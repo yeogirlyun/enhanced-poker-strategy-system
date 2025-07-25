@@ -2,6 +2,11 @@
 """
 Hold'em Strategy Manager
 
+Version 7.1 (2025-07-26) - 8-Max Expansion
+- ADDED: Open rules, vs_raise, and blind_defense for UTG+1 and HJ
+- UPDATED: Postflop pfa and caller rules with fallbacks for new positions
+- ENSURED: Tighter ranges for early positions like UTG+1, looser for HJ
+
 Version 7.0 (2025-01-25) - Modern Blind Defense Update
 
 REVISION HISTORY:
@@ -19,7 +24,7 @@ import sys
 
 def create_default_strategy():
     """
-    Generates a new strategy.json file with modern blind defense.
+    Generates a new strategy.json file with modern blind defense and 8-max positions.
     """
     strategy = {
         "hand_strength_tables": {
@@ -140,7 +145,8 @@ def create_default_strategy():
                         "sizing": 3.5,
                         "defend_freq": 0.35      # Defend 35% vs BTN
                     },
-                    "vs_UTG+1": {"value_thresh": 33, "call_range": [18, 32], "sizing": 4.0, "defend_freq": 0.16}
+                    "vs_UTG+1": {"value_thresh": 33, "call_range": [18, 32], "sizing": 4.0, "defend_freq": 0.16},
+                    "vs_HJ": {"value_thresh": 27, "call_range": [12, 26], "sizing": 3.5, "defend_freq": 0.28}
                 }
             }
         },
@@ -170,8 +176,14 @@ def create_default_strategy():
                 "turn": {
                     "UTG": {"OOP": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.75}, 
                             "IP": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.75}},
+                    "UTG+1": {"OOP": {"val_thresh": 39, "check_thresh": 24, "sizing": 0.75}, 
+                              "IP": {"val_thresh": 39, "check_thresh": 24, "sizing": 0.75}},
+                    "UTG+2": {"OOP": {"val_thresh": 38, "check_thresh": 23, "sizing": 0.75}, 
+                              "IP": {"val_thresh": 38, "check_thresh": 23, "sizing": 0.75}},
                     "MP": {"OOP": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.75}, 
                            "IP": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7}},
+                    "HJ": {"OOP": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7}, 
+                           "IP": {"val_thresh": 32, "check_thresh": 18, "sizing": 0.65}},
                     "CO": {"OOP": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7}, 
                            "IP": {"val_thresh": 30, "check_thresh": 18, "sizing": 0.55}},
                     "BTN": {"OOP": {"val_thresh": 30, "check_thresh": 18, "sizing": 0.55}, 
@@ -184,8 +196,14 @@ def create_default_strategy():
                 "river": {
                     "UTG": {"OOP": {"val_thresh": 50, "check_thresh": 30, "sizing": 1.0}, 
                             "IP": {"val_thresh": 50, "check_thresh": 30, "sizing": 1.0}},
+                    "UTG+1": {"OOP": {"val_thresh": 49, "check_thresh": 29, "sizing": 1.0}, 
+                              "IP": {"val_thresh": 49, "check_thresh": 29, "sizing": 1.0}},
+                    "UTG+2": {"OOP": {"val_thresh": 48, "check_thresh": 28, "sizing": 1.0}, 
+                              "IP": {"val_thresh": 48, "check_thresh": 28, "sizing": 1.0}},
                     "MP": {"OOP": {"val_thresh": 50, "check_thresh": 30, "sizing": 1.0}, 
                            "IP": {"val_thresh": 45, "check_thresh": 25, "sizing": 0.8}},
+                    "HJ": {"OOP": {"val_thresh": 45, "check_thresh": 25, "sizing": 0.8}, 
+                           "IP": {"val_thresh": 42, "check_thresh": 22, "sizing": 0.75}},
                     "CO": {"OOP": {"val_thresh": 45, "check_thresh": 25, "sizing": 0.8}, 
                            "IP": {"val_thresh": 40, "check_thresh": 22, "sizing": 0.7}},
                     "BTN": {"OOP": {"val_thresh": 40, "check_thresh": 22, "sizing": 0.7}, 
@@ -200,8 +218,14 @@ def create_default_strategy():
                 "flop": {
                     "UTG": {"OOP": {"small_bet": [45, 30], "medium_bet": [60, 35], "large_bet": [70, 100]}, 
                             "IP": {"small_bet": [45, 30], "medium_bet": [60, 35], "large_bet": [70, 100]}},
+                    "UTG+1": {"OOP": {"small_bet": [44, 29], "medium_bet": [59, 34], "large_bet": [69, 100]}, 
+                              "IP": {"small_bet": [44, 29], "medium_bet": [59, 34], "large_bet": [69, 100]}},
+                    "UTG+2": {"OOP": {"small_bet": [43, 28], "medium_bet": [58, 33], "large_bet": [68, 100]}, 
+                              "IP": {"small_bet": [43, 28], "medium_bet": [58, 33], "large_bet": [68, 100]}},
                     "MP": {"OOP": {"small_bet": [45, 30], "medium_bet": [60, 35], "large_bet": [70, 100]}, 
                            "IP": {"small_bet": [45, 30], "medium_bet": [60, 35], "large_bet": [70, 100]}},
+                    "HJ": {"OOP": {"small_bet": [42, 27], "medium_bet": [57, 32], "large_bet": [67, 100]}, 
+                           "IP": {"small_bet": [42, 27], "medium_bet": [57, 32], "large_bet": [67, 100]}},
                     "CO": {"OOP": {"small_bet": [45, 20], "medium_bet": [60, 30], "large_bet": [70, 100]}, 
                            "IP": {"small_bet": [45, 20], "medium_bet": [60, 30], "large_bet": [70, 100]}},
                     "BTN": {"OOP": {"small_bet": [35, 15], "medium_bet": [45, 20], "large_bet": [60, 100]}, 
@@ -215,8 +239,14 @@ def create_default_strategy():
                 "turn": {
                     "UTG": {"OOP": {"small_bet": [45, 25], "medium_bet": [50, 30], "large_bet": [55, 100]}, 
                             "IP": {"small_bet": [40, 22], "medium_bet": [45, 25], "large_bet": [50, 100]}},
+                    "UTG+1": {"OOP": {"small_bet": [44, 24], "medium_bet": [49, 29], "large_bet": [54, 100]}, 
+                              "IP": {"small_bet": [39, 21], "medium_bet": [44, 24], "large_bet": [49, 100]}},
+                    "UTG+2": {"OOP": {"small_bet": [43, 23], "medium_bet": [48, 28], "large_bet": [53, 100]}, 
+                              "IP": {"small_bet": [38, 20], "medium_bet": [43, 23], "large_bet": [48, 100]}},
                     "MP": {"OOP": {"small_bet": [45, 25], "medium_bet": [50, 30], "large_bet": [55, 100]}, 
                            "IP": {"small_bet": [40, 22], "medium_bet": [45, 25], "large_bet": [50, 100]}},
+                    "HJ": {"OOP": {"small_bet": [42, 22], "medium_bet": [47, 27], "large_bet": [52, 100]}, 
+                           "IP": {"small_bet": [37, 19], "medium_bet": [42, 22], "large_bet": [47, 100]}},
                     "CO": {"OOP": {"small_bet": [40, 22], "medium_bet": [45, 25], "large_bet": [50, 100]}, 
                            "IP": {"small_bet": [35, 20], "medium_bet": [40, 22], "large_bet": [45, 100]}},
                     "BTN": {"OOP": {"small_bet": [35, 20], "medium_bet": [40, 22], "large_bet": [45, 100]}, 
@@ -229,8 +259,14 @@ def create_default_strategy():
                 "river": {
                     "UTG": {"OOP": {"small_bet": [55, 35], "medium_bet": [60, 40], "large_bet": [65, 100]}, 
                             "IP": {"small_bet": [50, 30], "medium_bet": [55, 35], "large_bet": [60, 100]}},
+                    "UTG+1": {"OOP": {"small_bet": [54, 34], "medium_bet": [59, 39], "large_bet": [64, 100]}, 
+                              "IP": {"small_bet": [49, 29], "medium_bet": [54, 34], "large_bet": [59, 100]}},
+                    "UTG+2": {"OOP": {"small_bet": [53, 33], "medium_bet": [58, 38], "large_bet": [63, 100]}, 
+                              "IP": {"small_bet": [48, 28], "medium_bet": [53, 33], "large_bet": [58, 100]}},
                     "MP": {"OOP": {"small_bet": [55, 35], "medium_bet": [60, 40], "large_bet": [65, 100]}, 
                            "IP": {"small_bet": [50, 30], "medium_bet": [55, 35], "large_bet": [60, 100]}},
+                    "HJ": {"OOP": {"small_bet": [52, 32], "medium_bet": [57, 37], "large_bet": [62, 100]}, 
+                           "IP": {"small_bet": [47, 27], "medium_bet": [52, 32], "large_bet": [57, 100]}},
                     "CO": {"OOP": {"small_bet": [50, 30], "medium_bet": [55, 35], "large_bet": [60, 100]}, 
                            "IP": {"small_bet": [45, 25], "medium_bet": [50, 30], "large_bet": [55, 100]}},
                     "BTN": {"OOP": {"small_bet": [45, 25], "medium_bet": [50, 30], "large_bet": [55, 100]}, 
@@ -246,11 +282,12 @@ def create_default_strategy():
     
     with open('strategy.json', 'w') as f:
         json.dump(strategy, f, indent=4)
-    print("✅ Successfully created 'strategy.json' with modern blind defense strategy.")
+    print("✅ Successfully created 'strategy.json' with modern blind defense strategy and 8-max positions.")
     print("   - Added wider hand ranges for blind defense")
     print("   - Implemented position-based defense frequencies")
     print("   - Created specific blind vs position thresholds")
     print("   - Added pot odds considerations")
+    print("   - Expanded for 8-max with UTG+1 and HJ")
 
 def load_strategy():
     try:
