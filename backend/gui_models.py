@@ -13,26 +13,26 @@ Version 1.0 (2025-07-29) - Initial Version
 """
 
 import json
+import os
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 
 # --- GTO Theme Definition ---
 THEME = {
-    "bg": "#2E2E2E",
-    "fg": "#E0E0E0",
-    "bg_light": "#3C3C3C",
-    "bg_dark": "#252525",
-    "accent": "#007ACC",
-    "font_family": "Helvetica",
+    "bg": "#1a1a1a",           # Dark background
+    "bg_dark": "#2d2d2d",      # Slightly lighter dark
+    "bg_light": "#404040",     # Light gray for buttons
+    "fg": "#ffffff",           # White text
+    "accent": "#4CAF50",       # Green accent
+    "font_family": "Arial",
     "font_size": 10,
     "tier_colors": {
-        "Elite": "#00FF00",   # Bright Green (Value)
-        "Premium": "#00BFFF", # Deep Sky Blue (Strong Value)
-        "Gold": "#FF69B4",    # Hot Pink (Bluff/Mixed)
-        "Silver": "#FF8C00",  # Dark Orange (Thin Value/Call)
-        "Bronze": "#808080"   # Gray (Fold/Marginal)
+        "Elite": "#FF4444",      # Bright Red (Premium hands)
+        "Premium": "#44AAFF",    # Bright Blue (Strong hands)
+        "Gold": "#FFAA44",       # Orange (Medium hands)
+        "Silver": "#44FF44",     # Bright Green (Weak hands)
+        "Bronze": "#FF8844"      # Orange-Red (Marginal hands)
     },
-    "highlight_color": "white"
 }
 
 @dataclass
@@ -62,9 +62,13 @@ class StrategyData:
     Version 1.0 (2025-07-29) - Initial Version
     - Created to act as a single source of truth for the application's state.
     - Manages the list of tiers and the full strategy dictionary.
+    Version 1.1 (2025-07-29) - Strategy File Support
+    - Added support for loading strategy data from JSON files.
+    - Added current strategy file tracking.
     """
     tiers: List[HandStrengthTier] = field(default_factory=list)
     strategy_dict: Dict[str, Any] = field(default_factory=dict)
+    current_strategy_file: Optional[str] = None
 
     def add_tier(self, tier: HandStrengthTier):
         """Adds a new tier and sorts the list by strength."""
@@ -79,12 +83,201 @@ class StrategyData:
     def load_default_tiers(self):
         """Loads a default set of tiers for a new strategy."""
         self.tiers = [
-            HandStrengthTier("Elite", 40, 50, THEME["tier_colors"]["Elite"], ["AA", "KK", "QQ", "AKs"]),
-            HandStrengthTier("Premium", 30, 39, THEME["tier_colors"]["Premium"], ["JJ", "AKo", "AQs", "AJs", "KQs"]),
-            HandStrengthTier("Gold", 20, 29, THEME["tier_colors"]["Gold"], ["TT", "99", "AQo", "AJo", "KJs", "QJs", "JTs"]),
-            HandStrengthTier("Silver", 10, 19, THEME["tier_colors"]["Silver"], ["88", "77", "KJo", "QJo", "JTo", "A9s", "A8s"]),
-            HandStrengthTier("Bronze", 1, 9, THEME["tier_colors"]["Bronze"], ["66", "55", "44", "33", "22", "A7s", "A6s", "A5s"])
+            HandStrengthTier("Elite", 40, 50, THEME["tier_colors"]["Elite"], 
+                           ["AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs"]),
+            HandStrengthTier("Premium", 30, 39, THEME["tier_colors"]["Premium"], 
+                           ["TT", "99", "AJo", "KQs", "AJs", "KJs", "QJs", "JTs", "ATs", "KQo"]),
+            HandStrengthTier("Gold", 20, 29, THEME["tier_colors"]["Gold"], 
+                           ["88", "77", "AQo", "KJo", "A9s", "A8s", "KTs", "QTs", "J9s"]),
+            HandStrengthTier("Silver", 10, 19, THEME["tier_colors"]["Silver"], 
+                           ["66", "55", "44", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s"]),
+            HandStrengthTier("Bronze", 1, 9, THEME["tier_colors"]["Bronze"], 
+                           ["33", "22", "A4s", "A3s", "A2s", "K8s", "Q8s", "J7s", "T8s", "98s"])
         ]
+        self.current_strategy_file = None
+        
+        # Create strategy dictionary from default tiers for HS score display
+        self.strategy_dict = self._create_strategy_from_tiers()
+
+    def load_strategy_from_file(self, filename: str) -> bool:
+        """Loads strategy data from a JSON file."""
+        try:
+            if not os.path.exists(filename):
+                print(f"ERROR: Strategy file '{filename}' not found")
+                return False
+            
+            with open(filename, 'r') as f:
+                strategy_data = json.load(f)
+            
+            # Store the full strategy data
+            self.strategy_dict = strategy_data
+            
+            # Extract hand strength data and create tiers
+            self._create_tiers_from_strategy(strategy_data)
+            
+            # Set current strategy file
+            self.current_strategy_file = filename
+            
+            print(f"SUCCESS: Loaded strategy from '{filename}'")
+            print(f"  - Total hands: {sum(len(tier.hands) for tier in self.tiers)}")
+            print(f"  - Tiers: {len(self.tiers)}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"ERROR: Failed to load strategy from '{filename}': {e}")
+            return False
+
+    def _create_tiers_from_strategy(self, strategy_data: Dict[str, Any]):
+        """Creates tiers from strategy data."""
+        self.tiers.clear()
+        
+        # Get hand strength table
+        hand_strength_table = strategy_data.get("hand_strength_tables", {}).get("preflop", {})
+        
+        if not hand_strength_table:
+            print("WARNING: No preflop hand strength table found, using default tiers")
+            self.load_default_tiers()
+            return
+        
+        # Group hands by strength ranges
+        strength_groups = {}
+        for hand, strength in hand_strength_table.items():
+            # Determine tier based on strength
+            if strength >= 40:
+                tier_name = "Elite"
+                tier_color = THEME["tier_colors"]["Elite"]
+                min_hs, max_hs = 40, 50
+            elif strength >= 30:
+                tier_name = "Premium"
+                tier_color = THEME["tier_colors"]["Premium"]
+                min_hs, max_hs = 30, 39
+            elif strength >= 20:
+                tier_name = "Gold"
+                tier_color = THEME["tier_colors"]["Gold"]
+                min_hs, max_hs = 20, 29
+            elif strength >= 10:
+                tier_name = "Silver"
+                tier_color = THEME["tier_colors"]["Silver"]
+                min_hs, max_hs = 10, 19
+            else:
+                tier_name = "Bronze"
+                tier_color = THEME["tier_colors"]["Bronze"]
+                min_hs, max_hs = 1, 9
+            
+            # Add to strength group
+            if tier_name not in strength_groups:
+                strength_groups[tier_name] = {
+                    'hands': [],
+                    'min_hs': min_hs,
+                    'max_hs': max_hs,
+                    'color': tier_color
+                }
+            strength_groups[tier_name]['hands'].append(hand)
+        
+        # Create tiers
+        for tier_name, data in strength_groups.items():
+            tier = HandStrengthTier(
+                name=tier_name,
+                min_hs=data['min_hs'],
+                max_hs=data['max_hs'],
+                color=data['color'],
+                hands=sorted(data['hands'])
+            )
+            self.tiers.append(tier)
+        
+        # Sort tiers by strength
+        self.tiers.sort(key=lambda t: t.min_hs, reverse=True)
+
+    def save_strategy_to_file(self, filename: str) -> bool:
+        """Saves current strategy data to a JSON file."""
+        try:
+            # Create strategy data from current tiers
+            strategy_data = self._create_strategy_from_tiers()
+            
+            with open(filename, 'w') as f:
+                json.dump(strategy_data, f, indent=2)
+            
+            self.current_strategy_file = filename
+            print(f"SUCCESS: Saved strategy to '{filename}'")
+            return True
+            
+        except Exception as e:
+            print(f"ERROR: Failed to save strategy to '{filename}': {e}")
+            return False
+
+    def _create_strategy_from_tiers(self) -> Dict[str, Any]:
+        """Creates strategy data from current tiers."""
+        # Create hand strength table from tiers
+        hand_strength_table = {}
+        
+        for tier in self.tiers:
+            # Assign strength values based on tier
+            if tier.name == "Elite":
+                base_strength = 45
+            elif tier.name == "Premium":
+                base_strength = 35
+            elif tier.name == "Gold":
+                base_strength = 25
+            elif tier.name == "Silver":
+                base_strength = 15
+            else:  # Bronze
+                base_strength = 5
+            
+            # Assign strength to each hand in the tier
+            for i, hand in enumerate(tier.hands):
+                # Slightly vary strength within tier
+                strength = base_strength - (i * 2)
+                hand_strength_table[hand] = max(strength, 1)
+        
+        # Create strategy structure
+        strategy_data = {
+            "hand_strength_tables": {
+                "preflop": hand_strength_table,
+                "postflop": {
+                    "high_card": 5,
+                    "pair": 15,
+                    "top_pair": 30,
+                    "over_pair": 35,
+                    "two_pair": 45,
+                    "set": 60,
+                    "straight": 70,
+                    "flush": 80,
+                    "full_house": 90,
+                    "quads": 100,
+                    "straight_flush": 120
+                }
+            },
+            "preflop": {
+                "open_rules": {
+                    "UTG": {"threshold": 30, "sizing": 3.0},
+                    "MP": {"threshold": 20, "sizing": 3.0},
+                    "CO": {"threshold": 15, "sizing": 2.5},
+                    "BTN": {"threshold": 10, "sizing": 2.5},
+                    "SB": {"threshold": 20, "sizing": 3.0}
+                }
+            }
+        }
+        
+        return strategy_data
+
+    def get_current_strategy_file(self) -> Optional[str]:
+        """Returns the current strategy file name."""
+        return self.current_strategy_file
+
+    def get_strategy_file_display_name(self) -> str:
+        """Returns a display name for the current strategy file."""
+        if self.current_strategy_file:
+            return os.path.basename(self.current_strategy_file)
+        return "Default Strategy"
+
+    def get_available_strategy_files(self) -> List[str]:
+        """Returns a list of available strategy files in the current directory."""
+        strategy_files = []
+        for file in os.listdir('.'):
+            if file.endswith('.json') and 'strategy' in file.lower():
+                strategy_files.append(file)
+        return sorted(strategy_files)
 
 class GridSettings:
     """
@@ -95,14 +288,18 @@ class GridSettings:
     Version 1.0 (2025-07-29) - Initial Version
     - Centralizes grid size settings to be accessible by any UI component.
     """
-    _SIZES = ["Small", "Medium", "Large", "Extra Large"]
+    _SIZES = ["Small", "Medium", "Large", "Extra Large", "Huge", "Massive", "Giant", "Colossal"]
     _CONFIGS = {
-        "Small": {'font': ('Helvetica', 8), 'button_width': 4, 'button_height': 1, 'label_width': 4},
-        "Medium": {'font': ('Helvetica', 9), 'button_width': 5, 'button_height': 1, 'label_width': 5},
-        "Large": {'font': ('Helvetica', 10), 'button_width': 6, 'button_height': 2, 'label_width': 6},
-        "Extra Large": {'font': ('Helvetica', 12), 'button_width': 7, 'button_height': 2, 'label_width': 7}
+        "Small": {'font': ('Helvetica', 8), 'button_width': 12, 'button_height': 3, 'label_width': 8},
+        "Medium": {'font': ('Helvetica', 9), 'button_width': 15, 'button_height': 3, 'label_width': 9},
+        "Large": {'font': ('Helvetica', 10), 'button_width': 18, 'button_height': 4, 'label_width': 10},
+        "Extra Large": {'font': ('Helvetica', 12), 'button_width': 21, 'button_height': 4, 'label_width': 11},
+        "Huge": {'font': ('Helvetica', 14), 'button_width': 24, 'button_height': 5, 'label_width': 12},
+        "Massive": {'font': ('Helvetica', 16), 'button_width': 27, 'button_height': 5, 'label_width': 13},
+        "Giant": {'font': ('Helvetica', 18), 'button_width': 30, 'button_height': 6, 'label_width': 14},
+        "Colossal": {'font': ('Helvetica', 20), 'button_width': 33, 'button_height': 6, 'label_width': 15}
     }
-    HIGHLIGHT_COLORS = ['#FFFF00', '#00FFFF', '#FF00FF', '#00FF00', '#FFA500']
+    HIGHLIGHT_COLORS = ['#FF4444', '#44AAFF', '#FFAA44', '#44FF44', '#FF8844', '#FF66CC', '#66CCFF', '#FFFF44']
 
     @staticmethod
     def get_all_sizes() -> List[str]:
