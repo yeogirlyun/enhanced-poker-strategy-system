@@ -28,7 +28,18 @@ class PokerStrategyGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Advanced Poker Strategy Development")
-        self.root.geometry("1400x900")
+        
+        # Set window to 60% of screen size
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = int(screen_width * 0.6)
+        window_height = int(screen_height * 0.6)
+        
+        # Center the window
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
         self.root.configure(bg=THEME["bg"])
         
         # Initialize strategy data
@@ -117,14 +128,16 @@ class PokerStrategyGUI:
         help_menu.add_command(label="About", command=self._show_about)
 
     def _setup_ui(self):
-        """Setup the main UI components."""
-        # Main container
-        main_container = ttk.Frame(self.root, style='Dark.TFrame')
-        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        """Setup the main UI components with percentage-based sizing."""
+        # Configure grid weights for percentage-based layout
+        self.root.grid_rowconfigure(0, weight=20)  # Top area: 20%
+        self.root.grid_rowconfigure(1, weight=80)  # Content area: 80%
+        self.root.grid_columnconfigure(0, weight=60)  # Grid area: 60%
+        self.root.grid_columnconfigure(1, weight=40)  # Tier area: 40%
         
-        # TOP AREA: Menu and controls with dark sky blue background
-        top_frame = ttk.LabelFrame(main_container, text="Application Controls", style='TopArea.TLabelframe')
-        top_frame.pack(fill=tk.X, padx=5, pady=5)
+        # TOP AREA: Menu and controls (20% of height)
+        top_frame = ttk.LabelFrame(self.root, text="Application Controls", style='TopArea.TLabelframe')
+        top_frame.grid(row=0, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
         
         # Top row: Strategy and file controls
         strategy_row = ttk.Frame(top_frame, style='TopArea.TFrame')
@@ -168,21 +181,15 @@ class PokerStrategyGUI:
         ttk.Button(controls_container, text="Force Clear", 
                   command=self._force_clear_highlights, style='TopArea.TButton', width=10).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
         
-
-        
-        # MAIN CONTENT AREA: Grid and Tiers
-        content_frame = ttk.Frame(main_container, style='Dark.TFrame')
-        content_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # LEFT AREA: Hand grid (takes most space)
-        grid_frame = ttk.Frame(content_frame, style='Dark.TFrame')
-        grid_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        # LEFT AREA: Hand grid (60% width, 80% height)
+        grid_frame = ttk.Frame(self.root, style='Dark.TFrame')
+        grid_frame.grid(row=1, column=0, sticky='nsew', padx=(5, 2), pady=5)
         
         self.hand_grid = HandGridWidget(grid_frame, self.strategy_data, self._on_hand_click)
         
-        # RIGHT AREA: Tiers/HS/Decision table panel (compact)
-        right_panel_frame = ttk.Frame(content_frame, style='Dark.TFrame')
-        right_panel_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
+        # RIGHT AREA: Tiers/HS/Decision table panel (40% width, 80% height)
+        right_panel_frame = ttk.Frame(self.root, style='Dark.TFrame')
+        right_panel_frame.grid(row=1, column=1, sticky='nsew', padx=(2, 5), pady=5)
         
         self.tier_panel = TierPanel(right_panel_frame, self.strategy_data, 
                                    self._on_tier_data_change, self._on_tier_select)

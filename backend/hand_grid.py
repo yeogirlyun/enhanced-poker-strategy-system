@@ -99,7 +99,16 @@ class HandGridWidget:
         # Get current size configuration
         sizes = GridSettings.get_all_sizes()
         current_size = sizes[self._grid_state['grid_size']]
-        size_config = GridSettings.get_size_config(current_size)
+        
+        # Calculate dynamic button size based on grid pane dimensions
+        grid_width = self.grid_canvas.winfo_width()
+        grid_height = self.grid_canvas.winfo_height()
+        
+        # If grid dimensions are not yet available, use default config
+        if grid_width <= 1 or grid_height <= 1:
+            size_config = GridSettings.get_size_config(current_size)
+        else:
+            size_config = GridSettings.calculate_button_size_for_grid(grid_width, grid_height, current_size)
         
         print(f"DEBUG: Grid rendered with size '{current_size}'")
         
@@ -153,6 +162,9 @@ class HandGridWidget:
         
         # Mark as no longer needing redraw
         self._grid_state['needs_redraw'] = False
+        
+        # Bind resize event to recalculate button sizes
+        self.grid_canvas.bind('<Configure>', self._on_grid_resize)
 
     def _get_button_appearance(self, hand: str) -> Tuple[str, str, str, int]:
         """Determines the appearance of a button based on current state."""
@@ -288,10 +300,15 @@ class HandGridWidget:
 
     def _create_button_with_hs(self, hand: str, size_config: Dict, bg_color: str, fg_color: str, border_color: str, border_width: int):
         """Create a button with hand name and HS score display."""
-        # Create a frame to act as the button
-        button_frame = tk.Frame(self.hand_frame, bg=bg_color, relief=tk.RAISED, bd=border_width)
+        # Create a frame to act as the button with proper dimensions
+        button_frame = tk.Frame(self.hand_frame, bg=bg_color, relief=tk.RAISED, bd=border_width,
+                              width=size_config['button_width'], height=size_config['button_height'])
         if border_color:
             button_frame.configure(relief=tk.SOLID, bd=border_width, highlightbackground=border_color, highlightthickness=border_width)
+        
+        # Configure frame to maintain size
+        button_frame.pack_propagate(False)
+        button_frame.grid_propagate(False)
         
         # Main hand label
         hand_label = tk.Label(button_frame, text=hand, font=size_config['font'], 
@@ -347,3 +364,13 @@ class HandGridWidget:
         self._update_grid_state(selected_tiers=[], selected_hands=set())
         self._current_tier_selection = None
         self._tier_highlighting_active = False
+    
+    def _on_grid_resize(self, event):
+        """Handle grid resize events to recalculate button sizes."""
+        # Only trigger if the size actually changed significantly
+        if hasattr(self, '_last_grid_size'):
+            if abs(event.width - self._last_grid_size[0]) > 10 or abs(event.height - self._last_grid_size[1]) > 10:
+                self._last_grid_size = (event.width, event.height)
+                self._render_grid()
+        else:
+            self._last_grid_size = (event.width, event.height)

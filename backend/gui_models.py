@@ -290,14 +290,14 @@ class GridSettings:
     """
     _SIZES = ["Small", "Medium", "Large", "Extra Large", "Huge", "Massive", "Giant", "Colossal"]
     _CONFIGS = {
-        "Small": {'font': ('Helvetica', 8), 'button_width': 12, 'button_height': 3, 'label_width': 8},
-        "Medium": {'font': ('Helvetica', 9), 'button_width': 15, 'button_height': 3, 'label_width': 9},
-        "Large": {'font': ('Helvetica', 10), 'button_width': 18, 'button_height': 4, 'label_width': 10},
-        "Extra Large": {'font': ('Helvetica', 12), 'button_width': 21, 'button_height': 4, 'label_width': 11},
-        "Huge": {'font': ('Helvetica', 14), 'button_width': 24, 'button_height': 5, 'label_width': 12},
-        "Massive": {'font': ('Helvetica', 16), 'button_width': 27, 'button_height': 5, 'label_width': 13},
-        "Giant": {'font': ('Helvetica', 18), 'button_width': 30, 'button_height': 6, 'label_width': 14},
-        "Colossal": {'font': ('Helvetica', 20), 'button_width': 33, 'button_height': 6, 'label_width': 15}
+        "Small": {'font': ('Helvetica', 8), 'button_width': 20, 'button_height': 5, 'label_width': 8},
+        "Medium": {'font': ('Helvetica', 9), 'button_width': 25, 'button_height': 6, 'label_width': 9},
+        "Large": {'font': ('Helvetica', 10), 'button_width': 30, 'button_height': 7, 'label_width': 10},
+        "Extra Large": {'font': ('Helvetica', 12), 'button_width': 35, 'button_height': 8, 'label_width': 11},
+        "Huge": {'font': ('Helvetica', 14), 'button_width': 40, 'button_height': 9, 'label_width': 12},
+        "Massive": {'font': ('Helvetica', 16), 'button_width': 45, 'button_height': 10, 'label_width': 13},
+        "Giant": {'font': ('Helvetica', 18), 'button_width': 50, 'button_height': 11, 'label_width': 14},
+        "Colossal": {'font': ('Helvetica', 20), 'button_width': 55, 'button_height': 12, 'label_width': 15}
     }
     HIGHLIGHT_COLORS = ['#FF4444', '#44AAFF', '#FFAA44', '#44FF44', '#FF8844', '#FF66CC', '#66CCFF', '#FFFF44']
 
@@ -308,6 +308,34 @@ class GridSettings:
     @staticmethod
     def get_size_config(size: str) -> Dict:
         return GridSettings._CONFIGS.get(size, GridSettings._CONFIGS["Medium"])
+    
+    @staticmethod
+    def calculate_button_size_for_grid(grid_width: int, grid_height: int, size: str) -> Dict:
+        """Calculate button size to fill 75% of the grid pane."""
+        # Get base config
+        base_config = GridSettings.get_size_config(size)
+        
+        # Calculate available space for the grid (13x13 grid)
+        grid_cells_width = 13
+        grid_cells_height = 13
+        
+        # Calculate button size to fill 75% of available space
+        target_width = int((grid_width * 0.75) / grid_cells_width)
+        target_height = int((grid_height * 0.75) / grid_cells_height)
+        
+        # Ensure minimum size
+        min_width = base_config['button_width']
+        min_height = base_config['button_height']
+        
+        button_width = max(target_width, min_width)
+        button_height = max(target_height, min_height)
+        
+        return {
+            'font': base_config['font'],
+            'button_width': button_width,
+            'button_height': button_height,
+            'label_width': base_config['label_width']
+        }
 
 class HandFormatHelper:
     """

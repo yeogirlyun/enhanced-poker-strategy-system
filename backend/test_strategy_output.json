@@ -1,0 +1,90 @@
+{
+  "hand_strength_tables": {
+    "preflop": {
+      "AA": 45,
+      "KK": 43,
+      "QQ": 41,
+      "AKo": 35,
+      "AKs": 33,
+      "JJ": 31,
+      "AJs": 25,
+      "AQo": 23,
+      "AQs": 21,
+      "KQs": 19,
+      "TT": 17,
+      "77": 15,
+      "88": 13,
+      "99": 11,
+      "A2s": 9,
+      "A3s": 7,
+      "A4s": 5,
+      "A5s": 3,
+      "A6s": 1,
+      "A7s": 1,
+      "A8s": 1,
+      "AJo": 1,
+      "ATs": 1,
+      "JTs": 1,
+      "KJs": 1,
+      "KQo": 1,
+      "KTs": 1,
+      "QJs": 1,
+      "QTs": 1,
+      "T9s": 1,
+      "22": 5,
+      "33": 3,
+      "44": 1,
+      "54s": 1,
+      "55": 1,
+      "65s": 1,
+      "66": 1,
+      "76s": 1,
+      "87s": 1,
+      "98s": 1,
+      "J9s": 1,
+      "K8s": 1,
+      "K9s": 1,
+      "KJo": 1,
+      "Q9s": 1,
+      "QJo": 1,
+      "T8s": 1
+    },
+    "postflop": {
+      "high_card": 5,
+      "pair": 15,
+      "top_pair": 30,
+      "over_pair": 35,
+      "two_pair": 45,
+      "set": 60,
+      "straight": 70,
+      "flush": 80,
+      "full_house": 90,
+      "quads": 100,
+      "straight_flush": 120
+    }
+  },
+  "preflop": {
+    "open_rules": {
+      "UTG": {
+        "threshold": 30,
+        "sizing": 3.0
+      },
+      "MP": {
+        "threshold": 20,
+        "sizing": 3.0
+      },
+      "CO": {
+        "threshold": 15,
+        "sizing": 2.5
+      },
+      "BTN": {
+        "threshold": 10,
+        "sizing": 2.5
+      },
+      "SB": {
+        "threshold": 20,
+        "sizing": 3.0
+      }
+    }
+  }
+}
