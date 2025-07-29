@@ -72,17 +72,22 @@ class TierPanel:
         # Bind selection event
         self.tier_listbox.bind('<<ListboxSelect>>', self._on_listbox_select)
         
-        # Control buttons (compact layout)
+        # Control buttons (using TopMenu.TButton style for consistency)
         button_frame = ttk.Frame(self.main_frame, style='Dark.TFrame')
         button_frame.pack(fill=tk.X, padx=5, pady=3)
         
-        # Use smaller buttons for compact layout
-        ttk.Button(button_frame, text="Add Tier", command=self._add_tier, 
-                  style='Dark.TButton', width=10).pack(side=tk.LEFT, padx=2)
-        ttk.Button(button_frame, text="Remove", command=self._remove_tier, 
-                  style='Dark.TButton', width=10).pack(side=tk.LEFT, padx=2)
-        ttk.Button(button_frame, text="Edit", command=self._edit_tier, 
-                  style='Dark.TButton', width=10).pack(side=tk.LEFT, padx=2)
+        # Use TopMenu.TButton style for consistency with top menu, but maintain current size
+        self.add_tier_btn = ttk.Button(button_frame, text="Add Tier", command=self._add_tier, 
+                                      style='TopMenu.TButton', width=10)
+        self.add_tier_btn.pack(side=tk.LEFT, padx=2)
+        
+        self.remove_tier_btn = ttk.Button(button_frame, text="Remove", command=self._remove_tier, 
+                                         style='TopMenu.TButton', width=10)
+        self.remove_tier_btn.pack(side=tk.LEFT, padx=2)
+        
+        self.edit_tier_btn = ttk.Button(button_frame, text="Edit", command=self._edit_tier, 
+                                       style='TopMenu.TButton', width=10)
+        self.edit_tier_btn.pack(side=tk.LEFT, padx=2)
         
         # Count display frame (compact)
         count_frame = ttk.LabelFrame(self.main_frame, text="Statistics", style='Dark.TLabelframe')
@@ -117,6 +122,16 @@ class TierPanel:
         self.total_hands_label.configure(font=font_config)
         self.selected_count_label.configure(font=font_config)
         self.tier_details_label.configure(font=font_config)
+        
+        # Update button fonts to maintain current size (not 120% like top menu)
+        button_font = (THEME["font_family"], font_size, 'bold')
+        try:
+            self.add_tier_btn.configure(font=button_font)
+            self.remove_tier_btn.configure(font=button_font)
+            self.edit_tier_btn.configure(font=button_font)
+        except tk.TclError:
+            # ttk widgets don't support direct font configuration
+            pass
         
         print(f"DEBUG: Tier panel font size updated to {font_size}")
 
@@ -212,15 +227,30 @@ class TierPanel:
         return hand_strength_table.get(hand)
 
     def _add_tier(self):
-        """Opens dialog to add a new tier."""
+        """Opens dialog to add a new tier with auto-detection of hands and overlap prevention."""
         dialog = TierEditDialog(self.parent, "Add New Tier")
         if dialog.result:
             new_tier = HandStrengthTier(**dialog.result)
+            
+            # Check for overlapping HS ranges and resolve conflicts
+            if self._has_overlapping_ranges(new_tier):
+                if not self._resolve_overlapping_ranges(new_tier):
+                    return  # User cancelled the operation
+            
+            # Auto-detect hands for the new tier based on HS range
+            self._update_tier_hands_based_on_hs_range(new_tier)
+            
             self.strategy_data.add_tier(new_tier)
+            
+            # Update strategy dictionary to include new tier
+            self.strategy_data.strategy_dict = self.strategy_data._create_strategy_from_tiers()
+            
             self._update_tier_list()
             self._update_counts()
             if self.on_tier_change:
                 self.on_tier_change()
+            
+            print(f"DEBUG: Added new tier '{new_tier.name}' with {len(new_tier.hands)} hands (HS {new_tier.min_hs}-{new_tier.max_hs})")
 
     def _remove_tier(self):
         """Removes the selected tier."""
@@ -245,7 +275,7 @@ class TierPanel:
             self.on_tier_change()
 
     def _edit_tier(self):
-        """Opens dialog to edit the selected tier."""
+        """Opens dialog to edit the selected tier with enhanced hand management and overlap prevention."""
         selected_indices = self.tier_listbox.curselection()
         if len(selected_indices) != 1:
             messagebox.showwarning("Selection Error", "Please select exactly one tier to edit.")
@@ -256,15 +286,197 @@ class TierPanel:
         
         dialog = TierEditDialog(self.parent, "Edit Tier", tier_to_edit)
         if dialog.result:
+            # Store original values for comparison
+            original_min_hs = tier_to_edit.min_hs
+            original_max_hs = tier_to_edit.max_hs
+            original_hands = tier_to_edit.hands.copy()
+            
+            # Create temporary tier to check for overlaps
+            temp_tier = HandStrengthTier(
+                name=dialog.result['name'],
+                min_hs=dialog.result['min_hs'],
+                max_hs=dialog.result['max_hs'],
+                color=dialog.result['color'],
+                hands=[]
+            )
+            
+            # Check for overlapping HS ranges (excluding the current tier being edited)
+            has_overlap = False
+            overlapping_tiers = []
+            for i, existing_tier in enumerate(self.strategy_data.tiers):
+                if i != index:  # Skip the tier being edited
+                    if (temp_tier.min_hs <= existing_tier.max_hs and 
+                        temp_tier.max_hs >= existing_tier.min_hs):
+                        has_overlap = True
+                        overlapping_tiers.append(existing_tier)
+            
+            if has_overlap:
+                # Show conflict dialog
+                conflict_msg = f"HS range {temp_tier.min_hs}-{temp_tier.max_hs} overlaps with existing tiers:\n\n"
+                for tier in overlapping_tiers:
+                    conflict_msg += f"• {tier.name} (HS {tier.min_hs}-{tier.max_hs})\n"
+                
+                conflict_msg += "\nChoose an option:\n"
+                conflict_msg += "• 'Auto-adjust': Automatically adjust the tier's range\n"
+                conflict_msg += "• 'Cancel': Cancel editing the tier"
+                
+                choice = messagebox.askyesnocancel("HS Range Conflict", conflict_msg)
+                
+                if choice is None:  # Cancel
+                    return
+                elif choice:  # Auto-adjust
+                    if not self._auto_adjust_range_for_edit(temp_tier, overlapping_tiers, index):
+                        return  # User cancelled
+                    # Update dialog result with adjusted values
+                    dialog.result['min_hs'] = temp_tier.min_hs
+                    dialog.result['max_hs'] = temp_tier.max_hs
+            
+            # Update basic properties
             tier_to_edit.name = dialog.result['name']
             tier_to_edit.min_hs = dialog.result['min_hs']
             tier_to_edit.max_hs = dialog.result['max_hs']
             tier_to_edit.color = dialog.result['color']
             
+            # Handle hand management based on HS range changes
+            if original_min_hs != tier_to_edit.min_hs or original_max_hs != tier_to_edit.max_hs:
+                self._update_tier_hands_based_on_hs_range(tier_to_edit)
+            
+            # Update strategy dictionary to reflect changes
+            self.strategy_data.strategy_dict = self.strategy_data._create_strategy_from_tiers()
+            
             self._update_tier_list()
             self._update_counts()
             if self.on_tier_change:
                 self.on_tier_change()
+            
+            print(f"DEBUG: Updated tier '{tier_to_edit.name}' with {len(tier_to_edit.hands)} hands (HS {tier_to_edit.min_hs}-{tier_to_edit.max_hs})")
+
+    def _has_overlapping_ranges(self, new_tier: HandStrengthTier) -> bool:
+        """Check if the new tier's HS range overlaps with existing tiers."""
+        for existing_tier in self.strategy_data.tiers:
+            # Check if ranges overlap
+            if (new_tier.min_hs <= existing_tier.max_hs and 
+                new_tier.max_hs >= existing_tier.min_hs):
+                return True
+        return False
+    
+    def _resolve_overlapping_ranges(self, new_tier: HandStrengthTier) -> bool:
+        """Resolve overlapping HS ranges by adjusting the new tier's range."""
+        overlapping_tiers = []
+        for existing_tier in self.strategy_data.tiers:
+            if (new_tier.min_hs <= existing_tier.max_hs and 
+                new_tier.max_hs >= existing_tier.min_hs):
+                overlapping_tiers.append(existing_tier)
+        
+        if not overlapping_tiers:
+            return True
+        
+        # Show conflict dialog
+        conflict_msg = f"HS range {new_tier.min_hs}-{new_tier.max_hs} overlaps with existing tiers:\n\n"
+        for tier in overlapping_tiers:
+            conflict_msg += f"• {tier.name} (HS {tier.min_hs}-{tier.max_hs})\n"
+        
+        conflict_msg += "\nChoose an option:\n"
+        conflict_msg += "• 'Auto-adjust': Automatically adjust the new tier's range\n"
+        conflict_msg += "• 'Cancel': Cancel adding the tier"
+        
+        choice = messagebox.askyesnocancel("HS Range Conflict", conflict_msg)
+        
+        if choice is None:  # Cancel
+            return False
+        elif choice:  # Auto-adjust
+            return self._auto_adjust_range(new_tier, overlapping_tiers)
+        else:  # Cancel
+            return False
+    
+    def _auto_adjust_range(self, new_tier: HandStrengthTier, overlapping_tiers: List[HandStrengthTier]) -> bool:
+        """Automatically adjust the new tier's HS range to avoid overlaps."""
+        # Find the largest gap in HS ranges
+        all_ranges = [(tier.min_hs, tier.max_hs) for tier in self.strategy_data.tiers]
+        all_ranges.append((new_tier.min_hs, new_tier.max_hs))
+        all_ranges.sort()
+        
+        # Find gaps between ranges
+        gaps = []
+        for i in range(len(all_ranges) - 1):
+            current_max = all_ranges[i][1]
+            next_min = all_ranges[i + 1][0]
+            if next_min > current_max + 1:  # Gap exists
+                gaps.append((current_max + 1, next_min - 1))
+        
+        if gaps:
+            # Use the largest gap
+            largest_gap = max(gaps, key=lambda x: x[1] - x[0])
+            new_tier.min_hs = largest_gap[0]
+            new_tier.max_hs = largest_gap[1]
+            
+            messagebox.showinfo("Range Adjusted", 
+                              f"New tier range adjusted to HS {new_tier.min_hs}-{new_tier.max_hs}")
+            return True
+        else:
+            # No gaps available, ask user to choose a different range
+            messagebox.showerror("No Available Range", 
+                               "No non-overlapping HS range available. Please choose a different range.")
+            return False
+    
+    def _auto_adjust_range_for_edit(self, tier_to_edit: HandStrengthTier, overlapping_tiers: List[HandStrengthTier], edit_index: int) -> bool:
+        """Automatically adjust the tier's HS range to avoid overlaps during editing."""
+        # Create a list of ranges excluding the tier being edited
+        all_ranges = []
+        for i, tier in enumerate(self.strategy_data.tiers):
+            if i != edit_index:  # Exclude the tier being edited
+                all_ranges.append((tier.min_hs, tier.max_hs))
+        
+        # Add the new range to find gaps
+        all_ranges.append((tier_to_edit.min_hs, tier_to_edit.max_hs))
+        all_ranges.sort()
+        
+        # Find gaps between ranges
+        gaps = []
+        for i in range(len(all_ranges) - 1):
+            current_max = all_ranges[i][1]
+            next_min = all_ranges[i + 1][0]
+            if next_min > current_max + 1:  # Gap exists
+                gaps.append((current_max + 1, next_min - 1))
+        
+        if gaps:
+            # Use the largest gap
+            largest_gap = max(gaps, key=lambda x: x[1] - x[0])
+            tier_to_edit.min_hs = largest_gap[0]
+            tier_to_edit.max_hs = largest_gap[1]
+            
+            messagebox.showinfo("Range Adjusted", 
+                              f"Tier range adjusted to HS {tier_to_edit.min_hs}-{tier_to_edit.max_hs}")
+            return True
+        else:
+            # No gaps available, ask user to choose a different range
+            messagebox.showerror("No Available Range", 
+                               "No non-overlapping HS range available. Please choose a different range.")
+            return False
+
+    def _update_tier_hands_based_on_hs_range(self, tier: HandStrengthTier):
+        """Updates tier hands based on HS range, auto-detecting if needed."""
+        if not self.strategy_data.strategy_dict:
+            print("DEBUG: No strategy dictionary available for hand management")
+            return
+        
+        # Get all available hands and their HS scores
+        hand_strength_table = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
+        if not hand_strength_table:
+            print("DEBUG: No hand strength table available")
+            return
+        
+        # Find hands that belong to this HS range
+        matching_hands = []
+        for hand, hs_score in hand_strength_table.items():
+            if tier.min_hs <= hs_score <= tier.max_hs:
+                matching_hands.append(hand)
+        
+        # Update tier hands
+        tier.hands = sorted(matching_hands)
+        
+        print(f"DEBUG: Auto-detected {len(tier.hands)} hands for tier '{tier.name}' (HS {tier.min_hs}-{tier.max_hs})")
+        print(f"DEBUG: Hands: {tier.hands}")
 
     def get_selected_tiers(self) -> List[HandStrengthTier]:
         """Returns the currently selected tiers."""

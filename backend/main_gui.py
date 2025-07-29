@@ -48,19 +48,25 @@ class PokerStrategyGUI:
         
         # Font size control
         self.current_font_size_index = 6  # Start with "Giant" size (fills 75%+ of grid window)
-        self.font_sizes = ["Small", "Medium", "Large", "Extra Large", "Huge", "Massive", "Giant", "Colossal"]
+        self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
         
-        self._setup_styles()
+        # Setup styles with initial button font (120% of default)
+        initial_font_size = GridSettings.get_size_config(self.font_sizes[self.current_font_size_index])['font'][1]
+        initial_button_font = ('Arial', int(initial_font_size * 1.2), 'bold')
+        self._setup_styles(initial_button_font)
         self._setup_menu()
         self._setup_ui()
         self._bind_shortcuts()
         
+        # Apply initial font size to all components
+        self._apply_initial_font_size()
+        
         print(f"DEBUG: Main GUI initialized with font size: {self.font_sizes[self.current_font_size_index]}")
 
-    def _setup_styles(self):
+    def _setup_styles(self, button_font=('Arial', 12, 'bold')):
         """Setup the application styles."""
-        style = ttk.Style(self.root)
-        style.theme_use('clam')
+        style = ttk.Style()
+        style.theme_use('default')
         
         # Get current font configuration
         current_font_size = GridSettings.get_size_config(self.font_sizes[self.current_font_size_index])['font'][1]
@@ -95,6 +101,20 @@ class PokerStrategyGUI:
                        font=(THEME["font_family"], current_font_size))
         style.map('TopArea.TButton', background=[('active', THEME["accent"])])
 
+        # Custom style for top menu buttons with light pink background and dynamic font
+        style.configure('TopMenu.TButton',
+                        background='#FFE4E1',  # Light pink background
+                        foreground='#333',
+                        borderwidth=3,
+                        relief='raised',
+                        focusthickness=3,
+                        focuscolor='black',
+                        font=button_font,
+                        padding=8)
+        style.map('TopMenu.TButton',
+                  background=[('active', '#FFB6C1'), ('pressed', '#FFC0CB')],
+                  relief=[('pressed', 'sunken'), ('active', 'raised')])
+
     def _setup_menu(self):
         """Setup the main menu bar."""
         menubar = tk.Menu(self.root)
@@ -118,7 +138,7 @@ class PokerStrategyGUI:
         tools_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=tools_menu)
         tools_menu.add_command(label="Clear All Highlights", command=self._clear_all_highlights)
-        tools_menu.add_command(label="Force Clear Highlights", command=self._force_clear_highlights)
+
         tools_menu.add_separator()
         tools_menu.add_command(label="Show Statistics", command=self._show_statistics)
         
@@ -130,56 +150,71 @@ class PokerStrategyGUI:
     def _setup_ui(self):
         """Setup the main UI components with percentage-based sizing."""
         # Configure grid weights for percentage-based layout
-        self.root.grid_rowconfigure(0, weight=20)  # Top area: 20%
-        self.root.grid_rowconfigure(1, weight=80)  # Content area: 80%
+        self.root.grid_rowconfigure(0, weight=7)   # Top area: 7%
+        self.root.grid_rowconfigure(1, weight=93)  # Content area: 93%
         self.root.grid_columnconfigure(0, weight=60)  # Grid area: 60%
         self.root.grid_columnconfigure(1, weight=40)  # Tier area: 40%
         
         # TOP AREA: Menu and controls (20% of height)
         top_frame = ttk.LabelFrame(self.root, text="Application Controls", style='TopArea.TLabelframe')
-        top_frame.grid(row=0, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
+        top_frame.grid(row=0, column=0, columnspan=2, sticky='nsew', padx=2, pady=0)
         
-        # Top row: Strategy and file controls
-        strategy_row = ttk.Frame(top_frame, style='TopArea.TFrame')
-        strategy_row.pack(fill=tk.X, padx=5, pady=2)
+        # Configure top_frame to center its content
+        top_frame.grid_rowconfigure(0, weight=1)
+        top_frame.grid_columnconfigure(0, weight=1)
         
-        # Create a centered container for all controls
-        controls_container = ttk.Frame(strategy_row, style='TopArea.TFrame')
-        controls_container.pack(expand=True, anchor=tk.CENTER)
+        # Create a centered container for all controls using grid
+        controls_container = ttk.Frame(top_frame, style='TopArea.TFrame')
+        controls_container.grid(row=0, column=0, sticky='nsew', padx=2, pady=0)
+        
+        # Configure the controls container for compact layout (50% of space)
+        controls_container.grid_rowconfigure(0, weight=1)
+        # Configure columns to take up only 50% of horizontal space
+        for i in range(24):  # Double the number of columns
+            controls_container.grid_columnconfigure(i, weight=1)
+        controls_container.grid_columnconfigure(14, weight=1)
         
         # Strategy file info
-        ttk.Label(controls_container, text="Strategy:", style='TopArea.TLabel').pack(side=tk.LEFT, anchor=tk.CENTER)
+        ttk.Label(controls_container, text="Strategy:", style='TopArea.TLabel').grid(row=0, column=2, padx=1, pady=0, sticky='nsew')
         self.strategy_label = ttk.Label(controls_container, text="Default Strategy", style='TopArea.TLabel')
-        self.strategy_label.pack(side=tk.LEFT, padx=5, anchor=tk.CENTER)
+        self.strategy_label.grid(row=0, column=3, padx=1, pady=0, sticky='nsew')
         
-        # File operation buttons
-        ttk.Button(controls_container, text="New", command=self._new_strategy, 
-                  style='TopArea.TButton', width=8).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
-        ttk.Button(controls_container, text="Open", command=self._open_strategy, 
-                  style='TopArea.TButton', width=8).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
-        ttk.Button(controls_container, text="Save", command=self._save_strategy, 
-                  style='TopArea.TButton', width=8).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
+        # File operation buttons with 3D effects and dynamic font sizing
+        button_font_size = max(8, int(GridSettings.get_size_config(self.font_sizes[self.current_font_size_index])['font'][1] * 1.2))
+        button_font = ('Arial', button_font_size, 'bold')
+        
+        self.new_btn = ttk.Button(controls_container, text="New", command=self._new_strategy, style='TopMenu.TButton')
+        self.new_btn.grid(row=0, column=4, padx=2, pady=2, sticky='nsew')
+        
+        self.open_btn = ttk.Button(controls_container, text="Open", command=self._open_strategy, style='TopMenu.TButton')
+        self.open_btn.grid(row=0, column=5, padx=2, pady=2, sticky='nsew')
+        
+        self.save_btn = ttk.Button(controls_container, text="Save", command=self._save_strategy, style='TopMenu.TButton')
+        self.save_btn.grid(row=0, column=6, padx=2, pady=2, sticky='nsew')
         
         # App font size controls
-        ttk.Label(controls_container, text="App Font:", style='TopArea.TLabel').pack(side=tk.LEFT, padx=10, anchor=tk.CENTER)
-        ttk.Button(controls_container, text="-", command=self._decrease_font_size, 
-                  style='TopArea.TButton', width=4).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
+        ttk.Label(controls_container, text="App Font:", style='TopArea.TLabel').grid(row=0, column=8, padx=5, pady=0, sticky='nsew')
         
+        # Decrease button with larger graphical symbol
+        self.decrease_btn = ttk.Button(controls_container, text="−", command=self._decrease_font_size, style='TopMenu.TButton')
+        self.decrease_btn.grid(row=0, column=9, padx=2, pady=2, sticky='nsew')
+        
+        # Font size label (center-aligned)
         self.font_size_label = ttk.Label(controls_container, 
                                        text=self.font_sizes[self.current_font_size_index], 
-                                       style='TopArea.TLabel')
-        self.font_size_label.pack(side=tk.LEFT, padx=5, anchor=tk.CENTER)
+                                       style='TopArea.TLabel', anchor='center', font=('Arial', 12, 'bold'))
+        self.font_size_label.grid(row=0, column=10, padx=3, pady=2, sticky='ew')
         
-        ttk.Button(controls_container, text="+", command=self._increase_font_size, 
-                  style='TopArea.TButton', width=4).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
+        # Increase button with larger graphical symbol
+        self.increase_btn = ttk.Button(controls_container, text="+", command=self._increase_font_size, style='TopMenu.TButton')
+        self.increase_btn.grid(row=0, column=11, padx=2, pady=2, sticky='nsew')
         
-        # Grid control buttons
-        ttk.Button(controls_container, text="Clear Highlights", 
-                  command=self._clear_all_highlights, style='TopArea.TButton', width=12).pack(side=tk.LEFT, padx=10, anchor=tk.CENTER)
-        ttk.Button(controls_container, text="Clear All", 
-                  command=self._clear_all_highlights, style='TopArea.TButton', width=8).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
-        ttk.Button(controls_container, text="Force Clear", 
-                  command=self._force_clear_highlights, style='TopArea.TButton', width=10).pack(side=tk.LEFT, padx=2, anchor=tk.CENTER)
+        # Grid control buttons with 3D effects
+        self.clear_highlights_btn = ttk.Button(controls_container, text="Clear Highlights", command=self._clear_all_highlights, style='TopMenu.TButton')
+        self.clear_highlights_btn.grid(row=0, column=13, padx=3, pady=2, sticky='nsew')
+        
+        self.clear_all_btn = ttk.Button(controls_container, text="Clear All", command=self._clear_all_highlights, style='TopMenu.TButton')
+        self.clear_all_btn.grid(row=0, column=14, padx=2, pady=2, sticky='nsew')
         
         # LEFT AREA: Hand grid (60% width, 80% height)
         grid_frame = ttk.Frame(self.root, style='Dark.TFrame')
@@ -211,7 +246,7 @@ class PokerStrategyGUI:
         # Other shortcuts
         self.root.bind('<Command-r>', lambda e: self._refresh_display())
         self.root.bind('<Command-c>', lambda e: self._clear_all_highlights())
-        self.root.bind('<Command-f>', lambda e: self._force_clear_highlights())
+
 
     def _increase_font_size(self):
         """Increase font size for all components."""
@@ -231,11 +266,22 @@ class PokerStrategyGUI:
         
         print(f"DEBUG: Changing font size to '{new_size}' (index: {self.current_font_size_index})")
         
-        # Update styles
-        self._setup_styles()
+        # Get current font configuration
+        current_font_size = GridSettings.get_size_config(new_size)['font'][1]
+        font_config = (THEME["font_family"], current_font_size)
+        
+        # Calculate button font size (120% of app font size)
+        button_font_size = max(8, int(current_font_size * 1.2))
+        button_font = ('Arial', button_font_size, 'bold')
+        
+        # Update styles with new button font
+        self._setup_styles(button_font)
         
         # Update font size label
         self.font_size_label.configure(text=new_size)
+        
+        # Update top menu area fonts
+        self._update_top_menu_fonts(font_config)
         
         # Update hand grid size to match app font size
         self.hand_grid.grid_size_index = self.current_font_size_index
@@ -251,6 +297,84 @@ class PokerStrategyGUI:
         current_font_size = GridSettings.get_size_config(self.font_sizes[self.current_font_size_index])['font'][1]
         
         # Update tier panel fonts using the new method
+        self.tier_panel.update_font_size(current_font_size)
+    
+    def _update_top_menu_fonts(self, font_config):
+        """Update fonts in the top menu area."""
+        # Calculate button font size (120% of app font size)
+        button_font_size = max(8, int(font_config[1] * 1.2))
+        button_font = ('Arial', button_font_size, 'bold')
+        
+        # Update strategy label
+        self.strategy_label.configure(font=font_config)
+        
+        # Update button fonts - use style configuration for ttk widgets
+        if hasattr(self, 'new_btn'):
+            try:
+                self.new_btn.configure(font=button_font)
+            except tk.TclError:
+                # ttk widgets don't support direct font configuration
+                pass
+        if hasattr(self, 'open_btn'):
+            try:
+                self.open_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        if hasattr(self, 'save_btn'):
+            try:
+                self.save_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        if hasattr(self, 'decrease_btn'):
+            try:
+                self.decrease_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        if hasattr(self, 'increase_btn'):
+            try:
+                self.increase_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        if hasattr(self, 'clear_highlights_btn'):
+            try:
+                self.clear_highlights_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        if hasattr(self, 'clear_all_btn'):
+            try:
+                self.clear_all_btn.configure(font=button_font)
+            except tk.TclError:
+                pass
+        
+        # Update all ttk widgets in the top area to use the new font
+        # This ensures consistency across all top menu components
+        for widget in self.root.winfo_children():
+            if isinstance(widget, ttk.LabelFrame) and widget.grid_info()['row'] == 0:
+                # This is the top frame, update all its children
+                self._update_widget_fonts_recursive(widget, font_config)
+    
+    def _update_widget_fonts_recursive(self, parent, font_config):
+        """Recursively update font for all widgets in the top menu area."""
+        for child in parent.winfo_children():
+            if isinstance(child, (ttk.Label, ttk.Button)):
+                try:
+                    child.configure(font=font_config)
+                except tk.TclError:
+                    # Some ttk widgets might not support font configuration
+                    pass
+            elif isinstance(child, ttk.Frame):
+                self._update_widget_fonts_recursive(child, font_config)
+    
+    def _apply_initial_font_size(self):
+        """Apply the initial font size to all components."""
+        new_size = self.font_sizes[self.current_font_size_index]
+        current_font_size = GridSettings.get_size_config(new_size)['font'][1]
+        font_config = (THEME["font_family"], current_font_size)
+        
+        # Update top menu fonts
+        self._update_top_menu_fonts(font_config)
+        
+        # Update tier panel fonts
         self.tier_panel.update_font_size(current_font_size)
 
     def _on_hand_click(self, hand: str, is_selected: bool):
@@ -274,10 +398,7 @@ class PokerStrategyGUI:
         print(f"DEBUG: Clearing all highlights")
         self.hand_grid.clear_all_highlights()
 
-    def _force_clear_highlights(self):
-        """Force clear all highlights."""
-        print(f"DEBUG: Force clearing all highlights")
-        self.hand_grid.force_clear_highlights()
+
 
     def _refresh_display(self):
         """Refresh the display."""

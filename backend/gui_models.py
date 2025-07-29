@@ -288,16 +288,16 @@ class GridSettings:
     Version 1.0 (2025-07-29) - Initial Version
     - Centralizes grid size settings to be accessible by any UI component.
     """
-    _SIZES = ["Small", "Medium", "Large", "Extra Large", "Huge", "Massive", "Giant", "Colossal"]
+    _SIZES = ["1", "2", "3", "4", "5", "6", "7", "8"]
     _CONFIGS = {
-        "Small": {'font': ('Helvetica', 8), 'button_width': 20, 'button_height': 5, 'label_width': 8},
-        "Medium": {'font': ('Helvetica', 9), 'button_width': 25, 'button_height': 6, 'label_width': 9},
-        "Large": {'font': ('Helvetica', 10), 'button_width': 30, 'button_height': 7, 'label_width': 10},
-        "Extra Large": {'font': ('Helvetica', 12), 'button_width': 35, 'button_height': 8, 'label_width': 11},
-        "Huge": {'font': ('Helvetica', 14), 'button_width': 40, 'button_height': 9, 'label_width': 12},
-        "Massive": {'font': ('Helvetica', 16), 'button_width': 45, 'button_height': 10, 'label_width': 13},
-        "Giant": {'font': ('Helvetica', 18), 'button_width': 50, 'button_height': 11, 'label_width': 14},
-        "Colossal": {'font': ('Helvetica', 20), 'button_width': 55, 'button_height': 12, 'label_width': 15}
+        "1": {'font': ('Helvetica', 8), 'button_width': 20, 'button_height': 5, 'label_width': 8},
+        "2": {'font': ('Helvetica', 9), 'button_width': 25, 'button_height': 6, 'label_width': 9},
+        "3": {'font': ('Helvetica', 10), 'button_width': 30, 'button_height': 7, 'label_width': 10},
+        "4": {'font': ('Helvetica', 12), 'button_width': 35, 'button_height': 8, 'label_width': 11},
+        "5": {'font': ('Helvetica', 14), 'button_width': 40, 'button_height': 9, 'label_width': 12},
+        "6": {'font': ('Helvetica', 16), 'button_width': 45, 'button_height': 10, 'label_width': 13},
+        "7": {'font': ('Helvetica', 18), 'button_width': 50, 'button_height': 11, 'label_width': 14},
+        "8": {'font': ('Helvetica', 20), 'button_width': 55, 'button_height': 12, 'label_width': 15}
     }
     HIGHLIGHT_COLORS = ['#FF4444', '#44AAFF', '#FFAA44', '#44FF44', '#FF8844', '#FF66CC', '#66CCFF', '#FFFF44']
 
@@ -307,7 +307,7 @@ class GridSettings:
 
     @staticmethod
     def get_size_config(size: str) -> Dict:
-        return GridSettings._CONFIGS.get(size, GridSettings._CONFIGS["Medium"])
+        return GridSettings._CONFIGS.get(size, GridSettings._CONFIGS["3"])
     
     @staticmethod
     def calculate_button_size_for_grid(grid_width: int, grid_height: int, size: str) -> Dict:
