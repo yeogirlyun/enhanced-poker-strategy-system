@@ -546,10 +546,10 @@ Built with Python and Tkinter"""
     def _create_practice_session_interface(self, parent_frame):
         """Create the integrated practice session interface with visual table."""
         # Initialize practice simulator
-        from poker_practice_simulator import PokerPracticeSimulator
+        from enhanced_poker_engine import EnhancedPokerEngine
         from visual_poker_table import VisualPokerTable
 
-        self.practice_simulator = PokerPracticeSimulator(self.strategy_data)
+        self.practice_simulator = EnhancedPokerEngine(self.strategy_data)
 
         # Create main layout
         main_frame = ttk.Frame(parent_frame)

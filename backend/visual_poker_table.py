@@ -16,8 +16,8 @@ import math
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from poker_practice_simulator import (
-    PokerPracticeSimulator,
+from enhanced_poker_engine import (
+    EnhancedPokerEngine,
     Player,
     GameState,
     Action,
@@ -31,7 +31,7 @@ class VisualPokerTable:
 
     def __init__(self, parent_frame, strategy_data: StrategyData):
         self.strategy_data = strategy_data
-        self.simulator = PokerPracticeSimulator(strategy_data)
+        self.simulator = EnhancedPokerEngine(strategy_data)
         self.current_game_state: Optional[GameState] = None
 
         # Table dimensions - make it larger and better centered
