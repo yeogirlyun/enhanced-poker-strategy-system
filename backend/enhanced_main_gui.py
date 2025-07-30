@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Enhanced Main GUI for Poker Strategy Development with Decision Tables
+Enhanced Main GUI - Memory Efficient Version
 
-Extends the main GUI to include decision table editing for postflop strategies.
-
-REVISION HISTORY:
-===============
-Version 1.0 (2025-07-29) - Initial Version
-- Created enhanced main GUI with decision table integration
-- Added tabbed interface for different strategy components
-- Integrated decision table panel with existing components
+This is the main GUI application for the poker strategy development system.
+It provides a comprehensive interface for strategy analysis, optimization,
+and visualization with memory-efficient components.
 """
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
+from typing import Dict
 from datetime import datetime
+
+# Import GUI components
 from gui_models import StrategyData, THEME, GridSettings
 from hand_grid import HandGridWidget
 from tier_panel import TierPanel
 from decision_table_panel import DecisionTablePanel
 from postflop_hs_editor import PostflopHSEditor
+
+from strategy_optimization_panel import StrategyOptimizationPanel
 
 
 class EnhancedMainGUI:
@@ -44,8 +44,18 @@ class EnhancedMainGUI:
         if os.path.exists("modern_strategy.json"):
             self.strategy_data.load_strategy_from_file("modern_strategy.json")
         else:
-            # Fallback to default tiers
+            # Load default tiers and create complete strategy
             self.strategy_data.load_default_tiers()
+            # Ensure the strategy has complete decision tables
+            self.strategy_data.strategy_dict = (
+                self.strategy_data._create_strategy_from_tiers()
+            )
+            print("SUCCESS: Loaded default strategy with complete decision tables")
+            print(
+                f"  - Total hands: {sum(len(tier.hands) for tier in self.strategy_data.tiers)}"
+            )
+            print(f"  - Tiers: {len(self.strategy_data.tiers)}")
+            print("  - Decision tables: Preflop, Flop, Turn, River")
 
         self._setup_styles()
         self._create_menu()
@@ -352,7 +362,7 @@ Built with Python and Tkinter"""
             self._update_overview()
         # Update strategy file display
         self._update_strategy_file_display()
-    
+
     def _update_strategy_file_display(self):
         """Update the strategy file display in the top bar."""
         if hasattr(self, "strategy_file_label"):
@@ -382,7 +392,7 @@ Built with Python and Tkinter"""
             side="left", padx=5
         )
         self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
-        self.current_font_size_index = 1  # Start with size "2" (12pt) - was size "4"
+        self.current_font_size_index = 2  # Start with size "3" (14pt) - was size "2"
         self.font_size_var = tk.StringVar(
             value=self.font_sizes[self.current_font_size_index]
         )
@@ -416,19 +426,19 @@ Built with Python and Tkinter"""
             side="left", padx=(20, 5)
         )
         self.strategy_file_label = ttk.Label(
-            outer_frame, 
-            text="No file loaded", 
+            outer_frame,
+            text="No file loaded",
             style="Dark.TLabel",
-            foreground=THEME["accent"]
+            foreground=THEME["accent"],
         )
         self.strategy_file_label.pack(side="left", padx=5)
-        
+
         # Update the file display
         self._update_strategy_file_display()
-        
+
         # Apply initial font size to strategy file label
         if hasattr(self, "strategy_file_label"):
-            initial_font_size = GridSettings.get_size_config("2")["font"][1]  # Was "4"
+            initial_font_size = GridSettings.get_size_config("3")["font"][1]  # Was "2"
             self.strategy_file_label.configure(
                 font=(THEME["font_family"], initial_font_size)
             )
@@ -515,6 +525,32 @@ Built with Python and Tkinter"""
 
         # Initial overview update
         self._update_overview()
+
+        # Strategy Optimization tab
+        optimization_frame = ttk.Frame(self.notebook, style="Dark.TFrame")
+        self.notebook.add(optimization_frame, text="Strategy Optimization")
+
+        self.optimization_panel = StrategyOptimizationPanel(
+            optimization_frame,
+            self.strategy_data,
+            on_optimization_complete=self._on_optimization_complete,
+        )
+
+    def _on_optimization_complete(self, result):
+        """Handle optimization completion."""
+        # Update strategy overview with optimization results
+        self._update_overview()
+
+        # Show success message
+        messagebox.showinfo(
+            "Optimization Complete",
+            f"Strategy optimization completed successfully!\n\n"
+            f"Performance improvement: {result.performance_improvement}\n"
+            f"Human readability score: {result.readability_score}\n"
+            f"Execution complexity: {result.complexity_rating}\n"
+            f"Optimization method: {result.optimization_method}\n"
+            f"Convergence status: {result.convergence_status}",
+        )
 
     def _update_overview(self):
         """Update the strategy overview text."""
@@ -711,6 +747,10 @@ Click "Export to PDF" button above to generate a comprehensive strategy report."
             self.strategy_file_label.configure(
                 font=(THEME["font_family"], current_font_size)
             )
+
+        # Update optimization panel font size
+        if hasattr(self, "optimization_panel"):
+            self.optimization_panel.update_font_size(current_font_size)
 
         # Update hand grid size to match app font size
         if hasattr(self, "hand_grid"):

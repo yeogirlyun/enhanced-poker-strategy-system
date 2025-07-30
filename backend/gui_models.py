@@ -238,7 +238,7 @@ class StrategyData:
             return False
 
     def _create_strategy_from_tiers(self) -> Dict[str, Any]:
-        """Creates strategy data from current tiers with modern PFA/Caller postflop strategy."""
+        """Creates strategy data from current tiers with complete decision tables."""
         # Create hand strength table from tiers
         hand_strength_table = {}
 
@@ -261,83 +261,62 @@ class StrategyData:
                 strength = base_strength - (i * 2)
                 hand_strength_table[hand] = max(strength, 1)
 
-        # Modern postflop strategy using PFA/Caller concept
+        # Complete postflop strategy with all positions and streets
         postflop_strategy = {
             "pfa": {
                 "flop": {
-                    "UTG": {
-                        "val_thresh": 35,  # Strong hands only from UTG
-                        "check_thresh": 15,  # Check with medium hands
-                        "sizing": 0.75,  # 75% pot sizing
-                    },
-                    "MP": {
-                        "val_thresh": 30,  # Slightly more aggressive
-                        "check_thresh": 15,
-                        "sizing": 0.7,
-                    },
-                    "CO": {
-                        "val_thresh": 30,  # Cutoff can be more aggressive
-                        "check_thresh": 15,
-                        "sizing": 0.6,
-                    },
-                    "BTN": {
-                        "val_thresh": 20,  # Button can bet wider
-                        "check_thresh": 10,
-                        "sizing": 0.5,
-                    },
+                    "UTG": {"val_thresh": 35, "check_thresh": 15, "sizing": 0.75},
+                    "MP": {"val_thresh": 30, "check_thresh": 15, "sizing": 0.75},
+                    "CO": {"val_thresh": 25, "check_thresh": 10, "sizing": 0.75},
+                    "BTN": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.75},
+                    "SB": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.75},
                 },
                 "turn": {
-                    "UTG": {
-                        "val_thresh": 40,  # Turn requires stronger hands
-                        "check_thresh": 25,
-                        "sizing": 0.75,
-                    },
-                    "MP": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.75},
-                    "CO": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7},
-                    "BTN": {"val_thresh": 30, "check_thresh": 18, "sizing": 0.55},
+                    "UTG": {"val_thresh": 40, "check_thresh": 20, "sizing": 0.8},
+                    "MP": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.8},
+                    "CO": {"val_thresh": 30, "check_thresh": 15, "sizing": 0.8},
+                    "BTN": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.8},
+                    "SB": {"val_thresh": 30, "check_thresh": 20, "sizing": 0.8},
                 },
                 "river": {
-                    "UTG": {
-                        "val_thresh": 45,  # River requires strongest hands
-                        "check_thresh": 30,
-                        "sizing": 1.0,
-                    },
-                    "MP": {"val_thresh": 45, "check_thresh": 30, "sizing": 1.0},
-                    "CO": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.8},
-                    "BTN": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7},
+                    "UTG": {"val_thresh": 45, "check_thresh": 25, "sizing": 1.0},
+                    "MP": {"val_thresh": 40, "check_thresh": 25, "sizing": 1.0},
+                    "CO": {"val_thresh": 35, "check_thresh": 20, "sizing": 1.0},
+                    "BTN": {"val_thresh": 30, "check_thresh": 20, "sizing": 1.0},
+                    "SB": {"val_thresh": 35, "check_thresh": 25, "sizing": 1.0},
                 },
             },
             "caller": {
                 "flop": {
-                    "UTG": {
-                        "val_thresh": 40,  # Caller needs stronger hands
-                        "check_thresh": 20,
-                        "sizing": 0.8,
-                    },
-                    "MP": {"val_thresh": 40, "check_thresh": 20, "sizing": 0.8},
-                    "CO": {"val_thresh": 35, "check_thresh": 18, "sizing": 0.7},
-                    "BTN": {"val_thresh": 30, "check_thresh": 15, "sizing": 0.6},
+                    "UTG": {"val_thresh": 25, "check_thresh": 10, "sizing": 0.75},
+                    "MP": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.75},
+                    "CO": {"val_thresh": 15, "check_thresh": 5, "sizing": 0.75},
+                    "BTN": {"val_thresh": 15, "check_thresh": 5, "sizing": 0.75},
+                    "SB": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.75},
                 },
                 "turn": {
-                    "UTG": {"val_thresh": 45, "check_thresh": 30, "sizing": 0.9},
-                    "MP": {"val_thresh": 45, "check_thresh": 30, "sizing": 0.9},
-                    "CO": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.8},
-                    "BTN": {"val_thresh": 35, "check_thresh": 20, "sizing": 0.7},
+                    "UTG": {"val_thresh": 30, "check_thresh": 15, "sizing": 0.8},
+                    "MP": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.8},
+                    "CO": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.8},
+                    "BTN": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.8},
+                    "SB": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.8},
                 },
                 "river": {
-                    "UTG": {"val_thresh": 50, "check_thresh": 35, "sizing": 1.2},
-                    "MP": {"val_thresh": 50, "check_thresh": 35, "sizing": 1.2},
-                    "CO": {"val_thresh": 45, "check_thresh": 30, "sizing": 1.0},
-                    "BTN": {"val_thresh": 40, "check_thresh": 25, "sizing": 0.9},
+                    "UTG": {"val_thresh": 35, "check_thresh": 20, "sizing": 1.0},
+                    "MP": {"val_thresh": 30, "check_thresh": 20, "sizing": 1.0},
+                    "CO": {"val_thresh": 25, "check_thresh": 15, "sizing": 1.0},
+                    "BTN": {"val_thresh": 25, "check_thresh": 15, "sizing": 1.0},
+                    "SB": {"val_thresh": 30, "check_thresh": 20, "sizing": 1.0},
                 },
             },
         }
 
-        # Create strategy structure
+        # Create complete strategy structure
         strategy_data = {
             "hand_strength_tables": {
                 "preflop": hand_strength_table,
                 "postflop": {
+                    # Made Hands
                     "high_card": 5,
                     "pair": 15,
                     "top_pair": 30,
@@ -349,6 +328,19 @@ class StrategyData:
                     "full_house": 90,
                     "quads": 100,
                     "straight_flush": 120,
+                    # Draws
+                    "gutshot_draw": 12,
+                    "open_ended_draw": 18,
+                    "flush_draw": 20,
+                    "combo_draw": 35,
+                    # Special Situations
+                    "nut_flush_draw": 25,
+                    "nut_straight_draw": 22,
+                    "overcard_draw": 8,
+                    "backdoor_flush": 3,
+                    "backdoor_straight": 2,
+                    "pair_plus_draw": 28,
+                    "set_plus_draw": 65,
                 },
             },
             "preflop": {

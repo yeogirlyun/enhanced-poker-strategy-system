@@ -15,7 +15,7 @@ Version 1.0 (2025-07-29) - Initial Version
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import List, Dict, Any, Optional, Callable
+from typing import Optional, Callable
 from gui_models import StrategyData, THEME
 
 
@@ -33,8 +33,8 @@ class DecisionTablePanel:
         self.parent = parent_frame
         self.strategy_data = strategy_data
         self.on_table_change = on_table_change
-        self.current_street = "flop"  # Default street
-        self.current_font_size = 12  # Default, will be set by update_font_size
+        self.current_street = "preflop"  # Default street
+        self.current_font_size = 14  # Default, will be set by update_font_size
 
         # DecisionTablePanel initialized
 
@@ -45,7 +45,7 @@ class DecisionTablePanel:
         """Sets up the decision table UI."""
         # Main frame
         self.main_frame = ttk.LabelFrame(
-            self.parent, text="Postflop Decision Tables", style="Dark.TLabelframe"
+            self.parent, text="Decision Tables", style="Dark.TLabelframe"
         )
         self.main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -53,12 +53,17 @@ class DecisionTablePanel:
         self.street_notebook = ttk.Notebook(self.main_frame)
         self.street_notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Create tabs for each street
+        # Create tabs for each street (including preflop)
         self.street_frames = {}
         self.street_tables = {}
-        self.street_loaded = {"flop": False, "turn": False, "river": False}
+        self.street_loaded = {
+            "preflop": False,
+            "flop": False,
+            "turn": False,
+            "river": False,
+        }
 
-        for street in ["flop", "turn", "river"]:
+        for street in ["preflop", "flop", "turn", "river"]:
             # Create frame for this street
             street_frame = ttk.Frame(self.street_notebook, style="Dark.TFrame")
             self.street_notebook.add(street_frame, text=street.title())
@@ -68,7 +73,7 @@ class DecisionTablePanel:
             self._create_decision_table(street_frame, street)
 
             # Set initial street
-        self.current_street = "flop"
+        self.current_street = "preflop"
 
         # Bind tab change event
         self.street_notebook.bind("<<NotebookTabChanged>>", self._on_street_tab_change)
@@ -101,19 +106,21 @@ class DecisionTablePanel:
 
     def _get_positions(self, street=None):
         """Determine the list of positions dynamically from the strategy file or use a default."""
-        # Try to get from num_players parameter
-        num_players = self.strategy_data.strategy_dict.get("num_players", None)
-        if num_players == 6:
-            return ["UTG", "UTG+1", "MP", "HJ", "CO", "BTN"]
-        elif num_players == 4:
-            return ["UTG", "MP", "CO", "BTN"]
-
-        # Try to get from postflop data keys
-        postflop = self.strategy_data.strategy_dict.get("postflop", {})
-        action_data = postflop.get("pfa", {})  # Use pfa as default
-
         # Use provided street or current_street
         target_street = street or getattr(self, "current_street", "flop")
+
+        # For preflop, get positions from preflop data
+        if target_street == "preflop":
+            preflop = self.strategy_data.strategy_dict.get("preflop", {})
+            open_rules = preflop.get("open_rules", {})
+            if open_rules:
+                return list(open_rules.keys())
+            # Fallback for preflop
+            return ["UTG", "MP", "CO", "BTN", "SB"]
+
+        # For postflop streets, get from postflop data
+        postflop = self.strategy_data.strategy_dict.get("postflop", {})
+        action_data = postflop.get("pfa", {})
         street_data = action_data.get(target_street, {})
 
         if street_data:
@@ -123,7 +130,8 @@ class DecisionTablePanel:
         return ["UTG", "MP", "CO", "BTN"]
 
     def _create_decision_table(self, parent, street):
-        """Creates the decision table matrix with all positions as columns and both action types as labeled frames."""
+        """Creates the decision table matrix with all positions as columns and both
+        action types as labeled frames."""
         # Create separate container for each street
         if not hasattr(self, "table_containers"):
             self.table_containers = {}
@@ -133,10 +141,19 @@ class DecisionTablePanel:
 
         positions = self._get_positions(street)
         self.positions = positions
-        parameters = ["val_thresh", "check_thresh", "sizing"]
-        param_labels = ["Value Threshold", "Check Threshold", "Bet Sizing"]
-        action_types = ["pfa", "caller"]
-        action_labels = ["AS PFA", "AS CALLER"]
+
+        # Set parameters based on street
+        if street == "preflop":
+            parameters = ["val_thresh", "sizing"]
+            param_labels = ["Open Threshold", "Bet Sizing"]
+            action_types = ["pfa"]
+            action_labels = ["OPENING RANGES"]
+        else:
+            parameters = ["val_thresh", "check_thresh", "sizing"]
+            param_labels = ["Value Threshold", "Check Threshold", "Bet Sizing"]
+            action_types = ["pfa", "caller"]
+            action_labels = ["AS PFA", "AS CALLER"]
+
         font_config = (THEME["font_family"], self.current_font_size)
         header_font = (THEME["font_family"], self.current_font_size, "bold")
 
@@ -198,13 +215,14 @@ class DecisionTablePanel:
                     entry = ttk.Entry(
                         action_frame,
                         textvariable=value_var,
-                        width=12,
                         style="SkyBlue.TEntry",
                         font=font_config,
+                        width=8,
                     )
-                    entry.grid(row=row, column=col + 1, sticky="ew", padx=5, pady=3)
+                    entry.grid(row=row, column=col + 1, sticky="ew", padx=2, pady=2)
                     self.parameter_widgets[street][action_type][param][pos] = value_var
-            current_row += 1
+
+            current_row += 2  # Add space between action types
 
         # All data will be loaded at startup
 
@@ -212,25 +230,47 @@ class DecisionTablePanel:
         """Load all decision table data for all streets at startup."""
         try:
             postflop_data = self.strategy_data.strategy_dict.get("postflop", {})
+            preflop_data = self.strategy_data.strategy_dict.get("preflop", {})
 
             # Load data for all streets
-            for street in ["flop", "turn", "river"]:
+            for street in ["preflop", "flop", "turn", "river"]:
                 # Set positions for this street
                 self.positions = self._get_positions(street)
 
-                for action_type in ["pfa", "caller"]:
-                    action_data = postflop_data.get(action_type, {})
-                    street_data = action_data.get(street, {})
-
+                if street == "preflop":
+                    # Handle preflop data structure
+                    open_rules = preflop_data.get("open_rules", {})
                     for pos in self.positions:
-                        position_data = street_data.get(pos, {})
+                        position_data = open_rules.get(pos, {})
 
-                        # Load data into widgets
-                        for param in ["val_thresh", "check_thresh", "sizing"]:
-                            value = position_data.get(param, "")
-                            self.parameter_widgets[street][action_type][param][pos].set(
-                                str(value)
-                            )
+                        # Load preflop data into widgets (threshold and sizing)
+                        threshold = position_data.get("threshold", "")
+                        sizing = position_data.get("sizing", "")
+
+                        # Map to decision table parameters
+                        self.parameter_widgets[street]["pfa"]["val_thresh"][pos].set(
+                            str(threshold)
+                        )
+                        self.parameter_widgets[street]["pfa"]["sizing"][pos].set(
+                            str(sizing)
+                        )
+
+                        # Preflop doesn't have caller or check_thresh
+                else:
+                    # Handle postflop data structure
+                    for action_type in ["pfa", "caller"]:
+                        action_data = postflop_data.get(action_type, {})
+                        street_data = action_data.get(street, {})
+
+                        for pos in self.positions:
+                            position_data = street_data.get(pos, {})
+
+                            # Load data into widgets
+                            for param in ["val_thresh", "check_thresh", "sizing"]:
+                                value = position_data.get(param, "")
+                                self.parameter_widgets[street][action_type][param][
+                                    pos
+                                ].set(str(value))
 
                 # Mark this street as loaded
                 self.street_loaded[street] = True
@@ -244,21 +284,42 @@ class DecisionTablePanel:
     def _load_current_table(self):
         """Loads the current decision table data for all positions and action types."""
         try:
-            postflop_data = self.strategy_data.strategy_dict.get("postflop", {})
-
-            for action_type in ["pfa", "caller"]:
-                action_data = postflop_data.get(action_type, {})
-                street_data = action_data.get(self.current_street, {})
+            if self.current_street == "preflop":
+                # Handle preflop data structure
+                preflop_data = self.strategy_data.strategy_dict.get("preflop", {})
+                open_rules = preflop_data.get("open_rules", {})
 
                 for pos in self.positions:
-                    position_data = street_data.get(pos, {})
+                    position_data = open_rules.get(pos, {})
 
-                    # Direct loading from PFA/Caller structure
-                    for param in ["val_thresh", "check_thresh", "sizing"]:
-                        value = position_data.get(param, "")
-                        self.parameter_widgets[self.current_street][action_type][param][
-                            pos
-                        ].set(str(value))
+                    # Load preflop data
+                    threshold = position_data.get("threshold", "")
+                    sizing = position_data.get("sizing", "")
+
+                    self.parameter_widgets[self.current_street]["pfa"]["val_thresh"][
+                        pos
+                    ].set(str(threshold))
+                    self.parameter_widgets[self.current_street]["pfa"]["sizing"][
+                        pos
+                    ].set(str(sizing))
+                    # Preflop doesn't have check_thresh
+            else:
+                # Handle postflop data structure
+                postflop_data = self.strategy_data.strategy_dict.get("postflop", {})
+
+                for action_type in ["pfa", "caller"]:
+                    action_data = postflop_data.get(action_type, {})
+                    street_data = action_data.get(self.current_street, {})
+
+                    for pos in self.positions:
+                        position_data = street_data.get(pos, {})
+
+                        # Direct loading from PFA/Caller structure
+                        for param in ["val_thresh", "check_thresh", "sizing"]:
+                            value = position_data.get(param, "")
+                            self.parameter_widgets[self.current_street][action_type][
+                                param
+                            ][pos].set(str(value))
         except Exception as e:
             print(f"ERROR: Failed to load decision table: {e}")
             # Set default values
@@ -274,7 +335,7 @@ class DecisionTablePanel:
         """Handles street tab change."""
         current_tab = self.street_notebook.select()
         tab_id = self.street_notebook.index(current_tab)
-        streets = ["flop", "turn", "river"]
+        streets = ["preflop", "flop", "turn", "river"]
         self.current_street = streets[tab_id]
 
         # All data is already loaded and all tables are pre-rendered
@@ -285,44 +346,64 @@ class DecisionTablePanel:
         """Saves the current table changes to the strategy data for all positions and action types."""
         try:
             postflop = self.strategy_data.strategy_dict.setdefault("postflop", {})
+            preflop = self.strategy_data.strategy_dict.setdefault("preflop", {})
 
             # Save data for ALL streets, not just current street
-            for street in ["flop", "turn", "river"]:
-                for action_type in ["pfa", "caller"]:
-                    action = postflop.setdefault(action_type, {})
-                    street_data = action.setdefault(street, {})
+            for street in ["preflop", "flop", "turn", "river"]:
+                # Get positions for this street
+                positions = self._get_positions(street)
 
-                    # Get positions for this street
-                    positions = self._get_positions(street)
+                if street == "preflop":
+                    # Handle preflop data structure
+                    open_rules = preflop.setdefault("open_rules", {})
 
                     for pos in positions:
-                        new_values = {}
-                        for param in ["val_thresh", "check_thresh", "sizing"]:
-                            try:
-                                value = float(
-                                    self.parameter_widgets[street][action_type][param][
-                                        pos
-                                    ].get()
-                                )
-                                new_values[param] = value
-                            except ValueError:
-                                messagebox.showerror(
-                                    "Invalid Value",
-                                    f"Invalid value for {param} in {pos} ({action_type}): {self.parameter_widgets[street][action_type][param][pos].get()}",
-                                )
-                                return
-                        if pos not in street_data:
-                            street_data[pos] = {}
-                        street_data[pos].update(new_values)
+                        try:
+                            threshold = float(
+                                self.parameter_widgets[street]["pfa"]["val_thresh"][
+                                    pos
+                                ].get()
+                            )
+                            sizing = float(
+                                self.parameter_widgets[street]["pfa"]["sizing"][
+                                    pos
+                                ].get()
+                            )
 
+                            open_rules[pos] = {"threshold": threshold, "sizing": sizing}
+                        except ValueError:
+                            print(f"Invalid preflop data for {pos}")
+                else:
+                    # Handle postflop data structure
+                    for action_type in ["pfa", "caller"]:
+                        action = postflop.setdefault(action_type, {})
+                        street_data = action.setdefault(street, {})
+
+                        for pos in positions:
+                            new_values = {}
+                            for param in ["val_thresh", "check_thresh", "sizing"]:
+                                try:
+                                    value = float(
+                                        self.parameter_widgets[street][action_type][
+                                            param
+                                        ][pos].get()
+                                    )
+                                    new_values[param] = value
+                                except ValueError:
+                                    print(f"Invalid {param} for {pos} in {street}")
+                                    continue
+
+                            street_data[pos] = new_values
+
+            # Notify parent of changes
             if self.on_table_change:
                 self.on_table_change()
 
-            messagebox.showinfo(
-                "Success", "All decision table changes saved to strategy!"
-            )
+            messagebox.showinfo("Success", "Decision table changes saved!")
+
         except Exception as e:
             print(f"ERROR: Failed to save decision table: {e}")
+            messagebox.showerror("Error", f"Failed to save changes: {e}")
 
     def _reset_to_default(self):
         """Resets the current table to default values."""
@@ -330,6 +411,7 @@ class DecisionTablePanel:
             "Reset", "Are you sure you want to reset to default values?"
         ):
             defaults = {
+                "preflop": {"val_thresh": "35", "check_thresh": "15", "sizing": "0.75"},
                 "flop": {"val_thresh": "35", "check_thresh": "15", "sizing": "0.75"},
                 "turn": {"val_thresh": "40", "check_thresh": "20", "sizing": "0.8"},
                 "river": {"val_thresh": "45", "check_thresh": "25", "sizing": "1.0"},
