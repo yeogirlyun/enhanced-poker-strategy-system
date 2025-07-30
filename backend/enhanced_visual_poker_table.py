@@ -32,8 +32,8 @@ class ProfessionalPokerTable:
         self.current_game_state = None
         
         # MUCH LARGER table - 80% of pane
-        self.canvas_width = 1200  # Increased from 900
-        self.canvas_height = 800   # Increased from 600
+        self.canvas_width = 1600  # Increased from 1200
+        self.canvas_height = 1000  # Increased from 800
         self.center_x = self.canvas_width // 2
         self.center_y = self.canvas_height // 2
         
@@ -43,8 +43,8 @@ class ProfessionalPokerTable:
         self.player_radius = min(self.table_width, self.table_height) * 0.45  # Larger player radius
         
         # Card dimensions - larger for better visibility
-        self.card_width = 55  # Increased from 45
-        self.card_height = 75  # Increased from 65
+        self.card_width = 65  # Increased from 55
+        self.card_height = 85  # Increased from 75
         
         # Game state tracking
         self.current_hand_phase = "preflop"  # preflop, flop, turn, river
@@ -63,7 +63,7 @@ class ProfessionalPokerTable:
             bg="#0B6623",  # Professional green felt
             highlightthickness=0,
         )
-        self.canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)  # Reduced padding
         
         # Create controls
         self._create_professional_controls(parent_frame)
@@ -118,15 +118,17 @@ class ProfessionalPokerTable:
             ("RAISE", "raise", "#AA44FF"),  # Purple
         ]
 
-        # Add turn indicator
-        turn_label = tk.Label(
+        # Add turn indicator - 3x bigger
+        self.turn_label = tk.Label(
             right_frame,
             text="YOUR TURN",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 18, "bold"),  # 3x bigger font
             fg="white",
             bg="#FF6B6B",
+            relief="raised",
+            bd=3,  # Thicker border
         )
-        turn_label.pack(side=tk.LEFT, padx=5)
+        self.turn_label.pack(side=tk.LEFT, padx=10)  # More padding
 
         for text, value, color in actions:
             btn = tk.Button(
@@ -135,36 +137,38 @@ class ProfessionalPokerTable:
                 command=lambda v=value: self._set_action(v),
                 bg=color,
                 fg="white",
-                font=("Arial", 9, "bold"),
+                font=("Arial", 16, "bold"),  # 3x bigger font
                 relief="raised",
-                bd=2,
-                width=8,
-                height=1,
+                bd=4,  # Thicker border
+                width=15,  # 3x bigger width
+                height=3,  # 3x bigger height
             )
-            btn.pack(side=tk.LEFT, padx=2)
+            btn.pack(side=tk.LEFT, padx=8)  # More spacing
 
-        # Bet size entry
-        ttk.Label(right_frame, text="Bet:", font=("Arial", 10, "bold")).pack(
-            side=tk.LEFT, padx=5
+        # Bet size entry - 3x bigger
+        ttk.Label(right_frame, text="Bet:", font=("Arial", 16, "bold")).pack(
+            side=tk.LEFT, padx=10
         )
         self.bet_size_var = tk.StringVar(value="0")
         bet_entry = ttk.Entry(
-            right_frame, textvariable=self.bet_size_var, width=8, font=("Arial", 10)
+            right_frame, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
         )
-        bet_entry.pack(side=tk.LEFT, padx=2)
+        bet_entry.pack(side=tk.LEFT, padx=8)
 
-        # Professional submit button
+        # Professional submit button - 3x bigger
         submit_button = tk.Button(
             right_frame,
-            text="Submit Action",
+            text="SUBMIT ACTION",
             command=self._submit_professional_action,
             bg="#22AA22",
             fg="white",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 16, "bold"),
             relief="raised",
-            bd=2,
+            bd=4,
+            width=15,
+            height=3,
         )
-        submit_button.pack(side=tk.LEFT, padx=5)
+        submit_button.pack(side=tk.LEFT, padx=10)
 
     def _set_action(self, action):
         """Set the selected action."""
@@ -730,10 +734,10 @@ class ProfessionalPokerTableGUI:
     def __init__(self, strategy_data: StrategyData):
         self.strategy_data = strategy_data
 
-        # Create professional main window
+        # Create professional main window - much larger to accommodate 80% table
         self.root = tk.Tk()
         self.root.title("Professional Poker Table")
-        self.root.geometry("1000x700")
+        self.root.geometry("1800x1200")  # Much larger window
         self.root.configure(bg="#2C3E50")
 
         # Create professional poker table
