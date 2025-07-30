@@ -104,7 +104,7 @@ class ProfessionalPokerTable:
         right_frame = ttk.Frame(control_frame)
         right_frame.pack(side=tk.RIGHT, fill=tk.X)
 
-                        # Professional action buttons with clear labels
+        # Professional action buttons with clear labels
         self.action_var = tk.StringVar(value="check")
         actions = [
             ("FOLD", "fold", "#FF4444"),  # Red
@@ -113,17 +113,17 @@ class ProfessionalPokerTable:
             ("BET", "bet", "#FFAA44"),  # Orange
             ("RAISE", "raise", "#AA44FF"),  # Purple
         ]
-        
+
         # Add turn indicator
         turn_label = tk.Label(
             right_frame,
             text="YOUR TURN",
             font=("Arial", 10, "bold"),
             fg="white",
-            bg="#FF6B6B"
+            bg="#FF6B6B",
         )
         turn_label.pack(side=tk.LEFT, padx=5)
-        
+
         for text, value, color in actions:
             btn = tk.Button(
                 right_frame,
@@ -171,7 +171,7 @@ class ProfessionalPokerTable:
         # Calculate table position for perfect centering
         table_x = self.center_x - self.table_width // 2
         table_y = self.center_y - self.table_height // 2
-        
+
         # Draw professional table outline
         self.canvas.create_oval(
             table_x,
@@ -182,7 +182,7 @@ class ProfessionalPokerTable:
             outline="#8B4513",  # Brown border
             width=4,
         )
-        
+
         # Draw professional felt pattern
         for i in range(0, self.table_width, 25):
             for j in range(0, self.table_height, 25):
@@ -199,7 +199,7 @@ class ProfessionalPokerTable:
                         fill="#228B22",
                         outline="",
                     )
-        
+
         # Draw professional pot area - PERFECTLY CENTERED
         pot_radius = 35
         self.canvas.create_oval(
@@ -211,7 +211,7 @@ class ProfessionalPokerTable:
             outline="#B8860B",  # Dark gold border
             width=3,
         )
-        
+
         # Draw professional dealer button
         dealer_radius = 18
         self.canvas.create_oval(
@@ -246,7 +246,7 @@ class ProfessionalPokerTable:
     ):
         """Draw a professional player with perfect positioning."""
         x, y = position
-        
+
         # Professional player circle
         if player.is_human:
             color = "#FF6B6B"  # Red for human player
@@ -254,6 +254,8 @@ class ProfessionalPokerTable:
             color = "#95A5A6"  # Gray for folded players
         else:
             color = "#4ECDC4"  # Teal for AI players
+
+        player_radius = 30
         
         # Highlight current player's turn
         if is_current_player:
@@ -267,8 +269,6 @@ class ProfessionalPokerTable:
                 outline="#FFD700",  # Gold highlight
                 width=3,
             )
-        
-        player_radius = 30
         self.canvas.create_oval(
             x - player_radius,
             y - player_radius,
@@ -386,7 +386,7 @@ class ProfessionalPokerTable:
         if not self.current_game_state:
             return
 
-                # Professional pot amount - PERFECTLY CENTERED
+            # Professional pot amount - PERFECTLY CENTERED
         self.canvas.create_text(
             self.center_x,
             self.center_y,  # FIXED: Use center_y for perfect centering
@@ -394,7 +394,7 @@ class ProfessionalPokerTable:
             font=("Arial", 16, "bold"),
             fill="black",
         )
-        
+
         # Professional current bet
         if self.current_game_state.current_bet > 0:
             self.canvas.create_text(
