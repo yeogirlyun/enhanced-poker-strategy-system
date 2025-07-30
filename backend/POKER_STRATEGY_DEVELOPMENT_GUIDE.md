@@ -129,6 +129,14 @@ enhanced_main_gui.py (Main Window)
 - **Position adjustments**: UTG most conservative, BTN most aggressive
 - **Street progression**: Increasing requirements from flop to river
 
+### 6. **🎰 Poker Practice Simulator** *(NEW)*
+- **Up to 8 players**: 1 human + 7 AI bots
+- **Perfect AI play**: Bots follow strategy exactly
+- **Real-time feedback**: Deviation tracking and analysis
+- **Session logging**: Complete play history and statistics
+- **Hand evaluation**: Proper poker hand evaluator
+- **Stack tracking**: Real-time pot and stack management
+
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
@@ -253,6 +261,32 @@ typing   # Built-in
 - **Advanced scenarios**: Complex hand situations
 - **Theory-based**: Modern poker theory integration
 
+### 🎰 Poker Practice Simulator
+
+#### **Game Setup**
+- **Player count**: 2-8 players (1 human + AI bots)
+- **Starting stacks**: $100 per player
+- **Blinds**: $1/$2 structure
+- **Position rotation**: Automatic dealer rotation
+
+#### **AI Bot Behavior**
+- **Perfect strategy execution**: Bots follow strategy exactly
+- **Position-aware**: Adjusts play based on position
+- **Street progression**: Different strategies for preflop/flop/turn/river
+- **Realistic play**: Simulates actual poker game flow
+
+#### **Deviation Tracking**
+- **Real-time analysis**: Compares your actions to strategy
+- **Detailed logging**: Records every deviation with context
+- **Feedback system**: Immediate feedback on suboptimal plays
+- **Session statistics**: Accuracy, deviations, pot won/lost
+
+#### **Hand Evaluation**
+- **Proper evaluator**: Accurate poker hand rankings
+- **Board texture analysis**: Considers paired, suited, connected boards
+- **Strength calculation**: Precise hand strength scoring
+- **Postflop analysis**: Complete 5-card hand evaluation
+
 ## 🔧 Technical Details
 
 ### 📊 Data Structure
@@ -355,6 +389,8 @@ backend/
 ├── decision_table_panel.py        # Decision tables (494 lines)
 ├── postflop_hs_editor.py         # HS editor (502 lines)
 ├── strategy_optimization_panel.py # Optimization UI (371 lines)
+├── poker_practice_simulator.py    # Practice simulator (500+ lines)
+├── hand_evaluator.py              # Hand evaluator (300+ lines)
 ├── dialogs.py                     # Dialog windows (376 lines)
 ├── pdf_export.py                  # PDF generation (340 lines)
 ├── main_gui.py                    # Legacy main (729 lines)
