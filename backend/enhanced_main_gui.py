@@ -555,9 +555,9 @@ Built with Python and Tkinter"""
         main_frame = ttk.Frame(parent_frame)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-                # Create professional poker table
+        # Create professional poker table
         self.visual_table = ProfessionalPokerTable(main_frame, self.strategy_data)
-        
+
         # Connect the professional table's simulator to our practice simulator
         self.visual_table.engine = self.practice_simulator
 
