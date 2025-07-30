@@ -526,20 +526,40 @@ Built with Python and Tkinter"""
         # Initial overview update
         self._update_overview()
 
+        # Strategy Optimization tab
+        optimization_frame = ttk.Frame(self.notebook, style="Dark.TFrame")
+        self.notebook.add(optimization_frame, text="Strategy Optimization")
+
+        self.optimization_panel = StrategyOptimizationPanel(
+            optimization_frame,
+            self.strategy_data,
+            on_optimization_complete=self._on_optimization_complete,
+        )
+
+        # Practice Session tab
+        practice_frame = ttk.Frame(self.notebook, style="Dark.TFrame")
+        self.notebook.add(practice_frame, text="🎰 Practice Session")
+
+        # Create practice session interface
+        self._create_practice_session_interface(practice_frame)
+
     def _create_practice_session_interface(self, parent_frame):
         """Create the integrated practice session interface."""
         # Initialize practice simulator
         from poker_practice_simulator import PokerPracticeSimulator
+
         self.practice_simulator = PokerPracticeSimulator(self.strategy_data)
-        
+
         # Create main layout
         main_frame = ttk.Frame(parent_frame)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+
         # Top control panel
-        control_frame = ttk.LabelFrame(main_frame, text="Game Controls", style="Dark.TLabelframe")
+        control_frame = ttk.LabelFrame(
+            main_frame, text="Game Controls", style="Dark.TLabelframe"
+        )
         control_frame.pack(fill=tk.X, pady=(0, 10))
-        
+
         # Player count selection
         ttk.Label(control_frame, text="Players:").pack(side=tk.LEFT, padx=10)
         self.player_count_var = tk.StringVar(value="6")
@@ -548,30 +568,30 @@ Built with Python and Tkinter"""
             textvariable=self.player_count_var,
             values=["2", "3", "4", "5", "6", "7", "8"],
             state="readonly",
-            width=5
+            width=5,
         )
         player_count_combo.pack(side=tk.LEFT, padx=5)
-        
+
         # Start new hand button
         start_button = ttk.Button(
-            control_frame,
-            text="🎯 Start New Hand",
-            command=self._start_practice_hand
+            control_frame, text="🎯 Start New Hand", command=self._start_practice_hand
         )
         start_button.pack(side=tk.RIGHT, padx=10)
-        
+
         # Game area
         game_frame = ttk.Frame(main_frame)
         game_frame.pack(fill=tk.BOTH, expand=True)
-        
+
         # Left panel - Game state
         left_panel = ttk.Frame(game_frame)
         left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
+
         # Game state display
-        game_state_frame = ttk.LabelFrame(left_panel, text="Game State", style="Dark.TLabelframe")
+        game_state_frame = ttk.LabelFrame(
+            left_panel, text="Game State", style="Dark.TLabelframe"
+        )
         game_state_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
+
         self.game_state_text = tk.Text(
             game_state_frame,
             height=15,
@@ -579,81 +599,82 @@ Built with Python and Tkinter"""
             font=("Consolas", 10),
             bg=THEME["bg_dark"],
             fg=THEME["fg"],
-            state=tk.DISABLED
+            state=tk.DISABLED,
         )
         self.game_state_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
         # Right panel - Action controls and feedback
         right_panel = ttk.Frame(game_frame)
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        
+
         # Action frame
-        action_frame = ttk.LabelFrame(right_panel, text="Your Action", style="Dark.TLabelframe")
+        action_frame = ttk.LabelFrame(
+            right_panel, text="Your Action", style="Dark.TLabelframe"
+        )
         action_frame.pack(fill=tk.X, pady=(0, 10))
-        
+
         # Action buttons
         actions_frame = ttk.Frame(action_frame)
         actions_frame.pack(pady=10)
-        
+
         self.action_var = tk.StringVar(value="check")
         actions = [
             ("Fold", "fold"),
             ("Check", "check"),
             ("Call", "call"),
             ("Bet", "bet"),
-            ("Raise", "raise")
+            ("Raise", "raise"),
         ]
-        
+
         for text, value in actions:
             ttk.Radiobutton(
-                actions_frame,
-                text=text,
-                variable=self.action_var,
-                value=value
+                actions_frame, text=text, variable=self.action_var, value=value
             ).pack(anchor=tk.W, pady=2)
-        
+
         # Bet size entry
         ttk.Label(action_frame, text="Bet Size:").pack(pady=5)
         self.bet_size_var = tk.StringVar(value="0")
         bet_size_entry = ttk.Entry(action_frame, textvariable=self.bet_size_var)
         bet_size_entry.pack(pady=5)
-        
+
         # Submit action button
         submit_button = ttk.Button(
-            action_frame,
-            text="Submit Action",
-            command=self._submit_practice_action
+            action_frame, text="Submit Action", command=self._submit_practice_action
         )
         submit_button.pack(pady=10)
-        
+
         # Feedback frame
-        feedback_frame = ttk.LabelFrame(right_panel, text="Strategy Feedback", style="Dark.TLabelframe")
+        feedback_frame = ttk.LabelFrame(
+            right_panel, text="Strategy Feedback", style="Dark.TLabelframe"
+        )
         feedback_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
+
         self.feedback_text = tk.Text(
             feedback_frame,
             height=10,
             font=("Consolas", 9),
             bg=THEME["bg_dark"],
             fg=THEME["fg"],
-            state=tk.DISABLED
+            state=tk.DISABLED,
         )
         self.feedback_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
         # Session stats frame
-        stats_frame = ttk.LabelFrame(right_panel, text="Session Statistics", style="Dark.TLabelframe")
+        stats_frame = ttk.LabelFrame(
+            right_panel, text="Session Statistics", style="Dark.TLabelframe"
+        )
         stats_frame.pack(fill=tk.X)
-        
+
         self.stats_text = tk.Text(
             stats_frame,
             height=6,
             font=("Consolas", 9),
             bg=THEME["bg_dark"],
             fg=THEME["fg"],
-            state=tk.DISABLED
+            state=tk.DISABLED,
         )
         self.stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
         # Initialize game state
         self.current_game_state = None
         self._update_practice_stats()
@@ -663,17 +684,17 @@ Built with Python and Tkinter"""
         try:
             num_players = int(self.player_count_var.get())
             result = self.practice_simulator.play_hand(num_players)
-            
+
             # Get current game state from simulator
             self.current_game_state = self.practice_simulator.current_game_state
-            
+
             # Update display
             self._update_practice_game_display()
             self._update_practice_stats()
-            
+
             messagebox.showinfo(
-                "Hand Complete", 
-                f"Winner: {result['winner']}\nPot: ${result['pot']:.2f}\nDeviations: {result['deviations']}"
+                "Hand Complete",
+                f"Winner: {result['winner']}\nPot: ${result['pot']:.2f}\nDeviations: {result['deviations']}",
             )
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start hand: {str(e)}")
@@ -683,27 +704,32 @@ Built with Python and Tkinter"""
         if not self.current_game_state:
             messagebox.showwarning("No Active Hand", "Please start a new hand first.")
             return
-        
+
         try:
             # Get action from UI
             action_str = self.action_var.get()
             bet_size = float(self.bet_size_var.get())
-            
+
             from poker_practice_simulator import Action
+
             action_map = {
                 "fold": Action.FOLD,
                 "check": Action.CHECK,
                 "call": Action.CALL,
                 "bet": Action.BET,
-                "raise": Action.RAISE
+                "raise": Action.RAISE,
             }
-            
+
             action = action_map.get(action_str, Action.CHECK)
-            
+
             # Execute action
-            human_player = next(p for p in self.current_game_state.players if p.is_human)
-            self.practice_simulator.execute_action(human_player, action, bet_size, self.current_game_state)
-            
+            human_player = next(
+                p for p in self.current_game_state.players if p.is_human
+            )
+            self.practice_simulator.execute_action(
+                human_player, action, bet_size, self.current_game_state
+            )
+
             # Update display
             self._update_practice_game_display()
             self._update_practice_feedback()
@@ -714,27 +740,27 @@ Built with Python and Tkinter"""
         """Update the practice game state display."""
         if not self.current_game_state:
             return
-        
+
         display_text = "🎰 GAME STATE\n"
         display_text += "=" * 50 + "\n\n"
-        
+
         # Players
         display_text += "PLAYERS:\n"
         for player in self.current_game_state.players:
             status = "ACTIVE" if player.is_active else "FOLDED"
             display_text += f"{player.name} ({player.position.value}): ${player.stack:.2f} - {status}\n"
-        
+
         display_text += f"\nPOT: ${self.current_game_state.pot:.2f}\n"
         display_text += f"STREET: {self.current_game_state.street.upper()}\n"
-        
+
         if self.current_game_state.board:
             display_text += f"BOARD: {' '.join(self.current_game_state.board)}\n"
-        
+
         # Human player cards
         human_player = next(p for p in self.current_game_state.players if p.is_human)
         if human_player.cards:
             display_text += f"YOUR CARDS: {' '.join(human_player.cards)}\n"
-        
+
         self.game_state_text.config(state=tk.NORMAL)
         self.game_state_text.delete(1.0, tk.END)
         self.game_state_text.insert(1.0, display_text)
@@ -744,11 +770,11 @@ Built with Python and Tkinter"""
         """Update the practice feedback display."""
         if not self.practice_simulator.deviation_logs:
             return
-        
+
         # Get latest deviation
         latest_deviation = self.practice_simulator.deviation_logs[-1]
         feedback = self.practice_simulator.get_feedback_message(latest_deviation)
-        
+
         self.feedback_text.config(state=tk.NORMAL)
         self.feedback_text.delete(1.0, tk.END)
         self.feedback_text.insert(1.0, f"📊 FEEDBACK\n{'='*30}\n\n{feedback}")
@@ -757,7 +783,7 @@ Built with Python and Tkinter"""
     def _update_practice_stats(self):
         """Update the practice session statistics display."""
         report = self.practice_simulator.get_session_report()
-        
+
         stats_text = "📈 SESSION STATS\n"
         stats_text += "=" * 30 + "\n"
         stats_text += f"Hands Played: {report['hands_played']}\n"
@@ -765,7 +791,7 @@ Built with Python and Tkinter"""
         stats_text += f"Accuracy: {report['accuracy']:.1f}%\n"
         stats_text += f"Pot Won: ${report['total_pot_won']:.2f}\n"
         stats_text += f"Pot Lost: ${report['total_pot_lost']:.2f}\n"
-        
+
         self.stats_text.config(state=tk.NORMAL)
         self.stats_text.delete(1.0, tk.END)
         self.stats_text.insert(1.0, stats_text)
