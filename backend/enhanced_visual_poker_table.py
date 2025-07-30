@@ -241,7 +241,7 @@ class ProfessionalPokerTable:
         y = self.center_y + int(self.player_radius * math.sin(angle))
         return x, y
 
-            def _draw_professional_player(
+    def _draw_professional_player(
         self, player: Player, position: Tuple[int, int], is_current_player: bool = False
     ):
         """Draw a professional player with perfect positioning."""
