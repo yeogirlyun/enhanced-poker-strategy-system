@@ -15,10 +15,12 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
+from datetime import datetime
 from gui_models import StrategyData, THEME, GridSettings
 from hand_grid import HandGridWidget
 from tier_panel import TierPanel
 from decision_table_panel import DecisionTablePanel
+from postflop_hs_editor import PostflopHSEditor
 
 
 class EnhancedMainGUI:
@@ -26,11 +28,11 @@ class EnhancedMainGUI:
         self.root = tk.Tk()
         self.root.title("Poker Strategy Development System")
 
-        # Set window size to 50% of screen
+        # Set window size to 60% of screen and center it
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = int(screen_width * 0.5)
-        window_height = int(screen_height * 0.5)
+        window_width = int(screen_width * 0.60)
+        window_height = int(screen_height * 0.60)
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
@@ -118,6 +120,20 @@ class EnhancedMainGUI:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
+        # Strategy menu
+        strategy_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Strategy", menu=strategy_menu)
+        strategy_menu.add_command(
+            label="Reset to Default", command=self._reset_to_default
+        )
+        strategy_menu.add_command(
+            label="Clear All Changes", command=self._clear_all_changes
+        )
+        strategy_menu.add_separator()
+        strategy_menu.add_command(
+            label="Reload Current Strategy", command=self._reload_current_strategy
+        )
+
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
@@ -132,6 +148,7 @@ class EnhancedMainGUI:
             self.strategy_data.load_default_tiers()
             self.strategy_data.current_strategy_file = None
             self._refresh_all_panels()
+            self._update_strategy_file_display()
             messagebox.showinfo(
                 "New Strategy", "Created new strategy with default tiers."
             )
@@ -146,6 +163,7 @@ class EnhancedMainGUI:
         if filename:
             if self.strategy_data.load_strategy_from_file(filename):
                 self._refresh_all_panels()
+                self._update_strategy_file_display()
                 messagebox.showinfo(
                     "Load Strategy", f"Successfully loaded strategy from '{filename}'"
                 )
@@ -182,6 +200,7 @@ class EnhancedMainGUI:
         )
         if filename:
             if self.strategy_data.save_strategy_to_file(filename):
+                self._update_strategy_file_display()
                 messagebox.showinfo("Save Strategy", f"Strategy saved to '{filename}'")
             else:
                 messagebox.showerror(
@@ -230,6 +249,92 @@ Version: 2.0
 Built with Python and Tkinter"""
         messagebox.showinfo("About", about_text)
 
+    def _reset_to_default(self):
+        """Reset to the original default strategy."""
+        if messagebox.askyesno(
+            "Reset to Default",
+            "Reset to the original default strategy?\n\n"
+            "This will:\n"
+            "• Load the original default tiers\n"
+            "• Clear all custom HS scores\n"
+            "• Reset all decision table values\n"
+            "• Clear any unsaved changes",
+        ):
+            # Load default tiers (original, not modern)
+            self.strategy_data.load_default_tiers()
+            self.strategy_data.current_strategy_file = None
+
+            # Clear any custom HS scores and decision tables
+            if "hand_strength_tables" in self.strategy_data.strategy_dict:
+                del self.strategy_data.strategy_dict["hand_strength_tables"]
+            if "postflop" in self.strategy_data.strategy_dict:
+                del self.strategy_data.strategy_dict["postflop"]
+
+            self._refresh_all_panels()
+            self._update_strategy_file_display()
+            messagebox.showinfo(
+                "Reset Complete", "Strategy reset to original default values."
+            )
+
+    def _clear_all_changes(self):
+        """Clear all unsaved changes and reload the current strategy."""
+        if not self.strategy_data.current_strategy_file:
+            messagebox.showinfo(
+                "No File",
+                "No strategy file is currently loaded.\n"
+                "Use 'Load Strategy...' to load a file first.",
+            )
+            return
+
+        if messagebox.askyesno(
+            "Clear All Changes",
+            f"Discard all unsaved changes and reload '{self.strategy_data.current_strategy_file}'?\n\n"
+            "This will restore the strategy to its last saved state.",
+        ):
+            # Reload the current file
+            if self.strategy_data.load_strategy_from_file(
+                self.strategy_data.current_strategy_file
+            ):
+                self._refresh_all_panels()
+                messagebox.showinfo(
+                    "Changes Cleared",
+                    f"Reloaded '{self.strategy_data.current_strategy_file}' with last saved state.",
+                )
+            else:
+                messagebox.showerror(
+                    "Error",
+                    f"Failed to reload '{self.strategy_data.current_strategy_file}'",
+                )
+
+    def _reload_current_strategy(self):
+        """Reload the current strategy file."""
+        if not self.strategy_data.current_strategy_file:
+            messagebox.showinfo(
+                "No File",
+                "No strategy file is currently loaded.\n"
+                "Use 'Load Strategy...' to load a file first.",
+            )
+            return
+
+        if messagebox.askyesno(
+            "Reload Strategy",
+            f"Reload '{self.strategy_data.current_strategy_file}'?\n\n"
+            "This will discard any unsaved changes.",
+        ):
+            if self.strategy_data.load_strategy_from_file(
+                self.strategy_data.current_strategy_file
+            ):
+                self._refresh_all_panels()
+                messagebox.showinfo(
+                    "Reload Complete",
+                    f"Successfully reloaded '{self.strategy_data.current_strategy_file}'",
+                )
+            else:
+                messagebox.showerror(
+                    "Error",
+                    f"Failed to reload '{self.strategy_data.current_strategy_file}'",
+                )
+
     def _refresh_all_panels(self):
         """Refresh all panels with current strategy data."""
         # Refresh hand grid by re-rendering
@@ -245,6 +350,18 @@ Built with Python and Tkinter"""
         # Refresh overview
         if hasattr(self, "overview_text"):
             self._update_overview()
+        # Update strategy file display
+        self._update_strategy_file_display()
+    
+    def _update_strategy_file_display(self):
+        """Update the strategy file display in the top bar."""
+        if hasattr(self, "strategy_file_label"):
+            if self.strategy_data.current_strategy_file:
+                # Show just the filename, not the full path
+                filename = os.path.basename(self.strategy_data.current_strategy_file)
+                self.strategy_file_label.config(text=filename)
+            else:
+                self.strategy_file_label.config(text="Default Strategy")
 
     def _create_widgets(self):
         """Create the main widgets."""
@@ -265,7 +382,7 @@ Built with Python and Tkinter"""
             side="left", padx=5
         )
         self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
-        self.current_font_size_index = 3  # Start with size "4" (12pt)
+        self.current_font_size_index = 1  # Start with size "2" (12pt) - was size "4"
         self.font_size_var = tk.StringVar(
             value=self.font_sizes[self.current_font_size_index]
         )
@@ -294,6 +411,28 @@ Built with Python and Tkinter"""
         grid_size_combo.pack(side="left", padx=5)
         grid_size_combo.bind("<<ComboboxSelected>>", self._on_grid_size_change)
 
+        # Strategy file display
+        ttk.Label(outer_frame, text="Strategy:", style="Dark.TLabel").pack(
+            side="left", padx=(20, 5)
+        )
+        self.strategy_file_label = ttk.Label(
+            outer_frame, 
+            text="No file loaded", 
+            style="Dark.TLabel",
+            foreground=THEME["accent"]
+        )
+        self.strategy_file_label.pack(side="left", padx=5)
+        
+        # Update the file display
+        self._update_strategy_file_display()
+        
+        # Apply initial font size to strategy file label
+        if hasattr(self, "strategy_file_label"):
+            initial_font_size = GridSettings.get_size_config("2")["font"][1]  # Was "4"
+            self.strategy_file_label.configure(
+                font=(THEME["font_family"], initial_font_size)
+            )
+
         # Main notebook (95% height)
         self.notebook = ttk.Notebook(self.root)
         self.notebook.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
@@ -307,13 +446,7 @@ Built with Python and Tkinter"""
         self.hand_tier_frame.grid_columnconfigure(0, weight=60)  # Grid area: 60%
         self.hand_tier_frame.grid_columnconfigure(1, weight=40)  # Tier area: 40%
 
-        # Hand grid in left panel
-        grid_frame = ttk.Frame(self.hand_tier_frame, style="Dark.TFrame")
-        grid_frame.grid(row=0, column=0, sticky="nsew", padx=(5, 2), pady=5)
-
-        self.hand_grid = HandGridWidget(grid_frame, self.strategy_data)
-
-        # Tier panel in right panel
+        # Tier panel in right panel (create first so hand grid can reference it)
         tier_panel_frame = ttk.Frame(self.hand_tier_frame, style="Dark.TFrame")
         tier_panel_frame.grid(row=0, column=1, sticky="nsew", padx=(2, 5), pady=5)
 
@@ -324,7 +457,25 @@ Built with Python and Tkinter"""
             on_tier_select=self._on_tier_select,
         )
 
-        # Tab 2: Decision Tables
+        # Hand grid in left panel
+        grid_frame = ttk.Frame(self.hand_tier_frame, style="Dark.TFrame")
+        grid_frame.grid(row=0, column=0, sticky="nsew", padx=(5, 2), pady=5)
+
+        self.hand_grid = HandGridWidget(
+            grid_frame, self.strategy_data, tier_panel=self.tier_panel
+        )
+
+        # Tab 2: Postflop HS Editor
+        self.postflop_hs_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.postflop_hs_frame, text="Postflop HS Editor")
+
+        # Create postflop HS editor
+        self.postflop_hs_editor = PostflopHSEditor(
+            self.postflop_hs_frame, self.strategy_data
+        )
+        self.postflop_hs_editor.pack(fill=tk.BOTH, expand=True)
+
+        # Tab 3: Decision Tables
         self.decision_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.decision_frame, text="Decision Tables")
 
@@ -333,9 +484,22 @@ Built with Python and Tkinter"""
             self.decision_frame, self.strategy_data
         )
 
-        # Tab 3: Strategy Overview
+        # Tab 4: Strategy Overview
         self.overview_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.overview_frame, text="Strategy Overview")
+
+        # Create a frame for buttons
+        overview_button_frame = ttk.Frame(self.overview_frame)
+        overview_button_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        # Export to PDF button
+        self.export_pdf_button = ttk.Button(
+            overview_button_frame,
+            text="Export to PDF",
+            command=self._export_strategy_to_pdf,
+            style="Accent.TButton",
+        )
+        self.export_pdf_button.pack(side=tk.RIGHT, padx=5)
 
         # Create overview text area
         self.overview_text = tk.Text(
@@ -387,6 +551,44 @@ Caller (Passive Player):
 • Higher thresholds
 • Larger sizing
 
+POSTFLOP HAND STRENGTH SCORES:
+{'-'*30}"""
+
+        # Get HS scores (preflop and postflop)
+        hand_strength_tables = self.strategy_data.strategy_dict.get(
+            "hand_strength_tables", {}
+        )
+        preflop_hs_table = hand_strength_tables.get("preflop", {})
+        postflop_hs_table = hand_strength_tables.get("postflop", {})
+
+        if preflop_hs_table:
+            overview += f"\nPreflop hands: {len(preflop_hs_table)}"
+            overview += f"\nPreflop score range: {min(preflop_hs_table.values())}-{max(preflop_hs_table.values())}"
+        else:
+            overview += f"\nNo preflop HS scores defined"
+
+        if postflop_hs_table:
+            overview += f"\nPostflop hand types: {len(postflop_hs_table)}"
+            overview += f"\nPostflop score range: {min(postflop_hs_table.values())}-{max(postflop_hs_table.values())}"
+
+            # Show some key hand types
+            key_hands = [
+                "high_card",
+                "pair",
+                "top_pair",
+                "flush",
+                "straight",
+                "flush_draw",
+            ]
+            overview += f"\nKey postflop hand types:"
+            for hand in key_hands:
+                if hand in postflop_hs_table:
+                    overview += f"\n  {hand.replace('_', ' ').title()}: {postflop_hs_table[hand]}"
+        else:
+            overview += f"\nNo postflop HS scores defined"
+
+        overview += f"""
+
 POSITIONS SUPPORTED:
 {'-'*30}"""
 
@@ -409,9 +611,50 @@ TOTAL TIERS: {len(self.strategy_data.tiers)}
 
 {'='*50}
 Use the tabs above to edit different aspects of your strategy.
-Use File menu to save/load strategies."""
+Use File menu to save/load strategies.
+Click "Export to PDF" button above to generate a comprehensive strategy report."""
 
         self.overview_text.insert(1.0, overview)
+
+    def _export_strategy_to_pdf(self):
+        """Export the current strategy to a comprehensive PDF report."""
+        try:
+            from pdf_export import export_strategy_to_pdf
+            import tkinter.filedialog as filedialog
+
+            # Get save file path
+            filename = filedialog.asksaveasfilename(
+                title="Export Strategy to PDF",
+                defaultextension=".pdf",
+                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
+                initialfile=f"poker_strategy_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            )
+
+            if filename:
+                # Export to PDF
+                success = export_strategy_to_pdf(self.strategy_data, filename)
+
+                if success:
+                    messagebox.showinfo(
+                        "Export Successful",
+                        f"Strategy report exported successfully to:\n{filename}",
+                    )
+                else:
+                    messagebox.showerror(
+                        "Export Failed",
+                        "Failed to create PDF report. Please check the console for details.",
+                    )
+
+        except ImportError:
+            messagebox.showerror(
+                "Missing Dependency",
+                "PDF export requires the 'reportlab' library.\n"
+                "Please install it with: pip install reportlab",
+            )
+        except Exception as e:
+            messagebox.showerror(
+                "Export Error", f"An error occurred during export:\n{str(e)}"
+            )
 
     def _on_font_size_change(self, event=None):
         """Handle font size change."""
@@ -458,6 +701,16 @@ Use File menu to save/load strategies."""
         # Update tier panel
         if hasattr(self, "tier_panel"):
             self.tier_panel.update_font_size(current_font_size)
+
+        # Update postflop HS editor
+        if hasattr(self, "postflop_hs_editor"):
+            self.postflop_hs_editor.update_font_size(current_font_size)
+
+        # Update strategy file label
+        if hasattr(self, "strategy_file_label"):
+            self.strategy_file_label.configure(
+                font=(THEME["font_family"], current_font_size)
+            )
 
         # Update hand grid size to match app font size
         if hasattr(self, "hand_grid"):

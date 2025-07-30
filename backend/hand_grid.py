@@ -31,15 +31,18 @@ class HandGridWidget:
     """
 
     def __init__(
-        self, parent_frame, strategy_data: StrategyData, on_hand_click: Callable = None
+        self, parent_frame, strategy_data: StrategyData, on_hand_click: Callable = None, tier_panel=None
     ):
         self.parent = parent_frame
         self.strategy_data = strategy_data
         self.on_hand_click = on_hand_click
+        self.tier_panel = tier_panel
         self.hand_widgets: Dict[str, tk.Button] = {}
         self.selected_hands: Set[str] = set()
         self.current_highlight_mode: Optional[str] = None
-        self.grid_size_index = 6  # Default to size "7" for better visibility and HS score display
+        self.grid_size_index = (
+            6  # Default to size "7" for better visibility and HS score display
+        )
         self.base_font = tkFont.Font(
             family=THEME["font_family"], size=THEME["font_size"]
         )
@@ -171,14 +174,9 @@ class HandGridWidget:
                     hand, size_config, bg_color, fg_color, border_color, border_width
                 )
 
-                # Add click command to the frame
-                button_frame.bind(
-                    "<Button-1>", lambda e, h=hand: self.toggle_hand_selection(h)
-                )
+                # Add click handlers for hand selection and HS editing
                 main_label = button_frame.winfo_children()[0]  # Get the main label
-                main_label.bind(
-                    "<Button-1>", lambda e, h=hand: self.toggle_hand_selection(h)
-                )
+                self._add_click_handlers(button_frame, main_label, hand)
 
                 button_frame.grid(row=i + 1, column=j + 1, padx=1, pady=1)
                 self.hand_widgets[hand] = button_frame
@@ -287,10 +285,16 @@ class HandGridWidget:
         self._render_grid()
 
     def toggle_hand_selection(self, hand: str):
-        """Toggles hand selection and triggers grid redraw."""
+        """Toggles hand selection with single-selection behavior."""
+        # If clicking the same hand, deselect it
         if hand in self._grid_state["selected_hands"]:
             self._grid_state["selected_hands"].remove(hand)
+            # Clear the selected hand from tier panel
+            if self.tier_panel:
+                self.tier_panel.clear_selected_hand()
         else:
+            # Clear all other selections and select only this hand
+            self._grid_state["selected_hands"].clear()
             self._grid_state["selected_hands"].add(hand)
 
         print(
@@ -380,6 +384,9 @@ class HandGridWidget:
         )
         hand_label.pack(expand=True, fill=tk.BOTH)
 
+        # Add click handlers and context menu
+        self._add_click_handlers(button_frame, hand_label, hand)
+
         # HS score label (show for all font sizes with better visibility)
         hs_score = self._get_hand_strength(hand)
         if hs_score is not None:
@@ -433,6 +440,23 @@ class HandGridWidget:
         self._update_grid_state(selected_tiers=[], selected_hands=set())
         self._current_tier_selection = None
         self._tier_highlighting_active = False
+
+    def _add_click_handlers(self, frame, label, hand: str):
+        """Add left-click handler for hand selection and HS editing."""
+
+        def on_left_click(event):
+            """Handle left-click for hand selection and HS editing."""
+            self.toggle_hand_selection(hand)
+            
+            # If tier panel is available, set the selected hand for HS editing
+            if self.tier_panel:
+                self.tier_panel.set_selected_hand(hand)
+
+        # Bind events to both frame and label for better coverage
+        for widget in [frame, label]:
+            widget.bind("<Button-1>", on_left_click)
+
+    # HS score editing is now handled by the tier panel
 
     def _on_grid_resize(self, event):
         """Handle grid resize events to recalculate button sizes."""

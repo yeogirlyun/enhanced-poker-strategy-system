@@ -98,6 +98,32 @@ class TierPanel:
                                          style='Dark.TLabel')
         self.total_hands_label.pack(anchor=tk.W, padx=5, pady=2)
         
+        # Selected hand frame
+        self.selected_hand_frame = ttk.LabelFrame(self.main_frame, text="Selected Hand", style='Dark.TLabelframe')
+        self.selected_hand_frame.pack(fill=tk.X, padx=5, pady=3)
+        
+        # Selected hand info
+        self.selected_hand_label = ttk.Label(self.selected_hand_frame, text="Click a hand in the grid to edit its HS score", 
+                                           style='Dark.TLabel')
+        self.selected_hand_label.pack(anchor=tk.W, padx=5, pady=2)
+        
+        # HS score editing frame
+        self.hs_edit_frame = ttk.Frame(self.selected_hand_frame, style='Dark.TFrame')
+        self.hs_edit_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(self.hs_edit_frame, text="HS Score:", style='Dark.TLabel').pack(side=tk.LEFT, padx=(0, 5))
+        self.hs_score_var = tk.StringVar()
+        self.hs_score_entry = ttk.Entry(self.hs_edit_frame, textvariable=self.hs_score_var, 
+                                      width=8, style="SkyBlue.TEntry")
+        self.hs_score_entry.pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.update_hs_btn = ttk.Button(self.hs_edit_frame, text="Update HS", 
+                                       command=self._update_hs_score, style='TopMenu.TButton')
+        self.update_hs_btn.pack(side=tk.LEFT, padx=2)
+        
+        # Initially hide the HS editing controls
+        self.selected_hand_frame.pack_forget()
+        
         # Selected cards count (compact)
         self.selected_count_label = ttk.Label(count_frame, text="Selected Cards: 0", 
                                            style='Dark.TLabel')
@@ -492,3 +518,81 @@ class TierPanel:
         for tier in self.selected_tiers:
             selected_hands.update(tier.hands)
         return len(selected_hands)
+    
+    def set_selected_hand(self, hand: str):
+        """Sets the selected hand for HS score editing."""
+        self.selected_hand = hand
+        current_hs = self._get_hand_strength(hand) or 0
+        self.hs_score_var.set(str(current_hs))
+        self.selected_hand_label.config(text=f"Selected Hand: {hand} (Current HS: {current_hs})")
+        self.selected_hand_frame.pack(fill=tk.X, padx=5, pady=3)
+    
+    def clear_selected_hand(self):
+        """Clears the selected hand."""
+        self.selected_hand = None
+        self.hs_score_var.set("")
+        self.selected_hand_label.config(text="Click a hand in the grid to edit its HS score")
+        self.selected_hand_frame.pack_forget()
+    
+    def _update_hs_score(self):
+        """Updates the HS score for the selected hand and auto-adjusts tier placement."""
+        if not hasattr(self, 'selected_hand') or not self.selected_hand:
+            return
+        
+        try:
+            new_hs = int(self.hs_score_var.get())
+            if new_hs < 0 or new_hs > 100:
+                messagebox.showerror("Invalid HS Score", "HS score must be between 0 and 100")
+                return
+            
+            # Update the strategy data
+            if "hand_strength_tables" not in self.strategy_data.strategy_dict:
+                self.strategy_data.strategy_dict["hand_strength_tables"] = {}
+            if "preflop" not in self.strategy_data.strategy_dict["hand_strength_tables"]:
+                self.strategy_data.strategy_dict["hand_strength_tables"]["preflop"] = {}
+            
+            self.strategy_data.strategy_dict["hand_strength_tables"]["preflop"][self.selected_hand] = new_hs
+            
+            # Auto-adjust tier placement
+            self._auto_adjust_hand_to_tier(self.selected_hand, new_hs)
+            
+            # Update the display
+            self.selected_hand_label.config(text=f"Selected Hand: {self.selected_hand} (Current HS: {new_hs})")
+            
+            # Notify the main app to update the grid
+            if self.on_tier_change:
+                self.on_tier_change()
+                
+            messagebox.showinfo("Success", f"HS score for {self.selected_hand} updated to {new_hs}")
+            
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a valid number for HS score")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update HS score: {e}")
+    
+    def _auto_adjust_hand_to_tier(self, hand: str, new_hs: int):
+        """Automatically moves a hand to the correct tier based on its HS score."""
+        # Remove hand from all tiers first
+        for tier in self.strategy_data.tiers:
+            if hand in tier.hands:
+                tier.hands.remove(hand)
+                print(f"DEBUG: Removed {hand} from tier '{tier.name}'")
+        
+        # Find the correct tier for the new HS score
+        target_tier = None
+        for tier in self.strategy_data.tiers:
+            if tier.min_hs <= new_hs <= tier.max_hs:
+                target_tier = tier
+                break
+        
+        # Add hand to the correct tier
+        if target_tier:
+            target_tier.hands.append(hand)
+            target_tier.hands.sort()  # Keep hands sorted
+            print(f"DEBUG: Moved {hand} (HS: {new_hs}) to tier '{target_tier.name}' (HS {target_tier.min_hs}-{target_tier.max_hs})")
+        else:
+            print(f"DEBUG: No tier found for {hand} with HS {new_hs}")
+        
+        # Update tier list display
+        self._update_tier_list()
+        self._update_counts()

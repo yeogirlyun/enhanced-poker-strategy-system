@@ -397,52 +397,52 @@ class GridSettings:
     _SIZES = ["1", "2", "3", "4", "5", "6", "7", "8"]
     _CONFIGS = {
         "1": {
-            "font": ("Helvetica", 8),
-            "button_width": 25,
-            "button_height": 25,
-            "label_width": 8,
-        },
-        "2": {
-            "font": ("Helvetica", 9),
-            "button_width": 30,
-            "button_height": 30,
-            "label_width": 9,
-        },
-        "3": {
-            "font": ("Helvetica", 10),
+            "font": ("Helvetica", 10),  # Was size 3
             "button_width": 35,
             "button_height": 35,
             "label_width": 10,
         },
-        "4": {
-            "font": ("Helvetica", 12),
+        "2": {
+            "font": ("Helvetica", 12),  # Was size 4
             "button_width": 40,
             "button_height": 40,
             "label_width": 11,
         },
-        "5": {
-            "font": ("Helvetica", 14),
+        "3": {
+            "font": ("Helvetica", 14),  # Was size 5
             "button_width": 45,
             "button_height": 45,
             "label_width": 12,
         },
-        "6": {
-            "font": ("Helvetica", 16),
+        "4": {
+            "font": ("Helvetica", 16),  # Was size 6
             "button_width": 60,
             "button_height": 60,
             "label_width": 13,
         },
-        "7": {
-            "font": ("Helvetica", 18),
+        "5": {
+            "font": ("Helvetica", 18),  # Was size 7
             "button_width": 65,
             "button_height": 65,
             "label_width": 14,
         },
-        "8": {
-            "font": ("Helvetica", 20),
+        "6": {
+            "font": ("Helvetica", 20),  # Was size 8
             "button_width": 70,
             "button_height": 70,
             "label_width": 15,
+        },
+        "7": {
+            "font": ("Helvetica", 22),  # New larger size
+            "button_width": 75,
+            "button_height": 75,
+            "label_width": 16,
+        },
+        "8": {
+            "font": ("Helvetica", 24),  # New largest size
+            "button_width": 80,
+            "button_height": 80,
+            "label_width": 17,
         },
     }
     HIGHLIGHT_COLORS = [

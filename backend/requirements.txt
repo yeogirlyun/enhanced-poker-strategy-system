@@ -15,3 +15,6 @@ pytest>=6.0.0
 black>=21.0.0  # Code formatting
 flake8>=3.9.0  # Linting
 mypy>=0.910    # Type checking
+
+# PDF Generation
+reportlab>=4.0.0  # PDF creation

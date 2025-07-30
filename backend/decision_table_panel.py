@@ -36,10 +36,10 @@ class DecisionTablePanel:
         self.current_street = "flop"  # Default street
         self.current_font_size = 12  # Default, will be set by update_font_size
 
-        print(f"DEBUG: DecisionTablePanel initialized")
+        # DecisionTablePanel initialized
 
         self._setup_ui()
-        self._load_current_table()
+        # Don't load data here - will be loaded when tabs are first accessed
 
     def _setup_ui(self):
         """Sets up the decision table UI."""
@@ -56,6 +56,7 @@ class DecisionTablePanel:
         # Create tabs for each street
         self.street_frames = {}
         self.street_tables = {}
+        self.street_loaded = {"flop": False, "turn": False, "river": False}
 
         for street in ["flop", "turn", "river"]:
             # Create frame for this street
@@ -63,11 +64,17 @@ class DecisionTablePanel:
             self.street_notebook.add(street_frame, text=street.title())
             self.street_frames[street] = street_frame
 
-            # Create decision table for this street
+            # Create decision table for this street (but don't load data yet)
             self._create_decision_table(street_frame, street)
+
+            # Set initial street
+        self.current_street = "flop"
 
         # Bind tab change event
         self.street_notebook.bind("<<NotebookTabChanged>>", self._on_street_tab_change)
+
+        # Load ALL decision table data at startup for instant tab switching
+        self._load_all_decision_tables()
 
         # Button panel
         button_frame = ttk.Frame(self.main_frame, style="Dark.TFrame")
@@ -92,7 +99,7 @@ class DecisionTablePanel:
             style="TopMenu.TButton",
         ).pack(side=tk.LEFT, padx=5)
 
-    def _get_positions(self):
+    def _get_positions(self, street=None):
         """Determine the list of positions dynamically from the strategy file or use a default."""
         # Try to get from num_players parameter
         num_players = self.strategy_data.strategy_dict.get("num_players", None)
@@ -100,21 +107,31 @@ class DecisionTablePanel:
             return ["UTG", "UTG+1", "MP", "HJ", "CO", "BTN"]
         elif num_players == 4:
             return ["UTG", "MP", "CO", "BTN"]
+
         # Try to get from postflop data keys
         postflop = self.strategy_data.strategy_dict.get("postflop", {})
         action_data = postflop.get("pfa", {})  # Use pfa as default
-        street_data = action_data.get(self.current_street, {})
+
+        # Use provided street or current_street
+        target_street = street or getattr(self, "current_street", "flop")
+        street_data = action_data.get(target_street, {})
+
         if street_data:
             return list(street_data.keys())
+
         # Fallback default
         return ["UTG", "MP", "CO", "BTN"]
 
     def _create_decision_table(self, parent, street):
         """Creates the decision table matrix with all positions as columns and both action types as labeled frames."""
-        self.table_container = ttk.Frame(parent, style="Dark.TFrame")
-        self.table_container.pack(fill=tk.BOTH, expand=True)
+        # Create separate container for each street
+        if not hasattr(self, "table_containers"):
+            self.table_containers = {}
 
-        positions = self._get_positions()
+        self.table_containers[street] = ttk.Frame(parent, style="Dark.TFrame")
+        self.table_containers[street].pack(fill=tk.BOTH, expand=True)
+
+        positions = self._get_positions(street)
         self.positions = positions
         parameters = ["val_thresh", "check_thresh", "sizing"]
         param_labels = ["Value Threshold", "Check Threshold", "Bet Sizing"]
@@ -125,14 +142,14 @@ class DecisionTablePanel:
 
         # Header row
         ttk.Label(
-            self.table_container,
+            self.table_containers[street],
             text="Action/Parameter",
             style="Dark.TLabel",
             font=header_font,
         ).grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         for col, pos in enumerate(positions):
             ttk.Label(
-                self.table_container,
+                self.table_containers[street],
                 text=pos,
                 style="Dark.TLabel",
                 font=header_font,
@@ -149,7 +166,7 @@ class DecisionTablePanel:
         for action_type, action_label in zip(action_types, action_labels):
             # Create a labeled frame for this action type
             action_frame = ttk.LabelFrame(
-                self.table_container,
+                self.table_containers[street],
                 text=action_label,
                 style="Dark.TLabelframe",
                 labelanchor="nw",
@@ -189,7 +206,40 @@ class DecisionTablePanel:
                     self.parameter_widgets[street][action_type][param][pos] = value_var
             current_row += 1
 
-        self._load_current_table()
+        # All data will be loaded at startup
+
+    def _load_all_decision_tables(self):
+        """Load all decision table data for all streets at startup."""
+        try:
+            postflop_data = self.strategy_data.strategy_dict.get("postflop", {})
+
+            # Load data for all streets
+            for street in ["flop", "turn", "river"]:
+                # Set positions for this street
+                self.positions = self._get_positions(street)
+
+                for action_type in ["pfa", "caller"]:
+                    action_data = postflop_data.get(action_type, {})
+                    street_data = action_data.get(street, {})
+
+                    for pos in self.positions:
+                        position_data = street_data.get(pos, {})
+
+                        # Load data into widgets
+                        for param in ["val_thresh", "check_thresh", "sizing"]:
+                            value = position_data.get(param, "")
+                            self.parameter_widgets[street][action_type][param][pos].set(
+                                str(value)
+                            )
+
+                # Mark this street as loaded
+                self.street_loaded[street] = True
+
+        except Exception as e:
+            print(f"ERROR: Failed to load all decision tables: {e}")
+            import traceback
+
+            traceback.print_exc()
 
     def _load_current_table(self):
         """Loads the current decision table data for all positions and action types."""
@@ -226,37 +276,51 @@ class DecisionTablePanel:
         tab_id = self.street_notebook.index(current_tab)
         streets = ["flop", "turn", "river"]
         self.current_street = streets[tab_id]
-        print(f"DEBUG: Street changed to '{self.current_street}'")
-        self._load_current_table()
+
+        # All data is already loaded and all tables are pre-rendered
+        # No additional operations needed - just update current street
+        self.positions = self._get_positions(self.current_street)
 
     def _save_changes(self):
         """Saves the current table changes to the strategy data for all positions and action types."""
         try:
             postflop = self.strategy_data.strategy_dict.setdefault("postflop", {})
-            for action_type in ["pfa", "caller"]:
-                action = postflop.setdefault(action_type, {})
-                street = action.setdefault(self.current_street, {})
-                for pos in self.positions:
-                    new_values = {}
-                    for param in ["val_thresh", "check_thresh", "sizing"]:
-                        try:
-                            value = float(
-                                self.parameter_widgets[self.current_street][
-                                    action_type
-                                ][param][pos].get()
-                            )
-                            new_values[param] = value
-                        except ValueError:
-                            messagebox.showerror(
-                                "Invalid Value",
-                                f"Invalid value for {param} in {pos} ({action_type}): {self.parameter_widgets[self.current_street][action_type][param][pos].get()}",
-                            )
-                            return
-                    if pos not in street:
-                        street[pos] = {}
-                    street[pos].update(new_values)
+
+            # Save data for ALL streets, not just current street
+            for street in ["flop", "turn", "river"]:
+                for action_type in ["pfa", "caller"]:
+                    action = postflop.setdefault(action_type, {})
+                    street_data = action.setdefault(street, {})
+
+                    # Get positions for this street
+                    positions = self._get_positions(street)
+
+                    for pos in positions:
+                        new_values = {}
+                        for param in ["val_thresh", "check_thresh", "sizing"]:
+                            try:
+                                value = float(
+                                    self.parameter_widgets[street][action_type][param][
+                                        pos
+                                    ].get()
+                                )
+                                new_values[param] = value
+                            except ValueError:
+                                messagebox.showerror(
+                                    "Invalid Value",
+                                    f"Invalid value for {param} in {pos} ({action_type}): {self.parameter_widgets[street][action_type][param][pos].get()}",
+                                )
+                                return
+                        if pos not in street_data:
+                            street_data[pos] = {}
+                        street_data[pos].update(new_values)
+
             if self.on_table_change:
                 self.on_table_change()
+
+            messagebox.showinfo(
+                "Success", "All decision table changes saved to strategy!"
+            )
         except Exception as e:
             print(f"ERROR: Failed to save decision table: {e}")
 
