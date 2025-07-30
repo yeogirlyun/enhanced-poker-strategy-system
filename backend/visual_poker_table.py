@@ -254,7 +254,9 @@ class VisualPokerTable:
 
         # Position cards in center with better spacing
         card_spacing = 55  # Increased spacing between cards
-        start_x = self.center_x - (len(self.current_game_state.board) * card_spacing // 2)
+        start_x = self.center_x - (
+            len(self.current_game_state.board) * card_spacing // 2
+        )
 
         for i, card in enumerate(self.current_game_state.board):
             card_x = start_x + (i * card_spacing)

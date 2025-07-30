@@ -547,7 +547,7 @@ Built with Python and Tkinter"""
         """Create the integrated practice session interface with visual table."""
         # Initialize practice simulator
         from enhanced_poker_engine import EnhancedPokerEngine
-        from visual_poker_table import VisualPokerTable
+        from enhanced_visual_poker_table import ProfessionalPokerTable
 
         self.practice_simulator = EnhancedPokerEngine(self.strategy_data)
 
@@ -555,11 +555,11 @@ Built with Python and Tkinter"""
         main_frame = ttk.Frame(parent_frame)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Create visual poker table
-        self.visual_table = VisualPokerTable(main_frame, self.strategy_data)
-
-        # Connect the visual table's simulator to our practice simulator
-        self.visual_table.simulator = self.practice_simulator
+                # Create professional poker table
+        self.visual_table = ProfessionalPokerTable(main_frame, self.strategy_data)
+        
+        # Connect the professional table's simulator to our practice simulator
+        self.visual_table.engine = self.practice_simulator
 
     def _start_practice_hand(self):
         """Start a new practice hand."""
