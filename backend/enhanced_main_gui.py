@@ -557,7 +557,7 @@ Built with Python and Tkinter"""
 
         # Create visual poker table
         self.visual_table = VisualPokerTable(main_frame, self.strategy_data)
-        
+
         # Connect the visual table's simulator to our practice simulator
         self.visual_table.simulator = self.practice_simulator
 
