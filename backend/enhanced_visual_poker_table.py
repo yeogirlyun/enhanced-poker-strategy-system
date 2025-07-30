@@ -25,29 +25,29 @@ from gui_models import StrategyData
 
 class ProfessionalPokerTable:
     """Professional poker table with perfect centering and realistic game flow."""
-    
+
     def __init__(self, parent_frame, strategy_data: StrategyData):
         self.strategy_data = strategy_data
         self.engine = EnhancedPokerEngine(strategy_data)
         self.current_game_state = None
-        
+
         # MUCH LARGER table - 80% of pane
         self.canvas_width = 1600  # Increased from 1200
         self.canvas_height = 1000  # Increased from 800
         self.center_x = self.canvas_width // 2
         self.center_y = self.canvas_height // 2
-        
+
         # Professional table ratios - 80% of canvas
         self.table_width = int(self.canvas_width * 0.80)  # 80% of canvas width
         self.table_height = int(self.canvas_height * 0.80)  # 80% of canvas height
         self.player_radius = (
             min(self.table_width, self.table_height) * 0.45
         )  # Larger player radius
-        
+
         # Card dimensions - larger for better visibility
         self.card_width = 65  # Increased from 55
         self.card_height = 85  # Increased from 75
-        
+
         # Game state tracking
         self.current_hand_phase = "preflop"  # preflop, flop, turn, river
         self.current_action_player = 0  # Index of player whose turn it is
@@ -56,11 +56,11 @@ class ProfessionalPokerTable:
         self.big_blind_position = 2  # Big blind position
         self.hand_started = False
         self.community_cards_dealt = 0  # 0=preflop, 3=flop, 4=turn, 5=river
-        
+
         # Action log and sound effects
         self.action_log = []
         self.bot_action_delay = 2.0  # Seconds between bot actions
-        
+
         # Create canvas
         self.canvas = tk.Canvas(
             parent_frame,
@@ -69,11 +69,13 @@ class ProfessionalPokerTable:
             bg="#0B6623",  # Professional green felt
             highlightthickness=0,
         )
-        self.canvas.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)  # No padding for perfect centering
-        
+        self.canvas.pack(
+            fill=tk.BOTH, expand=True, padx=0, pady=0
+        )  # No padding for perfect centering
+
         # Create controls
         self._create_professional_controls(parent_frame)
-        
+
         # Draw table
         self._draw_professional_table()
 
@@ -82,7 +84,7 @@ class ProfessionalPokerTable:
         # Create main container frame
         main_container = ttk.Frame(parent_frame)
         main_container.pack(fill=tk.BOTH, expand=True)
-        
+
         # Top controls frame
         top_controls = ttk.Frame(main_container)
         top_controls.pack(fill=tk.X, padx=10, pady=5)
@@ -132,10 +134,12 @@ class ProfessionalPokerTable:
         # Action log frame - LEFT SIDE
         log_frame = ttk.Frame(main_container)
         log_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-        
+
         # Action log label
-        ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(anchor=tk.W)
-        
+        ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
+            anchor=tk.W
+        )
+
         # Action log text area
         self.action_log_text = tk.Text(
             log_frame,
@@ -148,11 +152,11 @@ class ProfessionalPokerTable:
             bd=2,
         )
         self.action_log_text.pack(fill=tk.BOTH, expand=True)
-        
+
         # Bottom action controls - BELOW TABLE
         action_frame = ttk.Frame(main_container)
         action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
-        
+
         # Center the action controls
         center_frame = ttk.Frame(action_frame)
         center_frame.pack(expand=True)
@@ -212,7 +216,7 @@ class ProfessionalPokerTable:
     def _set_action(self, action):
         """Set the selected action."""
         self.action_var.set(action)
-        
+
     def _log_action(self, player_name: str, action: str, amount: float = 0):
         """Log an action to the action log."""
         timestamp = time.strftime("%H:%M:%S")
@@ -220,55 +224,55 @@ class ProfessionalPokerTable:
             log_entry = f"[{timestamp}] {player_name}: {action} ${amount:.2f}\n"
         else:
             log_entry = f"[{timestamp}] {player_name}: {action}\n"
-        
+
         self.action_log.append(log_entry)
         self.action_log_text.insert(tk.END, log_entry)
         self.action_log_text.see(tk.END)  # Auto-scroll to bottom
-        
+
         # Play sound effect
         self._play_sound_effect(action)
-        
+
     def _play_sound_effect(self, action: str):
         """Play sound effect for action (simulated)."""
         # In a real implementation, you would play actual sound files
         print(f"🔊 Sound effect: {action}")
-        
+
     def _bot_action(self):
         """Simulate bot player action with realistic timing."""
         if not self.current_game_state:
             return
-            
+
         current_player = self.current_game_state.players[self.current_action_player]
         if current_player.is_human:
             return  # Not a bot player
-            
+
         # Simulate bot thinking time
         time.sleep(self.bot_action_delay)
-        
+
         # Bot decision logic
         actions = ["fold", "check", "call", "bet", "raise"]
         action = random.choice(actions)
         bet_size = random.randint(1, 10) if action in ["bet", "raise"] else 0
-        
+
         # Execute bot action
         self._execute_action(current_player, action, bet_size)
-        
+
         # Log bot action
         self._log_action(current_player.name, action.upper(), bet_size)
-        
+
         # Move to next player
         self._advance_to_next_player()
-        
+
         # Redraw table
         self._redraw_professional_table()
         self._update_turn_indicator()
-        
+
         # Schedule next bot action if needed
         if self.current_game_state:
             next_player = self.current_game_state.players[self.current_action_player]
             if not next_player.is_human:
                 threading.Timer(self.bot_action_delay, self._bot_action).start()
-                
+
     def _execute_action(self, player: Player, action: str, bet_size: float = 0):
         """Execute an action for a player."""
         if action == "fold":
@@ -280,7 +284,7 @@ class ProfessionalPokerTable:
                 call_amount = bet_size
             elif action == "raise":
                 call_amount = bet_size
-            
+
             player.stack -= call_amount
             self.current_game_state.pot += call_amount
             self.current_game_state.current_bet = call_amount
@@ -352,7 +356,7 @@ class ProfessionalPokerTable:
 
     def _get_player_position(
         self, player_index: int, total_players: int
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Calculate perfect player position around the table."""
         # Start from bottom (south) and go clockwise
         angle = (player_index * 2 * math.pi / total_players) - math.pi / 2
@@ -361,7 +365,7 @@ class ProfessionalPokerTable:
         return x, y
 
     def _draw_professional_player(
-        self, player: Player, position: Tuple[int, int], is_current_player: bool = False
+        self, player: Player, position: tuple[int, int], is_current_player: bool = False
     ):
         """Draw a professional player with perfect positioning."""
         x, y = position
@@ -426,7 +430,7 @@ class ProfessionalPokerTable:
         if player.cards and (player.is_human or not player.is_active):
             self._draw_professional_hole_cards(player, position)
 
-    def _draw_professional_hole_cards(self, player: Player, position: Tuple[int, int]):
+    def _draw_professional_hole_cards(self, player: Player, position: tuple[int, int]):
         """Draw professional hole cards with perfect spacing."""
         x, y = position
 
@@ -604,18 +608,20 @@ class ProfessionalPokerTable:
             # Redraw table
             self._redraw_professional_table()
 
-                        # Update turn indicator
+            # Update turn indicator
             self._update_turn_indicator()
-            
+
             # Log hand start
             self._log_action("DEALER", "Hand Started", 0)
-            
+
             # Start bot actions if first player is bot
             if self.current_game_state:
-                first_player = self.current_game_state.players[self.current_action_player]
+                first_player = self.current_game_state.players[
+                    self.current_action_player
+                ]
                 if not first_player.is_human:
                     threading.Timer(self.bot_action_delay, self._bot_action).start()
-            
+
             messagebox.showinfo(
                 "Hand Started",
                 f"New hand started with {num_players} players!\n"
@@ -662,29 +668,31 @@ class ProfessionalPokerTable:
 
             # Execute action for current player
             current_player = self.current_game_state.players[self.current_action_player]
-            
+
             # Execute the action
             self._execute_action(current_player, action_str, bet_size)
-            
+
             # Log the action
             self._log_action(current_player.name, action_str.upper(), bet_size)
 
             # Move to next player
             self._advance_to_next_player()
-            
+
             # Check if round is complete
             if self._is_round_complete():
                 self._advance_to_next_street()
 
             # Redraw table
             self._redraw_professional_table()
-            
+
             # Update turn indicator
             self._update_turn_indicator()
-            
+
             # Start bot actions if next player is bot
             if self.current_game_state:
-                next_player = self.current_game_state.players[self.current_action_player]
+                next_player = self.current_game_state.players[
+                    self.current_action_player
+                ]
                 if not next_player.is_human:
                     threading.Timer(self.bot_action_delay, self._bot_action).start()
 
