@@ -65,7 +65,7 @@ class ProfessionalPokerTable:
             bg="#0B6623",  # Professional green felt
             highlightthickness=0,
         )
-        self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)  # Reduced padding
+        self.canvas.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)  # No padding for perfect centering
 
         # Create controls
         self._create_professional_controls(parent_frame)
@@ -75,11 +75,16 @@ class ProfessionalPokerTable:
 
     def _create_professional_controls(self, parent_frame):
         """Create professional game controls."""
-        control_frame = ttk.Frame(parent_frame)
-        control_frame.pack(fill=tk.X, padx=10, pady=5)
+        # Create main container frame
+        main_container = ttk.Frame(parent_frame)
+        main_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Top controls frame
+        top_controls = ttk.Frame(main_container)
+        top_controls.pack(fill=tk.X, padx=10, pady=5)
 
         # Left side - Game controls
-        left_frame = ttk.Frame(control_frame)
+        left_frame = ttk.Frame(top_controls)
         left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # Player count with professional styling
@@ -106,23 +111,31 @@ class ProfessionalPokerTable:
         )
         start_button.pack(side=tk.LEFT, padx=10)
 
-        # Right side - Action controls
-        right_frame = ttk.Frame(control_frame)
+        # Right side - Top controls
+        right_frame = ttk.Frame(top_controls)
         right_frame.pack(side=tk.RIGHT, fill=tk.X)
 
-        # Professional action buttons with clear labels
-        self.action_var = tk.StringVar(value="check")
-        actions = [
-            ("FOLD", "fold", "#FF4444"),  # Red
-            ("CHECK", "check", "#4488FF"),  # Blue
-            ("CALL", "call", "#44AA44"),  # Green
-            ("BET", "bet", "#FFAA44"),  # Orange
-            ("RAISE", "raise", "#AA44FF"),  # Purple
-        ]
+        # Bet size entry - Top right
+        ttk.Label(right_frame, text="Bet:", font=("Arial", 16, "bold")).pack(
+            side=tk.LEFT, padx=10
+        )
+        self.bet_size_var = tk.StringVar(value="0")
+        bet_entry = ttk.Entry(
+            right_frame, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
+        )
+        bet_entry.pack(side=tk.LEFT, padx=8)
 
-        # Add turn indicator - 3x bigger
+        # Bottom action controls - BELOW TABLE
+        action_frame = ttk.Frame(main_container)
+        action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
+        
+        # Center the action controls
+        center_frame = ttk.Frame(action_frame)
+        center_frame.pack(expand=True)
+
+        # Turn indicator - CENTERED
         self.turn_label = tk.Label(
-            right_frame,
+            center_frame,
             text="YOUR TURN",
             font=("Arial", 18, "bold"),  # 3x bigger font
             fg="white",
@@ -132,9 +145,19 @@ class ProfessionalPokerTable:
         )
         self.turn_label.pack(side=tk.LEFT, padx=10)  # More padding
 
+        # Action buttons with clear labels - SKY BLUE BACKGROUND
+        self.action_var = tk.StringVar(value="check")
+        actions = [
+            ("FOLD", "fold", "#FF4444"),  # Red
+            ("CHECK", "check", "#87CEEB"),  # Sky Blue
+            ("CALL", "call", "#87CEEB"),  # Sky Blue
+            ("BET", "bet", "#87CEEB"),  # Sky Blue
+            ("RAISE", "raise", "#87CEEB"),  # Sky Blue
+        ]
+
         for text, value, color in actions:
             btn = tk.Button(
-                right_frame,
+                center_frame,
                 text=text,
                 command=lambda v=value: self._set_action(v),
                 bg=color,
@@ -147,22 +170,12 @@ class ProfessionalPokerTable:
             )
             btn.pack(side=tk.LEFT, padx=8)  # More spacing
 
-        # Bet size entry - 3x bigger
-        ttk.Label(right_frame, text="Bet:", font=("Arial", 16, "bold")).pack(
-            side=tk.LEFT, padx=10
-        )
-        self.bet_size_var = tk.StringVar(value="0")
-        bet_entry = ttk.Entry(
-            right_frame, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
-        )
-        bet_entry.pack(side=tk.LEFT, padx=8)
-
-        # Professional submit button - 3x bigger
+        # Professional submit button - SKY BLUE
         submit_button = tk.Button(
-            right_frame,
+            center_frame,
             text="SUBMIT ACTION",
             command=self._submit_professional_action,
-            bg="#22AA22",
+            bg="#87CEEB",  # Sky Blue
             fg="white",
             font=("Arial", 16, "bold"),
             relief="raised",
@@ -181,7 +194,7 @@ class ProfessionalPokerTable:
         # Calculate table position for perfect centering
         table_x = self.center_x - self.table_width // 2
         table_y = self.center_y - self.table_height // 2
-        
+
         # Draw professional table outline
         self.canvas.create_oval(
             table_x,
@@ -192,7 +205,7 @@ class ProfessionalPokerTable:
             outline="#8B4513",  # Brown border
             width=4,
         )
-        
+
         # Draw professional felt pattern
         for i in range(0, self.table_width, 25):
             for j in range(0, self.table_height, 25):
@@ -209,7 +222,7 @@ class ProfessionalPokerTable:
                         fill="#228B22",
                         outline="",
                     )
-        
+
         # Draw professional pot area - PERFECTLY CENTERED
         pot_radius = 45  # Larger pot
         self.canvas.create_oval(
@@ -221,7 +234,7 @@ class ProfessionalPokerTable:
             outline="#B8860B",  # Dark gold border
             width=3,
         )
-        
+
         # Draw professional dealer button
         dealer_radius = 22  # Larger dealer button
         self.canvas.create_oval(
@@ -750,7 +763,7 @@ class ProfessionalPokerTableGUI:
         # Create professional main window - much larger to accommodate 80% table
         self.root = tk.Tk()
         self.root.title("Professional Poker Table")
-        self.root.geometry("1800x1200")  # Much larger window
+        self.root.geometry("1800x1400")  # Taller window for bottom controls
         self.root.configure(bg="#2C3E50")
 
         # Create professional poker table
