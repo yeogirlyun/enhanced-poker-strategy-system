@@ -544,9 +544,10 @@ Built with Python and Tkinter"""
         self._create_practice_session_interface(practice_frame)
 
     def _create_practice_session_interface(self, parent_frame):
-        """Create the integrated practice session interface."""
+        """Create the integrated practice session interface with visual table."""
         # Initialize practice simulator
         from poker_practice_simulator import PokerPracticeSimulator
+        from visual_poker_table import VisualPokerTable
 
         self.practice_simulator = PokerPracticeSimulator(self.strategy_data)
 
@@ -554,130 +555,11 @@ Built with Python and Tkinter"""
         main_frame = ttk.Frame(parent_frame)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Top control panel
-        control_frame = ttk.LabelFrame(
-            main_frame, text="Game Controls", style="Dark.TLabelframe"
-        )
-        control_frame.pack(fill=tk.X, pady=(0, 10))
-
-        # Player count selection
-        ttk.Label(control_frame, text="Players:").pack(side=tk.LEFT, padx=10)
-        self.player_count_var = tk.StringVar(value="6")
-        player_count_combo = ttk.Combobox(
-            control_frame,
-            textvariable=self.player_count_var,
-            values=["2", "3", "4", "5", "6", "7", "8"],
-            state="readonly",
-            width=5,
-        )
-        player_count_combo.pack(side=tk.LEFT, padx=5)
-
-        # Start new hand button
-        start_button = ttk.Button(
-            control_frame, text="🎯 Start New Hand", command=self._start_practice_hand
-        )
-        start_button.pack(side=tk.RIGHT, padx=10)
-
-        # Game area
-        game_frame = ttk.Frame(main_frame)
-        game_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Left panel - Game state
-        left_panel = ttk.Frame(game_frame)
-        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Game state display
-        game_state_frame = ttk.LabelFrame(
-            left_panel, text="Game State", style="Dark.TLabelframe"
-        )
-        game_state_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-        self.game_state_text = tk.Text(
-            game_state_frame,
-            height=15,
-            width=50,
-            font=("Consolas", 10),
-            bg=THEME["bg_dark"],
-            fg=THEME["fg"],
-            state=tk.DISABLED,
-        )
-        self.game_state_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Right panel - Action controls and feedback
-        right_panel = ttk.Frame(game_frame)
-        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
-        # Action frame
-        action_frame = ttk.LabelFrame(
-            right_panel, text="Your Action", style="Dark.TLabelframe"
-        )
-        action_frame.pack(fill=tk.X, pady=(0, 10))
-
-        # Action buttons
-        actions_frame = ttk.Frame(action_frame)
-        actions_frame.pack(pady=10)
-
-        self.action_var = tk.StringVar(value="check")
-        actions = [
-            ("Fold", "fold"),
-            ("Check", "check"),
-            ("Call", "call"),
-            ("Bet", "bet"),
-            ("Raise", "raise"),
-        ]
-
-        for text, value in actions:
-            ttk.Radiobutton(
-                actions_frame, text=text, variable=self.action_var, value=value
-            ).pack(anchor=tk.W, pady=2)
-
-        # Bet size entry
-        ttk.Label(action_frame, text="Bet Size:").pack(pady=5)
-        self.bet_size_var = tk.StringVar(value="0")
-        bet_size_entry = ttk.Entry(action_frame, textvariable=self.bet_size_var)
-        bet_size_entry.pack(pady=5)
-
-        # Submit action button
-        submit_button = ttk.Button(
-            action_frame, text="Submit Action", command=self._submit_practice_action
-        )
-        submit_button.pack(pady=10)
-
-        # Feedback frame
-        feedback_frame = ttk.LabelFrame(
-            right_panel, text="Strategy Feedback", style="Dark.TLabelframe"
-        )
-        feedback_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-        self.feedback_text = tk.Text(
-            feedback_frame,
-            height=10,
-            font=("Consolas", 9),
-            bg=THEME["bg_dark"],
-            fg=THEME["fg"],
-            state=tk.DISABLED,
-        )
-        self.feedback_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Session stats frame
-        stats_frame = ttk.LabelFrame(
-            right_panel, text="Session Statistics", style="Dark.TLabelframe"
-        )
-        stats_frame.pack(fill=tk.X)
-
-        self.stats_text = tk.Text(
-            stats_frame,
-            height=6,
-            font=("Consolas", 9),
-            bg=THEME["bg_dark"],
-            fg=THEME["fg"],
-            state=tk.DISABLED,
-        )
-        self.stats_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Initialize game state
-        self.current_game_state = None
-        self._update_practice_stats()
+        # Create visual poker table
+        self.visual_table = VisualPokerTable(main_frame, self.strategy_data)
+        
+        # Connect the visual table's simulator to our practice simulator
+        self.visual_table.simulator = self.practice_simulator
 
     def _start_practice_hand(self):
         """Start a new practice hand."""
