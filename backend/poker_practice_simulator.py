@@ -264,6 +264,9 @@ class PokerPracticeSimulator:
         # Deal cards
         self.deal_cards(game_state)
         
+        # Store current game state for external access
+        self.current_game_state = game_state
+        
         # Play preflop
         self.play_street(game_state, "preflop")
         
