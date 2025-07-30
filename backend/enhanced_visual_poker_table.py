@@ -30,22 +30,24 @@ class ProfessionalPokerTable:
         self.strategy_data = strategy_data
         self.engine = EnhancedPokerEngine(strategy_data)
         self.current_game_state = None
-        
+
         # MUCH LARGER table - 80% of pane
         self.canvas_width = 1600  # Increased from 1200
         self.canvas_height = 1000  # Increased from 800
         self.center_x = self.canvas_width // 2
         self.center_y = self.canvas_height // 2
-        
+
         # Professional table ratios - 80% of canvas
-        self.table_width = int(self.canvas_width * 0.80)   # 80% of canvas width
+        self.table_width = int(self.canvas_width * 0.80)  # 80% of canvas width
         self.table_height = int(self.canvas_height * 0.80)  # 80% of canvas height
-        self.player_radius = min(self.table_width, self.table_height) * 0.45  # Larger player radius
-        
+        self.player_radius = (
+            min(self.table_width, self.table_height) * 0.45
+        )  # Larger player radius
+
         # Card dimensions - larger for better visibility
         self.card_width = 65  # Increased from 55
         self.card_height = 85  # Increased from 75
-        
+
         # Game state tracking
         self.current_hand_phase = "preflop"  # preflop, flop, turn, river
         self.current_action_player = 0  # Index of player whose turn it is
@@ -54,7 +56,7 @@ class ProfessionalPokerTable:
         self.big_blind_position = 2  # Big blind position
         self.hand_started = False
         self.community_cards_dealt = 0  # 0=preflop, 3=flop, 4=turn, 5=river
-        
+
         # Create canvas
         self.canvas = tk.Canvas(
             parent_frame,
@@ -64,10 +66,10 @@ class ProfessionalPokerTable:
             highlightthickness=0,
         )
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)  # Reduced padding
-        
+
         # Create controls
         self._create_professional_controls(parent_frame)
-        
+
         # Draw table
         self._draw_professional_table()
 
@@ -179,7 +181,7 @@ class ProfessionalPokerTable:
         # Calculate table position for perfect centering
         table_x = self.center_x - self.table_width // 2
         table_y = self.center_y - self.table_height // 2
-
+        
         # Draw professional table outline
         self.canvas.create_oval(
             table_x,
@@ -190,7 +192,7 @@ class ProfessionalPokerTable:
             outline="#8B4513",  # Brown border
             width=4,
         )
-
+        
         # Draw professional felt pattern
         for i in range(0, self.table_width, 25):
             for j in range(0, self.table_height, 25):
@@ -207,9 +209,9 @@ class ProfessionalPokerTable:
                         fill="#228B22",
                         outline="",
                     )
-
+        
         # Draw professional pot area - PERFECTLY CENTERED
-        pot_radius = 35
+        pot_radius = 45  # Larger pot
         self.canvas.create_oval(
             self.center_x - pot_radius,
             self.center_y - pot_radius,  # FIXED: Use center_y for perfect centering
@@ -219,9 +221,9 @@ class ProfessionalPokerTable:
             outline="#B8860B",  # Dark gold border
             width=3,
         )
-
+        
         # Draw professional dealer button
-        dealer_radius = 18
+        dealer_radius = 22  # Larger dealer button
         self.canvas.create_oval(
             self.center_x - dealer_radius,
             self.center_y - dealer_radius,
@@ -235,7 +237,7 @@ class ProfessionalPokerTable:
             self.center_x,
             self.center_y,
             text="D",
-            font=("Arial", 14, "bold"),
+            font=("Arial", 16, "bold"),
             fill="black",
         )
 
@@ -263,19 +265,19 @@ class ProfessionalPokerTable:
         else:
             color = "#4ECDC4"  # Teal for AI players
 
-        player_radius = 30
+        player_radius = 50  # MUCH BIGGER player radius
 
         # Highlight current player's turn
         if is_current_player:
             # Draw highlight ring
             self.canvas.create_oval(
-                x - player_radius - 5,
-                y - player_radius - 5,
-                x + player_radius + 5,
-                y + player_radius + 5,
+                x - player_radius - 8,
+                y - player_radius - 8,
+                x + player_radius + 8,
+                y + player_radius + 8,
                 fill="",
                 outline="#FFD700",  # Gold highlight
-                width=3,
+                width=4,
             )
         self.canvas.create_oval(
             x - player_radius,
@@ -284,30 +286,30 @@ class ProfessionalPokerTable:
             y + player_radius,
             fill=color,
             outline="black",
-            width=2,
+            width=3,
         )
 
-        # Professional player name
+        # Professional player name - MUCH BIGGER
         name = "You" if player.is_human else f"P{player.name.split()[-1]}"
         self.canvas.create_text(
-            x, y - 8, text=name, font=("Arial", 11, "bold"), fill="white"
+            x, y - 12, text=name, font=("Arial", 16, "bold"), fill="white"
         )
 
-        # Professional position indicator
+        # Professional position indicator - MUCH BIGGER
         self.canvas.create_text(
             x,
-            y + 8,
+            y + 12,
             text=player.position.value,
-            font=("Arial", 9, "bold"),
+            font=("Arial", 14, "bold"),
             fill="white",
         )
 
-        # Professional stack size
+        # Professional stack size - MUCH BIGGER
         self.canvas.create_text(
             x,
-            y + 35,
+            y + 45,
             text=f"${player.stack:.0f}",
-            font=("Arial", 9, "bold"),
+            font=("Arial", 14, "bold"),
             fill="white",
         )
 
@@ -319,13 +321,13 @@ class ProfessionalPokerTable:
         """Draw professional hole cards with perfect spacing."""
         x, y = position
 
-        # Position cards below player with professional spacing
-        card_y = y + 60
+        # Position cards below player with professional spacing - MUCH BIGGER
+        card_y = y + 80  # Further below player
 
         for i, card in enumerate(player.cards):
-            card_x = x - 35 + (i * 40)  # Professional card spacing
+            card_x = x - 45 + (i * 50)  # Bigger card spacing
 
-            # Professional card background
+            # Professional card background - MUCH BIGGER
             card_color = "#FFD700" if player.is_human else "#FFFFFF"
             self.canvas.create_rectangle(
                 card_x,
@@ -334,10 +336,10 @@ class ProfessionalPokerTable:
                 card_y + self.card_height,
                 fill=card_color,
                 outline="black",
-                width=2,
+                width=3,  # Thicker border
             )
 
-            # Professional card text
+            # Professional card text - MUCH BIGGER
             rank, suit = card[0], card[1]
             suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
             color = "red" if suit in ["h", "d"] else "black"
@@ -346,7 +348,7 @@ class ProfessionalPokerTable:
                 card_x + self.card_width // 2,
                 card_y + self.card_height // 2,
                 text=f"{rank}{suit_symbol}",
-                font=("Arial", 14, "bold"),
+                font=("Arial", 18, "bold"),  # MUCH BIGGER font
                 fill=color,
             )
 
@@ -354,20 +356,20 @@ class ProfessionalPokerTable:
         """Draw professional community cards with perfect centering."""
         if not self.current_game_state:
             return
-            
+
         # Only show community cards as they're dealt
-        cards_to_show = self.current_game_state.board[:self.community_cards_dealt]
+        cards_to_show = self.current_game_state.board[: self.community_cards_dealt]
         if not cards_to_show:
             return
-            
+
         # Professional card spacing and positioning
         card_spacing = 80  # Increased spacing for larger cards
         start_x = self.center_x - (len(cards_to_show) * card_spacing // 2)
-        
+
         for i, card in enumerate(cards_to_show):
             card_x = start_x + (i * card_spacing)
             card_y = self.center_y - 80  # Positioned above pot
-            
+
             # Professional card background
             self.canvas.create_rectangle(
                 card_x,
@@ -378,12 +380,12 @@ class ProfessionalPokerTable:
                 outline="black",
                 width=2,
             )
-            
+
             # Professional card text
             rank, suit = card[0], card[1]
             suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
             color = "red" if suit in ["h", "d"] else "black"
-            
+
             self.canvas.create_text(
                 card_x + self.card_width // 2,
                 card_y + self.card_height // 2,
@@ -402,17 +404,17 @@ class ProfessionalPokerTable:
             self.center_x,
             self.center_y,  # FIXED: Use center_y for perfect centering
             text=f"${self.current_game_state.pot:.0f}",
-            font=("Arial", 16, "bold"),
+            font=("Arial", 20, "bold"),  # MUCH BIGGER font
             fill="black",
         )
 
-        # Professional current bet
+        # Professional current bet - MUCH BIGGER
         if self.current_game_state.current_bet > 0:
             self.canvas.create_text(
                 self.center_x,
-                self.center_y + 25,  # FIXED: Position below pot
+                self.center_y + 35,  # Further below pot
                 text=f"Bet: ${self.current_game_state.current_bet:.0f}",
-                font=("Arial", 12, "bold"),
+                font=("Arial", 16, "bold"),  # MUCH BIGGER font
                 fill="white",
             )
 
@@ -435,19 +437,26 @@ class ProfessionalPokerTable:
         """Start a new professional hand with proper dealer sequence."""
         try:
             num_players = int(self.player_count_var.get())
-            
+
             # Initialize hand state
             self.hand_started = True
             self.current_hand_phase = "preflop"
             self.community_cards_dealt = 0
             self.current_action_player = 0  # UTG starts
-            
+
             # Create players with proper positions
             players = []
-            positions = [Position.UTG, Position.MP, Position.CO, Position.BTN, Position.SB, Position.BB]
-            
+            positions = [
+                Position.UTG,
+                Position.MP,
+                Position.CO,
+                Position.BTN,
+                Position.SB,
+                Position.BB,
+            ]
+
             for i in range(num_players):
-                is_human = (i == 0)  # First player is human
+                is_human = i == 0  # First player is human
                 position = positions[i % len(positions)]
                 player = Player(
                     name=f"Player {i+1}",
@@ -455,41 +464,42 @@ class ProfessionalPokerTable:
                     position=position,
                     is_human=is_human,
                     is_active=True,
-                    cards=[]  # Cards will be dealt by dealer
+                    cards=[],  # Cards will be dealt by dealer
                 )
                 players.append(player)
-            
+
             # Dealer deals hole cards (but don't show AI cards yet)
             import random
+
             deck = self._create_deck()
             random.shuffle(deck)
-            
+
             # Deal hole cards
             for player in players:
                 player.cards = [deck.pop(), deck.pop()]
-            
+
             # Create game state
             self.current_game_state = GameState(
                 players=players,
                 board=[],  # No community cards yet
                 pot=0.0,
                 current_bet=0.0,
-                street="preflop"
+                street="preflop",
             )
-            
+
             # Post blinds
             if num_players >= 2:
                 self.current_game_state.players[self.small_blind_position].stack -= 0.5
                 self.current_game_state.players[self.big_blind_position].stack -= 1.0
                 self.current_game_state.pot = 1.5
                 self.current_game_state.current_bet = 1.0
-            
+
             # Redraw table
             self._redraw_professional_table()
-            
+
             # Update turn indicator
             self._update_turn_indicator()
-            
+
             messagebox.showinfo(
                 "Hand Started",
                 f"New hand started with {num_players} players!\n"
@@ -497,26 +507,26 @@ class ProfessionalPokerTable:
                 f"Your position: {self.current_game_state.players[0].position.value}\n"
                 f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
             )
-            
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start hand: {str(e)}")
-            
+
     def _create_deck(self):
         """Create a standard 52-card deck."""
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-        suits = ['h', 'd', 'c', 's']
+        ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+        suits = ["h", "d", "c", "s"]
         deck = []
         for rank in ranks:
             for suit in suits:
                 deck.append(f"{rank}{suit}")
         return deck
-        
+
     def _update_turn_indicator(self):
         """Update the turn indicator to show whose turn it is."""
         if not self.current_game_state:
             self.turn_label.config(text="NO ACTIVE HAND", bg="#95A5A6")
             return
-            
+
         current_player = self.current_game_state.players[self.current_action_player]
         if current_player.is_human:
             self.turn_label.config(text="YOUR TURN", bg="#FF6B6B")
@@ -546,7 +556,7 @@ class ProfessionalPokerTable:
 
             # Execute action for current player
             current_player = self.current_game_state.players[self.current_action_player]
-            
+
             # Apply action
             if action == Action.FOLD:
                 current_player.is_active = False
@@ -557,21 +567,21 @@ class ProfessionalPokerTable:
                     call_amount = bet_size
                 elif action == Action.RAISE:
                     call_amount = bet_size
-                
+
                 current_player.stack -= call_amount
                 self.current_game_state.pot += call_amount
                 self.current_game_state.current_bet = call_amount
 
             # Move to next player
             self._advance_to_next_player()
-            
+
             # Check if round is complete
             if self._is_round_complete():
                 self._advance_to_next_street()
 
             # Redraw table
             self._redraw_professional_table()
-            
+
             # Update turn indicator
             self._update_turn_indicator()
 
@@ -580,28 +590,28 @@ class ProfessionalPokerTable:
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to submit action: {str(e)}")
-            
+
     def _advance_to_next_player(self):
         """Move to the next active player."""
         num_players = len(self.current_game_state.players)
         self.current_action_player = (self.current_action_player + 1) % num_players
-        
+
         # Skip folded players
         while not self.current_game_state.players[self.current_action_player].is_active:
             self.current_action_player = (self.current_action_player + 1) % num_players
-            
+
     def _is_round_complete(self):
         """Check if the current betting round is complete."""
         active_players = [p for p in self.current_game_state.players if p.is_active]
         if len(active_players) <= 1:
             return True
-            
+
         # Check if all active players have acted and bets are equal
         for player in active_players:
             if player.stack < self.current_game_state.current_bet:
                 return False
         return True
-        
+
     def _advance_to_next_street(self):
         """Advance to the next street (flop, turn, river)."""
         if self.current_hand_phase == "preflop":
@@ -620,31 +630,34 @@ class ProfessionalPokerTable:
             # Hand is complete
             self._show_hand_results()
             return
-            
+
         # Reset betting for new street
         self.current_game_state.current_bet = 0.0
-        self.current_action_player = (self.big_blind_position + 1) % len(self.current_game_state.players)
-        
+        self.current_action_player = (self.big_blind_position + 1) % len(
+            self.current_game_state.players
+        )
+
     def _deal_community_cards(self, num_cards):
         """Deal community cards."""
-        if not hasattr(self, '_deck'):
+        if not hasattr(self, "_deck"):
             self._deck = self._create_deck()
             import random
+
             random.shuffle(self._deck)
-            
+
         for _ in range(num_cards):
             if self._deck:
                 self.current_game_state.board.append(self._deck.pop())
-                
+
     def _show_hand_results(self):
         """Show the results of the hand."""
         messagebox.showinfo(
             "Hand Complete",
             f"Hand completed!\nFinal pot: ${self.current_game_state.pot:.2f}\n"
-            f"Winner: {self._determine_winner()}"
+            f"Winner: {self._determine_winner()}",
         )
         self.hand_started = False
-        
+
     def _determine_winner(self):
         """Determine the winner of the hand."""
         active_players = [p for p in self.current_game_state.players if p.is_active]
@@ -715,7 +728,7 @@ class ProfessionalPokerTable:
                     i, len(self.current_game_state.players)
                 )
                 # Highlight current action player
-                is_current = (i == self.current_action_player)
+                is_current = i == self.current_action_player
                 self._draw_professional_player(player, position, is_current)
 
             # Draw professional community cards
