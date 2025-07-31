@@ -732,7 +732,7 @@ class ProfessionalPokerTable:
 
     def _is_showdown(self):
         """Check if we're in showdown phase (river betting complete)."""
-        if not self.current_game_state or self.current_hand_phase != "river":
+        if not self.current_game_state or self.state_machine.get_current_state() != PokerState.RIVER_BETTING:
             return False
 
         # Check if river betting is complete
@@ -962,7 +962,7 @@ class ProfessionalPokerTable:
                 # Folded player - show mucked cards (face down with "MUCKED" text)
                 card_color = "#2C3E50"  # Dark gray for mucked cards
                 show_card_text = False
-            elif self.current_hand_phase == "river" and self._is_showdown():
+            elif self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                 # Showdown - reveal all active players' cards
                 card_color = "#F5F5F5"  # Very light gray
                 show_card_text = True
@@ -1007,7 +1007,7 @@ class ProfessionalPokerTable:
                     font=("Arial", 10, "bold"),
                     fill="white",
                 )
-            elif self.current_hand_phase == "river" and self._is_showdown():
+            elif self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                 # Showdown - reveal card text for active players
                 rank, suit = card[0], card[1]
                 suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
@@ -1097,8 +1097,8 @@ class ProfessionalPokerTable:
         if not self.current_game_state:
             return
 
-        # Professional street name - use current hand phase
-        street_text = self.current_hand_phase.upper()
+        # Professional street name - use state machine
+        street_text = self.state_machine.get_current_state().value.upper()
         self.canvas.create_text(
             self.center_x,
             40,
