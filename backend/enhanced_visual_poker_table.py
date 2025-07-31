@@ -101,8 +101,8 @@ class ProfessionalPokerTable:
             width=50,  # Fixed width, never changes
             height=25,  # Much taller
             font=("Arial", 14),  # Default font size
-            bg="#2C3E50",
-            fg="white",
+            bg="SystemButtonFace",  # Match app background
+            fg="black",
             relief="sunken",
             bd=2,
             wrap=tk.NONE,  # No word wrapping to enable horizontal scroll
@@ -138,13 +138,14 @@ class ProfessionalPokerTable:
         center_frame = ttk.Frame(action_frame)
         center_frame.pack(expand=True)
 
-        # Player controls - SAME SIZE AS ACTION BUTTONS
-        player_frame = ttk.Frame(center_frame)
-        player_frame.pack(side=tk.LEFT, padx=10)
+        # Center the action controls
+        center_frame = ttk.Frame(action_frame)
+        center_frame.pack(expand=True)
 
-        # Player count button - same size as action buttons
+        # Player count variable and dropdown - same size as action buttons
+        self.player_count_var = tk.StringVar(value="6")
         player_count_btn = tk.Button(
-            player_frame,
+            center_frame,
             text="Players: 6",
             bg="#CCCCCC",  # Gray background
             fg="black",  # Black font
@@ -158,7 +159,7 @@ class ProfessionalPokerTable:
 
         # Professional start button - same size as action buttons
         start_button = tk.Button(
-            player_frame,
+            center_frame,
             text="🎯 Start Hand",
             command=self._start_professional_hand,
             bg="#CCCCCC",  # Gray background
@@ -170,10 +171,6 @@ class ProfessionalPokerTable:
             height=2,  # Same height as action buttons
         )
         start_button.pack(side=tk.LEFT, padx=5)
-
-        # Center the action controls
-        center_frame = ttk.Frame(action_frame)
-        center_frame.pack(expand=True)
 
         # Turn indicator - CENTERED (SAME SIZE AS ACTION BUTTONS)
         self.turn_label = tk.Label(
