@@ -70,7 +70,7 @@ class ProfessionalPokerTable:
             self.table_frame,  # Use table_frame instead of parent_frame
             width=self.canvas_width,
             height=self.canvas_height,
-            bg="#87CEEB",  # Light blue sky background
+            bg="#2C3E50",  # Same dark gray as action log pane
             highlightthickness=0,
         )
         self.canvas.pack(
@@ -365,12 +365,12 @@ class ProfessionalPokerTable:
         # Draw professional felt pattern with poker suit symbols
         suit_symbols = ["♠", "♥", "♦", "♣"]
         pattern_spacing = 40  # Larger spacing for better visibility
-        
+
         for i in range(0, self.table_width, pattern_spacing):
             for j in range(0, self.table_height, pattern_spacing):
                 pattern_x = table_x + i
                 pattern_y = table_y + j
-                
+
                 # Check if pattern is within the table area
                 if (pattern_x - self.center_x) ** 2 + (
                     pattern_y - self.center_y
@@ -378,7 +378,7 @@ class ProfessionalPokerTable:
                     # Alternate suit symbols for variety
                     suit_index = (i + j) // pattern_spacing % len(suit_symbols)
                     suit_symbol = suit_symbols[suit_index]
-                    
+
                     # Use darker green for subtle pattern
                     self.canvas.create_text(
                         pattern_x,
@@ -539,10 +539,10 @@ class ProfessionalPokerTable:
         # Card width is 80, so we need spacing of card_width + gap
         gap = 8  # 0.1 cm equivalent gap (approximately 8 pixels)
         total_card_width = self.card_width + gap
-        
+
         # Center the two cards around the player position
         first_card_x = x - (total_card_width + self.card_width) // 2
-        
+
         for i, card in enumerate(player.cards):
             card_x = first_card_x + (i * total_card_width)
 
