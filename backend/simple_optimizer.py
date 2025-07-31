@@ -285,13 +285,12 @@ class SimpleOptimizer:
         return strategy
 
     def _apply_advanced_improvements(self, strategy: Dict) -> Dict:
-        """Apply advanced strategy improvements with randomization."""
+        """Apply advanced strategy improvements with equity-based logic."""
         # Apply moderate improvements
         strategy = self._apply_moderate_improvements(strategy)
 
-        # Add postflop improvements with randomization
+        # Add equity-based postflop improvements
         if "postflop" in strategy:
-            # Improve bet sizing with random adjustments
             for street in ["flop", "turn", "river"]:
                 if (
                     street in strategy["postflop"]
@@ -300,14 +299,74 @@ class SimpleOptimizer:
                     for pos in strategy["postflop"][street]["pfa"]:
                         for ip_oop in strategy["postflop"][street]["pfa"][pos]:
                             rule = strategy["postflop"][street]["pfa"][pos][ip_oop]
+                            
+                            # Apply equity-based threshold improvements
+                            if "val_thresh" in rule:
+                                base_threshold = self._get_equity_based_threshold(street, pos)
+                                if rule["val_thresh"] < base_threshold:
+                                    rule["val_thresh"] = base_threshold
+                                    print(f"Improved val_thresh for {pos} on {street}")
+                            
+                            # Ensure logical gap between check and bet thresholds
+                            if "val_thresh" in rule and "check_thresh" in rule:
+                                if rule["check_thresh"] >= rule["val_thresh"]:
+                                    rule["check_thresh"] = rule["val_thresh"] - random.randint(5, 10)
+                                    print(f"Adjusted check_thresh for {pos} on {street}")
+                            
+                            # Improve bet sizing based on equity principles
                             if "bet_size" in rule:
-                                # Random adjustment between 3-8
-                                adjustment = random.randint(3, 8)
-                                rule["bet_size"] = min(
-                                    100, rule["bet_size"] + adjustment
-                                )
+                                equity_based_size = self._get_equity_based_bet_size(street, pos)
+                                rule["bet_size"] = min(100, max(25, equity_based_size))
 
         return strategy
+    
+    def _get_equity_based_threshold(self, street: str, position: str) -> int:
+        """Get equity-based threshold for value betting."""
+        # Base thresholds by street
+        street_thresholds = {
+            "flop": 55,
+            "turn": 60,
+            "river": 65
+        }
+        
+        # Position adjustments
+        position_boosts = {
+            "BTN": 5,   # Button gets boost
+            "CO": 3,    # Cutoff gets small boost
+            "MP": 0,    # Middle position neutral
+            "UTG": -2,  # UTG gets penalty
+            "SB": -3,   # Small blind penalty
+            "BB": -5    # Big blind penalty
+        }
+        
+        base = street_thresholds.get(street, 60)
+        boost = position_boosts.get(position, 0)
+        
+        return max(50, min(80, base + boost))  # Clamp between 50-80
+    
+    def _get_equity_based_bet_size(self, street: str, position: str) -> int:
+        """Get equity-based bet sizing."""
+        # Base bet sizes by street
+        street_sizes = {
+            "flop": 50,
+            "turn": 60,
+            "river": 75
+        }
+        
+        # Position adjustments for bet sizing
+        position_adjustments = {
+            "BTN": 10,  # Button can bet larger
+            "CO": 5,    # Cutoff gets small boost
+            "MP": 0,    # Middle position neutral
+            "UTG": -5,  # UTG bets smaller
+            "SB": -10,  # Small blind bets smaller
+            "BB": -15   # Big blind bets smaller
+        }
+        
+        base = street_sizes.get(street, 60)
+        adjustment = position_adjustments.get(position, 0)
+        
+        return max(25, min(100, base + adjustment))  # Clamp between 25-100
 
     def _apply_random_improvements(self, strategy: Dict, approach: str) -> Dict:
         """Apply random improvements based on approach."""
