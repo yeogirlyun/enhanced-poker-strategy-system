@@ -24,6 +24,7 @@ from tier_panel import TierPanel
 from decision_table_panel import DecisionTablePanel
 from postflop_hs_editor import PostflopHSEditor
 from strategy_optimization_panel import StrategyOptimizationPanel
+from tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
 
 
 class EnhancedMainGUIV2:
@@ -269,9 +270,10 @@ class EnhancedMainGUIV2:
         outer_frame.pack(fill="x", padx=2, pady=2)
 
         # Font size control
-        ttk.Label(outer_frame, text="Font Size:", style="Dark.TLabel").pack(
-            side="left", padx=5
-        )
+        font_size_label = ttk.Label(outer_frame, text="Font Size:", style="Dark.TLabel")
+        font_size_label.pack(side="left", padx=5)
+        ToolTip(font_size_label, COMMON_TOOLTIPS["font_size"])
+        
         self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
         self.current_font_size_index = 3  # Start with size "4" (12pt)
         self.font_size_var = tk.StringVar(
@@ -286,11 +288,13 @@ class EnhancedMainGUIV2:
         )
         font_size_combo.pack(side="left", padx=5)
         font_size_combo.bind("<<ComboboxSelected>>", self._on_font_size_change)
+        ToolTip(font_size_combo, COMMON_TOOLTIPS["font_size"])
 
         # Grid size control
-        ttk.Label(outer_frame, text="Grid Size:", style="Dark.TLabel").pack(
-            side="left", padx=5
-        )
+        grid_size_label = ttk.Label(outer_frame, text="Grid Size:", style="Dark.TLabel")
+        grid_size_label.pack(side="left", padx=5)
+        ToolTip(grid_size_label, COMMON_TOOLTIPS["grid_size"])
+        
         self.grid_size_var = tk.StringVar(value="7")  # Default to size "7"
         grid_size_combo = ttk.Combobox(
             outer_frame,
@@ -301,15 +305,18 @@ class EnhancedMainGUIV2:
         )
         grid_size_combo.pack(side="left", padx=5)
         grid_size_combo.bind("<<ComboboxSelected>>", self._on_grid_size_change)
+        ToolTip(grid_size_combo, COMMON_TOOLTIPS["grid_size"])
 
         # Strategy file display
-        ttk.Label(outer_frame, text="Strategy:", style="Dark.TLabel").pack(
-            side="left", padx=10
-        )
+        strategy_label = ttk.Label(outer_frame, text="Strategy:", style="Dark.TLabel")
+        strategy_label.pack(side="left", padx=10)
+        ToolTip(strategy_label, COMMON_TOOLTIPS["strategy_file"])
+        
         self.strategy_file_label = ttk.Label(
             outer_frame, text="Default Strategy", style="Dark.TLabel"
         )
         self.strategy_file_label.pack(side="left", padx=5)
+        ToolTip(self.strategy_file_label, COMMON_TOOLTIPS["strategy_file"])
 
         # Main notebook (95% height)
         self.notebook = ttk.Notebook(self.root)
@@ -409,7 +416,10 @@ class EnhancedMainGUIV2:
         control_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Player count selection
-        ttk.Label(control_frame, text="Players:").pack(side=tk.LEFT, padx=10)
+        player_label = ttk.Label(control_frame, text="Players:")
+        player_label.pack(side=tk.LEFT, padx=10)
+        ToolTip(player_label, COMMON_TOOLTIPS["player_count"])
+        
         self.player_count_var = tk.StringVar(value="6")
         player_count_combo = ttk.Combobox(
             control_frame,
@@ -419,12 +429,14 @@ class EnhancedMainGUIV2:
             width=5,
         )
         player_count_combo.pack(side=tk.LEFT, padx=5)
+        ToolTip(player_count_combo, COMMON_TOOLTIPS["player_count"])
 
         # Start new hand button
         start_button = ttk.Button(
             control_frame, text="🎯 Start New Hand", command=self._start_practice_hand
         )
         start_button.pack(side=tk.RIGHT, padx=10)
+        ToolTip(start_button, COMMON_TOOLTIPS["start_hand"])
 
         # Game area
         game_frame = ttk.Frame(main_frame)
@@ -480,16 +492,21 @@ class EnhancedMainGUIV2:
             ).pack(anchor=tk.W, pady=2)
 
         # Bet size entry
-        ttk.Label(action_frame, text="Bet Size:").pack(pady=5)
+        bet_size_label = ttk.Label(action_frame, text="Bet Size:")
+        bet_size_label.pack(pady=5)
+        ToolTip(bet_size_label, COMMON_TOOLTIPS["bet_size"])
+        
         self.bet_size_var = tk.StringVar(value="0")
         bet_size_entry = ttk.Entry(action_frame, textvariable=self.bet_size_var)
         bet_size_entry.pack(pady=5)
+        ToolTip(bet_size_entry, COMMON_TOOLTIPS["bet_size"])
 
         # Submit action button
         submit_button = ttk.Button(
             action_frame, text="Submit Action", command=self._submit_practice_action
         )
         submit_button.pack(pady=10)
+        ToolTip(submit_button, COMMON_TOOLTIPS["submit_action"])
 
         # Feedback frame
         feedback_frame = ttk.LabelFrame(
