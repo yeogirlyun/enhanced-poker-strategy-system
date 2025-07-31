@@ -7,10 +7,10 @@ REVISION HISTORY:
 Version 1.0 (2025-07-29) - Initial Version
 - Created main application window with hand grid and tier management.
 - Integrated hand grid and tier panel components.
-Version 1.1 (2025-07-29) - Enhanced Font Controls
+Version 1.1 (2025-07-29) - Enhanced Font Controls & UI
 - Added general font size control system with Cmd+ menu.
 - Improved default font sizes for better readability.
-- Added font size controls for all GUI components.
+- Redesigned the UI with a professional dark theme and a more dynamic, percentage-based layout.
 """
 
 import tkinter as tk
@@ -30,20 +30,16 @@ class PokerStrategyGUI:
         self.root = tk.Tk()
         self.root.title("Advanced Poker Strategy Development")
 
-        # Set window to 60% of screen size
+        # Set window to 60% of screen size and center it
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         window_width = int(screen_width * 0.6)
         window_height = int(screen_height * 0.6)
-
-        # Center the window
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-
         self.root.configure(bg=THEME["bg"])
 
-        # Initialize strategy data
         self.strategy_data = StrategyData()
         
         # Try to load the optimized modern strategy as default
@@ -55,28 +51,15 @@ class PokerStrategyGUI:
             print("⚠️  No strategy file found, loading default tiers")
             self.strategy_data.load_default_tiers()
 
-        # Font size control
-        self.current_font_size_index = (
-            6  # Start with "Giant" size (fills 75%+ of grid window)
-        )
+        # Global Font Size Control
+        self.current_font_size_index = 6  # Start with a larger, more readable size
         self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
-        # Setup styles with initial button font (120% of default)
-        initial_font_size = GridSettings.get_size_config(
-            self.font_sizes[self.current_font_size_index]
-        )["font"][1]
-        initial_button_font = ("Arial", int(initial_font_size * 1.2), "bold")
-        self._setup_styles(initial_button_font)
+        self._setup_styles()
         self._setup_menu()
         self._setup_ui()
         self._bind_shortcuts()
-
-        # Apply initial font size to all components
         self._apply_initial_font_size()
-
-        print(
-            f"DEBUG: Main GUI initialized with font size: {self.font_sizes[self.current_font_size_index]}"
-        )
 
     def _setup_styles(self, button_font=("Arial", 12, "bold")):
         """Setup the application styles."""
@@ -220,6 +203,12 @@ class PokerStrategyGUI:
             background=[("active", "#FFB6C1"), ("pressed", "#FFC0CB")],
             relief=[("pressed", "sunken"), ("active", "raised")],
         )
+        
+        # Enhanced status bar style
+        style.configure("Status.TLabel", background="#2E5A8F", foreground="#FFFFFF", font=("Arial", 10, "bold"))
+        
+        # Professional tooltip style
+        style.configure("Tooltip.TLabel", background="#FFFFCC", foreground="#333333", relief="solid", borderwidth=1)
 
     def _setup_menu(self):
         """Setup the main menu bar."""
@@ -398,6 +387,15 @@ class PokerStrategyGUI:
             self._on_tier_select,
         )
 
+        # Add status bar at the bottom
+        self.status_bar = ttk.Label(
+            self.root, 
+            text="Ready - Poker Strategy Development System", 
+            style="Status.TLabel",
+            anchor="w"
+        )
+        self.status_bar.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+
         # Update strategy file display
         self._update_strategy_display()
 
@@ -405,6 +403,12 @@ class PokerStrategyGUI:
         """Updates the strategy file display."""
         display_name = self.strategy_data.get_strategy_file_display_name()
         self.strategy_label.configure(text=display_name)
+        self._update_status(f"Strategy loaded: {display_name}")
+
+    def _update_status(self, message: str):
+        """Update the status bar with a message."""
+        self.status_bar.configure(text=f"Ready - {message}")
+        self.root.update_idletasks()
 
     def _bind_shortcuts(self):
         """Bind keyboard shortcuts."""

@@ -19,19 +19,19 @@ from dataclasses import dataclass, field
 
 # --- GTO Theme Definition ---
 THEME = {
-    "bg": "#1a1a1a",  # Dark background
-    "bg_dark": "#2d2d2d",  # Slightly lighter dark
-    "bg_light": "#404040",  # Light gray for buttons
-    "fg": "#ffffff",  # White text
-    "accent": "#4CAF50",  # Green accent
+    "bg": "#1a1a1a",          # Dark background
+    "bg_dark": "#2d2d2d",      # Slightly lighter dark
+    "bg_light": "#404040",     # Light gray for buttons
+    "fg": "#ffffff",           # White text
+    "accent": "#4CAF50",       # Green accent
     "font_family": "Arial",
     "font_size": 10,
     "tier_colors": {
-        "Elite": "#FF4444",  # Bright Red (Premium hands)
-        "Premium": "#44AAFF",  # Bright Blue (Strong hands)
-        "Gold": "#FFAA44",  # Orange (Medium hands)
-        "Silver": "#44FF44",  # Bright Green (Weak hands)
-        "Bronze": "#FF8844",  # Orange-Red (Marginal hands)
+        "Elite": "#FF4444",     # Bright Red (Premium hands)
+        "Premium": "#44AAFF",   # Bright Blue (Strong hands)
+        "Gold": "#FFAA44",      # Orange (Medium hands)
+        "Silver": "#44FF44",    # Bright Green (Weak hands)
+        "Bronze": "#FF8844",    # Orange-Red (Marginal hands)
     },
 }
 
