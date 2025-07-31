@@ -480,7 +480,10 @@ class ProfessionalPokerTable:
             "SYSTEM", f"  HS Score: {rationale['hs_score']}", 0, play_sound=False
         )
         self._log_action(
-            "SYSTEM", f"  Street: {self.state_machine.get_current_state().value}", 0, play_sound=False
+            "SYSTEM",
+            f"  Street: {self.state_machine.get_current_state()}",
+            0,
+            play_sound=False,
         )
         self._log_action(
             "SYSTEM",
@@ -529,7 +532,7 @@ class ProfessionalPokerTable:
         )
 
         # Get current street and position
-        street = self.state_machine.get_current_state().value
+        street = self.state_machine.get_current_state()
         position = player.position
 
         # Determine if this is a PFA (Pot First Action) or Caller situation
