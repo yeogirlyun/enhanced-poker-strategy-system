@@ -66,71 +66,40 @@ class EnhancedMainGUIV2:
     def _setup_styles(self):
         """Setup custom styles for the application."""
         style = ttk.Style()
+        style.theme_use('clam')  # Use a more modern theme as a base
 
-        # Configure notebook style
-        style.configure("TNotebook", background=THEME["primary_bg"])
-        style.configure(
-            "TNotebook.Tab",
-            background=THEME["secondary_bg"],
-            foreground=THEME["text"],
-            padding=[10, 5],
-        )
-        style.map(
-            "TNotebook.Tab",
+        # --- General Styles ---
+        style.configure(".", background=THEME["primary_bg"], foreground=THEME["text"], font=FONTS["main"])
+        style.configure("TFrame", background=THEME["primary_bg"])
+        style.configure("TLabelframe", background=THEME["secondary_bg"], bordercolor=THEME["border"])
+        style.configure("TLabelframe.Label", background=THEME["secondary_bg"], foreground=THEME["text"], font=FONTS["header"])
+
+        # --- Notebook (Tabs) Style ---
+        style.configure("TNotebook", background=THEME["primary_bg"], borderwidth=0)
+        style.configure("TNotebook.Tab", background=THEME["secondary_bg"], foreground=THEME["text_dark"], font=FONTS["main"], padding=[10, 5], borderwidth=0)
+        style.map("TNotebook.Tab",
             background=[("selected", THEME["accent_primary"]), ("active", THEME["widget_bg"])],
+            foreground=[("selected", "white"), ("active", THEME["text"])]
         )
 
-        # Configure entry style
-        style.configure(
-            "SkyBlue.TEntry",
-            fieldbackground="#87CEEB",
-            foreground="#000000",
-            borderwidth=2,
-            relief="solid",
-        )
+        # --- Custom Button Styles ---
+        style.configure("TButton", font=FONTS["main"], padding=6, relief="flat", background=THEME["widget_bg"])
+        style.map("TButton", background=[("active", THEME["accent_secondary"])])
 
-        # Configure combobox style
-        style.configure(
-            "SkyBlue.TCombobox",
-            fieldbackground="#87CEEB",
-            foreground="#000000",
-            background="#87CEEB",
-            arrowcolor="#000000",
-        )
+        # Primary Action Button (e.g., "Start Game")
+        style.configure("Primary.TButton", font=FONTS["header"], background=THEME["accent_primary"], foreground="white")
+        style.map("Primary.TButton", background=[("active", "#1177bb")])
 
-        # Configure label frame style
-        style.configure(
-            "Dark.TLabelframe", background=THEME["primary_bg"], foreground=THEME["text"]
-        )
-        style.configure(
-            "Dark.TLabelframe.Label", background=THEME["primary_bg"], foreground=THEME["text"]
-        )
+        # Danger Action Button (e.g., "Reset")
+        style.configure("Danger.TButton", font=FONTS["main"], background=THEME["accent_danger"], foreground="white")
+        style.map("Danger.TButton", background=[("active", "#e54c51")])
 
-        # Configure label style
-        style.configure("Dark.TLabel", background=THEME["primary_bg"], foreground=THEME["text"])
+        # --- Entry and Combobox Styles ---
+        style.configure("TEntry", fieldbackground=THEME["widget_bg"], foreground=THEME["text"], borderwidth=1)
+        style.configure("TCombobox", fieldbackground=THEME["widget_bg"], foreground=THEME["text"], background=THEME["widget_bg"])
 
-        # Configure button styles
-        style.configure(
-            "TopMenu.TButton",
-            background=THEME["accent_primary"],
-            foreground=THEME["text"],
-            borderwidth=1,
-            font=FONTS["main"]
-        )
-        style.map(
-            "TopMenu.TButton",
-            background=[("active", THEME["accent_secondary"])]
-        )
-
-        # --- NEW: Status Bar Style ---
-        style.configure(
-            "StatusBar.TLabel",
-            background=THEME["secondary_bg"],
-            foreground=THEME["text_dark"],
-            font=FONTS["small"],
-            relief=tk.SUNKEN,
-            borderwidth=1
-        )
+        # --- Status Bar Style ---
+        style.configure("StatusBar.TLabel", background=THEME["accent_primary"], foreground="white")
 
     def _create_menu(self):
         """Create the menu bar."""
@@ -394,6 +363,12 @@ class EnhancedMainGUIV2:
         self.notebook.add(practice_frame, text="🎰 Practice Session")
 
         self._create_practice_session_interface(practice_frame)
+
+        # Tab 7: Enhanced Game (NEW)
+        enhanced_game_frame = ttk.Frame(self.notebook)
+        self.notebook.add(enhanced_game_frame, text="🎮 Enhanced Game")
+
+        self._create_enhanced_game_tab(enhanced_game_frame)
 
         # Update strategy file display
         self._update_strategy_file_display()
@@ -746,6 +721,292 @@ STRATEGY FEATURES:
         self.status_bar_text.set(message)
         if duration > 0:
             self.root.after(duration, lambda: self.status_bar_text.set("Ready."))
+
+    def _create_enhanced_game_tab(self, parent_frame):
+        """Create the enhanced game tab with modern styling and tooltips."""
+        # Main container
+        main_container = ttk.Frame(parent_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+        # Title section
+        title_frame = ttk.Frame(main_container)
+        title_frame.pack(fill=tk.X, pady=(0, 20))
+
+        title_label = ttk.Label(
+            title_frame, 
+            text="Enhanced Poker Strategy Game", 
+            font=FONTS["title"]
+        )
+        title_label.pack()
+        ToolTip(title_label, "Advanced poker practice with strategy analysis")
+
+        # Controls section
+        controls_frame = ttk.LabelFrame(
+            main_container, 
+            text="Game Controls", 
+            padding=15
+        )
+        controls_frame.pack(fill=tk.X, pady=(0, 20))
+
+        # Game settings row
+        settings_frame = ttk.Frame(controls_frame)
+        settings_frame.pack(fill=tk.X, pady=(0, 15))
+
+        # Player count
+        player_frame = ttk.Frame(settings_frame)
+        player_frame.pack(side=tk.LEFT, padx=(0, 20))
+
+        player_label = ttk.Label(player_frame, text="Players:")
+        player_label.pack(side=tk.LEFT)
+        ToolTip(player_label, "Number of players in the game (2-8)")
+
+        self.enhanced_player_count = tk.StringVar(value="6")
+        player_combo = ttk.Combobox(
+            player_frame,
+            textvariable=self.enhanced_player_count,
+            values=["2", "3", "4", "5", "6", "7", "8"],
+            state="readonly",
+            width=8
+        )
+        player_combo.pack(side=tk.LEFT, padx=(5, 0))
+        ToolTip(player_combo, "Select the number of players for the game")
+
+        # Starting stack
+        stack_frame = ttk.Frame(settings_frame)
+        stack_frame.pack(side=tk.LEFT, padx=(0, 20))
+
+        stack_label = ttk.Label(stack_frame, text="Starting Stack:")
+        stack_label.pack(side=tk.LEFT)
+        ToolTip(stack_label, "Initial chip stack for each player")
+
+        self.starting_stack = tk.StringVar(value="1000")
+        stack_entry = ttk.Entry(stack_frame, textvariable=self.starting_stack, width=10)
+        stack_entry.pack(side=tk.LEFT, padx=(5, 0))
+        ToolTip(stack_entry, "Enter the starting chip amount")
+
+        # Blind levels
+        blind_frame = ttk.Frame(settings_frame)
+        blind_frame.pack(side=tk.LEFT)
+
+        blind_label = ttk.Label(blind_frame, text="Blinds:")
+        blind_label.pack(side=tk.LEFT)
+        ToolTip(blind_label, "Small and big blind amounts")
+
+        self.small_blind = tk.StringVar(value="10")
+        small_blind_entry = ttk.Entry(blind_frame, textvariable=self.small_blind, width=5)
+        small_blind_entry.pack(side=tk.LEFT, padx=(5, 2))
+        ToolTip(small_blind_entry, "Small blind amount")
+
+        ttk.Label(blind_frame, text="/").pack(side=tk.LEFT, padx=2)
+
+        self.big_blind = tk.StringVar(value="20")
+        big_blind_entry = ttk.Entry(blind_frame, textvariable=self.big_blind, width=5)
+        big_blind_entry.pack(side=tk.LEFT, padx=(2, 0))
+        ToolTip(big_blind_entry, "Big blind amount")
+
+        # Action buttons
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.pack(fill=tk.X)
+
+        # Start game button
+        self.start_enhanced_game_btn = ttk.Button(
+            button_frame,
+            text="🎮 Start Enhanced Game",
+            command=self._start_enhanced_game,
+            style="Primary.TButton"
+        )
+        self.start_enhanced_game_btn.pack(side=tk.LEFT, padx=(0, 10))
+        ToolTip(self.start_enhanced_game_btn, "Start a new enhanced poker game with strategy analysis")
+
+        # Reset button
+        reset_btn = ttk.Button(
+            button_frame,
+            text="🔄 Reset Game",
+            command=self._reset_enhanced_game,
+            style="Danger.TButton"
+        )
+        reset_btn.pack(side=tk.LEFT, padx=(0, 10))
+        ToolTip(reset_btn, "Reset the current game and start fresh")
+
+        # Settings button
+        settings_btn = ttk.Button(
+            button_frame,
+            text="⚙️ Game Settings",
+            command=self._show_game_settings
+        )
+        settings_btn.pack(side=tk.LEFT)
+        ToolTip(settings_btn, "Configure advanced game settings and options")
+
+        # Game display section
+        game_display_frame = ttk.LabelFrame(
+            main_container,
+            text="Game Display",
+            padding=15
+        )
+        game_display_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Create notebook for game tabs
+        self.game_notebook = ttk.Notebook(game_display_frame)
+        self.game_notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Game state tab
+        game_state_frame = ttk.Frame(self.game_notebook)
+        self.game_notebook.add(game_state_frame, text="Game State")
+
+        self.enhanced_game_state = tk.Text(
+            game_state_frame,
+            height=15,
+            font=("Consolas", 10),
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            state=tk.DISABLED
+        )
+        self.enhanced_game_state.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Strategy analysis tab
+        strategy_frame = ttk.Frame(self.game_notebook)
+        self.game_notebook.add(strategy_frame, text="Strategy Analysis")
+
+        self.strategy_analysis = tk.Text(
+            strategy_frame,
+            height=15,
+            font=("Arial", 10),
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            state=tk.DISABLED
+        )
+        self.strategy_analysis.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Statistics tab
+        stats_frame = ttk.Frame(self.game_notebook)
+        self.game_notebook.add(stats_frame, text="Statistics")
+
+        self.game_statistics = tk.Text(
+            stats_frame,
+            height=15,
+            font=("Arial", 10),
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            state=tk.DISABLED
+        )
+        self.game_statistics.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def _start_enhanced_game(self):
+        """Start the enhanced poker game."""
+        try:
+            players = int(self.enhanced_player_count.get())
+            stack = int(self.starting_stack.get())
+            small_blind = int(self.small_blind.get())
+            big_blind = int(self.big_blind.get())
+            
+            # Update game state display
+            game_info = f"""ENHANCED POKER GAME STARTED
+{'='*50}
+
+Game Settings:
+• Players: {players}
+• Starting Stack: {stack} chips
+• Blinds: {small_blind}/{big_blind}
+• Strategy: {self.strategy_data.get_strategy_file_display_name()}
+
+Game Status: Ready to begin
+Last Action: Game initialized
+"""
+            
+            self.enhanced_game_state.config(state=tk.NORMAL)
+            self.enhanced_game_state.delete(1.0, tk.END)
+            self.enhanced_game_state.insert(1.0, game_info)
+            self.enhanced_game_state.config(state=tk.DISABLED)
+            
+            # Update strategy analysis
+            strategy_info = f"""STRATEGY ANALYSIS
+{'='*30}
+
+Current Strategy: {self.strategy_data.get_strategy_file_display_name()}
+Total Hands: {sum(len(tier.hands) for tier in self.strategy_data.tiers)}
+Tiers: {len(self.strategy_data.tiers)}
+
+Strategy Features:
+• Preflop hand evaluation
+• Position-based adjustments
+• Postflop decision tables
+• Practice session integration
+
+Ready for game analysis...
+"""
+            
+            self.strategy_analysis.config(state=tk.NORMAL)
+            self.strategy_analysis.delete(1.0, tk.END)
+            self.strategy_analysis.insert(1.0, strategy_info)
+            self.strategy_analysis.config(state=tk.DISABLED)
+            
+            # Update statistics
+            stats_info = f"""GAME STATISTICS
+{'='*20}
+
+Session Start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Games Played: 0
+Hands Played: 0
+Win Rate: 0.0%
+Average Pot: 0 chips
+
+Performance Metrics:
+• Decision Accuracy: 0.0%
+• Strategy Adherence: 0.0%
+• Position Play: 0.0%
+• Hand Selection: 0.0%
+
+Ready to track performance...
+"""
+            
+            self.game_statistics.config(state=tk.NORMAL)
+            self.game_statistics.delete(1.0, tk.END)
+            self.game_statistics.insert(1.0, stats_info)
+            self.game_statistics.config(state=tk.DISABLED)
+            
+            self.set_status(f"Enhanced game started with {players} players, {stack} chips each")
+            
+        except ValueError as e:
+            self.set_status("Error: Please enter valid numbers for game settings", duration=3000)
+
+    def _reset_enhanced_game(self):
+        """Reset the enhanced game."""
+        if messagebox.askyesno("Reset Game", "Are you sure you want to reset the game?"):
+            # Clear all displays
+            for text_widget in [self.enhanced_game_state, self.strategy_analysis, self.game_statistics]:
+                text_widget.config(state=tk.NORMAL)
+                text_widget.delete(1.0, tk.END)
+                text_widget.insert(1.0, "Game reset. Start a new game to begin.")
+                text_widget.config(state=tk.DISABLED)
+            
+            self.set_status("Game reset successfully")
+
+    def _show_game_settings(self):
+        """Show advanced game settings dialog."""
+        settings_text = """Advanced Game Settings
+
+Strategy Options:
+• Use current strategy for decisions
+• Enable position-based adjustments
+• Apply postflop decision tables
+• Include hand strength analysis
+
+Game Options:
+• Auto-save game state
+• Track detailed statistics
+• Enable strategy feedback
+• Show optimal play suggestions
+
+AI Opponent Settings:
+• Difficulty level: Medium
+• Strategy adherence: 85%
+• Bluff frequency: 15%
+• Position awareness: High
+
+These settings can be configured in the main strategy panels."""
+        
+        messagebox.showinfo("Game Settings", settings_text)
+        self.set_status("Game settings dialog displayed")
 
     def run(self):
         """Run the application."""
