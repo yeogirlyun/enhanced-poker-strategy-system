@@ -8,9 +8,6 @@ This script launches the enhanced CLI poker game with all the latest features.
 import sys
 import os
 
-# Add cli_version to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'cli_version'))
-
 # Add shared directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'shared'))
 

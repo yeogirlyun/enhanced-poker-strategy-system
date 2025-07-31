@@ -564,26 +564,27 @@ class ImprovedPokerStateMachine:
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using strategy table."""
         if not self.strategy_data or not hasattr(self.strategy_data, 'strategy_dict'):
-            # BUG FIX: evaluate_hand returns tuple, so unpack it
             hand_strength, _ = self.evaluate_hand(cards, [])
             return hand_strength
-        
-        # Convert cards to hand notation (e.g., "AA", "AKs", "72o")
-        # Sort by poker rank, not alphabetically
-        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, 
-                       '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, 
+
+        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
+                       '9': 9, '8': 8, '7': 7, '6': 6, '5': 5,
                        '4': 4, '3': 3, '2': 2}
-        ranks = sorted([card[0] for card in cards], 
+        
+        # Add a check to ensure ranks are valid
+        if not all(card[0] in rank_values for card in cards):
+            # Fallback to a default value if a rank is not found
+            return 0 
+
+        ranks = sorted([card[0] for card in cards],
                       key=lambda r: rank_values.get(r, 0), reverse=True)
         suited = cards[0][1] == cards[1][1]
-        
-        # BUG FIX: Pocket pairs don't need 's' or 'o' suffix
+
         if ranks[0] == ranks[1]:
-            hand_notation = f"{ranks[0]}{ranks[1]}"  # e.g., "AA", "KK"
+            hand_notation = f"{ranks[0]}{ranks[1]}"
         else:
-            hand_notation = f"{ranks[0]}{ranks[1]}{'s' if suited else 'o'}"  # e.g., "AKs", "AKo"
-        
-        # Look up in preflop table (correct path)
+            hand_notation = f"{ranks[0]}{ranks[1]}{'s' if suited else 'o'}"
+
         preflop_table = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
         return preflop_table.get(hand_notation, 0)
 
