@@ -84,11 +84,15 @@ class DynamicPositionManager:
         Returns:
             List of seat numbers in action order
         """
+        if self.num_players < 2:
+            return []
+
         if street == 'preflop':
-            # Preflop: UTG first (3 seats after button)
+            # Preflop action starts with the player to the left of the Big Blind (UTG).
+            # For 6-max, this is seat index (dealer + 3) % num_players.
             start_seat = (self.dealer_seat + 3) % self.num_players
         else:
-            # Postflop: SB first (1 seat after button)
+            # Postflop action starts with the player to the left of the Button (Small Blind).
             start_seat = (self.dealer_seat + 1) % self.num_players
         
         action_order = []

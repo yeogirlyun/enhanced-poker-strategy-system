@@ -113,8 +113,11 @@ class EnhancedHandEvaluator:
         sorted_values = sorted(rank_counts.values(), reverse=True)
         max_suit_count = max(suit_counts.values()) if suit_counts else 0
         
-        # Check for straight flush
+        # Check for royal flush (A-high straight flush)
         if self._is_straight_flush(rank_counts, suit_counts):
+            # Check if it's a royal flush (A-high straight flush)
+            if 14 in rank_values and 13 in rank_values and 12 in rank_values and 11 in rank_values and 10 in rank_values:
+                return HandRank.ROYAL_FLUSH, sorted(rank_values, reverse=True), "Royal Flush"
             return HandRank.STRAIGHT_FLUSH, sorted(rank_values, reverse=True), "Straight Flush"
         
         # Check for four of a kind
@@ -229,6 +232,22 @@ class EnhancedHandEvaluator:
         }
         
         return preflop_strengths.get(hand_notation, 50)  # Default to 50 for unlisted hands
+
+    def hand_rank_to_string(self, hand_rank: HandRank) -> str:
+        """Convert HandRank enum to string for easier use."""
+        conversion = {
+            HandRank.HIGH_CARD: 'high_card',
+            HandRank.PAIR: 'pair',
+            HandRank.TWO_PAIR: 'two_pair',
+            HandRank.THREE_OF_A_KIND: 'three_of_a_kind',
+            HandRank.STRAIGHT: 'straight',
+            HandRank.FLUSH: 'flush',
+            HandRank.FULL_HOUSE: 'full_house',
+            HandRank.FOUR_OF_A_KIND: 'four_of_a_kind',
+            HandRank.STRAIGHT_FLUSH: 'straight_flush',
+            HandRank.ROYAL_FLUSH: 'royal_flush'
+        }
+        return conversion.get(hand_rank, 'high_card')
 
 
 # Global instance for easy access
