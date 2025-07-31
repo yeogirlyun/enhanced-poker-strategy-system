@@ -15,6 +15,7 @@ Version 1.1 (2025-07-29) - Enhanced Font Controls & UI
 
 import tkinter as tk
 from tkinter import ttk, messagebox
+import os
 from gui_models import StrategyData, THEME, GridSettings
 from hand_grid import HandGridWidget
 from tier_panel import TierPanel
@@ -693,11 +694,33 @@ class PokerStrategyGUI:
         messagebox.showinfo("Keyboard Shortcuts", shortcuts_text)
     
     def _launch_poker_table(self):
-        """Launch the professional poker table interface."""
+        """Launch the professional poker table interface with user-selected strategy."""
         try:
             from enhanced_visual_poker_table import ProfessionalPokerTableGUI
+            from tkinter import filedialog
+            
+            # --- FIX STARTS HERE ---
+            # Prompt the user to select a strategy file for the bots
+            strategy_path = filedialog.askopenfilename(
+                title="Select Strategy File for Bots",
+                filetypes=[("JSON files", "*.json")],
+                initialdir=os.getcwd()  # Start in the current directory
+            )
+
+            if not strategy_path:
+                messagebox.showinfo("Cancelled", "Poker table launch cancelled.")
+                return
+
+            bot_strategy_data = StrategyData()
+            if not bot_strategy_data.load_strategy_from_file(strategy_path):
+                messagebox.showerror("Error", f"Could not load strategy from {strategy_path}")
+                return
+            
+            print(f"SUCCESS: Bots will use strategy from {os.path.basename(strategy_path)}.")
+            # --- FIX ENDS HERE ---
+
             self._update_status("Launching professional poker table...")
-            poker_table = ProfessionalPokerTableGUI(self.strategy_data)
+            poker_table = ProfessionalPokerTableGUI(bot_strategy_data)
             print("🎮 Professional poker table launched successfully!")
         except Exception as e:
             self._update_status(f"Error launching poker table: {e}")

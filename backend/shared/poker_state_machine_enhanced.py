@@ -552,7 +552,8 @@ class ImprovedPokerStateMachine:
                 hand_strength = self.get_preflop_hand_strength(player.cards)
                 
                 # --- IMPROVED BOT LOGIC WITH 3-BETTING ---
-                if self.game_state.current_bet > 1.0:  # Facing a raise (assuming BB is 1.0)
+                # If facing a raise (current_bet > big blind)
+                if self.game_state.current_bet > self.game_state.big_blind:
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
@@ -569,7 +570,7 @@ class ImprovedPokerStateMachine:
                     else:
                         return ActionType.FOLD, 0
                     # --- FIX ENDS HERE ---
-                else:  # No raise, this is an opening opportunity
+                else:  # This is an opening opportunity
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 20)
@@ -578,11 +579,10 @@ class ImprovedPokerStateMachine:
                     if hand_strength >= threshold:
                         return ActionType.BET, min(sizing, player.stack)
                     else:
-                        # Check/fold from blind positions
-                        if position in ["SB", "BB"] and self.game_state.current_bet == 0:
+                        # Player should check if in BB and no one raised, otherwise fold
+                        if player.position == "BB" and self.game_state.current_bet == self.game_state.big_blind:
                             return ActionType.CHECK, 0
-                        else:
-                            return ActionType.FOLD, 0
+                        return ActionType.FOLD, 0
             else:
                 # Use postflop strategy with advanced pot odds
                 hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)

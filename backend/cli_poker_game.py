@@ -14,6 +14,7 @@ from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, Poker
 from gui_models import StrategyData
 import os
 import sys
+import argparse
 
 # Try to enable colored output on Windows
 try:
@@ -710,23 +711,34 @@ class ImprovedCLIPokerGame:
 
 
 def main():
-    """Enhanced main function."""
+    """Enhanced main function with dynamic strategy file loading."""
+    # --- FIX STARTS HERE ---
+    parser = argparse.ArgumentParser(description="Enhanced CLI Poker Game.")
+    parser.add_argument(
+        "--strategy", 
+        type=str, 
+        default="modern_strategy.json",
+        help="Path to the strategy JSON file for bots to use."
+    )
+    args = parser.parse_args()
+
     print(Colors.colorize("🚀 Loading Enhanced Poker Game...", Colors.BRIGHT_CYAN))
     
-    # Load strategy data
     strategy_data = StrategyData()
+    strategy_file_to_load = args.strategy
+    
+    print(Colors.colorize(f"🤖 Bots will use strategy from: {strategy_file_to_load}", Colors.YELLOW))
+
     try:
-        if strategy_data.load_strategy_from_file("optimized_modern_strategy.json"):
-            print(Colors.colorize("✅ Optimized modern strategy loaded", Colors.GREEN))
-        elif strategy_data.load_strategy_from_file("modern_strategy.json"):
-            print(Colors.colorize("✅ Modern strategy loaded", Colors.GREEN))
+        if strategy_data.load_strategy_from_file(strategy_file_to_load):
+            print(Colors.colorize("✅ Strategy loaded successfully", Colors.GREEN))
         else:
-            print(Colors.colorize("⚠️  Using default strategy", Colors.YELLOW))
+            print(Colors.colorize(f"⚠️  Could not load {strategy_file_to_load}. Using default tiers.", Colors.YELLOW))
             strategy_data.load_default_tiers()
     except Exception as e:
         print(Colors.colorize(f"⚠️  Strategy loading error: {e}", Colors.YELLOW))
-        print(Colors.colorize("⚠️  Using default strategy", Colors.YELLOW))
         strategy_data.load_default_tiers()
+    # --- FIX ENDS HERE ---
 
     # Create and run the game
     game = ImprovedCLIPokerGame(strategy_data)
