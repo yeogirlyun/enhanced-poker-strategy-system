@@ -18,7 +18,7 @@ Version 2.0 (2025-07-29) - Professional Theme Enhancement
 
 import json
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
 
 # --- Professional Theme Definition ---
@@ -116,7 +116,7 @@ class HandStrengthTier:
     min_hs: int
     max_hs: int
     color: str
-    hands: List[str] = field(default_factory=list)
+    hands: Set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -162,11 +162,11 @@ class StrategyData:
             "Bronze": "#8A3FFC",  # Purple
         }
         self.tiers = [
-            HandStrengthTier("Elite", 40, 50, tier_colors["Elite"], ["AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs"]),
-            HandStrengthTier("Premium", 30, 39, tier_colors["Premium"], ["TT", "99", "AJo", "KQs", "AJs", "KJs", "QJs", "JTs", "ATs", "KQo"]),
-            HandStrengthTier("Gold", 20, 29, tier_colors["Gold"], ["88", "77", "AQo", "KJo", "A9s", "A8s", "KTs", "QTs", "J9s"]),
-            HandStrengthTier("Silver", 10, 19, tier_colors["Silver"], ["66", "55", "44", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s"]),
-            HandStrengthTier("Bronze", 1, 9, tier_colors["Bronze"], ["33", "22", "A4s", "A3s", "A2s", "K8s", "Q8s", "J7s", "T8s", "98s"]),
+            HandStrengthTier("Elite", 40, 50, tier_colors["Elite"], {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs"}),
+            HandStrengthTier("Premium", 30, 39, tier_colors["Premium"], {"TT", "99", "AJo", "KQs", "AJs", "KJs", "QJs", "JTs", "ATs", "KQo"}),
+            HandStrengthTier("Gold", 20, 29, tier_colors["Gold"], {"88", "77", "AQo", "KJo", "A9s", "A8s", "KTs", "QTs", "J9s"}),
+            HandStrengthTier("Silver", 10, 19, tier_colors["Silver"], {"66", "55", "44", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s"}),
+            HandStrengthTier("Bronze", 1, 9, tier_colors["Bronze"], {"33", "22", "A4s", "A3s", "A2s", "K8s", "Q8s", "J7s", "T8s", "98s"}),
         ]
         self.current_strategy_file = None
         self.strategy_dict = self._create_strategy_from_tiers()
@@ -210,8 +210,8 @@ class StrategyData:
             else: tier_name, min_hs, max_hs = "Bronze", 1, 9
             
             if tier_name not in strength_groups:
-                strength_groups[tier_name] = {"hands": [], "min_hs": min_hs, "max_hs": max_hs, "color": tier_colors[tier_name]}
-            strength_groups[tier_name]["hands"].append(hand)
+                strength_groups[tier_name] = {"hands": set(), "min_hs": min_hs, "max_hs": max_hs, "color": tier_colors[tier_name]}
+            strength_groups[tier_name]["hands"].add(hand)
 
         for tier_name, data in strength_groups.items():
             self.tiers.append(HandStrengthTier(name=tier_name, **data))
