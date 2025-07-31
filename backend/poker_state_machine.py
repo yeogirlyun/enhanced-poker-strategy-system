@@ -177,8 +177,18 @@ class PokerStateMachine:
         # Set action player (UTG)
         self.action_player_index = (self.big_blind_position + 1) % len(players)
 
-        # Transition to preflop betting
+        # Transition to preflop betting (but don't start first action automatically)
         self.transition_to(PokerState.PREFLOP_BETTING)
+    
+    def start_hand_with_cards(self, deck):
+        """Start a new hand and deal cards."""
+        self.start_hand()
+        self.deal_hole_cards(deck)
+
+    def deal_hole_cards(self, deck):
+        """Deal hole cards to all players."""
+        for player in self.game_state.players:
+            player.cards = [deck.pop(), deck.pop()]
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
@@ -189,8 +199,7 @@ class PokerStateMachine:
         # Check if round is already complete (all players called BB)
         if self.is_round_complete():
             self.transition_to(PokerState.DEAL_FLOP)
-        else:
-            self.handle_current_player_action()
+        # Don't automatically start first action - let caller control this
 
     def handle_deal_flop(self):
         """Deal the flop."""

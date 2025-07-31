@@ -263,7 +263,7 @@ class ProfessionalPokerTable:
     def _execute_immediate_action(self, action):
         """Execute an action immediately using state machine (FOLD, CHECK, CALL)."""
         if not self.current_game_state or not self.hand_started:
-            messagebox.showwarning("No Active Hand", "Please start a new hand first.")
+            self._log_action("ERROR", "No Active Hand - Please start a new hand first", 0, play_sound=False)
             return
 
         try:
@@ -301,7 +301,7 @@ class ProfessionalPokerTable:
                 )
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to execute action: {str(e)}")
+            self._log_action("ERROR", f"Failed to execute action: {str(e)}", 0, play_sound=False)
 
     def _set_action(self, action):
         """Set the selected action (for BET/RAISE that require submit)."""
@@ -732,7 +732,10 @@ class ProfessionalPokerTable:
 
     def _is_showdown(self):
         """Check if we're in showdown phase (river betting complete)."""
-        if not self.current_game_state or self.state_machine.get_current_state() != PokerState.RIVER_BETTING:
+        if (
+            not self.current_game_state
+            or self.state_machine.get_current_state() != PokerState.RIVER_BETTING
+        ):
             return False
 
         # Check if river betting is complete
@@ -1115,17 +1118,13 @@ class ProfessionalPokerTable:
             # Initialize hand state
             self.hand_started = True
 
-            # Start the state machine
-            self.state_machine.start_hand()
-
-            # Get the initial game state from state machine
-            self.current_game_state = self.state_machine.game_state
-
-            # Deal hole cards
+            # Create deck and start hand with cards
             deck = self._create_deck()
             random.shuffle(deck)
-            for player in self.current_game_state.players:
-                player.cards = [deck.pop(), deck.pop()]
+            
+            # Start the state machine with cards
+            self.state_machine.start_hand_with_cards(deck)
+            self.current_game_state = self.state_machine.game_state
 
             # Redraw table
             self._redraw_professional_table()
@@ -1199,7 +1198,7 @@ class ProfessionalPokerTable:
             )
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to start hand: {str(e)}")
+            self._log_action("ERROR", f"Failed to start hand: {str(e)}", 0, play_sound=False)
 
     def _create_deck(self):
         """Create a standard 52-card deck."""
@@ -1235,7 +1234,7 @@ class ProfessionalPokerTable:
     def _submit_professional_action(self):
         """Submit action with proper turn progression using state machine."""
         if not self.current_game_state or not self.hand_started:
-            messagebox.showwarning("No Active Hand", "Please start a new hand first.")
+            self._log_action("ERROR", "No Active Hand - Please start a new hand first", 0, play_sound=False)
             return
 
         try:
@@ -1281,7 +1280,7 @@ class ProfessionalPokerTable:
                 )
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to submit action: {str(e)}")
+            self._log_action("ERROR", f"Failed to submit action: {str(e)}", 0, play_sound=False)
 
     def _advance_to_next_player(self):
         """Move to the next active player."""
