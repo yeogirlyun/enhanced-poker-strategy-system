@@ -464,58 +464,16 @@ class PokerStrategyGUI:
         self.tier_panel.update_font_size(current_font_size)
 
     def _update_top_menu_fonts(self, font_config):
-        """Update fonts in the top menu area."""
-        # Calculate button font size (120% of app font size)
+        """Update fonts in the top menu area by updating the style."""
         button_font_size = max(8, int(font_config[1] * 1.2))
         button_font = ("Arial", button_font_size, "bold")
 
-        # Update strategy label
-        self.strategy_label.configure(font=font_config)
+        style = ttk.Style()
+        style.configure("TopArea.TLabel", font=font_config)
+        style.configure("TopMenu.TButton", font=button_font)
 
-        # Update button fonts - use style configuration for ttk widgets
-        if hasattr(self, "new_btn"):
-            try:
-                self.new_btn.configure(font=button_font)
-            except tk.TclError:
-                # ttk widgets don't support direct font configuration
-                pass
-        if hasattr(self, "open_btn"):
-            try:
-                self.open_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-        if hasattr(self, "save_btn"):
-            try:
-                self.save_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-        if hasattr(self, "decrease_btn"):
-            try:
-                self.decrease_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-        if hasattr(self, "increase_btn"):
-            try:
-                self.increase_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-        if hasattr(self, "clear_highlights_btn"):
-            try:
-                self.clear_highlights_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-        if hasattr(self, "clear_all_btn"):
-            try:
-                self.clear_all_btn.configure(font=button_font)
-            except tk.TclError:
-                pass
-
-        # Update all ttk widgets in the top area to use the new font
-        # This ensures consistency across all top menu components
-        for widget in self.root.winfo_children():
-            if isinstance(widget, ttk.LabelFrame) and widget.grid_info()["row"] == 0:
-                # This is the top frame, update all its children
-                self._update_widget_fonts_recursive(widget, font_config)
+        # Update the font size label directly since it's a specific case
+        self.font_size_label.configure(font=("Arial", 12, "bold"))
 
     def _update_widget_fonts_recursive(self, parent, font_config):
         """Recursively update font for all widgets in the top menu area."""

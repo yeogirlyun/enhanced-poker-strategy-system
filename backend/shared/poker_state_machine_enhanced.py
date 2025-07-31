@@ -1452,9 +1452,6 @@ class ImprovedPokerStateMachine:
         }
 
 
-# Maintain compatibility with existing code
-PokerStateMachine = ImprovedPokerStateMachine
-
 print("🚀 Improved Poker State Machine loaded!")
 print("✅ All critical fixes implemented:")
 print("  1. Dynamic position tracking")

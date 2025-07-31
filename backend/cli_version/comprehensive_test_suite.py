@@ -270,7 +270,8 @@ class PokerTestSuite:
             actions_taken = 0
             
             while (machine.get_current_state() != PokerState.END_HAND and 
-                   actions_taken < max_actions):
+                   actions_taken < max_actions and
+                   len([p for p in machine.game_state.players if p.is_active]) > 1):
                 
                 current_player = machine.get_action_player()
                 if current_player and current_player.is_active:

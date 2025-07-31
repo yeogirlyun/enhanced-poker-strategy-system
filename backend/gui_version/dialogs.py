@@ -63,13 +63,10 @@ class TierEditDialog:
         # Ensure tier name is properly displayed - show current tier name or "New Tier" for new tiers
         tier_name = tier.name if tier and tier.name else "New Tier"
         self.name_var = tk.StringVar(value=tier_name)
-        # Use regular tk.Entry with explicit colors for better visibility
-        name_entry = tk.Entry(main_frame, textvariable=self.name_var, width=30,
-                             bg='white', fg='black', relief=tk.SUNKEN, bd=2,
-                             font=('Arial', 10))
+        # Use ttk.Entry with style for better consistency
+        name_entry = ttk.Entry(main_frame, textvariable=self.name_var, width=30, style="SkyBlue.TEntry")
         name_entry.pack(fill=tk.X, pady=(0, 15))
         name_entry.focus()
-        # Select all text for easy editing
         name_entry.select_range(0, tk.END)
         
         # HS range slider
@@ -92,10 +89,8 @@ class TierEditDialog:
         min_frame = ttk.Frame(slider_frame)
         min_frame.pack(fill=tk.X, pady=(0, 5))
         ttk.Label(min_frame, text="Min HS:", width=8).pack(side=tk.LEFT)
-        self.min_slider = tk.Scale(min_frame, from_=1, to=45, orient=tk.HORIZONTAL, 
-                                  variable=self.min_hs_var, length=200, 
-                                  bg=THEME["bg"], fg=THEME["fg"], 
-                                  highlightbackground=THEME["bg"], highlightcolor=THEME["bg"])
+        self.min_slider = ttk.Scale(min_frame, from_=1, to=45, orient=tk.HORIZONTAL, 
+                                   variable=self.min_hs_var)
         self.min_slider.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.min_label = ttk.Label(min_frame, text=str(initial_min), width=4)
         self.min_label.pack(side=tk.RIGHT, padx=(5, 0))
@@ -104,10 +99,8 @@ class TierEditDialog:
         max_frame = ttk.Frame(slider_frame)
         max_frame.pack(fill=tk.X, pady=(0, 5))
         ttk.Label(max_frame, text="Max HS:", width=8).pack(side=tk.LEFT)
-        self.max_slider = tk.Scale(max_frame, from_=1, to=45, orient=tk.HORIZONTAL, 
-                                  variable=self.max_hs_var, length=200,
-                                  bg=THEME["bg"], fg=THEME["fg"], 
-                                  highlightbackground=THEME["bg"], highlightcolor=THEME["bg"])
+        self.max_slider = ttk.Scale(max_frame, from_=1, to=45, orient=tk.HORIZONTAL, 
+                                   variable=self.max_hs_var)
         self.max_slider.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.max_label = ttk.Label(max_frame, text=str(initial_max), width=4)
         self.max_label.pack(side=tk.RIGHT, padx=(5, 0))
