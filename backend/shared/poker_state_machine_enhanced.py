@@ -476,45 +476,31 @@ class ImprovedPokerStateMachine:
     def is_round_complete(self) -> bool:
         """Check if betting round is complete with all-in handling."""
         active_players = [p for p in self.game_state.players if p.is_active]
-        
-        # Only one player left
+
         if len(active_players) <= 1:
             return True
 
-        # Players who can still act (not folded, not all-in)
         can_act_players = [p for p in active_players if not p.is_all_in]
-        
-        # Everyone is all-in - go to showdown
-        if len(can_act_players) == 0:
-            return True
 
-        # Only one player can act and they've acted - round complete
-        if len(can_act_players) == 1:
-            player_index = next(i for i, p in enumerate(self.game_state.players) 
-                              if p.is_active and not p.is_all_in)
-            return player_index in self.game_state.players_acted
+        if not can_act_players:
+            return True
 
         # Check if all players who can act have acted and bets are equal
         can_act_indices = [i for i, p in enumerate(self.game_state.players) 
                           if p.is_active and not p.is_all_in]
-        
-        all_acted = all(i in self.game_state.players_acted for i in can_act_indices)
-        
-        # Special case for preflop: BB gets option to raise if everyone just called
-        if (self.game_state.street == "preflop" and 
-            self.big_blind_position not in self.game_state.players_acted and
-            self.game_state.current_bet == 1.0):  # Only calls, no raises
-            # Check if BB can actually raise (has sufficient stack)
-            bb_player = self.game_state.players[self.big_blind_position]
-            if bb_player.stack >= self.game_state.min_raise:
-                return False
-            # BB can't raise, so round is complete
-            return True
 
-        # Check if bets are equal among players who can act
+        all_acted = all(i in self.game_state.players_acted for i in can_act_indices)
+
+        # Special case for preflop: BB gets option to raise
+        if self.game_state.street == "preflop" and self.game_state.current_bet == 1.0:
+            bb_player = self.game_state.players[self.big_blind_position]
+            if (bb_player.is_active and not bb_player.is_all_in and 
+                self.big_blind_position not in self.game_state.players_acted):
+                return False
+
         target_bet = self.game_state.current_bet
         bets_equal = all(p.current_bet == target_bet for p in can_act_players)
-        
+
         return all_acted and bets_equal
 
     def handle_current_player_action(self):
@@ -1328,56 +1314,44 @@ class ImprovedPokerStateMachine:
         """Create side pots for all-in scenarios with proper tracking."""
         active_players = [p for p in self.game_state.players if p.is_active and p.total_invested > 0]
         all_in_players = [p for p in active_players if p.is_all_in]
-        
+
         if not all_in_players:
             return []  # No side pots needed
-        
-        # Sort players by their total investment (ascending)
-        sorted_players = sorted(active_players, key=lambda p: p.total_invested)
-        
+
+        # Get all unique investment amounts from players who are all-in
+        all_in_investments = sorted(list(set(p.total_invested for p in all_in_players)))
+
         side_pots = []
-        previous_investment = 0
-        
-        for i, player in enumerate(sorted_players):
-            current_investment = player.total_invested
+        last_investment_level = 0
+
+        for investment_level in all_in_investments:
+            pot_amount = 0
+            eligible_players = []
+
+            # Calculate this side pot's value
+            for p in self.game_state.players:
+                contribution = max(0, min(p.total_invested, investment_level) - last_investment_level)
+                pot_amount += contribution
+
+            # Determine who is eligible for this pot
+            eligible_players = [p for p in active_players if p.total_invested >= investment_level]
+
+            if pot_amount > 0:
+                side_pots.append({
+                    'amount': pot_amount,
+                    'eligible_players': eligible_players
+                })
             
-            # BUG FIX: Consider partial calls in side pot calculations
-            if player.partial_call_amount is not None:
-                effective_investment = player.partial_call_amount
-            else:
-                effective_investment = current_investment
-            
-            if effective_investment > previous_investment:
-                pot_amount = 0
-                eligible_players = []
-                
-                # Calculate pot amount for this level
-                for p in active_players:
-                    # Use partial call amount if available
-                    p_effective_investment = (p.partial_call_amount if p.partial_call_amount is not None 
-                                           else p.total_invested)
-                    
-                    if p_effective_investment >= effective_investment:
-                        # Player contributes to this pot level
-                        contribution = min(effective_investment - previous_investment, 
-                                        p_effective_investment - previous_investment)
-                        pot_amount += contribution
-                        eligible_players.append(p)
-                
-                if pot_amount > 0:
-                    side_pots.append({
-                        'amount': pot_amount,
-                        'eligible_players': eligible_players,
-                        'level': effective_investment,
-                        'partial_call': player.partial_call_amount is not None
-                    })
-                previous_investment = effective_investment
-        
-        # BUG FIX: Reset partial call amounts after creating side pots
-        for player in self.game_state.players:
-            player.partial_call_amount = None
-            player.full_call_amount = None
-        
+            last_investment_level = investment_level
+
+        # The main pot is what's left over
+        main_pot_total = self.game_state.pot - sum(p['amount'] for p in side_pots)
+        if main_pot_total > 0:
+             side_pots.append({
+                'amount': main_pot_total,
+                'eligible_players': [p for p in active_players if not p.is_all_in]
+            })
+
         return side_pots
 
     def handle_end_hand(self):
