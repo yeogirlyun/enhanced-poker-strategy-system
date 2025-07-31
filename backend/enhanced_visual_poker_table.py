@@ -194,8 +194,8 @@ class ProfessionalPokerTable:
             center_frame,
             text="YOUR TURN",
             font=("Arial", 16, "bold"),  # Same as action buttons
-            fg="white",
-            bg="#FF6B6B",
+            fg="black",
+            bg="#CCCCCC",  # Gray background
             relief="raised",
             bd=4,  # Same border as action buttons
             width=12,  # Same width as action buttons
@@ -206,20 +206,20 @@ class ProfessionalPokerTable:
         # Action buttons with clear labels - ALL CONSISTENT SIZE
         self.action_var = tk.StringVar(value="check")
         actions = [
-            ("FOLD", "fold", "#FF4444"),  # Red
-            ("CHECK", "check", "#87CEEB"),  # Sky Blue
-            ("CALL", "call", "#87CEEB"),  # Sky Blue
-            ("BET", "bet", "#87CEEB"),  # Sky Blue
-            ("RAISE", "raise", "#87CEEB"),  # Sky Blue
+            ("FOLD", "fold"),
+            ("CHECK", "check"),
+            ("CALL", "call"),
+            ("BET", "bet"),
+            ("RAISE", "raise"),
         ]
 
-        for text, value, color in actions:
+        for text, value in actions:
             btn = tk.Button(
                 center_frame,
                 text=text,
                 command=lambda v=value: self._set_action(v),
-                bg=color,
-                fg="white",
+                bg="#CCCCCC",  # Gray background
+                fg="black",  # Black font
                 font=("Arial", 16, "bold"),  # Consistent font
                 relief="raised",
                 bd=4,  # Consistent border
@@ -233,8 +233,8 @@ class ProfessionalPokerTable:
             center_frame,
             text="SUBMIT",
             command=self._submit_professional_action,
-            bg="#87CEEB",  # Sky Blue
-            fg="white",
+            bg="#CCCCCC",  # Gray background
+            fg="black",  # Black font
             font=("Arial", 16, "bold"),
             relief="raised",
             bd=4,
