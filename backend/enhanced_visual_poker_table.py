@@ -508,6 +508,22 @@ class ProfessionalPokerTable:
 
         # Note: Sound effects are handled by _log_action to avoid duplicates
 
+    def _is_showdown(self):
+        """Check if we're in showdown phase (river betting complete)."""
+        if not self.current_game_state or self.current_hand_phase != "river":
+            return False
+        
+        # Check if river betting is complete
+        active_players = [p for p in self.current_game_state.players if p.is_active]
+        if len(active_players) <= 1:
+            return False
+            
+        # If all active players have acted and bets are equal, it's showdown
+        for player in active_players:
+            if player.current_bet != self.current_game_state.current_bet:
+                return False
+        return True
+
     def _draw_professional_table(self):
         """Draw a professional poker table with perfect centering."""
         # Calculate table position for perfect centering
@@ -708,7 +724,7 @@ class ProfessionalPokerTable:
         for i, card in enumerate(player.cards):
             card_x = first_card_x + (i * total_card_width)
 
-            # Determine card appearance based on player status
+            # Determine card appearance based on player status and game phase
             if player.is_human:
                 # Human player - always show cards
                 card_color = "#F5F5F5"  # Very light gray
@@ -717,9 +733,13 @@ class ProfessionalPokerTable:
                 # Folded player - show mucked cards (face down with "MUCKED" text)
                 card_color = "#2C3E50"  # Dark gray for mucked cards
                 show_card_text = False
-            else:
-                # Active bot player - show face down cards
+            elif self.current_hand_phase == "river" and self._is_showdown():
+                # Showdown - reveal all active players' cards
                 card_color = "#F5F5F5"  # Very light gray
+                show_card_text = True
+            else:
+                # Active bot player during play - show card backs
+                card_color = "#2C3E50"  # Dark gray for card backs
                 show_card_text = False
 
             # Draw card background
@@ -758,14 +778,30 @@ class ProfessionalPokerTable:
                     font=("Arial", 10, "bold"),
                     fill="white",
                 )
-            else:
-                # Show "XX" for active bot players (face down)
+            elif self.current_hand_phase == "river" and self._is_showdown():
+                # Showdown - reveal card text for active players
+                rank, suit = card[0], card[1]
+                suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
+                color = "red" if suit in ["h", "d"] else "black"
+
+                # Calculate font size as 60% of card height
+                font_size = int(self.card_height * 0.6)
+
                 self.canvas.create_text(
                     card_x + self.card_width // 2,
                     card_y + self.card_height // 2,
-                    text="XX",
-                    font=("Arial", 12, "bold"),
-                    fill="gray",
+                    text=f"{rank}{suit_symbol}",
+                    font=("Arial", font_size, "bold"),
+                    fill=color,
+                )
+            else:
+                # Show card back pattern for active bot players
+                self.canvas.create_text(
+                    card_x + self.card_width // 2,
+                    card_y + self.card_height // 2,
+                    text="🂠",  # Card back symbol
+                    font=("Arial", 16, "bold"),
+                    fill="white",
                 )
 
     def _draw_professional_community_cards(self):
@@ -1121,8 +1157,11 @@ class ProfessionalPokerTable:
             self._log_action("DEALER", "Dealing RIVER", 0, play_sound=True)
             self._deal_community_cards(1)
         elif self.current_hand_phase == "river":
-            # Hand is complete
+            # Hand is complete - trigger showdown
             self._log_action("DEALER", "SHOWDOWN", 0, play_sound=True)
+            # Redraw to show all cards
+            self._redraw_professional_table()
+            time.sleep(2)  # Show cards for 2 seconds
             self._show_hand_results()
             return
 
