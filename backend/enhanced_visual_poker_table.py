@@ -314,11 +314,11 @@ class ProfessionalPokerTable:
         """Activate buttons when it's the human player's turn."""
         for btn in self.action_buttons.values():
             btn.config(
-                state=tk.NORMAL, 
+                state=tk.NORMAL,
                 bg="#FF6B35",  # Bright orange when active
                 fg="white",
                 relief="raised",
-                bd=3
+                bd=3,
             )  # Bright orange with 3D effect when active
         # Log turn info to action log
         self._log_action(
@@ -331,11 +331,11 @@ class ProfessionalPokerTable:
         """Deactivate buttons when it's a bot player's turn."""
         for btn in self.action_buttons.values():
             btn.config(
-                state=tk.DISABLED, 
+                state=tk.DISABLED,
                 bg="#CCCCCC",  # Light gray when disabled
                 fg="gray",
                 relief="sunken",
-                bd=1
+                bd=1,
             )  # Light gray with sunken effect when disabled
         # Log turn info to action log
         self._log_action(
@@ -502,6 +502,13 @@ class ProfessionalPokerTable:
 
         # Move to next player
         self._advance_to_next_player()
+
+        # Check if round is complete after bot action
+        if self._is_round_complete():
+            self._log_action("SYSTEM", "Round complete - advancing to next street", 0, play_sound=False)
+            self._advance_to_next_street()
+            self._redraw_professional_table()
+            return
 
         # Redraw table
         self._redraw_professional_table()
@@ -910,7 +917,7 @@ class ProfessionalPokerTable:
             else:
                 # No bet to call - this is a bet
                 bet_text = f"Bet: ${player.current_bet:.0f}"
-            
+
             self.canvas.create_text(
                 x,
                 y + player_radius + 25,
@@ -1150,8 +1157,14 @@ class ProfessionalPokerTable:
 
             # Post blinds
             if num_players >= 2:
+                # Small blind
                 self.current_game_state.players[self.small_blind_position].stack -= 0.5
+                self.current_game_state.players[self.small_blind_position].current_bet = 0.5
+                
+                # Big blind
                 self.current_game_state.players[self.big_blind_position].stack -= 1.0
+                self.current_game_state.players[self.big_blind_position].current_bet = 1.0
+                
                 self.current_game_state.pot = 1.5
                 self.current_game_state.current_bet = 1.0
 
