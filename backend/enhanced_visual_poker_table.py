@@ -12,57 +12,7 @@ import math
 import time
 from typing import List, Dict, Optional
 
-try:
-    import pygame
-    PYGAME_AVAILABLE = True
-except ImportError:
-    PYGAME_AVAILABLE = False
-    print("⚠️  Pygame not available. Sound effects will be disabled.")
-
-
-class SoundManager:
-    """Manages sound effects for the poker table."""
-    
-    def __init__(self):
-        self.sounds = {}
-        if PYGAME_AVAILABLE:
-            try:
-                pygame.mixer.init()
-                self._load_sounds()
-            except Exception as e:
-                print(f"⚠️  Sound initialization failed: {e}")
-    
-    def _load_sounds(self):
-        """Load sound effects from the sounds directory."""
-        import os
-        sound_dir = "sounds"
-        if os.path.isdir(sound_dir):
-            for filename in os.listdir(sound_dir):
-                if filename.endswith((".wav", ".ogg")):
-                    name = os.path.splitext(filename)[0]
-                    path = os.path.join(sound_dir, filename)
-                    try:
-                        self.sounds[name] = pygame.mixer.Sound(path)
-                    except pygame.error as e:
-                        print(f"⚠️  Could not load sound '{filename}': {e}")
-        else:
-            print("⚠️  'sounds' directory not found. Creating placeholder sounds.")
-            self._create_placeholder_sounds()
-    
-    def _create_placeholder_sounds(self):
-        """Create placeholder sounds for testing."""
-        # This would create simple beep sounds for testing
-        pass
-    
-    def play(self, sound_name: str):
-        """Play a sound effect."""
-        if sound_name in self.sounds and PYGAME_AVAILABLE:
-            try:
-                self.sounds[sound_name].play()
-            except Exception as e:
-                print(f"⚠️  Error playing sound '{sound_name}': {e}")
-        else:
-            print(f"🔊 Debug: Sound '{sound_name}' not found or pygame unavailable.")
+from sound_manager import SoundManager
 
 
 class ProfessionalPokerTableGUI:
@@ -90,6 +40,15 @@ class ProfessionalPokerTableGUI:
         
         # Initialize sound manager
         self.sound_manager = SoundManager()
+        
+        # Initialize poker engine
+        try:
+            from enhanced_poker_engine import EnhancedPokerEngine
+            self.engine = EnhancedPokerEngine(strategy_data)
+            self.engine_available = True
+        except ImportError:
+            print("⚠️  EnhancedPokerEngine not available. Using simulation mode.")
+            self.engine_available = False
         
         # --- UI Elements ---
         self.canvas = tk.Canvas(
@@ -438,10 +397,42 @@ class ProfessionalPokerTableGUI:
                 self.community_card_labels[i].config(text=card)
 
     def _deal_cards(self):
-        """Simulates dealing cards to players."""
+        """Deal cards using the poker engine."""
         self.sound_manager.play("card_deal")
-        # Add animation logic here
-        print("🎴 Cards dealt!")
+        
+        if self.engine_available:
+            try:
+                # Use the poker engine to deal cards
+                game_state = self.engine.deal_new_hand()
+                
+                # Update player cards
+                for i, player in enumerate(game_state.players):
+                    if i < len(self.player_seats):
+                        cards = " ".join(player.cards) if player.cards else "🂠 🂠"
+                        self.player_seats[i]["cards"].config(text=cards)
+                
+                # Update community cards
+                if hasattr(game_state, 'community_cards') and game_state.community_cards:
+                    self.update_community_cards(game_state.community_cards)
+                
+                print("🎴 Cards dealt using poker engine!")
+                
+            except Exception as e:
+                print(f"⚠️  Error using poker engine: {e}")
+                self._deal_cards_simulation()
+        else:
+            self._deal_cards_simulation()
+    
+    def _deal_cards_simulation(self):
+        """Fallback simulation for dealing cards."""
+        import random
+        cards = ["Ah", "Ks", "Qd", "Jc", "Th", "9s", "8d", "7c", "6h", "5s"]
+        for i in range(self.num_players):
+            if i < len(self.player_seats):
+                card1 = random.choice(cards)
+                card2 = random.choice(cards)
+                self.player_seats[i]["cards"].config(text=f"{card1} {card2}")
+        print("🎴 Cards dealt (simulation mode)!")
 
     def _next_dealer(self):
         """Moves to the next dealer."""

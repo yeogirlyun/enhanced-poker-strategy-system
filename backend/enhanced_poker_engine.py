@@ -429,10 +429,80 @@ class EnhancedPokerEngine:
         }
 
     def _play_betting_round(self, game_state: GameState) -> None:
-        """Play a betting round."""
-        # Simplified betting round for now
-        # In a full implementation, this would handle all betting logic
-        pass
+        """Play a betting round with proper action order and logic."""
+        from dynamic_position_manager import DynamicPositionManager
+        
+        # Initialize position manager
+        position_manager = DynamicPositionManager(len(game_state.players))
+        
+        # Get action order based on street
+        if game_state.street == "preflop":
+            # Preflop: UTG, MP, CO, BTN, SB, BB
+            action_order = position_manager.get_action_order("preflop")
+        else:
+            # Postflop: BTN, SB, BB, UTG, MP, CO
+            action_order = position_manager.get_action_order("postflop")
+        
+        # Track betting round state
+        round_complete = False
+        last_raiser = None
+        current_bet = game_state.current_bet
+        
+        # Play through action order
+        for seat in action_order:
+            if round_complete:
+                break
+                
+            player = game_state.players[seat]
+            if not player.is_active or player.is_all_in:
+                continue
+            
+            # Get player action
+            if player.is_human:
+                # For human players, we'd need a callback
+                # For now, use strategy action
+                action = self.get_strategy_action(player, game_state)
+            else:
+                # Bot players use strategy
+                action = self.get_strategy_action(player, game_state)
+            
+            # Execute action
+            bet_size = self._calculate_bet_size(player, action, game_state)
+            self.execute_action(player, action, bet_size, game_state)
+            
+            # Update round state
+            if action in [Action.BET, Action.RAISE]:
+                last_raiser = seat
+                current_bet = player.current_bet
+            
+            # Check if round is complete
+            if self._is_round_complete(game_state, last_raiser):
+                round_complete = True
+    
+    def _calculate_bet_size(self, player: Player, action: Action, game_state: GameState) -> float:
+        """Calculate appropriate bet size for an action."""
+        if action == Action.CALL:
+            return game_state.current_bet - player.current_bet
+        elif action == Action.BET:
+            return game_state.pot * 0.75  # 75% pot bet
+        elif action == Action.RAISE:
+            return game_state.current_bet * 2.5  # 2.5x raise
+        else:
+            return 0.0
+    
+    def _is_round_complete(self, game_state: GameState, last_raiser: Optional[int]) -> bool:
+        """Check if the betting round is complete."""
+        active_players = [p for p in game_state.players if p.is_active and not p.is_all_in]
+        
+        if len(active_players) <= 1:
+            return True
+        
+        # Check if all players have acted and bet sizes are equal
+        for player in active_players:
+            if player.current_bet != game_state.current_bet:
+                return False
+        
+        return True
 
     def _determine_winner(self, game_state: GameState) -> Player:
         """Determine the winner of the hand."""
