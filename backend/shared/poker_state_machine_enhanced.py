@@ -562,54 +562,15 @@ class ImprovedPokerStateMachine:
         return self.get_basic_bot_action(player)
 
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
-        """Get preflop hand strength using strategy table."""
-        if not self.strategy_data or not hasattr(self.strategy_data, 'strategy_dict'):
-            hand_strength, _ = self.evaluate_hand(cards, [])
-            return hand_strength
-
-        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
-                       '9': 9, '8': 8, '7': 7, '6': 6, '5': 5,
-                       '4': 4, '3': 3, '2': 2}
-        
-        # Add a check to ensure ranks are valid
-        if not all(card[0] in rank_values for card in cards):
-            # Fallback to a default value if a rank is not found
-            return 0 
-
-        ranks = sorted([card[0] for card in cards],
-                      key=lambda r: rank_values.get(r, 0), reverse=True)
-        suited = cards[0][1] == cards[1][1]
-
-        if ranks[0] == ranks[1]:
-            hand_notation = f"{ranks[0]}{ranks[1]}"
-        else:
-            hand_notation = f"{ranks[0]}{ranks[1]}{'s' if suited else 'o'}"
-
-        preflop_table = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
-        return preflop_table.get(hand_notation, 0)
+        """Get preflop hand strength using enhanced evaluator."""
+        from enhanced_hand_evaluation import hand_evaluator
+        return hand_evaluator.get_preflop_hand_strength(cards)
 
     def get_postflop_hand_strength(self, cards: List[str], board: List[str]) -> int:
-        """Get postflop hand strength using strategy table."""
-        if not self.strategy_data or not hasattr(self.strategy_data, 'strategy_dict'):
-            # BUG FIX: Unpack the tuple
-            score, _ = self.evaluate_hand(cards, board)
-            return score
-        
-        # Classify hand type and look up in postflop table
-        hand_type = self.classify_hand(cards, board)
-        postflop_table = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("postflop", {})
-        
-        # BUG FIX: Provide default values for missing hand types
-        default_strengths = {
-            "top_pair_good_kicker": 35,
-            "top_pair_bad_kicker": 25, 
-            "second_pair": 20,
-            "bottom_pair": 10,
-            "pair": 15  # Fallback
-        }
-        
-        strength = postflop_table.get(hand_type, default_strengths.get(hand_type, 0))
-        return strength
+        """Get postflop hand strength using enhanced evaluator."""
+        from enhanced_hand_evaluation import hand_evaluator
+        evaluation = hand_evaluator.evaluate_hand(cards, board)
+        return evaluation['strength_score']
 
     def classify_hand(self, cards: List[str], board: List[str]) -> str:
         """Classify hand type for postflop strategy with all variants."""
