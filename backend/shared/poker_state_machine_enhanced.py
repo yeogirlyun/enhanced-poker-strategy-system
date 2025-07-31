@@ -501,26 +501,23 @@ class ImprovedPokerStateMachine:
                 hand_strength = self.get_preflop_hand_strength(player.cards)
                 
                 # --- IMPROVED BOT LOGIC WITH 3-BETTING ---
-                if self.game_state.current_bet > 0:  # Facing a raise
+                if self.game_state.current_bet > 1.0:  # Facing a raise (assuming BB is 1.0)
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
-                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 40)  # Top ~5% of hands
-                    call_threshold = vs_raise_rules.get("call_thresh", 25)  # Decent hands
+                    
+                    # --- FIX STARTS HERE ---
+                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 40)
+                    call_range = vs_raise_rules.get("call_range", [0, 0])  # Default to empty range
                     sizing = vs_raise_rules.get("sizing", 3.0)
                     
                     if hand_strength >= value_3bet_thresh:
-                        # 3-bet with very strong hands
-                        raise_amount = min(self.game_state.current_bet * sizing, player.stack)
-                        return ActionType.RAISE, raise_amount
-                    elif hand_strength >= call_threshold:
-                        # Call with decent hands
-                        call_amount = self.game_state.current_bet - player.current_bet
-                        if call_amount <= player.stack * 0.3:  # Don't call too much
-                            return ActionType.CALL, call_amount
-                        else:
-                            return ActionType.FOLD, 0
+                        return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
+                    # Use the call_range to decide whether to call
+                    elif call_range[0] <= hand_strength <= call_range[1]:
+                        return ActionType.CALL, self.game_state.current_bet - player.current_bet
                     else:
                         return ActionType.FOLD, 0
+                    # --- FIX ENDS HERE ---
                 else:  # No raise, this is an opening opportunity
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
