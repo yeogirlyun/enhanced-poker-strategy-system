@@ -723,7 +723,7 @@ STRATEGY FEATURES:
             padding=5,
             style="StatusBar.TLabel"  # Use a custom style
         )
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        status_bar.grid(row=2, column=0, sticky="ew", padx=5, pady=2)
         self.set_status("Ready.")
 
     def set_status(self, message, duration=5000):
