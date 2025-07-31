@@ -531,10 +531,26 @@ class ProfessionalPokerTable:
         # Redraw table
         self._redraw_professional_table()
 
-        # Schedule next bot action if needed
+        # Schedule next action (bot or human)
         if self.current_game_state:
             next_player = self.current_game_state.players[self.current_action_player]
-            if not next_player.is_human:
+            if next_player.is_human:
+                # Next player is human - activate buttons
+                self._log_action(
+                    "SYSTEM",
+                    f"Next player is {next_player.name} (HUMAN) - activating buttons",
+                    0,
+                    play_sound=False,
+                )
+                self._activate_buttons_for_human_turn()
+            else:
+                # Next player is bot - schedule bot action
+                self._log_action(
+                    "SYSTEM",
+                    f"Next player is {next_player.name} (BOT) - scheduling bot action",
+                    0,
+                    play_sound=False,
+                )
                 threading.Timer(self.bot_action_delay, self._bot_action).start()
 
     def _get_strategy_based_decision(self, player: Player) -> tuple[str, float, dict]:
@@ -1495,13 +1511,23 @@ class ProfessionalPokerTable:
         # Update turn indicator after setting action player
         self._update_turn_indicator()
 
-        # Start bot actions if the current player is a bot
+        # Handle the current player's turn
         if self.current_game_state:
             current_player = self.current_game_state.players[self.current_action_player]
-            if not current_player.is_human:
+            if current_player.is_human:
+                # Human player's turn - activate buttons
                 self._log_action(
                     "SYSTEM",
-                    f"Starting {self.current_hand_phase} action with {current_player.name}",
+                    f"Starting {self.current_hand_phase} action with {current_player.name} (HUMAN)",
+                    0,
+                    play_sound=False,
+                )
+                self._activate_buttons_for_human_turn()
+            else:
+                # Bot player's turn - start bot action
+                self._log_action(
+                    "SYSTEM",
+                    f"Starting {self.current_hand_phase} action with {current_player.name} (BOT)",
                     0,
                     play_sound=False,
                 )
