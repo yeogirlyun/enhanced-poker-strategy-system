@@ -900,7 +900,7 @@ class ProfessionalPokerTable:
         self.canvas.create_text(
             x,
             y + text_radius * 0.1,
-                            text=player.position,
+            text=player.position,
             font=("Arial", 14, "bold"),
             fill=text_color,
         )
@@ -1038,8 +1038,8 @@ class ProfessionalPokerTable:
         if not self.current_game_state:
             return
 
-        # Only show community cards as they're dealt
-        cards_to_show = self.current_game_state.board[: self.community_cards_dealt]
+        # Show all community cards (state machine handles dealing)
+        cards_to_show = self.current_game_state.board
         if not cards_to_show:
             return
 
@@ -1376,83 +1376,10 @@ class ProfessionalPokerTable:
         return False
 
     def _advance_to_next_street(self):
-        """Advance to the next street (flop, turn, river)."""
-        if self.current_hand_phase == "preflop":
-            self.current_hand_phase = "flop"
-            self.community_cards_dealt = 3
-            self._log_action("DEALER", "Dealing FLOP", 0, play_sound=True)
-            self._deal_community_cards(3)
-        elif self.current_hand_phase == "flop":
-            self.current_hand_phase = "turn"
-            self.community_cards_dealt = 4
-            self._log_action("DEALER", "Dealing TURN", 0, play_sound=True)
-            self._deal_community_cards(1)
-        elif self.current_hand_phase == "turn":
-            self.current_hand_phase = "river"
-            self.community_cards_dealt = 5
-            self._log_action("DEALER", "Dealing RIVER", 0, play_sound=True)
-            self._deal_community_cards(1)
-        elif self.current_hand_phase == "river":
-            # Hand is complete - trigger showdown
-            self._log_action("DEALER", "SHOWDOWN", 0, play_sound=True)
-            # Redraw to show all cards
-            self._redraw_professional_table()
-            time.sleep(1)  # Show cards for 1 second (reduced from 2)
-            self._show_hand_results()
-            return
-
-        # Reset betting for new street
-        self.current_game_state.current_bet = 0.0
-        # Clear all player bets for new street
-        for player in self.current_game_state.players:
-            player.current_bet = 0.0
-        self.current_game_state.street = (
-            self.current_hand_phase
-        )  # Update game state street
-
-        # Set action player based on street
-        if self.current_hand_phase == "preflop":
-            # Preflop: UTG starts (after big blind)
-            self.current_action_player = (self.big_blind_position + 1) % len(
-                self.current_game_state.players
-            )
-        else:
-            # Postflop: First active player after dealer (button) starts
-            self.current_action_player = (self.dealer_position + 1) % len(
-                self.current_game_state.players
-            )
-            # Skip to first active player
-            while not self.current_game_state.players[
-                self.current_action_player
-            ].is_active:
-                self.current_action_player = (self.current_action_player + 1) % len(
-                    self.current_game_state.players
-                )
-
-        # Update turn indicator after setting action player
-        self._update_turn_indicator()
-
-        # Handle the current player's turn
-        if self.current_game_state:
-            current_player = self.current_game_state.players[self.current_action_player]
-            if current_player.is_human:
-                # Human player's turn - activate buttons
-                self._log_action(
-                    "SYSTEM",
-                    f"Starting {self.current_hand_phase} action with {current_player.name} (HUMAN)",
-                    0,
-                    play_sound=False,
-                )
-                self._activate_buttons_for_human_turn()
-            else:
-                # Bot player's turn - start bot action
-                self._log_action(
-                    "SYSTEM",
-                    f"Starting {self.current_hand_phase} action with {current_player.name} (BOT)",
-                    0,
-                    play_sound=False,
-                )
-                threading.Timer(self.bot_action_delay, self._bot_action).start()
+        """Advance to the next street using state machine."""
+        # State machine handles all street progression
+        # This method is now a placeholder for compatibility
+        pass
 
     def _deal_community_cards(self, num_cards):
         """Deal community cards."""
