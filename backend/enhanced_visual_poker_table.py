@@ -334,7 +334,7 @@ class ProfessionalPokerTable:
             btn.config(state=tk.DISABLED, bg="#E0E0E0")
         self.turn_label.config(text="BOT TURN", bg="#FF9800", fg="white")
 
-    def _log_action(self, player_name: str, action: str, amount: float = 0):
+    def _log_action(self, player_name: str, action: str, amount: float = 0, play_sound: bool = True):
         """Log an action to the action log."""
         timestamp = time.strftime("%H:%M:%S")
         if amount > 0:
@@ -346,43 +346,62 @@ class ProfessionalPokerTable:
         self.action_log_text.insert(tk.END, log_entry)
         self.action_log_text.see(tk.END)  # Auto-scroll to bottom
 
-        # Play sound effect
-        self._play_sound_effect(action)
+        # Play sound effect only for actual player actions, not system messages
+        if play_sound and player_name not in ["DEALER", "SYSTEM"]:
+            self._play_sound_effect(action)
 
     def _play_sound_effect(self, action: str):
-        """Play sound effect for action."""
+        """Play professional poker sound effects based on major poker apps."""
         try:
             import winsound
 
-            # Windows sound effects
+            # Windows sound effects - Professional poker app style
             sound_effects = {
-                "fold": winsound.SND_ALIAS,
-                "check": winsound.SND_ALIAS,
-                "call": winsound.SND_ALIAS,
-                "bet": winsound.SND_ALIAS,
-                "raise": winsound.SND_ALIAS,
-                "all_in": winsound.SND_ALIAS,
-                "deal": winsound.SND_ALIAS,
-                "shuffle": winsound.SND_ALIAS,
+                # Player actions (like PokerStars)
+                "fold": "SystemHand",  # Soft, quick sound
+                "check": "SystemQuestion",  # Gentle notification
+                "call": "SystemExclamation",  # Medium notification
+                "bet": "SystemAsterisk",  # Attention sound
+                "raise": "SystemAsterisk",  # Same as bet
+                "all_in": "SystemExclamation",  # Dramatic sound
+                
+                # Game events (like 888 Poker)
+                "deal": "SystemStart",  # Card dealing sound
+                "shuffle": "SystemStart",  # Shuffle sound
+                "your_turn": "SystemQuestion",  # Turn notification
+                "hand_start": "SystemStart",  # Hand beginning
+                "street_change": "SystemExclamation",  # Street change
+                "showdown": "SystemAsterisk",  # Showdown sound
+                "winner": "SystemExclamation",  # Winner announcement
+                "chips": "SystemAsterisk",  # Chip movement
             }
             winsound.PlaySound(
-                "SystemAsterisk", sound_effects.get(action.lower(), winsound.SND_ALIAS)
+                sound_effects.get(action.lower(), "SystemAsterisk"), 
+                winsound.SND_ALIAS
             )
         except ImportError:
             try:
                 import os
 
-                # macOS/Linux sound effects
+                # macOS/Linux sound effects - Professional poker app style
                 sound_effects = {
-                    "fold": "afplay /System/Library/Sounds/Tink.aiff",
-                    "check": "afplay /System/Library/Sounds/Tink.aiff",
-                    "call": "afplay /System/Library/Sounds/Tink.aiff",
-                    "bet": "afplay /System/Library/Sounds/Glass.aiff",
-                    "raise": "afplay /System/Library/Sounds/Glass.aiff",
-                    "all_in": "afplay /System/Library/Sounds/Glass.aiff",
-                    "deal": "afplay /System/Library/Sounds/Pop.aiff",
-                    "shuffle": "afplay /System/Library/Sounds/Pop.aiff",
-                    "your_turn": "afplay /System/Library/Sounds/Glass.aiff",
+                    # Player actions (like PokerStars)
+                    "fold": "afplay /System/Library/Sounds/Tink.aiff",  # Soft fold
+                    "check": "afplay /System/Library/Sounds/Tink.aiff",  # Gentle check
+                    "call": "afplay /System/Library/Sounds/Glass.aiff",  # Medium call
+                    "bet": "afplay /System/Library/Sounds/Glass.aiff",  # Attention bet
+                    "raise": "afplay /System/Library/Sounds/Glass.aiff",  # Same as bet
+                    "all_in": "afplay /System/Library/Sounds/Glass.aiff",  # Dramatic
+                    
+                    # Game events (like 888 Poker)
+                    "deal": "afplay /System/Library/Sounds/Pop.aiff",  # Card dealing
+                    "shuffle": "afplay /System/Library/Sounds/Pop.aiff",  # Shuffle
+                    "your_turn": "afplay /System/Library/Sounds/Glass.aiff",  # Turn
+                    "hand_start": "afplay /System/Library/Sounds/Pop.aiff",  # Start
+                    "street_change": "afplay /System/Library/Sounds/Glass.aiff",  # Street
+                    "showdown": "afplay /System/Library/Sounds/Glass.aiff",  # Showdown
+                    "winner": "afplay /System/Library/Sounds/Glass.aiff",  # Winner
+                    "chips": "afplay /System/Library/Sounds/Tink.aiff",  # Chips
                 }
                 os.system(
                     sound_effects.get(
@@ -390,18 +409,27 @@ class ProfessionalPokerTable:
                     )
                 )
             except:
-                # Fallback to console output
+                # Fallback to console output with emoji indicators
                 sound_effects = {
-                    "fold": "🔇 Fold sound",
-                    "check": "🔊 Check sound",
-                    "call": "🔊 Call sound",
-                    "bet": "💰 Bet sound",
-                    "raise": "💰 Raise sound",
-                    "all_in": "🎰 All-in sound",
-                    "deal": "🃏 Deal sound",
-                    "shuffle": "🔀 Shuffle sound",
+                    # Player actions
+                    "fold": "🔇 Fold (soft)",
+                    "check": "🔊 Check (gentle)",
+                    "call": "💰 Call (medium)",
+                    "bet": "💰 Bet (attention)",
+                    "raise": "💰 Raise (attention)",
+                    "all_in": "🎰 All-in (dramatic)",
+                    
+                    # Game events
+                    "deal": "🃏 Deal cards",
+                    "shuffle": "🔀 Shuffle deck",
+                    "your_turn": "🔔 Your turn",
+                    "hand_start": "🎮 Hand start",
+                    "street_change": "🔄 Street change",
+                    "showdown": "⚡ Showdown",
+                    "winner": "🏆 Winner",
+                    "chips": "🪙 Chips",
                 }
-                effect = sound_effects.get(action.lower(), f"🔊 {action} sound")
+                effect = sound_effects.get(action.lower(), f"🔊 {action}")
                 print(f"{effect}")
 
     def _bot_action(self):
@@ -470,6 +498,10 @@ class ProfessionalPokerTable:
             player.current_bet = call_amount
         elif action == "check":
             player.current_bet = 0
+
+        # Play chip sound for betting actions
+        if action in ["bet", "raise", "call"]:
+            self._play_sound_effect("chips")
 
     def _draw_professional_table(self):
         """Draw a professional poker table with perfect centering."""
@@ -851,8 +883,11 @@ class ProfessionalPokerTable:
             # Update turn indicator
             self._update_turn_indicator()
 
+            # Play hand start sound
+            self._play_sound_effect("hand_start")
+
             # Log hand start
-            self._log_action("DEALER", "Hand Started", 0)
+            self._log_action("DEALER", "Hand Started", 0, play_sound=False)
 
             # Start bot actions if first player is bot
             if self.current_game_state:
@@ -864,33 +899,38 @@ class ProfessionalPokerTable:
 
             # Log detailed hand start info instead of popup
             self._log_action(
-                "SYSTEM", f"New hand started with {num_players} players!", 0
+                "SYSTEM", f"New hand started with {num_players} players!", 0, play_sound=False
             )
             self._log_action(
                 "SYSTEM",
                 f"Dealer: {self.current_game_state.players[self.dealer_position].name}",
                 0,
+                play_sound=False,
             )
             self._log_action(
                 "SYSTEM",
                 f"Your position: {self.current_game_state.players[0].position.value}",
                 0,
+                play_sound=False,
             )
             self._log_action(
                 "SYSTEM",
                 f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
                 0,
+                play_sound=False,
             )
             # Add helpful instructions
             self._log_action(
                 "SYSTEM",
                 "INSTRUCTIONS: FOLD, CHECK, CALL execute immediately. BET/RAISE require SUBMIT!",
                 0,
+                play_sound=False,
             )
             self._log_action(
                 "SYSTEM",
                 "TIP: For betting actions, enter amount and click SUBMIT!",
                 0,
+                play_sound=False,
             )
 
         except Exception as e:
@@ -996,16 +1036,20 @@ class ProfessionalPokerTable:
             self.current_hand_phase = "flop"
             self.community_cards_dealt = 3
             self._deal_community_cards(3)
+            self._play_sound_effect("street_change")  # Flop sound
         elif self.current_hand_phase == "flop":
             self.current_hand_phase = "turn"
             self.community_cards_dealt = 4
             self._deal_community_cards(1)
+            self._play_sound_effect("street_change")  # Turn sound
         elif self.current_hand_phase == "turn":
             self.current_hand_phase = "river"
             self.community_cards_dealt = 5
             self._deal_community_cards(1)
+            self._play_sound_effect("street_change")  # River sound
         elif self.current_hand_phase == "river":
             # Hand is complete
+            self._play_sound_effect("showdown")  # Showdown sound
             self._show_hand_results()
             return
 
@@ -1025,7 +1069,11 @@ class ProfessionalPokerTable:
 
         for _ in range(num_cards):
             if self._deck:
-                self.current_game_state.board.append(self._deck.pop())
+                card = self._deck.pop()
+                self.current_game_state.board.append(card)
+                self._redraw_professional_table()
+                self._play_sound_effect("deal")  # Deal sound for each card
+                time.sleep(0.3)  # Deal cards with delay
 
     def _show_hand_results(self):
         """Show the results of the hand."""
