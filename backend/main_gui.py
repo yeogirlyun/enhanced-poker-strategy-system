@@ -70,6 +70,9 @@ class EnhancedMainGUI:
         self._create_status_bar()
         
         self._apply_initial_font_size()
+        
+        # Initialize the overview with current strategy data
+        self._update_overview()
 
     def _setup_styles(self):
         """Setup custom styles for the application."""
@@ -598,34 +601,62 @@ class EnhancedMainGUI:
         if hasattr(self, "overview_text"):
             self.overview_text.delete(1.0, tk.END)
             
+            # Get strategy information
+            strategy_name = self.strategy_data.get_strategy_file_display_name()
+            total_hands = sum(len(tier.hands) for tier in self.strategy_data.tiers)
+            total_tiers = len(self.strategy_data.tiers)
+            
             overview = f"""STRATEGY OVERVIEW
-{'='*50}
+{'='*60}
 
-Current Strategy: {self.strategy_data.get_strategy_file_display_name()}
-Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📊 STRATEGY INFORMATION:
+• Current Strategy: {strategy_name}
+• Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+• Total Playable Hands: {total_hands}
+• Number of Tiers: {total_tiers}
+• Strategy File: {self.strategy_data.current_strategy_file or 'Default'}
 
-TIER SUMMARY:
+🎯 TIER BREAKDOWN:
 """
             
+            # Add tier information with better formatting
             for tier in self.strategy_data.tiers:
-                overview += f"\n{tier.name} (HS {tier.min_hs}-{tier.max_hs}): {len(tier.hands)} hands"
-                overview += f"\n  Hands: {', '.join(tier.hands[:5])}"
-                if len(tier.hands) > 5:
-                    overview += f" ... and {len(tier.hands) - 5} more"
+                tier_color = tier.color
+                overview += f"\n🔸 {tier.name} (HS {tier.min_hs}-{tier.max_hs}): {len(tier.hands)} hands"
+                overview += f"\n   Hands: {', '.join(tier.hands[:8])}"
+                if len(tier.hands) > 8:
+                    overview += f" ... and {len(tier.hands) - 8} more"
                 overview += "\n"
             
             overview += f"""
-TOTAL STATISTICS:
-• Total Playable Hands: {sum(len(tier.hands) for tier in self.strategy_data.tiers)}
-• Number of Tiers: {len(self.strategy_data.tiers)}
-• Strategy File: {self.strategy_data.current_strategy_file or 'Default'}
+📈 STRATEGY ANALYSIS:
+• Elite Hands: {len([t for t in self.strategy_data.tiers if 'Elite' in t.name])} tiers
+• Premium Hands: {len([t for t in self.strategy_data.tiers if 'Premium' in t.name])} tiers  
+• Gold Hands: {len([t for t in self.strategy_data.tiers if 'Gold' in t.name])} tiers
+• Silver Hands: {len([t for t in self.strategy_data.tiers if 'Silver' in t.name])} tiers
+• Bronze Hands: {len([t for t in self.strategy_data.tiers if 'Bronze' in t.name])} tiers
 
-STRATEGY FEATURES:
-• Preflop hand strength evaluation
-• Postflop decision tables
-• Position-based adjustments
-• Practice session integration
-• Strategy optimization tools
+🚀 SYSTEM FEATURES:
+• ✅ Preflop hand strength evaluation
+• ✅ Postflop decision tables  
+• ✅ Position-based adjustments
+• ✅ Practice session integration
+• ✅ Strategy optimization tools
+• ✅ Hand grid visualization
+• ✅ Tier management system
+• ✅ PDF export capability
+
+💡 USAGE TIPS:
+• Use the Hand Grid & Tiers tab to visualize your strategy
+• Edit postflop hand strengths in the Postflop HS Editor
+• Practice your strategy in the Practice Session tab
+• Optimize your strategy using the Strategy Optimization panel
+• Export your strategy to PDF for sharing or analysis
+
+📋 RECENT ACTIVITY:
+• Strategy loaded successfully
+• All panels initialized
+• Ready for strategy development and practice
 """
             
             self.overview_text.insert(1.0, overview)
