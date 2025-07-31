@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hold'em Strategy Trainer</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .poker-table {
+            background: radial-gradient(ellipse at center, #0A6B3B 0%, #055B2D 100%);
+            border: 10px solid #5C3A21;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+        .playing-card {
+            font-family: 'Roboto Mono', monospace;
+            width: 5em;
+            height: 7em;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 0.5em;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.3em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .playing-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .playing-card.red { color: #B91C1C; }
+        .playing-card.black { color: #1F2937; }
+        .card-rank { font-size: 1.5em; font-weight: 700; }
+        .card-suit { font-size: 1.2em; }
+        .card-back {
+            background: repeating-linear-gradient(
+                45deg,
+                #B91C1C,
+                #B91C1C 10px,
+                #DC2626 10px,
+                #DC2626 20px
+            );
+        }
+        .action-log-container {
+            height: 120px;
+            background-color: #f3f4f6;
+            border-radius: 0.5em;
+            padding: 0.75em;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .action-button {
+            transition: all 0.2s;
+        }
+        .action-button:active {
+            transform: scale(0.95);
+        }
+        .chip-stack {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2px;
+        }
+        .chip {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border: 2px solid #d97706;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .active-player {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        // Enhanced Sound Engine with better error handling
+        class SoundEngine {
+            constructor() {
+                this.isStarted = false;
+                this.synths = {};
+                this.audioEnabled = true;
+            }
+
+            async start() {
+                if (this.isStarted) return true;
+                
+                try {
+                    await Tone.start();
+                    this.isStarted = true;
+                    
+                    // Initialize all synths
+                    this.synths = {
+                        chip: new Tone.PluckSynth().toDestination(),
+                        fold: new Tone.NoiseSynth({ 
+                            noise: { type: 'white' }, 
+                            envelope: { attack: 0.005, decay: 0.1, sustain: 0 } 
+                        }).toDestination(),
+                        check: new Tone.MembraneSynth({ 
+                            pitchDecay: 0.01, 
+                            octaves: 2 
+                        }).toDestination(),
+                        yourTurn: new Tone.Synth({ 
+                            oscillator: { type: 'triangle' }, 
+                            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } 
+                        }).toDestination(),
+                        // Add missing synths
+                        raise: new Tone.PluckSynth().toDestination(),
+                        bet: new Tone.PluckSynth().toDestination(),
+                        call: new Tone.PluckSynth().toDestination(),
+                        error: new Tone.MetalSynth({
+                            frequency: 200,
+                            envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+                            harmonicity: 5.1,
+                            modulationIndex: 32,
+                            resonance: 4000,
+                            octaves: 1.5
+                        }).toDestination()
+                    };
+                    
+                    console.log("✅ Audio engine initialized successfully");
+                    return true;
+                } catch (error) {
+                    console.error("❌ Failed to initialize audio:", error);
+                    this.audioEnabled = false;
+                    return false;
+                }
+            }
+
+            play(sound) {
+                if (!this.isStarted || !this.audioEnabled || !this.synths[sound]) {
+                    console.log(`Audio not ready or sound not found: ${sound}`);
+                    return;
+                }
+                
+                try {
+                    const now = Tone.now();
+                    
+                    switch(sound) {
+                        case 'chip':
+                        case 'bet':
+                        case 'call':
+                            this.synths.chip.triggerAttackRelease("C4", "8n", now);
+                            break;
+                        case 'raise':
+                            this.synths.raise.triggerAttackRelease("G4", "8n", now);
+                            break;
+                        case 'fold':
+                            this.synths.fold.triggerAttackRelease("8n", now);
+                            break;
+                        case 'check':
+                            this.synths.check.triggerAttackRelease("C2", "8n", now);
+                            break;
+                        case 'yourTurn':
+                            this.synths.yourTurn.triggerAttackRelease("G5", "16n", now);
+                            break;
+                        case 'error':
+                            this.synths.error.triggerAttackRelease("16n", now);
+                            break;
+                    }
+                } catch (error) {
+                    console.error(`Error playing sound ${sound}:`, error);
+                }
+            }
+
+            setEnabled(enabled) {
+                this.audioEnabled = enabled;
+            }
+        }
+
+        // Singleton sound engine instance
+        const soundEngine = new SoundEngine();
+
+        // Enhanced API Communication with retry logic
+        const API_BASE_URL = "http://127.0.0.1:8000";
+
+        const api = {
+            async request(url, options = {}, retries = 3) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            ...options,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...options.headers
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        return await response.json();
+                    } catch (error) {
+                        console.error(`API request failed (attempt ${i + 1}/${retries}):`, error);
+                        
+                        if (i === retries - 1) {
+                            throw error;
+                        }
+                        
+                        // Wait before retry (exponential backoff)
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                    }
+                }
+            },
+
+            async newGame() {
+                return this.request(`${API_BASE_URL}/api/game/new`, { method: 'POST' });
+            },
+
+            async postAction(sessionId, action, size) {
+                return this.request(`${API_BASE_URL}/api/game/${sessionId}/action`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, size }),
+                });
+            }
+        };
+
+        // React Components
+
+        const PlayingCard = ({ rank, suit }) => {
+            if (!rank || !suit) return <div className="playing-card card-back"></div>;
+            
+            const isRed = suit === '♥' || suit === '♦';
+            const colorClass = isRed ? 'red' : 'black';
+            
+            return (
+                <div className={`playing-card ${colorClass}`}>
+                    <div>
+                        <div className="card-rank">{rank}</div>
+                        <div className="card-suit">{suit}</div>
+                    </div>
+                    <div className="self-end rotate-180">
+                        <div className="card-rank">{rank}</div>
+                        <div className="card-suit">{suit}</div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const Player = ({ player, seat, isCurrentTurn }) => {
+            const getSuitSymbol = (s) => ({'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'})[s] || '';
+            
+            const card1Rank = player.hole_cards[0] ? player.hole_cards[0].slice(0, -1) : null;
+            const card1Suit = player.hole_cards[0] ? getSuitSymbol(player.hole_cards[0].slice(-1)) : null;
+            const card2Rank = player.hole_cards[1] ? player.hole_cards[1].slice(0, -1) : null;
+            const card2Suit = player.hole_cards[1] ? getSuitSymbol(player.hole_cards[1].slice(-1)) : null;
+            
+            const positionStyles = [
+                { top: '50%', left: '0', transform: 'translateY(-50%)' }, 
+                { top: '15%', left: '15%', transform: 'translate(-50%, -50%)' },
+                { top: '0', left: '50%', transform: 'translateX(-50%)' }, 
+                { top: '15%', right: '15%', transform: 'translate(50%, -50%)' },
+                { top: '50%', right: '0', transform: 'translateY(-50%)' }, 
+                { bottom: '0', left: '50%', transform: 'translateX(-50%)' },
+            ];
+            
+            const playerClasses = `absolute text-center text-white transition-all duration-500 ${
+                player.is_active ? 'opacity-100' : 'opacity-40'
+            } ${isCurrentTurn ? 'active-player' : ''}`;
+            
+            // Calculate chip count for visual display
+            const chipCount = Math.min(Math.floor(player.contributed / 5), 10);
+            
+            return (
+                <div className={playerClasses} style={positionStyles[seat]}>
+                    <div className="p-2 rounded-lg bg-black/30 backdrop-blur-sm relative">
+                        <div className="font-bold text-lg">{player.name}</div>
+                        <div className="text-yellow-300 text-md">${player.stack.toFixed(2)}</div>
+                        <div className="text-xs uppercase opacity-80">{player.position}</div>
+                        
+                        {/* Betting indicator */}
+                        {player.contributed > 0 && (
+                            <>
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-10">
+                                    ${player.contributed.toFixed(2)}
+                                </div>
+                                
+                                {/* Visual chip stack */}
+                                <div className="chip-stack">
+                                    {[...Array(chipCount)].map((_, i) => (
+                                        <div key={i} className="chip" style={{marginLeft: i > 0 ? '-10px' : '0'}}></div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    
+                    <div className="flex justify-center space-x-2 mt-2">
+                        <PlayingCard rank={card1Rank} suit={card1Suit} />
+                        <PlayingCard rank={card2Rank} suit={card2Suit} />
+                    </div>
+                </div>
+            );
+        };
+
+        const ActionLog = ({ logs }) => {
+            const logEndRef = useRef(null);
+            
+            useEffect(() => { 
+                logEndRef.current?.scrollIntoView({ behavior: "smooth" }); 
+            }, [logs]);
+            
+            return (
+                <div className="action-log-container">
+                    <div>
+                        {logs.map((log, index) => (
+                            <p key={index} className={`text-sm font-mono leading-tight ${
+                                log.includes('YOUR ACTION') ? 'text-blue-600 font-bold' : 
+                                log.includes('wins') ? 'text-green-600 font-bold' : 
+                                'text-gray-700'
+                            }`}>
+                                {log}
+                            </p>
+                        ))}
+                        <div ref={logEndRef} />
+                    </div>
+                </div>
+            );
+        };
+
+        const PokerTable = ({ gameState, onAction, onNewGame }) => {
+            const [isProcessing, setIsProcessing] = useState(false);
+            
+            if (!gameState) {
+                return (
+                    <div className="text-center p-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                        <p className="mt-2">Loading game...</p>
+                    </div>
+                );
+            }
+            
+            const { players, pot, board, to_call, is_users_turn, action_log, winner_info } = gameState;
+            const getSuitSymbol = (s) => ({'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'})[s] || '';
+            
+            // Find current turn player for visual indication
+            const currentTurnPlayer = is_users_turn ? players.find(p => p.is_user) : null;
+            
+            const handleAggressiveAction = async (actionType) => {
+                // Calculate suggested bet sizes
+                const potSize = pot - (to_call || 0);
+                const halfPot = (potSize * 0.5).toFixed(2);
+                const twoThirdsPot = (potSize * 0.67).toFixed(2);
+                const fullPot = potSize.toFixed(2);
+                
+                const defaultSize = actionType === 'bet' ? halfPot : (to_call * 2.5).toFixed(2);
+                
+                const sizeStr = prompt(
+                    `Enter ${actionType} amount:\n\n` +
+                    `Pot: $${potSize.toFixed(2)}\n` +
+                    `Suggestions: 1/2 pot ($${halfPot}), 2/3 pot ($${twoThirdsPot}), pot ($${fullPot})`,
+                    defaultSize
+                );
+                
+                if (sizeStr === null) return;
+                
+                const size = parseFloat(sizeStr);
+                if (!isNaN(size) && size > 0) {
+                    soundEngine.play(actionType);
+                    setIsProcessing(true);
+                    await onAction(actionType, size);
+                    setIsProcessing(false);
+                } else {
+                    soundEngine.play('error');
+                    alert("Invalid amount. Please enter a positive number.");
+                }
+            };
+            
+            const handleAction = async (action) => {
+                if (isProcessing) return;
+                
+                soundEngine.play(action);
+                setIsProcessing(true);
+                await onAction(action, 0);
+                setIsProcessing(false);
+            };
+            
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                    <div className="w-full max-w-4xl aspect-[4/3] relative poker-table rounded-full">
+                        {players.map(p => (
+                            <Player 
+                                key={p.seat} 
+                                player={p} 
+                                seat={p.seat} 
+                                isCurrentTurn={is_users_turn && p.is_user}
+                            />
+                        ))}
+                        
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                            <div className="text-white text-2xl font-bold mb-2">
+                                Pot: <span className="text-yellow-300">${pot.toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="flex space-x-2 justify-center">
+                                {board.map((cardStr, idx) => (
+                                    <PlayingCard 
+                                        key={`${cardStr}-${idx}`} 
+                                        rank={cardStr.slice(0, -1)} 
+                                        suit={getSuitSymbol(cardStr.slice(-1))} 
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="w-full max-w-4xl mt-4 p-4 bg-white rounded-lg shadow-md">
+                        <ActionLog logs={action_log} />
+                        
+                        <div className="mt-4">
+                            {winner_info && (
+                                <div className="text-center">
+                                    <p className="text-lg font-bold text-green-600 mb-4">
+                                        🎉 {winner_info.name} wins ${winner_info.pot.toFixed(2)}!
+                                    </p>
+                                    <button 
+                                        onClick={onNewGame} 
+                                        className="px-6 py-3 bg-gray-800 text-white font-bold rounded-lg shadow-md hover:bg-gray-900 transition action-button"
+                                    >
+                                        Start New Hand
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {is_users_turn && !winner_info && (
+                                <div className="flex justify-center items-center space-x-4">
+                                    {to_call > 0 ? (
+                                        <>
+                                            <button 
+                                                onClick={() => handleAction('fold')} 
+                                                disabled={isProcessing}
+                                                className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition action-button disabled:opacity-50"
+                                            >
+                                                Fold
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAction('call')} 
+                                                disabled={isProcessing}
+                                                className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition action-button disabled:opacity-50"
+                                            >
+                                                Call ${to_call.toFixed(2)}
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAggressiveAction('raise')} 
+                                                disabled={isProcessing}
+                                                className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition action-button disabled:opacity-50"
+                                            >
+                                                Raise
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button 
+                                                onClick={() => handleAction('check')} 
+                                                disabled={isProcessing}
+                                                className="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition action-button disabled:opacity-50"
+                                            >
+                                                Check
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAggressiveAction('bet')} 
+                                                disabled={isProcessing}
+                                                className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition action-button disabled:opacity-50"
+                                            >
+                                                Bet
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {isProcessing && (
+                                <div className="text-center mt-4">
+                                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [sessionId, setSessionId] = useState(null);
+            const [gameState, setGameState] = useState(null);
+            const [error, setError] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [soundEnabled, setSoundEnabled] = useState(true);
+            const lastLogLength = useRef(0);
+
+            // Sound effects for game events
+            useEffect(() => {
+                if (!gameState || !soundEnabled) return;
+                
+                const newLogLength = gameState.action_log.length;
+                if (newLogLength > lastLogLength.current) {
+                    const lastLog = gameState.action_log[newLogLength - 1] || "";
+                    
+                    // Play sound based on the action in the log
+                    if (lastLog.includes('YOUR ACTION')) {
+                        soundEngine.play('yourTurn');
+                    } else if (!lastLog.startsWith('---') && !lastLog.includes('You')) {
+                        if (lastLog.includes('folds')) soundEngine.play('fold');
+                        else if (lastLog.includes('checks')) soundEngine.play('check');
+                        else if (lastLog.includes('calls')) soundEngine.play('call');
+                        else if (lastLog.includes('raises')) soundEngine.play('raise');
+                        else if (lastLog.includes('bets')) soundEngine.play('bet');
+                        else if (lastLog.includes('wins')) soundEngine.play('chip');
+                    }
+                }
+                lastLogLength.current = newLogLength;
+            }, [gameState?.action_log, soundEnabled]);
+
+            const handleNewGame = useCallback(async () => {
+                setIsLoading(true);
+                setError(null);
+                
+                try {
+                    // Ensure sound is started
+                    if (soundEnabled) {
+                        await soundEngine.start();
+                    }
+                    
+                    const data = await api.newGame();
+                    setSessionId(data.session_id);
+                    setGameState(data.game_state);
+                    lastLogLength.current = data.game_state.action_log.length;
+                    
+                    if (soundEnabled) {
+                        soundEngine.play('chip');
+                    }
+                } catch (err) {
+                    console.error('Failed to start new game:', err);
+                    setError('Could not connect to the game server. Please make sure the backend is running on port 8000.');
+                } finally {
+                    setIsLoading(false);
+                }
+            }, [soundEnabled]);
+
+            const handleAction = useCallback(async (action, size = 0) => {
+                if (!sessionId || isLoading) return;
+                
+                try {
+                    const data = await api.postAction(sessionId, action, size);
+                    setGameState(data.game_state);
+                } catch (err) {
+                    console.error('Failed to perform action:', err);
+                    setError('Failed to perform action. Please check your connection.');
+                    soundEngine.play('error');
+                }
+            }, [sessionId, isLoading]);
+
+            // Initialize audio on first user interaction
+            useEffect(() => {
+                const startAudio = async () => {
+                    await soundEngine.start();
+                    document.removeEventListener('click', startAudio);
+                    document.removeEventListener('keydown', startAudio);
+                };
+                
+                document.addEventListener('click', startAudio);
+                document.addEventListener('keydown', startAudio);
+                
+                return () => {
+                    document.removeEventListener('click', startAudio);
+                    document.removeEventListener('keydown', startAudio);
+                };
+            }, []);
+
+            // Start new game on mount
+            useEffect(() => {
+                handleNewGame();
+            }, [handleNewGame]);
+
+            if (error) {
+                return (
+                    <div className="h-screen flex flex-col items-center justify-center bg-red-50 text-red-700 p-4">
+                        <h1 className="text-2xl font-bold mb-4">⚠️ Connection Error</h1>
+                        <p className="text-center mb-6 max-w-md">{error}</p>
+                        <button 
+                            onClick={handleNewGame} 
+                            className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition"
+                        >
+                            Retry Connection
+                        </button>
+                        <p className="mt-4 text-sm">
+                            Make sure to run: <code className="bg-red-100 px-2 py-1 rounded">uvicorn main:app --reload</code>
+                        </p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="h-screen bg-gray-100">
+                    {/* Sound toggle */}
+                    <div className="absolute top-4 right-4 z-10">
+                        <button
+                            onClick={() => {
+                                setSoundEnabled(!soundEnabled);
+                                soundEngine.setEnabled(!soundEnabled);
+                            }}
+                            className="px-3 py-1 bg-white rounded shadow hover:bg-gray-100 transition"
+                            title="Toggle sound"
+                        >
+                            {soundEnabled ? '🔊' : '🔇'}
+                        </button>
+                    </div>
+                    
+                    {isLoading && !gameState ? (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="text-center">
+                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                                <p className="mt-4 text-lg">Initializing Game...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <PokerTable 
+                            gameState={gameState} 
+                            onAction={handleAction} 
+                            onNewGame={handleNewGame} 
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
