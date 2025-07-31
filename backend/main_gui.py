@@ -375,9 +375,33 @@ class EnhancedMainGUI:
         practice_frame = ttk.Frame(self.notebook)
         self.notebook.add(practice_frame, text="🎰 Practice Session")
 
+        # Create control panel for practice session
+        control_frame = ttk.Frame(practice_frame)
+        control_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Add start game button
+        start_game_btn = ttk.Button(
+            control_frame, 
+            text="🎯 Start New Hand", 
+            command=self._start_practice_game,
+            style="Primary.TButton"
+        )
+        start_game_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(start_game_btn, "Start a new poker hand with the current strategy")
+        
+        # Add reset game button
+        reset_game_btn = ttk.Button(
+            control_frame, 
+            text="🔄 Reset Game", 
+            command=self._reset_practice_game,
+            style="Danger.TButton"
+        )
+        reset_game_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(reset_game_btn, "Reset the current game state")
+        
         # Create the graphical practice session UI
         self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
-        self.practice_ui.pack(fill=tk.BOTH, expand=True)
+        self.practice_ui.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         # Tab 7: Enhanced Game (NEW)
         enhanced_game_frame = ttk.Frame(self.notebook)
@@ -1036,6 +1060,23 @@ Ready to track performance...
                 text_widget.config(state=tk.DISABLED)
             
             self.set_status("Game reset successfully")
+
+    def _start_practice_game(self):
+        """Start a new practice game."""
+        if hasattr(self, 'practice_ui'):
+            self.practice_ui.start_new_hand()
+            self.set_status("🎯 New poker hand started!")
+        else:
+            self.set_status("Error: Practice session not initialized", duration=3000)
+
+    def _reset_practice_game(self):
+        """Reset the practice game."""
+        if hasattr(self, 'practice_ui'):
+            # Reset the practice session
+            self.practice_ui.__init__(self.practice_ui.master, self.strategy_data)
+            self.set_status("🔄 Practice game reset successfully")
+        else:
+            self.set_status("Error: Practice session not initialized", duration=3000)
 
     def _show_game_settings(self):
         """Show advanced game settings dialog."""
