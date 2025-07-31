@@ -337,6 +337,7 @@ class ProfessionalPokerTable:
         """Play sound effect for action."""
         try:
             import winsound
+
             # Windows sound effects
             sound_effects = {
                 "fold": winsound.SND_ALIAS,
@@ -348,10 +349,13 @@ class ProfessionalPokerTable:
                 "deal": winsound.SND_ALIAS,
                 "shuffle": winsound.SND_ALIAS,
             }
-            winsound.PlaySound("SystemAsterisk", sound_effects.get(action.lower(), winsound.SND_ALIAS))
+            winsound.PlaySound(
+                "SystemAsterisk", sound_effects.get(action.lower(), winsound.SND_ALIAS)
+            )
         except ImportError:
             try:
                 import os
+
                 # macOS/Linux sound effects
                 sound_effects = {
                     "fold": "afplay /System/Library/Sounds/Tink.aiff",
@@ -363,7 +367,11 @@ class ProfessionalPokerTable:
                     "deal": "afplay /System/Library/Sounds/Pop.aiff",
                     "shuffle": "afplay /System/Library/Sounds/Pop.aiff",
                 }
-                os.system(sound_effects.get(action.lower(), "afplay /System/Library/Sounds/Tink.aiff"))
+                os.system(
+                    sound_effects.get(
+                        action.lower(), "afplay /System/Library/Sounds/Tink.aiff"
+                    )
+                )
             except:
                 # Fallback to console output
                 sound_effects = {
@@ -691,9 +699,9 @@ class ProfessionalPokerTable:
 
         for i, card in enumerate(cards_to_show):
             card_x = start_x + (i * card_spacing)
-            card_y = self.center_y - 20  # Positioned below pot info
+            card_y = self.center_y + 40  # Positioned well below pot info
 
-            # Professional card background
+            # Professional card background - SAME AS HOLE CARDS
             self.canvas.create_rectangle(
                 card_x,
                 card_y,
@@ -701,19 +709,22 @@ class ProfessionalPokerTable:
                 card_y + self.card_height,
                 fill="#F5F5F5",  # Very light gray background
                 outline="black",
-                width=2,
+                width=3,  # Thicker border like hole cards
             )
 
-            # Professional card text
+            # Professional card text - SAME SIZE AS HOLE CARDS
             rank, suit = card[0], card[1]
             suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
             color = "red" if suit in ["h", "d"] else "black"
+
+            # Calculate font size as 60% of card height (same as hole cards)
+            font_size = int(self.card_height * 0.6)
 
             self.canvas.create_text(
                 card_x + self.card_width // 2,
                 card_y + self.card_height // 2,
                 text=f"{rank}{suit_symbol}",
-                font=("Arial", 16, "bold"),  # Larger font
+                font=("Arial", font_size, "bold"),  # Same size as hole cards
                 fill=color,
             )
 
@@ -725,7 +736,7 @@ class ProfessionalPokerTable:
         # Professional pot amount - POSITIONED ABOVE COMMUNITY CARDS
         self.canvas.create_text(
             self.center_x,
-            self.center_y - 120,  # Higher position, above community cards
+            self.center_y - 80,  # Higher position, above community cards
             text=f"${self.current_game_state.pot:.0f}",
             font=("Arial", 20, "bold"),  # MUCH BIGGER font
             fill="black",
@@ -735,7 +746,7 @@ class ProfessionalPokerTable:
         if self.current_game_state.current_bet > 0:
             self.canvas.create_text(
                 self.center_x,
-                self.center_y - 85,  # Below pot amount
+                self.center_y - 45,  # Below pot amount
                 text=f"Bet: ${self.current_game_state.current_bet:.0f}",
                 font=("Arial", 16, "bold"),  # MUCH BIGGER font
                 fill="black",
