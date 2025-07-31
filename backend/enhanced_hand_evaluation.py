@@ -10,6 +10,7 @@ across the poker application.
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
 import itertools
+from functools import lru_cache
 
 
 class HandRank(Enum):
@@ -47,7 +48,24 @@ class EnhancedHandEvaluator:
         Returns:
             Dictionary with hand evaluation details
         """
-        all_cards = hole_cards + board_cards
+        # Convert to tuples for memoization
+        hole_tuple = tuple(sorted(hole_cards))
+        board_tuple = tuple(sorted(board_cards))
+        return self._evaluate_hand_memoized(hole_tuple, board_tuple)
+    
+    @lru_cache(maxsize=10000)
+    def _evaluate_hand_memoized(self, hole_cards: Tuple[str], board_cards: Tuple[str]) -> Dict:
+        """
+        Memoized version of hand evaluation for performance optimization.
+        
+        Args:
+            hole_cards: Tuple of hole cards (e.g., ('Ah', 'Kd'))
+            board_cards: Tuple of board cards (e.g., ('7c', '8h', '9s'))
+            
+        Returns:
+            Dictionary with hand evaluation details
+        """
+        all_cards = list(hole_cards) + list(board_cards)
         
         # Validate cards
         if not self._validate_cards(all_cards):
@@ -77,8 +95,8 @@ class EnhancedHandEvaluator:
             'rank_values': rank_values,
             'hand_description': description,
             'strength_score': strength_score,
-            'hole_cards': hole_cards,
-            'board_cards': board_cards
+            'hole_cards': list(hole_cards),
+            'board_cards': list(board_cards)
         }
     
     def _validate_cards(self, cards: List[str]) -> bool:

@@ -22,8 +22,10 @@ Version 3.0 (2025-07-29) - Main GUI Integration
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
+import sys
 from typing import Dict
 from datetime import datetime
+import cProfile
 
 from gui_models import StrategyData, THEME, FONTS, GridSettings
 from hand_grid import HandGridWidget
@@ -1072,4 +1074,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    # To profile the application, run: python main_gui.py --profile
+    if "--profile" in sys.argv:
+        cProfile.run("main()", "output.pstats")
+    else:
+        main() 
