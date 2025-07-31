@@ -44,9 +44,9 @@ class ProfessionalPokerTable:
             min(self.table_width, self.table_height) * 0.35
         )  # 35% to ensure 10% margin within table
 
-        # Card dimensions - much larger for better visibility
-        self.card_width = 80  # Much larger cards
-        self.card_height = 110  # Much larger cards
+        # Card dimensions - smaller for better fit
+        self.card_width = 60  # Smaller cards
+        self.card_height = 85  # Smaller cards
 
         # Game state tracking
         self.current_hand_phase = "preflop"  # preflop, flop, turn, river
@@ -175,10 +175,10 @@ class ProfessionalPokerTable:
         )
         start_button.pack(side=tk.LEFT, padx=5)
 
-        # Turn indicator - CENTERED (SAME SIZE AS ACTION BUTTONS)
+        # Turn indicator - SHOWS WHOSE TURN IT IS
         self.turn_label = tk.Label(
             center_frame,
-            text="YOUR TURN",
+            text="WAITING...",
             font=("Arial", 16, "bold"),  # Same as action buttons
             fg="black",
             bg="#CCCCCC",  # Gray background
@@ -191,6 +191,7 @@ class ProfessionalPokerTable:
 
         # Action buttons with clear labels - ALL CONSISTENT SIZE
         self.action_var = tk.StringVar(value="check")
+        self.action_buttons = {}  # Store button references
         actions = [
             ("FOLD", "fold", True),  # Immediate action
             ("CHECK", "check", True),  # Immediate action
@@ -228,6 +229,7 @@ class ProfessionalPokerTable:
                     width=12,  # ALL CONSISTENT SIZE
                     height=2,  # ALL CONSISTENT SIZE
                 )
+            self.action_buttons[value] = btn  # Store reference
             btn.pack(side=tk.LEFT, padx=5)  # Consistent spacing
 
         # Bet input - next to action buttons
@@ -318,6 +320,20 @@ class ProfessionalPokerTable:
         # Make submit button more prominent when action is selected
         self.submit_button.config(bg="#FF6B35", text="SUBMIT NOW!")  # Orange background
 
+    def _activate_buttons_for_human_turn(self):
+        """Activate buttons when it's the human player's turn."""
+        for btn in self.action_buttons.values():
+            btn.config(state=tk.NORMAL, bg="#CCCCCC")
+        self.turn_label.config(text="YOUR TURN", bg="#4CAF50", fg="white")
+        # Play special sound for human turn
+        self._play_sound_effect("your_turn")
+
+    def _deactivate_buttons_for_bot_turn(self):
+        """Deactivate buttons when it's a bot player's turn."""
+        for btn in self.action_buttons.values():
+            btn.config(state=tk.DISABLED, bg="#E0E0E0")
+        self.turn_label.config(text="BOT TURN", bg="#FF9800", fg="white")
+
     def _log_action(self, player_name: str, action: str, amount: float = 0):
         """Log an action to the action log."""
         timestamp = time.strftime("%H:%M:%S")
@@ -366,6 +382,7 @@ class ProfessionalPokerTable:
                     "all_in": "afplay /System/Library/Sounds/Glass.aiff",
                     "deal": "afplay /System/Library/Sounds/Pop.aiff",
                     "shuffle": "afplay /System/Library/Sounds/Pop.aiff",
+                    "your_turn": "afplay /System/Library/Sounds/Glass.aiff",
                 }
                 os.system(
                     sound_effects.get(
@@ -699,7 +716,7 @@ class ProfessionalPokerTable:
 
         for i, card in enumerate(cards_to_show):
             card_x = start_x + (i * card_spacing)
-            card_y = self.center_y + 40  # Positioned well below pot info
+            card_y = self.center_y + 60  # Positioned well below pot info
 
             # Professional card background - SAME AS HOLE CARDS
             self.canvas.create_rectangle(
@@ -736,7 +753,7 @@ class ProfessionalPokerTable:
         # Professional pot amount - POSITIONED ABOVE COMMUNITY CARDS
         self.canvas.create_text(
             self.center_x,
-            self.center_y - 80,  # Higher position, above community cards
+            self.center_y - 60,  # Higher position, above community cards
             text=f"${self.current_game_state.pot:.0f}",
             font=("Arial", 20, "bold"),  # MUCH BIGGER font
             fill="black",
@@ -746,7 +763,7 @@ class ProfessionalPokerTable:
         if self.current_game_state.current_bet > 0:
             self.canvas.create_text(
                 self.center_x,
-                self.center_y - 45,  # Below pot amount
+                self.center_y - 30,  # Below pot amount
                 text=f"Bet: ${self.current_game_state.current_bet:.0f}",
                 font=("Arial", 16, "bold"),  # MUCH BIGGER font
                 fill="black",
@@ -890,16 +907,17 @@ class ProfessionalPokerTable:
         return deck
 
     def _update_turn_indicator(self):
-        """Update the turn indicator to show whose turn it is."""
+        """Update the turn indicator and button states based on whose turn it is."""
         if not self.current_game_state:
             self.turn_label.config(text="NO ACTIVE HAND", bg="#95A5A6")
+            self._deactivate_buttons_for_bot_turn()
             return
 
         current_player = self.current_game_state.players[self.current_action_player]
         if current_player.is_human:
-            self.turn_label.config(text="YOUR TURN", bg="#FF6B6B")
+            self._activate_buttons_for_human_turn()
         else:
-            self.turn_label.config(text=f"{current_player.name}'s TURN", bg="#4ECDC4")
+            self._deactivate_buttons_for_bot_turn()
 
     def _submit_professional_action(self):
         """Submit action with proper turn progression and logging."""
