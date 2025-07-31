@@ -30,13 +30,13 @@ class ProfessionalPokerTable:
     def __init__(self, parent_frame, strategy_data: StrategyData):
         self.strategy_data = strategy_data
         self.engine = EnhancedPokerEngine(strategy_data)
-        
+
         # Initialize state machine
         self.state_machine = PokerStateMachine(num_players=6)
         self.state_machine.on_action_required = self._handle_human_action_required
         self.state_machine.on_hand_complete = self._handle_hand_complete
         self.state_machine.on_round_complete = self._handle_round_complete
-        
+
         # Game state from state machine
         self.current_game_state = None
 
@@ -282,19 +282,23 @@ class ProfessionalPokerTable:
                 action_type = ActionType.CALL
 
             # Execute action through state machine
-            if action_type and self.state_machine.is_valid_action(current_player, action_type):
+            if action_type and self.state_machine.is_valid_action(
+                current_player, action_type
+            ):
                 self.state_machine.execute_action(current_player, action_type)
-                
+
                 # Update game state
                 self.current_game_state = self.state_machine.game_state
-                
+
                 # Redraw table
                 self._redraw_professional_table()
-                
+
                 # Show professional feedback
                 self._show_professional_feedback(action, 0)
             else:
-                self._log_action("SYSTEM", f"Invalid action: {action}", 0, play_sound=False)
+                self._log_action(
+                    "SYSTEM", f"Invalid action: {action}", 0, play_sound=False
+                )
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to execute action: {str(e)}")
@@ -439,12 +443,12 @@ class ProfessionalPokerTable:
                 print(f"{effect}")
 
     def _bot_action(self):
-        """Simulate bot player action based on strategy with detailed logging."""
+        """Simulate bot player action using state machine."""
         if not self.current_game_state:
             return
 
-        current_player = self.current_game_state.players[self.current_action_player]
-        if current_player.is_human:
+        current_player = self.state_machine.get_action_player()
+        if not current_player or current_player.is_human:
             return  # Not a bot player
 
         # Simulate bot thinking time
@@ -456,7 +460,7 @@ class ProfessionalPokerTable:
         # Log detailed bot decision rationale
         self._log_action(
             "SYSTEM",
-            f"BOT DECISION: {current_player.name} ({current_player.position.value})",
+            f"BOT DECISION: {current_player.name} ({current_player.position})",
             0,
             play_sound=False,
         )
@@ -476,7 +480,7 @@ class ProfessionalPokerTable:
             "SYSTEM", f"  HS Score: {rationale['hs_score']}", 0, play_sound=False
         )
         self._log_action(
-            "SYSTEM", f"  Street: {self.current_hand_phase}", 0, play_sound=False
+            "SYSTEM", f"  Street: {self.state_machine.get_current_state().value}", 0, play_sound=False
         )
         self._log_action(
             "SYSTEM",
@@ -494,64 +498,28 @@ class ProfessionalPokerTable:
             "SYSTEM", f"  Reason: {rationale['reason']}", 0, play_sound=False
         )
 
-        # Execute bot action
-        self._execute_action(current_player, action, bet_size)
+        # Convert action to ActionType and execute through state machine
+        action_type = None
+        if action == "fold":
+            action_type = ActionType.FOLD
+        elif action == "check":
+            action_type = ActionType.CHECK
+        elif action == "call":
+            action_type = ActionType.CALL
+        elif action == "bet":
+            action_type = ActionType.BET
+        elif action == "raise":
+            action_type = ActionType.RAISE
 
-        # Log bot action (sound will be played by _log_action)
+        if action_type:
+            self.state_machine.execute_action(current_player, action_type, bet_size)
+            self.current_game_state = self.state_machine.game_state
+
+        # Log bot action
         self._log_action(current_player.name, action.upper(), bet_size)
-
-        # Move to next player
-        self._advance_to_next_player()
-
-        # Check if round is complete after bot action
-        self._log_action(
-            "SYSTEM",
-            f"Checking round completion after {current_player.name}'s action",
-            0,
-            play_sound=False,
-        )
-        if self._is_round_complete():
-            self._log_action(
-                "SYSTEM",
-                "Round complete - advancing to next street",
-                0,
-                play_sound=False,
-            )
-            self._advance_to_next_street()
-            self._redraw_professional_table()
-            return
-        else:
-            self._log_action(
-                "SYSTEM",
-                f"Round not complete - continuing with next player",
-                0,
-                play_sound=False,
-            )
 
         # Redraw table
         self._redraw_professional_table()
-
-        # Schedule next action (bot or human)
-        if self.current_game_state:
-            next_player = self.current_game_state.players[self.current_action_player]
-            if next_player.is_human:
-                # Next player is human - activate buttons
-                self._log_action(
-                    "SYSTEM",
-                    f"Next player is {next_player.name} (HUMAN) - activating buttons",
-                    0,
-                    play_sound=False,
-                )
-                self._activate_buttons_for_human_turn()
-            else:
-                # Next player is bot - schedule bot action
-                self._log_action(
-                    "SYSTEM",
-                    f"Next player is {next_player.name} (BOT) - scheduling bot action",
-                    0,
-                    play_sound=False,
-                )
-                threading.Timer(self.bot_action_delay, self._bot_action).start()
 
     def _get_strategy_based_decision(self, player: Player) -> tuple[str, float, dict]:
         """Get strategy-based decision for a bot player with detailed rationale."""
@@ -561,8 +529,8 @@ class ProfessionalPokerTable:
         )
 
         # Get current street and position
-        street = self.current_hand_phase
-        position = player.position.value
+        street = self.state_machine.get_current_state().value
+        position = player.position
 
         # Determine if this is a PFA (Pot First Action) or Caller situation
         is_pfa = self.current_game_state.current_bet == 0
@@ -1146,10 +1114,10 @@ class ProfessionalPokerTable:
 
             # Start the state machine
             self.state_machine.start_hand()
-            
+
             # Get the initial game state from state machine
             self.current_game_state = self.state_machine.game_state
-            
+
             # Deal hole cards
             deck = self._create_deck()
             random.shuffle(deck)
@@ -1205,12 +1173,14 @@ class ProfessionalPokerTable:
                 0,
                 play_sound=False,
             )
-            self._log_action(
-                "SYSTEM",
-                f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
-                0,
-                play_sound=False,
-            )
+            current_player = self.state_machine.get_action_player()
+            if current_player:
+                self._log_action(
+                    "SYSTEM",
+                    f"Action starts with: {current_player.name}",
+                    0,
+                    play_sound=False,
+                )
             # Add helpful instructions
             self._log_action(
                 "SYSTEM",
@@ -1283,12 +1253,14 @@ class ProfessionalPokerTable:
                 action_type = ActionType.RAISE
 
             # Execute action through state machine
-            if action_type and self.state_machine.is_valid_action(current_player, action_type, bet_size):
+            if action_type and self.state_machine.is_valid_action(
+                current_player, action_type, bet_size
+            ):
                 self.state_machine.execute_action(current_player, action_type, bet_size)
-                
+
                 # Update game state
                 self.current_game_state = self.state_machine.game_state
-                
+
                 # Play sound effect for the action
                 self._play_sound_effect(action_str)
 
@@ -1301,7 +1273,9 @@ class ProfessionalPokerTable:
                 # Show professional feedback
                 self._show_professional_feedback(action_str, bet_size)
             else:
-                self._log_action("SYSTEM", f"Invalid action: {action_str}", 0, play_sound=False)
+                self._log_action(
+                    "SYSTEM", f"Invalid action: {action_str}", 0, play_sound=False
+                )
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to submit action: {str(e)}")
@@ -1577,7 +1551,8 @@ class ProfessionalPokerTable:
                     i, len(self.current_game_state.players)
                 )
                 # Highlight current action player
-                is_current = i == self.current_action_player
+                current_player = self.state_machine.get_action_player()
+                is_current = current_player and player == current_player
                 self._draw_professional_player(player, position, is_current)
 
             # Draw professional community cards
