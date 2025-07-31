@@ -25,6 +25,7 @@ from decision_table_panel import DecisionTablePanel
 from postflop_hs_editor import PostflopHSEditor
 from strategy_optimization_panel import StrategyOptimizationPanel
 from tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
+from practice_session_ui import PracticeSessionUI
 
 
 class EnhancedMainGUIV2:
@@ -358,11 +359,13 @@ class EnhancedMainGUIV2:
             optimization_frame, self.strategy_data, self._on_optimization_complete
         )
 
-        # Tab 6: Practice Session
+        # Tab 6: Practice Session (Graphical)
         practice_frame = ttk.Frame(self.notebook)
         self.notebook.add(practice_frame, text="🎰 Practice Session")
 
-        self._create_practice_session_interface(practice_frame)
+        # Create the graphical practice session UI
+        self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
+        self.practice_ui.pack(fill=tk.BOTH, expand=True)
 
         # Tab 7: Enhanced Game (NEW)
         enhanced_game_frame = ttk.Frame(self.notebook)
