@@ -20,6 +20,7 @@ class Position(Enum):
     CO = "CO"    # Cutoff
     LJ = "LJ"    # LoJack (for 8+ players)
     HJ = "HJ"    # Hijack (for 9 players)
+    UTG2 = "UTG+2"  # Second Under the Gun (for 9 players)
 
 
 class DynamicPositionManager:
@@ -45,7 +46,7 @@ class DynamicPositionManager:
             6: [Position.BTN, Position.SB, Position.BB, Position.UTG, Position.MP, Position.CO],
             7: [Position.BTN, Position.SB, Position.BB, Position.UTG, Position.MP, Position.LJ, Position.CO],
             8: [Position.BTN, Position.SB, Position.BB, Position.UTG, Position.MP, Position.LJ, Position.CO, Position.HJ],
-            9: [Position.BTN, Position.SB, Position.BB, Position.UTG, Position.MP, Position.LJ, Position.HJ, Position.CO, Position.BTN]
+            9: [Position.BTN, Position.SB, Position.BB, Position.UTG, Position.UTG2, Position.MP, Position.LJ, Position.HJ, Position.CO]
         }
     
     def move_dealer_button(self):
