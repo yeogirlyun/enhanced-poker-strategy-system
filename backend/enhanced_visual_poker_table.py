@@ -278,10 +278,7 @@ class ProfessionalPokerTable:
             # Execute the action
             self._execute_action(current_player, action, 0)
 
-            # Play sound effect for the action
-            self._play_sound_effect(action)
-
-            # Log the action
+            # Log the action (sound will be played by _log_action)
             self._log_action(current_player.name, action.upper(), 0)
 
             # Move to next player
@@ -450,22 +447,28 @@ class ProfessionalPokerTable:
             actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
         else:
             # There's a bet to call - more realistic distribution
-            actions = ["fold", "fold", "call", "call", "call", "raise"]  # 33% fold, 50% call, 17% raise
+            actions = [
+                "fold",
+                "fold",
+                "call",
+                "call",
+                "call",
+                "raise",
+            ]  # 33% fold, 50% call, 17% raise
 
         action = random.choice(actions)
         bet_size = 0
         if action in ["bet", "raise"]:
-            bet_size = random.randint(1, min(10, int(self.current_game_state.current_bet * 2)))
+            bet_size = random.randint(
+                1, min(10, int(self.current_game_state.current_bet * 2))
+            )
         elif action == "call":
             bet_size = self.current_game_state.current_bet
 
         # Execute bot action
         self._execute_action(current_player, action, bet_size)
 
-        # Play sound effect for the action
-        self._play_sound_effect(action)
-
-        # Log bot action
+        # Log bot action (sound will be played by _log_action)
         self._log_action(current_player.name, action.upper(), bet_size)
 
         # Move to next player
@@ -501,9 +504,7 @@ class ProfessionalPokerTable:
         elif action == "check":
             player.current_bet = 0
 
-        # Play chip sound for betting actions
-        if action in ["bet", "raise", "call"]:
-            self._play_sound_effect("chips")
+        # Note: Sound effects are handled by _log_action to avoid duplicates
 
     def _draw_professional_table(self):
         """Draw a professional poker table with perfect centering."""
@@ -1049,7 +1050,7 @@ class ProfessionalPokerTable:
     def _is_round_complete(self):
         """Check if the current betting round is complete."""
         active_players = [p for p in self.current_game_state.players if p.is_active]
-        
+
         # If only one player remains, hand is complete
         if len(active_players) <= 1:
             return True
@@ -1063,23 +1064,23 @@ class ProfessionalPokerTable:
     def _handle_all_fold_scenario(self):
         """Handle scenario when all players fold except one."""
         active_players = [p for p in self.current_game_state.players if p.is_active]
-        
+
         if len(active_players) == 1:
             winner = active_players[0]
             self.current_game_state.pot += winner.current_bet  # Add any remaining bet
             winner.stack += self.current_game_state.pot
-            
+
             # Log the result
             self._log_action(
-                "SYSTEM", 
+                "SYSTEM",
                 f"All players folded! {winner.name} wins ${self.current_game_state.pot:.2f}",
                 0,
-                play_sound=False
+                play_sound=False,
             )
-            
+
             # Play winner sound
             self._play_sound_effect("winner")
-            
+
             # Show results and start new hand
             self._show_hand_results()
             return True
