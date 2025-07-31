@@ -142,20 +142,23 @@ class ProfessionalPokerTable:
         center_frame = ttk.Frame(action_frame)
         center_frame.pack(expand=True)
 
-        # Player count variable and dropdown - same size as action buttons
+        # Player count dropdown - same size as action buttons
         self.player_count_var = tk.StringVar(value="6")
-        player_count_btn = tk.Button(
-            center_frame,
-            text="Players: 6",
-            bg="#CCCCCC",  # Gray background
-            fg="black",  # Black font
-            font=("Arial", 16, "bold"),
-            relief="raised",
-            bd=4,
-            width=12,  # Same width as action buttons
-            height=2,  # Same height as action buttons
+        player_count_frame = ttk.Frame(center_frame)
+        player_count_frame.pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(player_count_frame, text="Players:", font=("Arial", 14, "bold")).pack(
+            side=tk.LEFT, padx=2
         )
-        player_count_btn.pack(side=tk.LEFT, padx=5)
+        player_combo = ttk.Combobox(
+            player_count_frame,
+            textvariable=self.player_count_var,
+            values=["2", "3", "4", "5", "6", "7", "8"],
+            state="readonly",
+            width=5,
+            font=("Arial", 14),
+        )
+        player_combo.pack(side=tk.LEFT, padx=2)
 
         # Professional start button - same size as action buttons
         start_button = tk.Button(
@@ -247,6 +250,9 @@ class ProfessionalPokerTable:
     def _set_action(self, action):
         """Set the selected action."""
         self.action_var.set(action)
+        print(f"Action selected: {action}")  # Debug info
+        # Update turn label to show selected action
+        self.turn_label.config(text=f"SELECTED: {action.upper()}")
 
     def _log_action(self, player_name: str, action: str, amount: float = 0):
         """Log an action to the action log."""
@@ -752,6 +758,10 @@ class ProfessionalPokerTable:
                 "SYSTEM",
                 f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
                 0,
+            )
+            # Add helpful instructions
+            self._log_action(
+                "SYSTEM", "INSTRUCTIONS: Click an action button (FOLD, CHECK, etc.), then click SUBMIT!", 0
             )
 
         except Exception as e:
