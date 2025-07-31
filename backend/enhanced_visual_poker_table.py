@@ -69,7 +69,7 @@ class ProfessionalPokerTable:
             self.table_frame,  # Use table_frame instead of parent_frame
             width=self.canvas_width,
             height=self.canvas_height,
-            bg="#0B6623",  # Professional green felt
+            bg="#87CEEB",  # Light blue sky background
             highlightthickness=0,
         )
         self.canvas.pack(
@@ -145,7 +145,7 @@ class ProfessionalPokerTable:
             log_frame,
             width=80,  # Much wider
             height=25,  # Much taller
-            font=("Arial", 12),  # Larger font
+            font=("Arial", 14),  # Default font size
             bg="#2C3E50",
             fg="white",
             relief="sunken",
@@ -155,7 +155,9 @@ class ProfessionalPokerTable:
 
         # Table frame - RIGHT SIDE (for canvas)
         self.table_frame = ttk.Frame(main_container)
-        self.table_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.table_frame.pack(
+            side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10
+        )
 
         # Bottom action controls - BELOW TABLE
         action_frame = ttk.Frame(main_container)
@@ -218,6 +220,10 @@ class ProfessionalPokerTable:
             height=2,  # Consistent size
         )
         submit_button.pack(side=tk.LEFT, padx=5)
+
+    def update_font_size(self, font_size: int):
+        """Update the action log font size to match the app's font size."""
+        self.action_log_text.configure(font=("Arial", font_size))
 
     def _set_action(self, action):
         """Set the selected action."""
@@ -341,6 +347,15 @@ class ProfessionalPokerTable:
             width=3,
         )
 
+        # Pot text with black font
+        self.canvas.create_text(
+            self.center_x,
+            self.center_y,
+            text="POT",
+            font=("Arial", 16, "bold"),
+            fill="black",
+        )
+
         # Draw professional dealer button
         dealer_radius = 22  # Larger dealer button
         self.canvas.create_oval(
@@ -378,11 +393,11 @@ class ProfessionalPokerTable:
 
         # Professional player circle
         if player.is_human:
-            color = "#FF6B6B"  # Red for human player
+            color = "#FFD700"  # Yellow gold for human player
         elif not player.is_active:
             color = "#95A5A6"  # Gray for folded players
         else:
-            color = "#4ECDC4"  # Teal for AI players
+            color = "#C0C0C0"  # Silver titanium for AI players
 
         player_radius = 50  # MUCH BIGGER player radius
 
@@ -410,8 +425,11 @@ class ProfessionalPokerTable:
 
         # Professional player name - MUCH BIGGER
         name = "You" if player.is_human else f"P{player.name.split()[-1]}"
+        text_color = (
+            "#000080" if player.is_human else "black"
+        )  # Deep ocean blue for human, black for bots
         self.canvas.create_text(
-            x, y - 12, text=name, font=("Arial", 16, "bold"), fill="white"
+            x, y - 12, text=name, font=("Arial", 16, "bold"), fill=text_color
         )
 
         # Professional position indicator - MUCH BIGGER
@@ -420,7 +438,7 @@ class ProfessionalPokerTable:
             y + 12,
             text=player.position.value,
             font=("Arial", 14, "bold"),
-            fill="white",
+            fill=text_color,
         )
 
         # Professional stack size - MUCH BIGGER
@@ -429,7 +447,7 @@ class ProfessionalPokerTable:
             y + 45,
             text=f"${player.stack:.0f}",
             font=("Arial", 14, "bold"),
-            fill="white",
+            fill=text_color,
         )
 
         # Draw professional hole cards - only show human cards or folded players
@@ -629,10 +647,24 @@ class ProfessionalPokerTable:
                     threading.Timer(self.bot_action_delay, self._bot_action).start()
 
             # Log detailed hand start info instead of popup
-            self._log_action("SYSTEM", f"New hand started with {num_players} players!", 0)
-            self._log_action("SYSTEM", f"Dealer: {self.current_game_state.players[self.dealer_position].name}", 0)
-            self._log_action("SYSTEM", f"Your position: {self.current_game_state.players[0].position.value}", 0)
-            self._log_action("SYSTEM", f"Action starts with: {self.current_game_state.players[self.current_action_player].name}", 0)
+            self._log_action(
+                "SYSTEM", f"New hand started with {num_players} players!", 0
+            )
+            self._log_action(
+                "SYSTEM",
+                f"Dealer: {self.current_game_state.players[self.dealer_position].name}",
+                0,
+            )
+            self._log_action(
+                "SYSTEM",
+                f"Your position: {self.current_game_state.players[0].position.value}",
+                0,
+            )
+            self._log_action(
+                "SYSTEM",
+                f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
+                0,
+            )
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start hand: {str(e)}")

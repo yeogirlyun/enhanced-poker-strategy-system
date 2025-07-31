@@ -931,6 +931,10 @@ Click "Export to PDF" button above to generate a comprehensive strategy report."
         if hasattr(self, "optimization_panel"):
             self.optimization_panel.update_font_size(current_font_size)
 
+        # Update visual poker table font size
+        if hasattr(self, "visual_table"):
+            self.visual_table.update_font_size(current_font_size)
+
         # Update hand grid size to match app font size
         if hasattr(self, "hand_grid"):
             self.hand_grid.grid_size_index = self.current_font_size_index
