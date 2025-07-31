@@ -114,27 +114,129 @@ class EquityDecisionEngine:
     
     def _calculate_hand_equity(self, hand: str, board: str, opponent_range: Optional[List[str]] = None) -> float:
         """
-        Calculate hand equity against opponent range.
+        Calculate hand equity against opponent range using Monte Carlo simulation.
         
         Args:
-            hand: Player's hole cards
-            board: Community cards
+            hand: Player's hole cards (e.g., "AhKs")
+            board: Community cards (e.g., "AhKsQd")
             opponent_range: Opponent's likely hands
             
         Returns:
             Equity as decimal (0.0 to 1.0)
         """
         if not opponent_range:
-            # Use default opponent range based on position
             opponent_range = self._get_default_opponent_range()
         
-        # For now, use a simplified equity calculation
-        # In a full implementation, this would run Monte Carlo simulations
-        hand_strength = self.evaluator.evaluate_hand(hand, board)
+        # Parse hand and board
+        hand_list = [hand[0:2], hand[2:4]] if len(hand) == 4 else hand.split()
+        board_list = board.split() if board else []
+        
+        # Use Monte Carlo simulation for accurate equity
+        return self._simulate_equity(hand_list, board_list, opponent_range)
+    
+    def _simulate_equity(self, hand: List[str], board: List[str], opponent_range: List[str], num_sims: int = 1000) -> float:
+        """
+        Monte Carlo simulation for equity against opponent range.
+        
+        Args:
+            hand: Player's hole cards as list
+            board: Community cards as list
+            opponent_range: Opponent's likely hands
+            num_sims: Number of simulations to run
+            
+        Returns:
+            Equity as decimal (0.0 to 1.0)
+        """
+        import random
+        
+        # Convert to card format for evaluation
+        hand_cards = [self._parse_card(card) for card in hand]
+        board_cards = [self._parse_card(card) for card in board]
+        
+        # Create opponent range cards
+        opp_range_cards = []
+        for hand_combo in opponent_range:
+            if len(hand_combo) == 4:  # e.g., "AhKs"
+                card1 = self._parse_card(hand_combo[0:2])
+                card2 = self._parse_card(hand_combo[2:4])
+                opp_range_cards.append((card1, card2))
+            elif len(hand_combo) == 2:  # e.g., "AA"
+                # Handle paired hands
+                card1 = self._parse_card(hand_combo[0] + hand_combo[0])
+                card2 = self._parse_card(hand_combo[1] + hand_combo[1])
+                opp_range_cards.append((card1, card2))
+        
+        if not opp_range_cards:
+            # Fallback to simplified calculation
+            return self._simplified_equity_calculation(hand_cards, board_cards)
+        
+        wins = ties = 0
+        remaining_cards = len(board_cards) < 5  # If not river, more cards to deal
+        
+        for _ in range(num_sims):
+            # Create deck excluding known cards
+            deck = self._create_deck_excluding(hand_cards + board_cards)
+            
+            # Complete the board if needed
+            sim_board = board_cards.copy()
+            if remaining_cards:
+                for _ in range(5 - len(board_cards)):
+                    if deck:
+                        sim_board.append(deck.pop())
+            
+            # Sample opponent hand from range
+            opp_hand = random.choice(opp_range_cards)
+            
+            # Ensure opponent cards don't conflict with board
+            while any(card in sim_board for card in opp_hand):
+                opp_hand = random.choice(opp_range_cards)
+            
+            # Evaluate hands
+            my_score = self.evaluator.evaluate_hand(hand_cards, sim_board)['strength_score']
+            opp_score = self.evaluator.evaluate_hand(opp_hand, sim_board)['strength_score']
+            
+            if my_score > opp_score:  # Higher score wins
+                wins += 1
+            elif my_score == opp_score:
+                ties += 1
+        
+        return (wins + ties / 2) / num_sims
+    
+    def _parse_card(self, card_str: str) -> str:
+        """Parse card string to internal format."""
+        # Convert from "Ah" format to internal format
+        rank_map = {'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': 'T', 
+                   '9': '9', '8': '8', '7': '7', '6': '6', '5': '5', '4': '4', '3': '3', '2': '2'}
+        suit_map = {'h': 'h', 'd': 'd', 'c': 'c', 's': 's'}
+        
+        if len(card_str) == 2:
+            rank = rank_map.get(card_str[0], card_str[0])
+            suit = suit_map.get(card_str[1], card_str[1])
+            return rank + suit
+        return card_str
+    
+    def _create_deck_excluding(self, known_cards: List[str]) -> List[str]:
+        """Create a deck excluding known cards."""
+        ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+        suits = ['h', 'd', 'c', 's']
+        
+        deck = []
+        for rank in ranks:
+            for suit in suits:
+                card = rank + suit
+                if card not in known_cards:
+                    deck.append(card)
+        
+        import random
+        random.shuffle(deck)
+        return deck
+    
+    def _simplified_equity_calculation(self, hand_cards: List[str], board_cards: List[str]) -> float:
+        """Fallback simplified equity calculation."""
+        hand_strength = self.evaluator.evaluate_hand(hand_cards, board_cards)
         hand_rank_value = hand_strength['hand_rank'].value
         
         # Convert hand rank to approximate equity
-        # This is a simplified approach - real equity calculation would be more complex
         max_rank = 9  # Royal Flush
         equity = hand_rank_value / max_rank
         

@@ -105,34 +105,42 @@ class HandGridWidget:
         # Clear All button moved to top area for better organization
 
     def _render_grid(self):
-        """Completely redraws the grid based on current state."""
-        print(f"DEBUG: _render_grid called - completely redrawing grid")
-        print(
-            f"DEBUG: Current state: tiers={len(self._grid_state['selected_tiers'])}, hands={len(self._grid_state['selected_hands'])}"
-        )
-
+        """Renders the grid with optimized partial updates."""
+        if not self._grid_state["needs_redraw"]:
+            return  # Skip if no changes needed
+        
+        print(f"DEBUG: _render_grid called - optimized rendering")
+        
+        # Check if we need to completely rebuild or just update existing widgets
+        if not self.hand_widgets:
+            self._render_grid_full()
+        else:
+            self._update_existing_widgets()
+        
+        # Mark as no longer needing redraw
+        self._grid_state["needs_redraw"] = False
+    
+    def _render_grid_full(self):
+        """Completely rebuilds the grid (first time or major changes)."""
+        print(f"DEBUG: Performing full grid rebuild")
+        
         # Clear all existing widgets
         for widget in self.hand_frame.winfo_children():
             widget.destroy()
-
+        
         # Get current size configuration
         sizes = GridSettings.get_all_sizes()
         current_size = sizes[self._grid_state["grid_size"]]
-
-        # Always use the proper size configuration to maintain grid size
-        # Don't recalculate based on canvas dimensions during highlighting
         size_config = GridSettings.get_size_config(current_size)
-
-        print(f"DEBUG: Grid rendered with size '{current_size}'")
-
+        
         # Configure base font
         self.base_font = tkFont.Font(
             family=THEME["font_family"], size=size_config["font"][1]
         )
-
+        
         # Create grid
         ranks = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
-
+        
         # Add row labels (left side)
         for i, rank in enumerate(ranks):
             label = tk.Label(
@@ -140,12 +148,12 @@ class HandGridWidget:
                 text=rank,
                 font=self.base_font,
                 bg="#006400",
-                fg="#ffffff",  # Dark green with white text
+                fg="#ffffff",
                 width=3,
                 height=1,
             )
             label.grid(row=i + 1, column=0, padx=2, pady=1)
-
+        
         # Add column labels (top)
         for j, rank in enumerate(ranks):
             label = tk.Label(
@@ -153,43 +161,73 @@ class HandGridWidget:
                 text=rank,
                 font=self.base_font,
                 bg="#006400",
-                fg="#ffffff",  # Dark green with white text
+                fg="#ffffff",
                 width=3,
                 height=1,
             )
             label.grid(row=0, column=j + 1, padx=2, pady=1)
-
+        
         # Create hand buttons
         for i, rank1 in enumerate(ranks):
             for j, rank2 in enumerate(ranks):
                 hand = self._get_hand_notation(rank1, rank2, i, j)
-
+                
                 # Get button appearance based on current state
                 bg_color, fg_color, border_color, border_width = (
                     self._get_button_appearance(hand)
                 )
-
+                
                 # Create button with HS score
                 button_frame = self._create_button_with_hs(
                     hand, size_config, bg_color, fg_color, border_color, border_width
                 )
-
+                
                 # Add click handlers for hand selection and HS editing
-                main_label = button_frame.winfo_children()[0]  # Get the main label
+                main_label = button_frame.winfo_children()[0]
                 self._add_click_handlers(button_frame, main_label, hand)
-
+                
                 button_frame.grid(row=i + 1, column=j + 1, padx=1, pady=1)
                 self.hand_widgets[hand] = button_frame
-
+        
         # Update canvas scroll region
         self.hand_frame.update_idletasks()
         self.grid_canvas.configure(scrollregion=self.grid_canvas.bbox("all"))
-
-        # Mark as no longer needing redraw
-        self._grid_state["needs_redraw"] = False
-
+        
         # Bind resize event to recalculate button sizes
         self.grid_canvas.bind("<Configure>", self._on_grid_resize)
+    
+    def _update_existing_widgets(self):
+        """Updates existing widgets without rebuilding the entire grid."""
+        print(f"DEBUG: Performing partial widget updates")
+        
+        for hand, widget in self.hand_widgets.items():
+            # Get current appearance
+            bg_color, fg_color, border_color, border_width = (
+                self._get_button_appearance(hand)
+            )
+            
+            # Update main label (first child)
+            main_label = widget.winfo_children()[0]
+            main_label.configure(bg=bg_color, fg=fg_color)
+            
+            # Update border if needed
+            if border_color:
+                widget.configure(
+                    highlightbackground=border_color, 
+                    highlightthickness=border_width
+                )
+            else:
+                widget.configure(highlightthickness=0)
+            
+            # Update HS label if it exists (second child)
+            if len(widget.winfo_children()) > 1:
+                hs_label = widget.winfo_children()[1]
+                hs_score = self._get_hand_strength(hand)
+                hs_label.configure(
+                    text=str(hs_score) if hs_score else "",
+                    bg=bg_color,
+                    fg=fg_color
+                )
 
     def _get_button_appearance(self, hand: str) -> Tuple[str, str, str, int]:
         """Determines the appearance of a button based on current state."""
