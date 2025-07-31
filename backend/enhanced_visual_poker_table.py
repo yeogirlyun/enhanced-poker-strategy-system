@@ -41,8 +41,8 @@ class ProfessionalPokerTable:
         self.table_width = int(self.canvas_width * 0.80)  # 80% of canvas width
         self.table_height = int(self.canvas_height * 0.80)  # 80% of canvas height
         self.player_radius = (
-            min(self.table_width, self.table_height) * 0.45
-        )  # Larger player radius
+            min(self.table_width, self.table_height) * 0.35
+        )  # 35% to ensure 10% margin within table
 
         # Card dimensions - much larger for better visibility
         self.card_width = 80  # Much larger cards
@@ -249,7 +249,7 @@ class ProfessionalPokerTable:
             text="SUBMIT",
             command=self._submit_professional_action,
             bg="#4CAF50",  # Green background to make it stand out
-            fg="white",  # White font for contrast
+            fg="black",  # Black font for better readability
             font=("Arial", 16, "bold"),
             relief="raised",
             bd=4,
@@ -272,7 +272,7 @@ class ProfessionalPokerTable:
         try:
             # Execute action for current player
             current_player = self.current_game_state.players[self.current_action_player]
-            
+
             # Execute the action
             self._execute_action(current_player, action, 0)
 
@@ -334,20 +334,50 @@ class ProfessionalPokerTable:
         self._play_sound_effect(action)
 
     def _play_sound_effect(self, action: str):
-        """Play sound effect for action (simulated)."""
-        # In a real implementation, you would play actual sound files
-        sound_effects = {
-            "fold": "🔇 Fold sound",
-            "check": "🔊 Check sound",
-            "call": "🔊 Call sound",
-            "bet": "💰 Bet sound",
-            "raise": "💰 Raise sound",
-            "all_in": "🎰 All-in sound",
-            "deal": "🃏 Deal sound",
-            "shuffle": "🔀 Shuffle sound",
-        }
-        effect = sound_effects.get(action.lower(), f"🔊 {action} sound")
-        print(f"{effect}")
+        """Play sound effect for action."""
+        try:
+            import winsound
+            # Windows sound effects
+            sound_effects = {
+                "fold": winsound.SND_ALIAS,
+                "check": winsound.SND_ALIAS,
+                "call": winsound.SND_ALIAS,
+                "bet": winsound.SND_ALIAS,
+                "raise": winsound.SND_ALIAS,
+                "all_in": winsound.SND_ALIAS,
+                "deal": winsound.SND_ALIAS,
+                "shuffle": winsound.SND_ALIAS,
+            }
+            winsound.PlaySound("SystemAsterisk", sound_effects.get(action.lower(), winsound.SND_ALIAS))
+        except ImportError:
+            try:
+                import os
+                # macOS/Linux sound effects
+                sound_effects = {
+                    "fold": "afplay /System/Library/Sounds/Tink.aiff",
+                    "check": "afplay /System/Library/Sounds/Tink.aiff",
+                    "call": "afplay /System/Library/Sounds/Tink.aiff",
+                    "bet": "afplay /System/Library/Sounds/Glass.aiff",
+                    "raise": "afplay /System/Library/Sounds/Glass.aiff",
+                    "all_in": "afplay /System/Library/Sounds/Glass.aiff",
+                    "deal": "afplay /System/Library/Sounds/Pop.aiff",
+                    "shuffle": "afplay /System/Library/Sounds/Pop.aiff",
+                }
+                os.system(sound_effects.get(action.lower(), "afplay /System/Library/Sounds/Tink.aiff"))
+            except:
+                # Fallback to console output
+                sound_effects = {
+                    "fold": "🔇 Fold sound",
+                    "check": "🔊 Check sound",
+                    "call": "🔊 Call sound",
+                    "bet": "💰 Bet sound",
+                    "raise": "💰 Raise sound",
+                    "all_in": "🎰 All-in sound",
+                    "deal": "🃏 Deal sound",
+                    "shuffle": "🔀 Shuffle sound",
+                }
+                effect = sound_effects.get(action.lower(), f"🔊 {action} sound")
+                print(f"{effect}")
 
     def _bot_action(self):
         """Simulate bot player action with realistic timing and sound effects."""
@@ -661,7 +691,7 @@ class ProfessionalPokerTable:
 
         for i, card in enumerate(cards_to_show):
             card_x = start_x + (i * card_spacing)
-            card_y = self.center_y - 80  # Positioned above pot
+            card_y = self.center_y - 20  # Positioned below pot info
 
             # Professional card background
             self.canvas.create_rectangle(
@@ -692,10 +722,10 @@ class ProfessionalPokerTable:
         if not self.current_game_state:
             return
 
-            # Professional pot amount - PERFECTLY CENTERED
+        # Professional pot amount - POSITIONED ABOVE COMMUNITY CARDS
         self.canvas.create_text(
             self.center_x,
-            self.center_y,  # FIXED: Use center_y for perfect centering
+            self.center_y - 120,  # Higher position, above community cards
             text=f"${self.current_game_state.pot:.0f}",
             font=("Arial", 20, "bold"),  # MUCH BIGGER font
             fill="black",
@@ -705,10 +735,10 @@ class ProfessionalPokerTable:
         if self.current_game_state.current_bet > 0:
             self.canvas.create_text(
                 self.center_x,
-                self.center_y + 35,  # Further below pot
+                self.center_y - 85,  # Below pot amount
                 text=f"Bet: ${self.current_game_state.current_bet:.0f}",
                 font=("Arial", 16, "bold"),  # MUCH BIGGER font
-                fill="white",
+                fill="black",
             )
 
     def _draw_professional_street_info(self):
