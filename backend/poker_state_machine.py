@@ -108,10 +108,12 @@ class PokerStateMachine:
 
     def transition_to(self, new_state: PokerState):
         """Transition to a new state with validation."""
+        print(f"DEBUG: Attempting transition from {self.current_state.value} to {new_state.value}")
         if new_state in self.STATE_TRANSITIONS[self.current_state]:
             old_state = self.current_state
             self.current_state = new_state
             self.log_action(f"STATE TRANSITION: {old_state.value} → {new_state.value}")
+            print(f"DEBUG: Transition successful, calling handle_state_entry for {new_state.value}")
             self.handle_state_entry()
         else:
             raise ValueError(
@@ -321,8 +323,12 @@ class PokerStateMachine:
     def handle_end_hand(self):
         """Handle hand completion."""
         self.log_action("Hand complete")
+        print(f"DEBUG: handle_end_hand called, on_hand_complete callback: {self.on_hand_complete}")
         if self.on_hand_complete:
+            print("DEBUG: Calling on_hand_complete callback")
             self.on_hand_complete()
+        else:
+            print("DEBUG: No on_hand_complete callback set")
 
     def handle_current_player_action(self):
         """Handle the current player's action."""

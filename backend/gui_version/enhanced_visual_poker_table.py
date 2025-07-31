@@ -21,7 +21,7 @@ from enhanced_poker_engine import (
     Position,
 )
 from gui_models import StrategyData
-from poker_state_machine import PokerStateMachine, PokerState, ActionType
+from poker_state_machine_enhanced import ImprovedPokerStateMachine, PokerState, ActionType
 
 
 class ProfessionalPokerTable:
@@ -32,7 +32,7 @@ class ProfessionalPokerTable:
         self.engine = EnhancedPokerEngine(strategy_data)
 
         # Initialize state machine
-        self.state_machine = PokerStateMachine(num_players=6)
+        self.state_machine = ImprovedPokerStateMachine(num_players=6)
         self.state_machine.on_action_required = self._handle_human_action_required
         self.state_machine.on_hand_complete = self._handle_hand_complete
         self.state_machine.on_round_complete = self._handle_round_complete
