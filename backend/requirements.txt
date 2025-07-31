@@ -1,20 +1,5 @@
-# Janggi Game Dependencies
+# CLI Poker Game Requirements
+# Core dependencies for the CLI poker game
 
-# Core GUI Framework
-tkinter  # Usually comes with Python
-
-# Game Logic and Utilities
-numpy>=1.21.0
-pytest>=6.0.0
-
-# Optional: For enhanced graphics (if needed later)
-# pygame>=2.0.0
-# pillow>=8.0.0
-
-# Development Tools
-black>=21.0.0  # Code formatting
-flake8>=3.9.0  # Linting
-mypy>=0.910    # Type checking
-
-# PDF Generation
-reportlab>=4.0.0  # PDF creation
+# No external dependencies required - uses only Python standard library
+# The game uses custom poker logic and state machine implementation

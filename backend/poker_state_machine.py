@@ -179,7 +179,7 @@ class PokerStateMachine:
 
         # Transition to preflop betting (but don't start first action automatically)
         self.transition_to(PokerState.PREFLOP_BETTING)
-    
+
     def start_hand_with_cards(self, deck):
         """Start a new hand and deal cards."""
         self.start_hand()
