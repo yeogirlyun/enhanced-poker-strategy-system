@@ -461,9 +461,9 @@ class ProfessionalPokerTable:
         action = random.choice(actions)
         bet_size = 0
         if action in ["bet", "raise"]:
-            bet_size = random.randint(
-                1, min(10, int(self.current_game_state.current_bet * 2))
-            )
+            # Ensure we have a valid range for betting/raising
+            max_bet = max(1, int(self.current_game_state.current_bet * 2))
+            bet_size = random.randint(1, min(10, max_bet))
         elif action == "call":
             bet_size = self.current_game_state.current_bet
 
