@@ -131,19 +131,19 @@ class ProfessionalPokerTable:
         )
         bet_entry.pack(side=tk.LEFT, padx=8)
 
-        # Action log frame - LEFT SIDE (HALF WINDOW WIDTH)
+        # Action log frame - LEFT SIDE (FIXED WIDTH, NO EXPAND)
         log_frame = ttk.Frame(main_container)
-        log_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        log_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
         # Action log label
         ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
             anchor=tk.W
         )
 
-        # Action log text area - MUCH LARGER
+        # Action log text area - FIXED WIDTH
         self.action_log_text = tk.Text(
             log_frame,
-            width=80,  # Much wider
+            width=50,  # Fixed width, not expandable
             height=25,  # Much taller
             font=("Arial", 14),  # Default font size
             bg="#2C3E50",
@@ -153,14 +153,14 @@ class ProfessionalPokerTable:
         )
         self.action_log_text.pack(fill=tk.BOTH, expand=True)
 
-        # Table frame - RIGHT SIDE (for canvas)
+        # Table frame - RIGHT SIDE (for canvas and controls)
         self.table_frame = ttk.Frame(main_container)
         self.table_frame.pack(
             side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10
         )
 
-        # Bottom action controls - BELOW TABLE
-        action_frame = ttk.Frame(main_container)
+        # Bottom action controls - INSIDE TABLE FRAME
+        action_frame = ttk.Frame(self.table_frame)
         action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
 
         # Center the action controls
@@ -223,7 +223,15 @@ class ProfessionalPokerTable:
 
     def update_font_size(self, font_size: int):
         """Update the action log font size to match the app's font size."""
+        # Update action log font size
         self.action_log_text.configure(font=("Arial", font_size))
+        
+        # Adjust action log width based on font size to maintain readability
+        # Larger fonts need more width for the same number of characters
+        base_width = 50
+        width_adjustment = max(1, font_size - 14)  # Adjust width for larger fonts
+        new_width = base_width + (width_adjustment * 2)
+        self.action_log_text.configure(width=new_width)
 
     def _set_action(self, action):
         """Set the selected action."""
