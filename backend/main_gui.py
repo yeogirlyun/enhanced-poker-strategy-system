@@ -940,6 +940,17 @@ class EnhancedMainGUI:
             small_blind = int(self.small_blind.get())
             big_blind = int(self.big_blind.get())
             
+            # Additional validation
+            if not (2 <= players <= 8):
+                messagebox.showerror("Invalid Input", "Number of players must be between 2 and 8.")
+                return
+            if not (stack > 0 and small_blind > 0 and big_blind > 0):
+                messagebox.showerror("Invalid Input", "Stack and blind amounts must be positive numbers.")
+                return
+            if small_blind >= big_blind:
+                messagebox.showerror("Invalid Input", "Small blind must be less than the big blind.")
+                return
+            
             # Update game state display
             game_info = f"""ENHANCED POKER GAME STARTED
 {'='*50}

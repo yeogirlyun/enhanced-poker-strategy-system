@@ -159,18 +159,21 @@ class EnhancedHandEvaluator:
     def _is_straight(self, rank_counts: Dict) -> bool:
         """Check for straight."""
         ranks = list(rank_counts.keys())
-        rank_values = [self.rank_values[rank] for rank in ranks]
-        rank_values.sort()
-        
+        # Use a set to handle pairs on the board, which would otherwise break the straight check
+        unique_rank_values = sorted(list(set([self.rank_values[rank] for rank in ranks])))
+
+        if len(unique_rank_values) < 5:
+            return False
+
         # Check for regular straight
-        for i in range(len(rank_values) - 4):
-            if rank_values[i+4] - rank_values[i] == 4:
+        for i in range(len(unique_rank_values) - 4):
+            if unique_rank_values[i+4] - unique_rank_values[i] == 4:
                 return True
-        
+
         # Check for Ace-low straight (A,2,3,4,5)
-        if 14 in rank_values and 2 in rank_values and 3 in rank_values and 4 in rank_values and 5 in rank_values:
+        if all(rank in unique_rank_values for rank in [14, 2, 3, 4, 5]):
             return True
-        
+
         return False
     
     def _calculate_strength_score(self, hand_rank: HandRank, rank_values: List[int]) -> int:
