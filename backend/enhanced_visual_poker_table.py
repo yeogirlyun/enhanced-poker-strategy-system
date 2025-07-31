@@ -454,11 +454,11 @@ class ProfessionalPokerTable:
                     "check",
                     "check",
                     "check",
+                    "check",
                     "bet",
-                    "bet",
-                ]  # 67% check, 33% bet
+                ]  # 83% check, 17% bet
             else:
-                actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
+                actions = ["check", "check", "check", "check", "bet"]  # 80% check, 20% bet
         else:
             # There's a bet to call - BTN/blinds are less likely to fold
             if is_btn_or_blind:
@@ -468,8 +468,9 @@ class ProfessionalPokerTable:
                     "call",
                     "call",
                     "call",
+                    "call",
                     "raise",
-                ]  # 17% fold, 67% call, 17% raise
+                ]  # 14% fold, 71% call, 14% raise
             else:
                 actions = [
                     "fold",
@@ -477,8 +478,9 @@ class ProfessionalPokerTable:
                     "call",
                     "call",
                     "call",
+                    "call",
                     "raise",
-                ]  # 33% fold, 50% call, 17% raise
+                ]  # 29% fold, 57% call, 14% raise
 
         action = random.choice(actions)
         bet_size = 0
@@ -889,8 +891,8 @@ class ProfessionalPokerTable:
         if not self.current_game_state:
             return
 
-        # Professional street name
-        street_text = self.current_game_state.street.upper()
+        # Professional street name - use current hand phase
+        street_text = self.current_hand_phase.upper()
         self.canvas.create_text(
             self.center_x,
             40,
@@ -1055,7 +1057,7 @@ class ProfessionalPokerTable:
             return
 
         current_player = self.current_game_state.players[self.current_action_player]
-        
+
         # Only update button states if they need to change
         if current_player.is_human:
             # Check if buttons are currently deactivated
@@ -1136,8 +1138,10 @@ class ProfessionalPokerTable:
             return True
 
         # Check if all active players have acted and bets are equal
+        # A round is complete when all active players have the same bet amount
+        target_bet = self.current_game_state.current_bet
         for player in active_players:
-            if player.stack < self.current_game_state.current_bet:
+            if player.current_bet != target_bet:
                 return False
         return True
 
@@ -1194,6 +1198,7 @@ class ProfessionalPokerTable:
 
         # Reset betting for new street
         self.current_game_state.current_bet = 0.0
+        self.current_game_state.street = self.current_hand_phase  # Update game state street
         self.current_action_player = (self.big_blind_position + 1) % len(
             self.current_game_state.players
         )
