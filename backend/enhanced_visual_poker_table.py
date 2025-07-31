@@ -504,6 +504,12 @@ class ProfessionalPokerTable:
         self._advance_to_next_player()
 
         # Check if round is complete after bot action
+        self._log_action(
+            "SYSTEM",
+            f"Checking round completion after {current_player.name}'s action",
+            0,
+            play_sound=False,
+        )
         if self._is_round_complete():
             self._log_action(
                 "SYSTEM",
@@ -514,6 +520,13 @@ class ProfessionalPokerTable:
             self._advance_to_next_street()
             self._redraw_professional_table()
             return
+        else:
+            self._log_action(
+                "SYSTEM",
+                f"Round not complete - continuing with next player",
+                0,
+                play_sound=False,
+            )
 
         # Redraw table
         self._redraw_professional_table()
@@ -1478,6 +1491,21 @@ class ProfessionalPokerTable:
                 self.current_action_player = (self.current_action_player + 1) % len(
                     self.current_game_state.players
                 )
+        
+        # Update turn indicator after setting action player
+        self._update_turn_indicator()
+        
+        # Start bot actions if the current player is a bot
+        if self.current_game_state:
+            current_player = self.current_game_state.players[self.current_action_player]
+            if not current_player.is_human:
+                self._log_action(
+                    "SYSTEM",
+                    f"Starting {self.current_hand_phase} action with {current_player.name}",
+                    0,
+                    play_sound=False,
+                )
+                threading.Timer(self.bot_action_delay, self._bot_action).start()
 
     def _deal_community_cards(self, num_cards):
         """Deal community cards."""
