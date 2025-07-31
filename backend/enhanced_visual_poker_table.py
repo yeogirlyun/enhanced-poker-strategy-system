@@ -21,6 +21,7 @@ from enhanced_poker_engine import (
     Position,
 )
 from gui_models import StrategyData
+from poker_state_machine import PokerStateMachine, PokerState, ActionType
 
 
 class ProfessionalPokerTable:
@@ -29,6 +30,14 @@ class ProfessionalPokerTable:
     def __init__(self, parent_frame, strategy_data: StrategyData):
         self.strategy_data = strategy_data
         self.engine = EnhancedPokerEngine(strategy_data)
+        
+        # Initialize state machine
+        self.state_machine = PokerStateMachine(num_players=6)
+        self.state_machine.on_action_required = self._handle_human_action_required
+        self.state_machine.on_hand_complete = self._handle_hand_complete
+        self.state_machine.on_round_complete = self._handle_round_complete
+        
+        # Game state from state machine
         self.current_game_state = None
 
         # MUCH LARGER table - 80% of pane
@@ -48,14 +57,8 @@ class ProfessionalPokerTable:
         self.card_width = 60  # Smaller cards
         self.card_height = 85  # Smaller cards
 
-        # Game state tracking
-        self.current_hand_phase = "preflop"  # preflop, flop, turn, river
-        self.current_action_player = 0  # Index of player whose turn it is
-        self.dealer_position = 0  # Dealer position
-        self.small_blind_position = 1  # Small blind position
-        self.big_blind_position = 2  # Big blind position
+        # Game state tracking (now managed by state machine)
         self.hand_started = False
-        self.community_cards_dealt = 0  # 0=preflop, 3=flop, 4=turn, 5=river
 
         # Action log and sound effects
         self.action_log = []
@@ -258,43 +261,40 @@ class ProfessionalPokerTable:
         self.action_log_text.configure(font=("Arial", font_size))
 
     def _execute_immediate_action(self, action):
-        """Execute an action immediately (FOLD, CHECK, CALL)."""
-        if not self.current_game_state:
+        """Execute an action immediately using state machine (FOLD, CHECK, CALL)."""
+        if not self.current_game_state or not self.hand_started:
             messagebox.showwarning("No Active Hand", "Please start a new hand first.")
             return
 
         try:
-            # Execute action for current player
-            current_player = self.current_game_state.players[self.current_action_player]
+            # Get current player from state machine
+            current_player = self.state_machine.get_action_player()
+            if not current_player or not current_player.is_human:
+                return
 
-            # Execute the action
-            self._execute_action(current_player, action, 0)
+            # Convert action to ActionType
+            action_type = None
+            if action == "fold":
+                action_type = ActionType.FOLD
+            elif action == "check":
+                action_type = ActionType.CHECK
+            elif action == "call":
+                action_type = ActionType.CALL
 
-            # Log the action (sound will be played by _log_action)
-            self._log_action(current_player.name, action.upper(), 0)
-
-            # Move to next player
-            self._advance_to_next_player()
-
-            # Check if round is complete
-            if self._is_round_complete():
-                # Check for all-fold scenario first
-                if not self._handle_all_fold_scenario():
-                    self._advance_to_next_street()
-
-            # Redraw table
-            self._redraw_professional_table()
-
-            # Start bot actions if next player is bot
-            if self.current_game_state:
-                next_player = self.current_game_state.players[
-                    self.current_action_player
-                ]
-                if not next_player.is_human:
-                    threading.Timer(self.bot_action_delay, self._bot_action).start()
-
-            # Show professional feedback
-            self._show_professional_feedback(action, 0)
+            # Execute action through state machine
+            if action_type and self.state_machine.is_valid_action(current_player, action_type):
+                self.state_machine.execute_action(current_player, action_type)
+                
+                # Update game state
+                self.current_game_state = self.state_machine.game_state
+                
+                # Redraw table
+                self._redraw_professional_table()
+                
+                # Show professional feedback
+                self._show_professional_feedback(action, 0)
+            else:
+                self._log_action("SYSTEM", f"Invalid action: {action}", 0, play_sound=False)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to execute action: {str(e)}")
@@ -1137,75 +1137,24 @@ class ProfessionalPokerTable:
         )
 
     def _start_professional_hand(self):
-        """Start a new professional hand with proper dealer sequence."""
+        """Start a new professional hand using state machine."""
         try:
             num_players = int(self.player_count_var.get())
 
             # Initialize hand state
             self.hand_started = True
-            self.current_hand_phase = "preflop"
-            self.community_cards_dealt = 0
-            self.current_action_player = 0  # UTG starts
 
-            # Create players with proper positions
-            players = []
-            positions = [
-                Position.UTG,
-                Position.MP,
-                Position.CO,
-                Position.BTN,
-                Position.SB,
-                Position.BB,
-            ]
-
-            for i in range(num_players):
-                is_human = i == 0  # First player is human
-                position = positions[i % len(positions)]
-                player = Player(
-                    name=f"Player {i+1}",
-                    stack=100.0,
-                    position=position,
-                    is_human=is_human,
-                    is_active=True,
-                    cards=[],  # Cards will be dealt by dealer
-                )
-                # Add current_bet attribute
-                player.current_bet = 0.0
-                players.append(player)
-
-            # Dealer deals hole cards (but don't show AI cards yet)
+            # Start the state machine
+            self.state_machine.start_hand()
+            
+            # Get the initial game state from state machine
+            self.current_game_state = self.state_machine.game_state
+            
+            # Deal hole cards
             deck = self._create_deck()
             random.shuffle(deck)
-
-            # Deal hole cards
-            for player in players:
+            for player in self.current_game_state.players:
                 player.cards = [deck.pop(), deck.pop()]
-
-            # Create game state
-            self.current_game_state = GameState(
-                players=players,
-                board=[],  # No community cards yet
-                pot=0.0,
-                current_bet=0.0,
-                street="preflop",
-            )
-
-            # Post blinds
-            if num_players >= 2:
-                # Small blind
-                self.current_game_state.players[self.small_blind_position].stack -= 0.5
-                self.current_game_state.players[
-                    self.small_blind_position
-                ].current_bet = 0.5
-
-                # Big blind
-                self.current_game_state.players[self.big_blind_position].stack -= 1.0
-                self.current_game_state.players[self.big_blind_position].current_bet = (
-                    1.0
-                )
-
-                self.current_game_state.pot = 1.5
-                self.current_game_state.current_bet = 1.0
 
             # Redraw table
             self._redraw_professional_table()
@@ -1216,13 +1165,8 @@ class ProfessionalPokerTable:
             # Log hand start with sound
             self._log_action("DEALER", "Hand Started", 0, play_sound=True)
 
-            # Start bot actions if first player is bot
-            if self.current_game_state:
-                first_player = self.current_game_state.players[
-                    self.current_action_player
-                ]
-                if not first_player.is_human:
-                    threading.Timer(self.bot_action_delay, self._bot_action).start()
+            # Let the state machine handle the first action
+            self.state_machine.handle_current_player_action()
 
             # Log detailed hand start info
             self._log_action(
@@ -1295,27 +1239,29 @@ class ProfessionalPokerTable:
         return deck
 
     def _update_turn_indicator(self):
-        """Update button states based on whose turn it is."""
+        """Update button states based on whose turn it is using state machine."""
         if not self.current_game_state:
             self._deactivate_buttons_for_bot_turn()
             self._log_action("SYSTEM", "NO ACTIVE HAND", 0, play_sound=False)
             return
 
-        current_player = self.current_game_state.players[self.current_action_player]
+        # Get current player from state machine
+        current_player = self.state_machine.get_action_player()
 
-        # Only update button states if they need to change
-        if current_player.is_human:
-            # Check if buttons are currently deactivated
-            if self.action_buttons["fold"].cget("state") == "disabled":
-                self._activate_buttons_for_human_turn()
-        else:
-            # Check if buttons are currently activated
-            if self.action_buttons["fold"].cget("state") == "normal":
-                self._deactivate_buttons_for_bot_turn()
+        if current_player:
+            # Only update button states if they need to change
+            if current_player.is_human:
+                # Check if buttons are currently deactivated
+                if self.action_buttons["fold"].cget("state") == "disabled":
+                    self._activate_buttons_for_human_turn()
+            else:
+                # Check if buttons are currently activated
+                if self.action_buttons["fold"].cget("state") == "normal":
+                    self._deactivate_buttons_for_bot_turn()
 
     def _submit_professional_action(self):
-        """Submit action with proper turn progression and logging."""
-        if not self.current_game_state:
+        """Submit action with proper turn progression using state machine."""
+        if not self.current_game_state or not self.hand_started:
             messagebox.showwarning("No Active Hand", "Please start a new hand first.")
             return
 
@@ -1324,40 +1270,38 @@ class ProfessionalPokerTable:
             action_str = self.action_var.get()
             bet_size = float(self.bet_size_var.get())
 
-            # Execute action for current player
-            current_player = self.current_game_state.players[self.current_action_player]
+            # Get current player from state machine
+            current_player = self.state_machine.get_action_player()
+            if not current_player or not current_player.is_human:
+                return
 
-            # Execute the action
-            self._execute_action(current_player, action_str, bet_size)
+            # Convert action to ActionType
+            action_type = None
+            if action_str == "bet":
+                action_type = ActionType.BET
+            elif action_str == "raise":
+                action_type = ActionType.RAISE
 
-            # Play sound effect for the action
-            self._play_sound_effect(action_str)
+            # Execute action through state machine
+            if action_type and self.state_machine.is_valid_action(current_player, action_type, bet_size):
+                self.state_machine.execute_action(current_player, action_type, bet_size)
+                
+                # Update game state
+                self.current_game_state = self.state_machine.game_state
+                
+                # Play sound effect for the action
+                self._play_sound_effect(action_str)
 
-            # Log the action
-            self._log_action(current_player.name, action_str.upper(), bet_size)
+                # Log the action
+                self._log_action(current_player.name, action_str.upper(), bet_size)
 
-            # Move to next player
-            self._advance_to_next_player()
+                # Redraw table
+                self._redraw_professional_table()
 
-            # Check if round is complete
-            if self._is_round_complete():
-                # Check for all-fold scenario first
-                if not self._handle_all_fold_scenario():
-                    self._advance_to_next_street()
-
-            # Redraw table
-            self._redraw_professional_table()
-
-            # Start bot actions if next player is bot
-            if self.current_game_state:
-                next_player = self.current_game_state.players[
-                    self.current_action_player
-                ]
-                if not next_player.is_human:
-                    threading.Timer(self.bot_action_delay, self._bot_action).start()
-
-            # Show professional feedback
-            self._show_professional_feedback(action_str, bet_size)
+                # Show professional feedback
+                self._show_professional_feedback(action_str, bet_size)
+            else:
+                self._log_action("SYSTEM", f"Invalid action: {action_str}", 0, play_sound=False)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to submit action: {str(e)}")
@@ -1644,6 +1588,23 @@ class ProfessionalPokerTable:
 
             # Draw professional street info
             self._draw_professional_street_info()
+
+    def _handle_human_action_required(self, player):
+        """Handle when the state machine requires a human action."""
+        self.current_game_state = self.state_machine.game_state
+        self._update_turn_indicator()
+        self._activate_buttons_for_human_turn()
+
+    def _handle_hand_complete(self):
+        """Handle when the hand is complete."""
+        self.current_game_state = self.state_machine.game_state
+        self._show_hand_results()
+        self.hand_started = False
+
+    def _handle_round_complete(self):
+        """Handle when the betting round is complete."""
+        self.current_game_state = self.state_machine.game_state
+        self._redraw_professional_table()
 
 
 class ProfessionalPokerTableGUI:
