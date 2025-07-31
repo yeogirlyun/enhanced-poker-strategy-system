@@ -307,7 +307,9 @@ class ProfessionalPokerTable:
         self.action_var.set(action)
         print(f"Action selected: {action}")  # Debug info
         # Log the selected action
-        self._log_action("SYSTEM", f"Action selected: {action.upper()}", 0, play_sound=False)
+        self._log_action(
+            "SYSTEM", f"Action selected: {action.upper()}", 0, play_sound=False
+        )
         # Make submit button more prominent when action is selected
         self.submit_button.config(bg="#FF6B35", text="SUBMIT NOW!")  # Orange background
 
@@ -316,7 +318,9 @@ class ProfessionalPokerTable:
         for btn in self.action_buttons.values():
             btn.config(state=tk.NORMAL, bg="#4CAF50", fg="white")  # Green when active
         # Log turn info to action log
-        self._log_action("SYSTEM", "YOUR TURN - Action buttons activated", 0, play_sound=False)
+        self._log_action(
+            "SYSTEM", "YOUR TURN - Action buttons activated", 0, play_sound=False
+        )
         # Play special sound for human turn
         self._play_sound_effect("your_turn")
 
@@ -325,7 +329,9 @@ class ProfessionalPokerTable:
         for btn in self.action_buttons.values():
             btn.config(state=tk.DISABLED, bg="#E0E0E0", fg="gray")  # Gray when disabled
         # Log turn info to action log
-        self._log_action("SYSTEM", "BOT TURN - Action buttons deactivated", 0, play_sound=False)
+        self._log_action(
+            "SYSTEM", "BOT TURN - Action buttons deactivated", 0, play_sound=False
+        )
 
     def _log_action(
         self, player_name: str, action: str, amount: float = 0, play_sound: bool = True
@@ -436,19 +442,21 @@ class ProfessionalPokerTable:
         time.sleep(self.bot_action_delay)
 
         # Bot decision logic with realistic actions (less aggressive folding)
+        # BTN and blinds should be less likely to fold
+        is_btn_or_blind = current_player.position in [Position.BTN, Position.SB, Position.BB]
+        
         if self.current_game_state.current_bet == 0:
             # No bet to call - more likely to check or bet
-            actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
+            if is_btn_or_blind:
+                actions = ["check", "check", "check", "check", "bet", "bet"]  # 67% check, 33% bet
+            else:
+                actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
         else:
-            # There's a bet to call - more realistic distribution
-            actions = [
-                "fold",
-                "fold",
-                "call",
-                "call",
-                "call",
-                "raise",
-            ]  # 33% fold, 50% call, 17% raise
+            # There's a bet to call - BTN/blinds are less likely to fold
+            if is_btn_or_blind:
+                actions = ["fold", "call", "call", "call", "call", "raise"]  # 17% fold, 67% call, 17% raise
+            else:
+                actions = ["fold", "fold", "call", "call", "call", "raise"]  # 33% fold, 50% call, 17% raise
 
         action = random.choice(actions)
         bet_size = 0
@@ -901,11 +909,8 @@ class ProfessionalPokerTable:
             # Update turn indicator
             self._update_turn_indicator()
 
-            # Play hand start sound
-            self._play_sound_effect("hand_start")
-
-            # Log hand start
-            self._log_action("DEALER", "Hand Started", 0, play_sound=False)
+            # Log hand start with sound
+            self._log_action("DEALER", "Hand Started", 0, play_sound=True)
 
             # Start bot actions if first player is bot
             if self.current_game_state:
@@ -915,7 +920,7 @@ class ProfessionalPokerTable:
                 if not first_player.is_human:
                     threading.Timer(self.bot_action_delay, self._bot_action).start()
 
-            # Log detailed hand start info instead of popup
+            # Log detailed hand start info
             self._log_action(
                 "SYSTEM",
                 f"New hand started with {num_players} players!",
@@ -925,6 +930,24 @@ class ProfessionalPokerTable:
             self._log_action(
                 "SYSTEM",
                 f"Dealer: {self.current_game_state.players[self.dealer_position].name}",
+                0,
+                play_sound=False,
+            )
+            self._log_action(
+                "SYSTEM",
+                f"Your position: {self.current_game_state.players[0].position.value}",
+                0,
+                play_sound=False,
+            )
+            self._log_action(
+                "SYSTEM",
+                "INSTRUCTIONS: Click an action button (FOLD, CHECK, etc.), then click SUBMIT!",
+                0,
+                play_sound=False,
+            )
+            self._log_action(
+                "SYSTEM",
+                "TIP: The SUBMIT button executes your selected action!",
                 0,
                 play_sound=False,
             )
@@ -1085,21 +1108,21 @@ class ProfessionalPokerTable:
         if self.current_hand_phase == "preflop":
             self.current_hand_phase = "flop"
             self.community_cards_dealt = 3
+            self._log_action("DEALER", "Dealing FLOP", 0, play_sound=True)
             self._deal_community_cards(3)
-            self._play_sound_effect("street_change")  # Flop sound
         elif self.current_hand_phase == "flop":
             self.current_hand_phase = "turn"
             self.community_cards_dealt = 4
+            self._log_action("DEALER", "Dealing TURN", 0, play_sound=True)
             self._deal_community_cards(1)
-            self._play_sound_effect("street_change")  # Turn sound
         elif self.current_hand_phase == "turn":
             self.current_hand_phase = "river"
             self.community_cards_dealt = 5
+            self._log_action("DEALER", "Dealing RIVER", 0, play_sound=True)
             self._deal_community_cards(1)
-            self._play_sound_effect("street_change")  # River sound
         elif self.current_hand_phase == "river":
             # Hand is complete
-            self._play_sound_effect("showdown")  # Showdown sound
+            self._log_action("DEALER", "SHOWDOWN", 0, play_sound=True)
             self._show_hand_results()
             return
 
@@ -1117,12 +1140,15 @@ class ProfessionalPokerTable:
 
             random.shuffle(self._deck)
 
-        for _ in range(num_cards):
+        for i in range(num_cards):
             if self._deck:
                 card = self._deck.pop()
                 self.current_game_state.board.append(card)
                 self._redraw_professional_table()
-                self._play_sound_effect("deal")  # Deal sound for each card
+                # Log each card dealt
+                rank, suit = card[0], card[1]
+                suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
+                self._log_action("DEALER", f"Dealt: {rank}{suit_symbol}", 0, play_sound=True)
                 time.sleep(0.3)  # Deal cards with delay
 
     def _show_hand_results(self):
