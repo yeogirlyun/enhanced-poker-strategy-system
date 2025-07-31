@@ -427,7 +427,7 @@ class ProfessionalPokerTable:
                 print(f"{effect}")
 
     def _bot_action(self):
-        """Simulate bot player action with realistic timing and sound effects."""
+        """Simulate bot player action based on strategy with detailed logging."""
         if not self.current_game_state:
             return
 
@@ -438,58 +438,24 @@ class ProfessionalPokerTable:
         # Simulate bot thinking time
         time.sleep(self.bot_action_delay)
 
-        # Bot decision logic with realistic actions (less aggressive folding)
-        # BTN and blinds should be less likely to fold
-        is_btn_or_blind = current_player.position in [
-            Position.BTN,
-            Position.SB,
-            Position.BB,
-        ]
+        # Get strategy-based decision with detailed logging
+        action, bet_size, rationale = self._get_strategy_based_decision(current_player)
 
-        if self.current_game_state.current_bet == 0:
-            # No bet to call - more likely to check or bet
-            if is_btn_or_blind:
-                actions = [
-                    "check",
-                    "check",
-                    "check",
-                    "check",
-                    "check",
-                    "bet",
-                ]  # 83% check, 17% bet
-            else:
-                actions = ["check", "check", "check", "check", "bet"]  # 80% check, 20% bet
-        else:
-            # There's a bet to call - BTN/blinds are less likely to fold
-            if is_btn_or_blind:
-                actions = [
-                    "fold",
-                    "call",
-                    "call",
-                    "call",
-                    "call",
-                    "call",
-                    "raise",
-                ]  # 14% fold, 71% call, 14% raise
-            else:
-                actions = [
-                    "fold",
-                    "fold",
-                    "call",
-                    "call",
-                    "call",
-                    "call",
-                    "raise",
-                ]  # 29% fold, 57% call, 14% raise
-
-        action = random.choice(actions)
-        bet_size = 0
-        if action in ["bet", "raise"]:
-            # Ensure we have a valid range for betting/raising
-            max_bet = max(1, int(self.current_game_state.current_bet * 2))
-            bet_size = random.randint(1, min(10, max_bet))
-        elif action == "call":
-            bet_size = self.current_game_state.current_bet
+        # Log detailed bot decision rationale
+        self._log_action(
+            "SYSTEM",
+            f"BOT DECISION: {current_player.name} ({current_player.position.value})",
+            0,
+            play_sound=False,
+        )
+        self._log_action("SYSTEM", f"  Hand: {self._format_cards(current_player.cards)}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Community: {self._format_cards(self.current_game_state.board)}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  HS Score: {rationale['hs_score']}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Street: {self.current_hand_phase}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Decision Table: {rationale['decision_table']}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Thresholds: {rationale['thresholds']}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Action: {action.upper()} ${bet_size:.2f}", 0, play_sound=False)
+        self._log_action("SYSTEM", f"  Reason: {rationale['reason']}", 0, play_sound=False)
 
         # Execute bot action
         self._execute_action(current_player, action, bet_size)
@@ -508,6 +474,175 @@ class ProfessionalPokerTable:
             next_player = self.current_game_state.players[self.current_action_player]
             if not next_player.is_human:
                 threading.Timer(self.bot_action_delay, self._bot_action).start()
+
+    def _get_strategy_based_decision(self, player: Player) -> tuple[str, float, dict]:
+        """Get strategy-based decision for a bot player with detailed rationale."""
+        # Get player's hand strength
+        hs_score = self._evaluate_hand_strength(player.cards, self.current_game_state.board)
+        
+        # Get current street and position
+        street = self.current_hand_phase
+        position = player.position.value
+        
+        # Determine if this is a PFA (Pot First Action) or Caller situation
+        is_pfa = self.current_game_state.current_bet == 0
+        
+        # Get decision table entry
+        decision_table = "pfa" if is_pfa else "caller"
+        table_entry = self._get_decision_table_entry(street, position, decision_table)
+        
+        # Determine action based on strategy
+        action, bet_size, reason = self._determine_action_from_strategy(
+            hs_score, table_entry, is_pfa, self.current_game_state.current_bet
+        )
+        
+        rationale = {
+            'hs_score': hs_score,
+            'decision_table': decision_table,
+            'thresholds': table_entry,
+            'reason': reason
+        }
+        
+        return action, bet_size, rationale
+
+    def _evaluate_hand_strength(self, hole_cards: list, community_cards: list) -> int:
+        """Evaluate hand strength based on strategy file."""
+        if not self.strategy_data or not self.strategy_data.strategy_dict:
+            return 25  # Default fallback
+        
+        # Get hand strength tables
+        hand_strength_tables = self.strategy_data.strategy_dict.get("hand_strength_tables", {})
+        
+        if not community_cards:
+            # Preflop - use preflop hand strength table
+            preflop_table = hand_strength_tables.get("preflop", {})
+            hand_key = self._format_hand_for_strategy(hole_cards)
+            return preflop_table.get(hand_key, 15)  # Default to 15 if not found
+        else:
+            # Postflop - evaluate based on hand type
+            hand_type = self._evaluate_postflop_hand_type(hole_cards, community_cards)
+            postflop_table = hand_strength_tables.get("postflop", {})
+            return postflop_table.get(hand_type, 15)  # Default to 15 if not found
+
+    def _format_hand_for_strategy(self, cards: list) -> str:
+        """Format cards for strategy lookup (e.g., ['Ah', 'Ks'] -> 'AKs')."""
+        if len(cards) != 2:
+            return "XX"
+        
+        # Extract ranks and suits
+        rank1, suit1 = cards[0][0], cards[0][1]
+        rank2, suit2 = cards[1][0], cards[1][1]
+        
+        # Determine if suited
+        is_suited = suit1 == suit2
+        
+        # Create hand key (e.g., "AKs" for suited, "AKo" for offsuit)
+        if rank1 == rank2:
+            return f"{rank1}{rank1}"  # Pair
+        else:
+            # Sort ranks (higher first)
+            ranks = sorted([rank1, rank2], key=lambda x: "AKQJT98765432".index(x), reverse=True)
+            hand_key = f"{ranks[0]}{ranks[1]}"
+            return f"{hand_key}s" if is_suited else f"{hand_key}o"
+
+    def _evaluate_postflop_hand_type(self, hole_cards: list, community_cards: list) -> str:
+        """Evaluate postflop hand type for strategy lookup."""
+        # Simple evaluation - in a real implementation, you'd use treys or similar
+        # For now, return a basic hand type based on card analysis
+        all_cards = hole_cards + community_cards
+        
+        # Count ranks and suits
+        ranks = [card[0] for card in all_cards]
+        suits = [card[1] for card in all_cards]
+        
+        # Check for flush
+        suit_counts = {}
+        for suit in suits:
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        max_suit_count = max(suit_counts.values()) if suit_counts else 0
+        
+        # Check for pairs/three of a kind
+        rank_counts = {}
+        for rank in ranks:
+            rank_counts[rank] = rank_counts.get(rank, 0) + 1
+        
+        max_rank_count = max(rank_counts.values()) if rank_counts else 0
+        
+        # Determine hand type
+        if max_suit_count >= 5:
+            return "flush"
+        elif max_rank_count >= 4:
+            return "quads"
+        elif max_rank_count == 3:
+            # Check for full house
+            if len([c for c in rank_counts.values() if c >= 2]) >= 2:
+                return "full_house"
+            else:
+                return "set"
+        elif max_rank_count == 2:
+            # Check for two pair
+            pairs = [c for c in rank_counts.values() if c >= 2]
+            if len(pairs) >= 2:
+                return "two_pair"
+            else:
+                return "pair"
+        else:
+            return "high_card"
+
+    def _get_decision_table_entry(self, street: str, position: str, table_type: str) -> dict:
+        """Get decision table entry for current situation."""
+        if not self.strategy_data or not self.strategy_data.strategy_dict:
+            return {"val_thresh": 25, "check_thresh": 10, "sizing": 0.75}
+        
+        postflop_strategy = self.strategy_data.strategy_dict.get("postflop", {})
+        table = postflop_strategy.get(table_type, {})
+        street_table = table.get(street, {})
+        return street_table.get(position, {"val_thresh": 25, "check_thresh": 10, "sizing": 0.75})
+
+    def _determine_action_from_strategy(self, hs_score: int, table_entry: dict, is_pfa: bool, current_bet: float) -> tuple[str, float, str]:
+        """Determine action based on strategy thresholds."""
+        val_thresh = table_entry.get("val_thresh", 25)
+        check_thresh = table_entry.get("check_thresh", 10)
+        sizing = table_entry.get("sizing", 0.75)
+        
+        if is_pfa:
+            # Pot First Action (no bet to call)
+            if hs_score >= val_thresh:
+                # Value bet
+                bet_size = max(1, int(current_bet * sizing)) if current_bet > 0 else 2
+                return "bet", bet_size, f"Value bet (HS {hs_score} >= {val_thresh})"
+            elif hs_score >= check_thresh:
+                # Check-call
+                return "check", 0, f"Check-call (HS {hs_score} >= {check_thresh})"
+            else:
+                # Check-fold
+                return "check", 0, f"Check-fold (HS {hs_score} < {check_thresh})"
+        else:
+            # Caller situation (there's a bet to call)
+            if hs_score >= val_thresh:
+                # Raise
+                raise_size = max(current_bet * 2, current_bet + 2)
+                return "raise", raise_size, f"Raise (HS {hs_score} >= {val_thresh})"
+            elif hs_score >= check_thresh:
+                # Call
+                return "call", current_bet, f"Call (HS {hs_score} >= {check_thresh})"
+            else:
+                # Fold
+                return "fold", 0, f"Fold (HS {hs_score} < {check_thresh})"
+
+    def _format_cards(self, cards: list) -> str:
+        """Format cards for display in logs."""
+        if not cards:
+            return "None"
+        
+        formatted = []
+        for card in cards:
+            rank, suit = card[0], card[1]
+            suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
+            formatted.append(f"{rank}{suit_symbol}")
+        
+        return " ".join(formatted)
 
     def _execute_action(self, player: Player, action: str, bet_size: float = 0):
         """Execute an action for a player."""
@@ -1198,7 +1333,9 @@ class ProfessionalPokerTable:
 
         # Reset betting for new street
         self.current_game_state.current_bet = 0.0
-        self.current_game_state.street = self.current_hand_phase  # Update game state street
+        self.current_game_state.street = (
+            self.current_hand_phase
+        )  # Update game state street
         self.current_action_player = (self.big_blind_position + 1) % len(
             self.current_game_state.players
         )
