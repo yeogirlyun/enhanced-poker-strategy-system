@@ -90,27 +90,27 @@
     "vs_raise": {
       "UTG": {
         "value_thresh": 42,
-        "call_thresh": 28,
+        "call_range": [28, 41],
         "sizing": 3.0
       },
       "MP": {
         "value_thresh": 40,
-        "call_thresh": 25,
+        "call_range": [25, 39],
         "sizing": 3.0
       },
       "CO": {
         "value_thresh": 38,
-        "call_thresh": 22,
+        "call_range": [22, 37],
         "sizing": 2.5
       },
       "BTN": {
         "value_thresh": 35,
-        "call_thresh": 20,
+        "call_range": [20, 34],
         "sizing": 2.5
       },
       "SB": {
         "value_thresh": 40,
-        "call_thresh": 25,
+        "call_range": [25, 39],
         "sizing": 3.0
       }
     }
