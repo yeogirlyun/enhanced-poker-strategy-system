@@ -625,7 +625,9 @@ class EnhancedMainGUI:
             for tier in self.strategy_data.tiers:
                 tier_color = tier.color
                 overview += f"\n🔸 {tier.name} (HS {tier.min_hs}-{tier.max_hs}): {len(tier.hands)} hands"
-                overview += f"\n   Hands: {', '.join(tier.hands[:8])}"
+                # Convert set to list for slicing, then take first 8 hands
+                hands_list = list(tier.hands)[:8]
+                overview += f"\n   Hands: {', '.join(hands_list)}"
                 if len(tier.hands) > 8:
                     overview += f" ... and {len(tier.hands) - 8} more"
                 overview += "\n"
