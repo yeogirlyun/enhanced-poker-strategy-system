@@ -175,19 +175,7 @@ class ProfessionalPokerTable:
         )
         start_button.pack(side=tk.LEFT, padx=5)
 
-        # Turn indicator - SHOWS WHOSE TURN IT IS
-        self.turn_label = tk.Label(
-            center_frame,
-            text="WAITING...",
-            font=("Arial", 16, "bold"),  # Same as action buttons
-            fg="black",
-            bg="#CCCCCC",  # Gray background
-            relief="raised",
-            bd=4,  # Same border as action buttons
-            width=12,  # Same width as action buttons
-            height=2,  # Same height as action buttons
-        )
-        self.turn_label.pack(side=tk.LEFT, padx=10)  # More padding
+        # Turn info will be displayed in action log instead of separate button
 
         # Action buttons with clear labels - ALL CONSISTENT SIZE
         self.action_var = tk.StringVar(value="check")
@@ -202,32 +190,36 @@ class ProfessionalPokerTable:
 
         for text, value, immediate in actions:
             if immediate:
-                # Immediate action buttons
+                # Immediate action buttons with 3D effect
                 btn = tk.Button(
                     center_frame,
                     text=text,
                     command=lambda v=value: self._execute_immediate_action(v),
-                    bg="#CCCCCC",  # Gray background
+                    bg="#E8E8E8",  # Light gray background
                     fg="black",  # Black font
                     font=("Arial", 16, "bold"),  # Consistent font
                     relief="raised",
-                    bd=4,  # Consistent border
+                    bd=3,  # 3D border effect
                     width=12,  # ALL CONSISTENT SIZE
                     height=2,  # ALL CONSISTENT SIZE
+                    activebackground="#4CAF50",  # Green when pressed
+                    activeforeground="white",  # White text when pressed
                 )
             else:
-                # Action buttons that require submit
+                # Action buttons that require submit with 3D effect
                 btn = tk.Button(
                     center_frame,
                     text=text,
                     command=lambda v=value: self._set_action(v),
-                    bg="#CCCCCC",  # Gray background
+                    bg="#E8E8E8",  # Light gray background
                     fg="black",  # Black font
                     font=("Arial", 16, "bold"),  # Consistent font
                     relief="raised",
-                    bd=4,  # Consistent border
+                    bd=3,  # 3D border effect
                     width=12,  # ALL CONSISTENT SIZE
                     height=2,  # ALL CONSISTENT SIZE
+                    activebackground="#FF9800",  # Orange when pressed
+                    activeforeground="white",  # White text when pressed
                 )
             self.action_buttons[value] = btn  # Store reference
             btn.pack(side=tk.LEFT, padx=5)  # Consistent spacing
@@ -314,24 +306,26 @@ class ProfessionalPokerTable:
         """Set the selected action (for BET/RAISE that require submit)."""
         self.action_var.set(action)
         print(f"Action selected: {action}")  # Debug info
-        # Update turn label to show selected action
-        self.turn_label.config(text=f"SELECTED: {action.upper()}")
+        # Log the selected action
+        self._log_action("SYSTEM", f"Action selected: {action.upper()}", 0, play_sound=False)
         # Make submit button more prominent when action is selected
         self.submit_button.config(bg="#FF6B35", text="SUBMIT NOW!")  # Orange background
 
     def _activate_buttons_for_human_turn(self):
         """Activate buttons when it's the human player's turn."""
         for btn in self.action_buttons.values():
-            btn.config(state=tk.NORMAL, bg="#CCCCCC")
-        self.turn_label.config(text="YOUR TURN", bg="#4CAF50", fg="white")
+            btn.config(state=tk.NORMAL, bg="#4CAF50", fg="white")  # Green when active
+        # Log turn info to action log
+        self._log_action("SYSTEM", "YOUR TURN - Action buttons activated", 0, play_sound=False)
         # Play special sound for human turn
         self._play_sound_effect("your_turn")
 
     def _deactivate_buttons_for_bot_turn(self):
         """Deactivate buttons when it's a bot player's turn."""
         for btn in self.action_buttons.values():
-            btn.config(state=tk.DISABLED, bg="#E0E0E0")
-        self.turn_label.config(text="BOT TURN", bg="#FF9800", fg="white")
+            btn.config(state=tk.DISABLED, bg="#E0E0E0", fg="gray")  # Gray when disabled
+        # Log turn info to action log
+        self._log_action("SYSTEM", "BOT TURN - Action buttons deactivated", 0, play_sound=False)
 
     def _log_action(
         self, player_name: str, action: str, amount: float = 0, play_sound: bool = True
@@ -974,10 +968,10 @@ class ProfessionalPokerTable:
         return deck
 
     def _update_turn_indicator(self):
-        """Update the turn indicator and button states based on whose turn it is."""
+        """Update button states based on whose turn it is."""
         if not self.current_game_state:
-            self.turn_label.config(text="NO ACTIVE HAND", bg="#95A5A6")
             self._deactivate_buttons_for_bot_turn()
+            self._log_action("SYSTEM", "NO ACTIVE HAND", 0, play_sound=False)
             return
 
         current_player = self.current_game_state.players[self.current_action_player]
