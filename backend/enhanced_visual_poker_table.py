@@ -505,7 +505,12 @@ class ProfessionalPokerTable:
 
         # Check if round is complete after bot action
         if self._is_round_complete():
-            self._log_action("SYSTEM", "Round complete - advancing to next street", 0, play_sound=False)
+            self._log_action(
+                "SYSTEM",
+                "Round complete - advancing to next street",
+                0,
+                play_sound=False,
+            )
             self._advance_to_next_street()
             self._redraw_professional_table()
             return
@@ -720,6 +725,7 @@ class ProfessionalPokerTable:
             self.current_game_state.current_bet = call_amount
             player.current_bet = call_amount
         elif action == "check":
+            # Check action: player bets 0 (no additional bet)
             player.current_bet = 0
 
         # Note: Sound effects are handled by _log_action to avoid duplicates
@@ -1159,12 +1165,16 @@ class ProfessionalPokerTable:
             if num_players >= 2:
                 # Small blind
                 self.current_game_state.players[self.small_blind_position].stack -= 0.5
-                self.current_game_state.players[self.small_blind_position].current_bet = 0.5
-                
+                self.current_game_state.players[
+                    self.small_blind_position
+                ].current_bet = 0.5
+
                 # Big blind
                 self.current_game_state.players[self.big_blind_position].stack -= 1.0
-                self.current_game_state.players[self.big_blind_position].current_bet = 1.0
-                
+                self.current_game_state.players[self.big_blind_position].current_bet = (
+                    1.0
+                )
+
                 self.current_game_state.pot = 1.5
                 self.current_game_state.current_bet = 1.0
 
@@ -1346,9 +1356,48 @@ class ProfessionalPokerTable:
         # Check if all active players have acted and bets are equal
         # A round is complete when all active players have the same bet amount
         target_bet = self.current_game_state.current_bet
+        
+        # Debug logging
+        self._log_action(
+            "SYSTEM", 
+            f"Round check - Target bet: {target_bet}, Active players: {len(active_players)}", 
+            0, 
+            play_sound=False
+        )
+        
+        # Special case: if no bet to call (PFA situation) and all players have bet 0, round is complete
+        if target_bet == 0:
+            all_checked = True
+            for player in active_players:
+                if player.current_bet != 0:
+                    all_checked = False
+                    break
+            if all_checked:
+                self._log_action(
+                    "SYSTEM", 
+                    f"Round complete - all players checked (no bet to call)", 
+                    0, 
+                    play_sound=False
+                )
+                return True
+        
+        # Normal case: check if all players have matched the current bet
         for player in active_players:
             if player.current_bet != target_bet:
+                self._log_action(
+                    "SYSTEM", 
+                    f"  {player.name}: bet={player.current_bet} != target={target_bet}", 
+                    0, 
+                    play_sound=False
+                )
                 return False
+        
+        self._log_action(
+            "SYSTEM", 
+            f"Round complete - all players have bet {target_bet}", 
+            0, 
+            play_sound=False
+        )
         return True
 
     def _handle_all_fold_scenario(self):
@@ -1410,9 +1459,23 @@ class ProfessionalPokerTable:
         self.current_game_state.street = (
             self.current_hand_phase
         )  # Update game state street
-        self.current_action_player = (self.big_blind_position + 1) % len(
-            self.current_game_state.players
-        )
+        
+        # Set action player based on street
+        if self.current_hand_phase == "preflop":
+            # Preflop: UTG starts (after big blind)
+            self.current_action_player = (self.big_blind_position + 1) % len(
+                self.current_game_state.players
+            )
+        else:
+            # Postflop: First active player after dealer (button) starts
+            self.current_action_player = (self.dealer_position + 1) % len(
+                self.current_game_state.players
+            )
+            # Skip to first active player
+            while not self.current_game_state.players[self.current_action_player].is_active:
+                self.current_action_player = (self.current_action_player + 1) % len(
+                    self.current_game_state.players
+                )
 
     def _deal_community_cards(self, num_cards):
         """Deal community cards."""
