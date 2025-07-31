@@ -711,7 +711,7 @@ class ImprovedCLIPokerGame:
 
 
 def main():
-    """Enhanced main function with dynamic strategy file loading."""
+    """Enhanced main function with strategy selection."""
     # --- FIX STARTS HERE ---
     parser = argparse.ArgumentParser(description="Enhanced CLI Poker Game.")
     parser.add_argument(
@@ -720,14 +720,41 @@ def main():
         default="modern_strategy.json",
         help="Path to the strategy JSON file for bots to use."
     )
+    parser.add_argument(
+        "--interactive", 
+        action="store_true",
+        help="Enable interactive strategy selection."
+    )
     args = parser.parse_args()
 
     print(Colors.colorize("🚀 Loading Enhanced Poker Game...", Colors.BRIGHT_CYAN))
     
     strategy_data = StrategyData()
-    strategy_file_to_load = args.strategy
     
-    print(Colors.colorize(f"🤖 Bots will use strategy from: {strategy_file_to_load}", Colors.YELLOW))
+    if args.interactive:
+        # --- NEW: Interactive Strategy Selection ---
+        print(Colors.colorize("\n🎯 Strategy Selection:", Colors.BRIGHT_CYAN))
+        print(Colors.colorize("1. My Strategy (modern_strategy.json)", Colors.CYAN))
+        print(Colors.colorize("2. GTO Strategy (gto_strategy_default.json)", Colors.CYAN))
+        
+        while True:
+            strategy_choice = input(
+                Colors.colorize("Choose bot strategy [1/2]: ", Colors.CYAN)
+            ).strip()
+            
+            if strategy_choice == '2':
+                print(Colors.colorize("🤖 Bots will use the GTO Modern Strategy.", Colors.YELLOW))
+                strategy_file_to_load = "gto_strategy_default.json"
+                break
+            elif strategy_choice == '1':
+                print(Colors.colorize("🤖 Bots will use your custom strategy (modern_strategy.json).", Colors.YELLOW))
+                strategy_file_to_load = "modern_strategy.json"
+                break
+            else:
+                print(Colors.colorize("❌ Please enter 1 or 2", Colors.RED))
+    else:
+        strategy_file_to_load = args.strategy
+        print(Colors.colorize(f"🤖 Bots will use strategy from: {strategy_file_to_load}", Colors.YELLOW))
 
     try:
         if strategy_data.load_strategy_from_file(strategy_file_to_load):

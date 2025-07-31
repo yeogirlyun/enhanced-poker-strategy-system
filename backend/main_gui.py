@@ -56,6 +56,9 @@ class PokerStrategyGUI:
         self.current_font_size_index = 6  # Start with a larger, more readable size
         self.font_sizes = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
+        # Enhanced Game Strategy Selection
+        self.bot_strategy_var = tk.StringVar(value="Use My Current Strategy")
+
         self._setup_styles()
         self._setup_menu()
         self._setup_ui()
@@ -239,6 +242,12 @@ class PokerStrategyGUI:
 
         tools_menu.add_separator()
         tools_menu.add_command(label="Show Statistics", command=self._show_statistics)
+
+        # Games menu
+        games_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Games", menu=games_menu)
+        games_menu.add_command(label="🎮 Poker Table", command=self._launch_poker_table)
+        games_menu.add_command(label="🎯 Enhanced Game", command=self._start_enhanced_game)
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -725,6 +734,83 @@ class PokerStrategyGUI:
         except Exception as e:
             self._update_status(f"Error launching poker table: {e}")
             print(f"⚠️  Error launching poker table: {e}")
+
+    def _start_enhanced_game(self):
+        """Start the enhanced poker game with strategy selection for bots."""
+        try:
+            from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine
+            
+            # --- STRATEGY SELECTION DIALOG ---
+            dialog = tk.Toplevel(self.root)
+            dialog.title("Enhanced Game - Bot Strategy Selection")
+            dialog.geometry("400x200")
+            dialog.configure(bg=THEME["bg"])
+            dialog.transient(self.root)
+            dialog.grab_set()
+            
+            # Center the dialog
+            dialog.geometry(
+                "+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50)
+            )
+            
+            # Strategy selection
+            ttk.Label(dialog, text="Choose Bot Strategy:", style="Dark.TLabel").pack(pady=10)
+            
+            strategy_var = tk.StringVar(value="Use My Current Strategy")
+            strategy_combo = ttk.Combobox(
+                dialog,
+                textvariable=strategy_var,
+                values=["Use My Current Strategy", "Use GTO Modern Strategy"],
+                state="readonly",
+                width=30
+            )
+            strategy_combo.pack(pady=10)
+            
+            def start_game():
+                selected_strategy = strategy_var.get()
+                bot_strategy_data = StrategyData()
+                
+                if selected_strategy == "Use GTO Modern Strategy":
+                    # Load the default GTO strategy
+                    if not bot_strategy_data.load_strategy_from_file("gto_strategy_default.json"):
+                        messagebox.showerror("Error", "Could not load gto_strategy_default.json!")
+                        dialog.destroy()
+                        return
+                    print("SUCCESS: Bots will use the GTO Modern Strategy.")
+                else:
+                    # Use the user's currently loaded and edited strategy
+                    bot_strategy_data = self.strategy_data
+                    print("SUCCESS: Bots will use your current strategy.")
+                
+                # --- BUG FIX: Pass the selected strategy data to the state machine ---
+                self.poker_state_machine = ImprovedPokerStateMachine(
+                    num_players=6, 
+                    strategy_data=bot_strategy_data
+                )
+                # --- END FIX ---
+                
+                self.poker_state_machine.start_hand()
+                self._update_status("Enhanced poker game started!")
+                dialog.destroy()
+                messagebox.showinfo("Success", "Enhanced poker game started!")
+            
+            def cancel():
+                dialog.destroy()
+            
+            # Buttons
+            button_frame = ttk.Frame(dialog, style="Dark.TFrame")
+            button_frame.pack(fill=tk.X, padx=10, pady=10)
+            
+            ttk.Button(
+                button_frame, text="Start Game", command=start_game, style="Dark.TButton"
+            ).pack(side=tk.RIGHT, padx=5)
+            ttk.Button(
+                button_frame, text="Cancel", command=cancel, style="Dark.TButton"
+            ).pack(side=tk.RIGHT, padx=5)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start enhanced game: {e}")
+            print(f"⚠️  Error starting enhanced game: {e}")
 
     def run(self):
         """Run the application."""
