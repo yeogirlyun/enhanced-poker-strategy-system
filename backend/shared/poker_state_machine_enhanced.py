@@ -543,24 +543,36 @@ class ImprovedPokerStateMachine:
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
-                    # --- FIX STARTS HERE ---
+                    # --- IMPROVED 3-BETTING LOGIC WITH BACKWARD COMPATIBILITY ---
                     value_3bet_thresh = vs_raise_rules.get("value_thresh", 40)
-                    call_range = vs_raise_rules.get("call_range", [0, 0])  # Default to empty range
                     sizing = vs_raise_rules.get("sizing", 3.0)
+                    
+                    # Handle both call_range (new) and call_thresh (old) formats
+                    call_range = vs_raise_rules.get("call_range", None)
+                    if call_range is None:
+                        # Backward compatibility: convert call_thresh to call_range
+                        call_thresh = vs_raise_rules.get("call_thresh", 0)
+                        call_range = [call_thresh, value_3bet_thresh - 1]
                     
                     if hand_strength >= value_3bet_thresh:
                         return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
-                    # Use the call_range to decide whether to call
                     elif call_range[0] <= hand_strength <= call_range[1]:
                         return ActionType.CALL, self.game_state.current_bet - player.current_bet
                     else:
                         return ActionType.FOLD, 0
-                    # --- FIX ENDS HERE ---
+                    # --- END IMPROVED LOGIC ---
                 else:  # This is an opening opportunity
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 20)
                     sizing = open_rules.get(position, {}).get("sizing", 3.0)
+                    
+                    # --- NEW: ADJUST FOR LIMPERS ---
+                    limpers = len([p for p in self.game_state.players 
+                                 if p.current_bet == self.game_state.big_blind and p.position != "BB"])
+                    if limpers > 0:
+                        sizing += limpers  # Add one extra BB for each limper
+                    # --- END LIMPER ADJUSTMENT ---
                     
                     if hand_strength >= threshold:
                         return ActionType.BET, min(sizing, player.stack)
