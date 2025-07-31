@@ -45,7 +45,15 @@ class PokerStrategyGUI:
 
         # Initialize strategy data
         self.strategy_data = StrategyData()
-        self.strategy_data.load_default_tiers()
+        
+        # Try to load the optimized modern strategy as default
+        if self.strategy_data.load_strategy_from_file("optimized_modern_strategy.json"):
+            print("✅ Loaded optimized modern strategy as default")
+        elif self.strategy_data.load_strategy_from_file("modern_strategy.json"):
+            print("✅ Loaded modern strategy as default")
+        else:
+            print("⚠️  No strategy file found, loading default tiers")
+            self.strategy_data.load_default_tiers()
 
         # Font size control
         self.current_font_size_index = (

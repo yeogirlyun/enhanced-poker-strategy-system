@@ -716,8 +716,10 @@ def main():
     # Load strategy data
     strategy_data = StrategyData()
     try:
-        if strategy_data.load_strategy_from_file("modern_strategy.json"):
-            print(Colors.colorize("✅ Strategy loaded successfully", Colors.GREEN))
+        if strategy_data.load_strategy_from_file("optimized_modern_strategy.json"):
+            print(Colors.colorize("✅ Optimized modern strategy loaded", Colors.GREEN))
+        elif strategy_data.load_strategy_from_file("modern_strategy.json"):
+            print(Colors.colorize("✅ Modern strategy loaded", Colors.GREEN))
         else:
             print(Colors.colorize("⚠️  Using default strategy", Colors.YELLOW))
             strategy_data.load_default_tiers()

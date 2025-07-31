@@ -474,9 +474,10 @@ class EnhancedPokerEngine:
 
 # Test the enhanced engine
 if __name__ == "__main__":
-    # Load strategy
+        # Load strategy
     strategy_data = StrategyData()
-    strategy_data.load_strategy_from_file("modern_strategy.json")
+    if not strategy_data.load_strategy_from_file("optimized_modern_strategy.json"):
+        strategy_data.load_strategy_from_file("modern_strategy.json")
 
     # Create engine
     engine = EnhancedPokerEngine(strategy_data)
