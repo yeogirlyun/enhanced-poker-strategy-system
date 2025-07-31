@@ -315,14 +315,14 @@ class ProfessionalPokerTable:
         for btn in self.action_buttons.values():
             btn.config(
                 state=tk.NORMAL,
-                bg="#FF6B35",  # Bright orange when active
-                fg="white",
+                bg="white",  # White background when active
+                fg="black",  # Black text when user can act
                 relief="raised",
                 bd=3,
-            )  # Bright orange with 3D effect when active
+            )  # White background with black text when active
         # Log turn info to action log
         self._log_action(
-            "SYSTEM", "🎯 YOUR TURN - Action buttons highlighted!", 0, play_sound=False
+            "SYSTEM", "🎯 YOUR TURN - Action buttons active!", 0, play_sound=False
         )
         # Play special sound for human turn
         self._play_sound_effect("your_turn")
@@ -332,14 +332,14 @@ class ProfessionalPokerTable:
         for btn in self.action_buttons.values():
             btn.config(
                 state=tk.DISABLED,
-                bg="#CCCCCC",  # Light gray when disabled
-                fg="gray",
+                bg="white",  # White background when inactive
+                fg="gray",  # Dim gray text when user cannot act
                 relief="sunken",
                 bd=1,
-            )  # Light gray with sunken effect when disabled
+            )  # White background with dim text when inactive
         # Log turn info to action log
         self._log_action(
-            "SYSTEM", "🤖 BOT TURN - Action buttons deactivated", 0, play_sound=False
+            "SYSTEM", "🤖 BOT TURN - Action buttons inactive", 0, play_sound=False
         )
 
     def _log_action(
@@ -1491,10 +1491,10 @@ class ProfessionalPokerTable:
                 self.current_action_player = (self.current_action_player + 1) % len(
                     self.current_game_state.players
                 )
-        
+
         # Update turn indicator after setting action player
         self._update_turn_indicator()
-        
+
         # Start bot actions if the current player is a bot
         if self.current_game_state:
             current_player = self.current_game_state.players[self.current_action_player]
