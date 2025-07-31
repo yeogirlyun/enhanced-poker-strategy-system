@@ -171,19 +171,9 @@ class ProfessionalPokerTable:
         )
         start_button.pack(side=tk.LEFT, padx=10)
 
-        # Right side - Bet input
+        # Right side - Empty for now (bet input moved to action area)
         right_controls = ttk.Frame(top_controls_frame)
         right_controls.pack(side=tk.RIGHT, fill=tk.X)
-
-        # Bet size entry
-        ttk.Label(right_controls, text="Bet:", font=("Arial", 16, "bold")).pack(
-            side=tk.LEFT, padx=10
-        )
-        self.bet_size_var = tk.StringVar(value="0")
-        bet_entry = ttk.Entry(
-            right_controls, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
-        )
-        bet_entry.pack(side=tk.LEFT, padx=8)
 
         # Center the action controls
         center_frame = ttk.Frame(action_frame)
@@ -227,6 +217,19 @@ class ProfessionalPokerTable:
                 height=2,  # ALL CONSISTENT SIZE
             )
             btn.pack(side=tk.LEFT, padx=5)  # Consistent spacing
+
+        # Bet input - next to action buttons
+        bet_frame = ttk.Frame(center_frame)
+        bet_frame.pack(side=tk.LEFT, padx=10)
+
+        ttk.Label(bet_frame, text="Bet:", font=("Arial", 14, "bold")).pack(
+            side=tk.LEFT, padx=5
+        )
+        self.bet_size_var = tk.StringVar(value="0")
+        bet_entry = ttk.Entry(
+            bet_frame, textvariable=self.bet_size_var, width=8, font=("Arial", 14)
+        )
+        bet_entry.pack(side=tk.LEFT, padx=5)
 
         # Professional submit button - CONSISTENT SIZE
         submit_button = tk.Button(
