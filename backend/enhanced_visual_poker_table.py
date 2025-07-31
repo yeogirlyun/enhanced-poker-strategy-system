@@ -267,13 +267,13 @@ class ProfessionalPokerTable:
         # In a real implementation, you would play actual sound files
         sound_effects = {
             "fold": "🔇 Fold sound",
-            "check": "🔊 Check sound", 
+            "check": "🔊 Check sound",
             "call": "🔊 Call sound",
             "bet": "💰 Bet sound",
             "raise": "💰 Raise sound",
             "all_in": "🎰 All-in sound",
             "deal": "🃏 Deal sound",
-            "shuffle": "🔀 Shuffle sound"
+            "shuffle": "🔀 Shuffle sound",
         }
         effect = sound_effects.get(action.lower(), f"🔊 {action} sound")
         print(f"{effect}")
@@ -295,7 +295,7 @@ class ProfessionalPokerTable:
             actions = ["check", "bet"]
         else:
             actions = ["fold", "call", "raise"]
-        
+
         action = random.choice(actions)
         bet_size = 0
         if action in ["bet", "raise"]:
@@ -479,7 +479,11 @@ class ProfessionalPokerTable:
 
         # Player name - positioned within 10% margin
         self.canvas.create_text(
-            x, y - text_radius * 0.6, text=name, font=("Arial", 16, "bold"), fill=text_color
+            x,
+            y - text_radius * 0.6,
+            text=name,
+            font=("Arial", 16, "bold"),
+            fill=text_color,
         )
 
         # Professional position indicator - within 10% margin
@@ -501,7 +505,7 @@ class ProfessionalPokerTable:
         )
 
         # Betting amount - below player circle
-        if hasattr(player, 'current_bet') and player.current_bet > 0:
+        if hasattr(player, "current_bet") and player.current_bet > 0:
             bet_text = f"Bet: ${player.current_bet:.0f}"
             self.canvas.create_text(
                 x,
@@ -522,8 +526,16 @@ class ProfessionalPokerTable:
         # Position cards below player with professional spacing - MUCH BIGGER
         card_y = y + 100  # Further below player
 
+        # Calculate proper spacing to show both cards fully
+        # Card width is 80, so we need spacing of card_width + gap
+        gap = 8  # 0.1 cm equivalent gap (approximately 8 pixels)
+        total_card_width = self.card_width + gap
+        
+        # Center the two cards around the player position
+        first_card_x = x - (total_card_width + self.card_width) // 2
+        
         for i, card in enumerate(player.cards):
-            card_x = x - 60 + (i * 60)  # Bigger card spacing
+            card_x = first_card_x + (i * total_card_width)
 
             # Professional card background - MUCH BIGGER
             card_color = "#FFD700" if player.is_human else "#FFFFFF"
