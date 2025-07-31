@@ -61,9 +61,12 @@ class ProfessionalPokerTable:
         self.action_log = []
         self.bot_action_delay = 2.0  # Seconds between bot actions
 
-        # Create canvas
+        # Create controls first (they will contain the canvas)
+        self._create_professional_controls(parent_frame)
+
+        # Create canvas in the right frame
         self.canvas = tk.Canvas(
-            parent_frame,
+            self.table_frame,  # Use table_frame instead of parent_frame
             width=self.canvas_width,
             height=self.canvas_height,
             bg="#0B6623",  # Professional green felt
@@ -72,9 +75,6 @@ class ProfessionalPokerTable:
         self.canvas.pack(
             fill=tk.BOTH, expand=True, padx=0, pady=0
         )  # No padding for perfect centering
-
-        # Create controls
-        self._create_professional_controls(parent_frame)
 
         # Draw table
         self._draw_professional_table()
@@ -131,27 +131,31 @@ class ProfessionalPokerTable:
         )
         bet_entry.pack(side=tk.LEFT, padx=8)
 
-        # Action log frame - LEFT SIDE
+        # Action log frame - LEFT SIDE (HALF WINDOW WIDTH)
         log_frame = ttk.Frame(main_container)
-        log_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+        log_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Action log label
         ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
             anchor=tk.W
         )
 
-        # Action log text area
+        # Action log text area - MUCH LARGER
         self.action_log_text = tk.Text(
             log_frame,
-            width=40,
-            height=15,
-            font=("Arial", 10),
+            width=80,  # Much wider
+            height=25,  # Much taller
+            font=("Arial", 12),  # Larger font
             bg="#2C3E50",
             fg="white",
             relief="sunken",
             bd=2,
         )
         self.action_log_text.pack(fill=tk.BOTH, expand=True)
+
+        # Table frame - RIGHT SIDE (for canvas)
+        self.table_frame = ttk.Frame(main_container)
+        self.table_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Bottom action controls - BELOW TABLE
         action_frame = ttk.Frame(main_container)
@@ -161,15 +165,17 @@ class ProfessionalPokerTable:
         center_frame = ttk.Frame(action_frame)
         center_frame.pack(expand=True)
 
-        # Turn indicator - CENTERED
+        # Turn indicator - CENTERED (SAME SIZE AS ACTION BUTTONS)
         self.turn_label = tk.Label(
             center_frame,
             text="YOUR TURN",
-            font=("Arial", 18, "bold"),  # 3x bigger font
+            font=("Arial", 16, "bold"),  # Same as action buttons
             fg="white",
             bg="#FF6B6B",
             relief="raised",
-            bd=3,  # Thicker border
+            bd=4,  # Same border as action buttons
+            width=12,  # Same width as action buttons
+            height=2,  # Same height as action buttons
         )
         self.turn_label.pack(side=tk.LEFT, padx=10)  # More padding
 
@@ -622,13 +628,11 @@ class ProfessionalPokerTable:
                 if not first_player.is_human:
                     threading.Timer(self.bot_action_delay, self._bot_action).start()
 
-            messagebox.showinfo(
-                "Hand Started",
-                f"New hand started with {num_players} players!\n"
-                f"Dealer: {self.current_game_state.players[self.dealer_position].name}\n"
-                f"Your position: {self.current_game_state.players[0].position.value}\n"
-                f"Action starts with: {self.current_game_state.players[self.current_action_player].name}",
-            )
+            # Log detailed hand start info instead of popup
+            self._log_action("SYSTEM", f"New hand started with {num_players} players!", 0)
+            self._log_action("SYSTEM", f"Dealer: {self.current_game_state.players[self.dealer_position].name}", 0)
+            self._log_action("SYSTEM", f"Your position: {self.current_game_state.players[0].position.value}", 0)
+            self._log_action("SYSTEM", f"Action starts with: {self.current_game_state.players[self.current_action_player].name}", 0)
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start hand: {str(e)}")
