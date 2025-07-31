@@ -59,7 +59,8 @@ class ProfessionalPokerTable:
 
         # Action log and sound effects
         self.action_log = []
-        self.bot_action_delay = 2.0  # Seconds between bot actions
+        self.bot_action_delay = 1.5  # Seconds between bot actions
+        self.action_sound_delay = 0.5  # Delay for sound effects
 
         # Create controls first (they will contain the canvas)
         self._create_professional_controls(parent_frame)
@@ -152,12 +153,18 @@ class ProfessionalPokerTable:
             bd=2,
             wrap=tk.NONE,  # No word wrapping to enable horizontal scroll
         )
-        
+
         # Add scrollbars
-        log_scrollbar_v = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.action_log_text.yview)
-        log_scrollbar_h = ttk.Scrollbar(log_frame, orient=tk.HORIZONTAL, command=self.action_log_text.xview)
-        self.action_log_text.configure(yscrollcommand=log_scrollbar_v.set, xscrollcommand=log_scrollbar_h.set)
-        
+        log_scrollbar_v = ttk.Scrollbar(
+            log_frame, orient=tk.VERTICAL, command=self.action_log_text.yview
+        )
+        log_scrollbar_h = ttk.Scrollbar(
+            log_frame, orient=tk.HORIZONTAL, command=self.action_log_text.xview
+        )
+        self.action_log_text.configure(
+            yscrollcommand=log_scrollbar_v.set, xscrollcommand=log_scrollbar_h.set
+        )
+
         # Pack with scrollbars
         log_scrollbar_v.pack(side=tk.RIGHT, fill=tk.Y)
         log_scrollbar_h.pack(side=tk.BOTTOM, fill=tk.X)
@@ -258,10 +265,21 @@ class ProfessionalPokerTable:
     def _play_sound_effect(self, action: str):
         """Play sound effect for action (simulated)."""
         # In a real implementation, you would play actual sound files
-        print(f"🔊 Sound effect: {action}")
+        sound_effects = {
+            "fold": "🔇 Fold sound",
+            "check": "🔊 Check sound", 
+            "call": "🔊 Call sound",
+            "bet": "💰 Bet sound",
+            "raise": "💰 Raise sound",
+            "all_in": "🎰 All-in sound",
+            "deal": "🃏 Deal sound",
+            "shuffle": "🔀 Shuffle sound"
+        }
+        effect = sound_effects.get(action.lower(), f"🔊 {action} sound")
+        print(f"{effect}")
 
     def _bot_action(self):
-        """Simulate bot player action with realistic timing."""
+        """Simulate bot player action with realistic timing and sound effects."""
         if not self.current_game_state:
             return
 
@@ -272,13 +290,24 @@ class ProfessionalPokerTable:
         # Simulate bot thinking time
         time.sleep(self.bot_action_delay)
 
-        # Bot decision logic
-        actions = ["fold", "check", "call", "bet", "raise"]
+        # Bot decision logic with realistic actions
+        if self.current_game_state.current_bet == 0:
+            actions = ["check", "bet"]
+        else:
+            actions = ["fold", "call", "raise"]
+        
         action = random.choice(actions)
-        bet_size = random.randint(1, 10) if action in ["bet", "raise"] else 0
+        bet_size = 0
+        if action in ["bet", "raise"]:
+            bet_size = random.randint(1, 10)
+        elif action == "call":
+            bet_size = self.current_game_state.current_bet
 
         # Execute bot action
         self._execute_action(current_player, action, bet_size)
+
+        # Play sound effect for the action
+        self._play_sound_effect(action)
 
         # Log bot action
         self._log_action(current_player.name, action.upper(), bet_size)
@@ -300,6 +329,7 @@ class ProfessionalPokerTable:
         """Execute an action for a player."""
         if action == "fold":
             player.is_active = False
+            player.current_bet = 0
         elif action in ["call", "bet", "raise"]:
             # Update pot and stacks
             call_amount = self.current_game_state.current_bet
@@ -311,6 +341,9 @@ class ProfessionalPokerTable:
             player.stack -= call_amount
             self.current_game_state.pot += call_amount
             self.current_game_state.current_bet = call_amount
+            player.current_bet = call_amount
+        elif action == "check":
+            player.current_bet = 0
 
     def _draw_professional_table(self):
         """Draw a professional poker table with perfect centering."""
@@ -439,32 +472,44 @@ class ProfessionalPokerTable:
         text_color = (
             "#000080" if player.is_human else "black"
         )  # Deep ocean blue for human, black for bots
-        
+
         # Calculate 10% margin from circle edge
         margin = int(player_radius * 0.1)
         text_radius = player_radius - margin
-        
+
+        # Player name - positioned within 10% margin
         self.canvas.create_text(
-            x, y - text_radius, text=name, font=("Arial", 16, "bold"), fill=text_color
+            x, y - text_radius * 0.6, text=name, font=("Arial", 16, "bold"), fill=text_color
         )
 
-        # Professional position indicator - MUCH BIGGER with margin
+        # Professional position indicator - within 10% margin
         self.canvas.create_text(
             x,
-            y + text_radius * 0.3,
+            y + text_radius * 0.1,
             text=player.position.value,
             font=("Arial", 14, "bold"),
             fill=text_color,
         )
 
-        # Professional stack size - MUCH BIGGER with margin
+        # Professional stack size - within 10% margin
         self.canvas.create_text(
             x,
-            y + text_radius * 0.8,
+            y + text_radius * 0.6,
             text=f"${player.stack:.0f}",
             font=("Arial", 14, "bold"),
             fill=text_color,
         )
+
+        # Betting amount - below player circle
+        if hasattr(player, 'current_bet') and player.current_bet > 0:
+            bet_text = f"Bet: ${player.current_bet:.0f}"
+            self.canvas.create_text(
+                x,
+                y + player_radius + 25,
+                text=bet_text,
+                font=("Arial", 12, "bold"),
+                fill="red",
+            )
 
         # Draw professional hole cards - only show human cards or folded players
         if player.cards and (player.is_human or not player.is_active):
@@ -496,7 +541,7 @@ class ProfessionalPokerTable:
             rank, suit = card[0], card[1]
             suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
             color = "red" if suit in ["h", "d"] else "black"
-            
+
             # Calculate font size as 60% of card height
             font_size = int(self.card_height * 0.6)
 
@@ -622,6 +667,8 @@ class ProfessionalPokerTable:
                     is_active=True,
                     cards=[],  # Cards will be dealt by dealer
                 )
+                # Add current_bet attribute
+                player.current_bet = 0.0
                 players.append(player)
 
             # Dealer deals hole cards (but don't show AI cards yet)
@@ -726,6 +773,9 @@ class ProfessionalPokerTable:
 
             # Execute the action
             self._execute_action(current_player, action_str, bet_size)
+
+            # Play sound effect for the action
+            self._play_sound_effect(action_str)
 
             # Log the action
             self._log_action(current_player.name, action_str.upper(), bet_size)
