@@ -73,6 +73,19 @@ class GameState:
     min_raise: float = 1.0  # NEW: Track minimum raise amount
 
 
+@dataclass
+class HandHistoryLog:
+    """A snapshot of the game state at a specific action."""
+    timestamp: float
+    street: str
+    player_name: str
+    action: ActionType
+    amount: float
+    pot_size: float
+    board: List[str]
+    player_states: List[dict]  # Store a simplified dict of each player's state
+
+
 class ImprovedPokerStateMachine:
     """Fully improved poker state machine with all critical fixes."""
 
@@ -112,6 +125,9 @@ class ImprovedPokerStateMachine:
         self.action_log = []
         self.max_log_size = 1000  # Limit log size
         
+        # NEW: Advanced logging system
+        self.hand_history: List[HandHistoryLog] = []  # For structured logging
+        
         # Add caching for performance
         self._hand_eval_cache = {}
         self._cache_hits = 0
@@ -135,13 +151,45 @@ class ImprovedPokerStateMachine:
                 positions.append(f"P{i+1}")
             return positions
 
-    def log_action(self, message: str):
-        """Log an action with timestamp and size limit."""
+    def log_state_change(self, player: Player, action: ActionType, amount: float):
+        """Logs the entire game state at the moment of an action."""
+        if not self.game_state:
+            return
+
+        # Create a simplified snapshot of each player's state
+        player_states = [
+            {
+                "name": p.name,
+                "stack": p.stack,
+                "current_bet": p.current_bet,
+                "is_active": p.is_active,
+                "is_all_in": p.is_all_in,
+                "cards": p.cards if p.is_human else []  # Only log human cards for privacy/realism
+            }
+            for p in self.game_state.players
+        ]
+
+        log_entry = HandHistoryLog(
+            timestamp=time.time(),
+            street=self.game_state.street,
+            player_name=player.name,
+            action=action,
+            amount=amount,
+            pot_size=self.game_state.pot,
+            board=self.game_state.board.copy(),
+            player_states=player_states
+        )
+        
+        self.hand_history.append(log_entry)
+        # Also print a simple debug message to the console
+        self._log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")
+
+    def _log_action(self, message: str):
+        """Log a simple action message to the console for debugging."""
         timestamp = time.strftime("%H:%M:%S")
         log_entry = f"[{timestamp}] {message}"
         self.action_log.append(log_entry)
         
-        # Prevent unbounded growth
         if len(self.action_log) > self.max_log_size:
             self.action_log = self.action_log[-self.max_log_size:]
         
@@ -152,7 +200,7 @@ class ImprovedPokerStateMachine:
         if new_state in self.STATE_TRANSITIONS[self.current_state]:
             old_state = self.current_state
             self.current_state = new_state
-            self.log_action(f"STATE TRANSITION: {old_state.value} → {new_state.value}")
+            self._log_action(f"STATE TRANSITION: {old_state.value} → {new_state.value}")
             if self.on_state_change:
                 self.on_state_change(new_state)
             self.handle_state_entry()
@@ -228,7 +276,10 @@ class ImprovedPokerStateMachine:
 
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
-        self.log_action("Starting new hand")
+        self._log_action("Starting new hand")
+        
+        # --- NEW: Clear the hand history ---
+        self.hand_history.clear()
 
         # Create deck
         deck = self.create_deck()
@@ -286,7 +337,7 @@ class ImprovedPokerStateMachine:
 
         # Check if players can post blinds
         if sb_player.stack < sb_amount or bb_player.stack < bb_amount:
-            self.log_action("Insufficient stacks for blinds; ending game")
+            self._log_action("Insufficient stacks for blinds; ending game")
             self.transition_to(PokerState.END_HAND)
             return
 
@@ -317,7 +368,7 @@ class ImprovedPokerStateMachine:
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
-        self.log_action("Preflop betting round")
+        self._log_action("Preflop betting round")
         self.game_state.street = "preflop"
         self.reset_round_tracking()
 
@@ -334,7 +385,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_flop(self):
         """Deal the flop."""
-        self.log_action("Dealing flop")
+        self._log_action("Dealing flop")
         
         # Burn card
         if self.game_state.deck:
@@ -349,7 +400,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_turn(self):
         """Deal the turn."""
-        self.log_action("Dealing turn")
+        self._log_action("Dealing turn")
         
         # Burn card
         if self.game_state.deck:
@@ -361,7 +412,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_river(self):
         """Deal the river."""
-        self.log_action("Dealing river")
+        self._log_action("Dealing river")
         
         # Burn card
         if self.game_state.deck:
@@ -398,19 +449,19 @@ class ImprovedPokerStateMachine:
 
     def handle_flop_betting(self):
         """Handle flop betting round."""
-        self.log_action("Flop betting round")
+        self._log_action("Flop betting round")
         self.game_state.street = "flop"
         self._handle_betting_round(PokerState.DEAL_TURN)
 
     def handle_turn_betting(self):
         """Handle turn betting round."""
-        self.log_action("Turn betting round")
+        self._log_action("Turn betting round")
         self.game_state.street = "turn"
         self._handle_betting_round(PokerState.DEAL_RIVER)
 
     def handle_river_betting(self):
         """Handle river betting round."""
-        self.log_action("River betting round")
+        self._log_action("River betting round")
         self.game_state.street = "river"
         self._handle_betting_round(PokerState.SHOWDOWN)
 
@@ -474,11 +525,11 @@ class ImprovedPokerStateMachine:
         current_player = self.game_state.players[self.action_player_index]
 
         if current_player.is_human:
-            self.log_action(f"Human turn: {current_player.name}")
+            self._log_action(f"Human turn: {current_player.name}")
             if self.on_action_required:
                 self.on_action_required(current_player)
         else:
-            self.log_action(f"Bot turn: {current_player.name}")
+            self._log_action(f"Bot turn: {current_player.name}")
             self.execute_bot_action(current_player)
 
     # FIX 5: Strategy Integration for Bots
@@ -887,10 +938,11 @@ class ImprovedPokerStateMachine:
             if errors:
                 raise ValueError(f"Invalid action: {'; '.join(errors)}")
             
-            self.log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")
+            # --- NEW: Call the state logger here ---
+            self.log_state_change(player, action, amount)
             
         except Exception as e:
-            self.log_action(f"ERROR in execute_action: {e}")
+            self._log_action(f"ERROR in execute_action: {e}")
             return
 
         if action == ActionType.FOLD:
@@ -900,7 +952,7 @@ class ImprovedPokerStateMachine:
         elif action == ActionType.CHECK:
             # Only valid when current_bet is 0
             if self.game_state.current_bet != 0:
-                self.log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
+                self._log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
                 return
             player.current_bet = 0
 
@@ -914,7 +966,7 @@ class ImprovedPokerStateMachine:
                 player.is_all_in = True
                 player.partial_call_amount = actual_call
                 player.full_call_amount = call_amount
-                self.log_action(f"{player.name} ALL-IN for ${actual_call:.2f} (${call_amount - actual_call:.2f} short)")
+                self._log_action(f"{player.name} ALL-IN for ${actual_call:.2f} (${call_amount - actual_call:.2f} short)")
             else:
                 player.partial_call_amount = None
                 player.full_call_amount = None
@@ -927,11 +979,11 @@ class ImprovedPokerStateMachine:
             # Check for all-in
             if player.stack == 0:
                 player.is_all_in = True
-                self.log_action(f"{player.name} is ALL-IN!")
+                self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
-                self.log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
+                self._log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
                 return
             
             actual_bet = min(amount, player.stack)
@@ -944,12 +996,12 @@ class ImprovedPokerStateMachine:
             # Check for all-in
             if player.stack == 0:
                 player.is_all_in = True
-                self.log_action(f"{player.name} is ALL-IN!")
+                self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
             if amount <= self.game_state.current_bet:
                 min_raise_total = self.game_state.current_bet + self.game_state.min_raise
-                self.log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
+                self._log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
                 return
             
             total_bet = min(amount, player.current_bet + player.stack)
@@ -970,7 +1022,7 @@ class ImprovedPokerStateMachine:
             
             if player.stack == 0:
                 player.is_all_in = True
-                self.log_action(f"{player.name} is ALL-IN!")
+                self._log_action(f"{player.name} is ALL-IN!")
 
         # Mark player as acted
         player.has_acted_this_round = True
@@ -1006,7 +1058,7 @@ class ImprovedPokerStateMachine:
 
     def handle_round_complete(self):
         """Handle round completion."""
-        self.log_action("Round complete")
+        self._log_action("Round complete")
         if self.on_round_complete:
             self.on_round_complete()
 
@@ -1236,7 +1288,7 @@ class ImprovedPokerStateMachine:
 
     def handle_showdown(self):
         """Handle showdown with tie handling and side pots."""
-        self.log_action("Showdown")
+        self._log_action("Showdown")
         
         # Create side pots if needed
         side_pots = self.create_side_pots()
@@ -1250,7 +1302,7 @@ class ImprovedPokerStateMachine:
                 if len(eligible_players) == 1:
                     winner = eligible_players[0]
                     winner.stack += pot_amount
-                    self.log_action(f"{winner.name} wins side pot ${pot_amount:.2f}")
+                    self._log_action(f"{winner.name} wins side pot ${pot_amount:.2f}")
                 else:
                     # Determine winners for this pot
                     pot_winners = self.determine_winner()
@@ -1260,7 +1312,7 @@ class ImprovedPokerStateMachine:
                         split_amount = pot_amount / len(pot_winners)
                         for winner in pot_winners:
                             winner.stack += split_amount
-                            self.log_action(f"{winner.name} wins ${split_amount:.2f} from side pot")
+                            self._log_action(f"{winner.name} wins ${split_amount:.2f} from side pot")
         else:
             # No side pots, normal showdown
             winners = self.determine_winner()
@@ -1268,7 +1320,7 @@ class ImprovedPokerStateMachine:
                 split_amount = self.game_state.pot / len(winners)
                 for winner in winners:
                     winner.stack += split_amount
-                    self.log_action(f"{winner.name} wins ${split_amount:.2f}")
+                    self._log_action(f"{winner.name} wins ${split_amount:.2f}")
         
         self.transition_to(PokerState.END_HAND)
 
@@ -1330,7 +1382,7 @@ class ImprovedPokerStateMachine:
 
     def handle_end_hand(self):
         """Handle hand completion."""
-        self.log_action("Hand complete")
+        self._log_action("Hand complete")
         
         # Advance dealer position for next hand
         self.advance_dealer_position()
@@ -1429,6 +1481,10 @@ class ImprovedPokerStateMachine:
             ],
             "action_player": self.action_player_index,
         }
+    
+    def get_hand_history(self) -> List[HandHistoryLog]:
+        """Returns the structured log for the current hand."""
+        return self.hand_history
 
 
 print("🚀 Improved Poker State Machine loaded!")
