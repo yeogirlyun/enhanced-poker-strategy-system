@@ -86,55 +86,14 @@ class ProfessionalPokerTable:
         main_container = ttk.Frame(parent_frame)
         main_container.pack(fill=tk.BOTH, expand=True)
 
-        # Top controls frame
-        top_controls = ttk.Frame(main_container)
-        top_controls.pack(fill=tk.X, padx=10, pady=5)
-
-        # Left side - Game controls
-        left_frame = ttk.Frame(top_controls)
-        left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        # Player count with professional styling
-        ttk.Label(left_frame, text="Players:", font=("Arial", 10, "bold")).pack(
-            side=tk.LEFT, padx=5
-        )
-        self.player_count_var = tk.StringVar(value="6")
-        player_combo = ttk.Combobox(
-            left_frame,
-            textvariable=self.player_count_var,
-            values=["2", "3", "4", "5", "6", "7", "8"],
-            state="readonly",
-            width=5,
-            font=("Arial", 10),
-        )
-        player_combo.pack(side=tk.LEFT, padx=5)
-
-        # Professional start button
-        start_button = ttk.Button(
-            left_frame,
-            text="🎯 Start New Hand",
-            command=self._start_professional_hand,
-            style="Accent.TButton",
-        )
-        start_button.pack(side=tk.LEFT, padx=10)
-
-        # Right side - Top controls
-        right_frame = ttk.Frame(top_controls)
-        right_frame.pack(side=tk.RIGHT, fill=tk.X)
-
-        # Bet size entry - Top right
-        ttk.Label(right_frame, text="Bet:", font=("Arial", 16, "bold")).pack(
-            side=tk.LEFT, padx=10
-        )
-        self.bet_size_var = tk.StringVar(value="0")
-        bet_entry = ttk.Entry(
-            right_frame, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
-        )
-        bet_entry.pack(side=tk.LEFT, padx=8)
-
         # Action log frame - LEFT SIDE (FIXED WIDTH, NO EXPAND)
         log_frame = ttk.Frame(main_container)
         log_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+
+        # Action log label
+        ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
+            anchor=tk.W
+        )
 
         # Action log label
         ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
@@ -179,6 +138,52 @@ class ProfessionalPokerTable:
         # Bottom action controls - INSIDE TABLE FRAME
         action_frame = ttk.Frame(self.table_frame)
         action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
+
+        # Top row - Player controls and bet input
+        top_controls_frame = ttk.Frame(action_frame)
+        top_controls_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Left side - Player controls
+        left_controls = ttk.Frame(top_controls_frame)
+        left_controls.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Player count with professional styling
+        ttk.Label(left_controls, text="Players:", font=("Arial", 10, "bold")).pack(
+            side=tk.LEFT, padx=5
+        )
+        self.player_count_var = tk.StringVar(value="6")
+        player_combo = ttk.Combobox(
+            left_controls,
+            textvariable=self.player_count_var,
+            values=["2", "3", "4", "5", "6", "7", "8"],
+            state="readonly",
+            width=5,
+            font=("Arial", 10),
+        )
+        player_combo.pack(side=tk.LEFT, padx=5)
+
+        # Professional start button
+        start_button = ttk.Button(
+            left_controls,
+            text="🎯 Start New Hand",
+            command=self._start_professional_hand,
+            style="Accent.TButton",
+        )
+        start_button.pack(side=tk.LEFT, padx=10)
+
+        # Right side - Bet input
+        right_controls = ttk.Frame(top_controls_frame)
+        right_controls.pack(side=tk.RIGHT, fill=tk.X)
+
+        # Bet size entry
+        ttk.Label(right_controls, text="Bet:", font=("Arial", 16, "bold")).pack(
+            side=tk.LEFT, padx=10
+        )
+        self.bet_size_var = tk.StringVar(value="0")
+        bet_entry = ttk.Entry(
+            right_controls, textvariable=self.bet_size_var, width=12, font=("Arial", 16)
+        )
+        bet_entry.pack(side=tk.LEFT, padx=8)
 
         # Center the action controls
         center_frame = ttk.Frame(action_frame)
