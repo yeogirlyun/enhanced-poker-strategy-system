@@ -285,9 +285,6 @@ class ProfessionalPokerTable:
             # Redraw table
             self._redraw_professional_table()
 
-            # Update turn indicator
-            self._update_turn_indicator()
-
             # Start bot actions if next player is bot
             if self.current_game_state:
                 next_player = self.current_game_state.players[
@@ -443,20 +440,45 @@ class ProfessionalPokerTable:
 
         # Bot decision logic with realistic actions (less aggressive folding)
         # BTN and blinds should be less likely to fold
-        is_btn_or_blind = current_player.position in [Position.BTN, Position.SB, Position.BB]
-        
+        is_btn_or_blind = current_player.position in [
+            Position.BTN,
+            Position.SB,
+            Position.BB,
+        ]
+
         if self.current_game_state.current_bet == 0:
             # No bet to call - more likely to check or bet
             if is_btn_or_blind:
-                actions = ["check", "check", "check", "check", "bet", "bet"]  # 67% check, 33% bet
+                actions = [
+                    "check",
+                    "check",
+                    "check",
+                    "check",
+                    "bet",
+                    "bet",
+                ]  # 67% check, 33% bet
             else:
                 actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
         else:
             # There's a bet to call - BTN/blinds are less likely to fold
             if is_btn_or_blind:
-                actions = ["fold", "call", "call", "call", "call", "raise"]  # 17% fold, 67% call, 17% raise
+                actions = [
+                    "fold",
+                    "call",
+                    "call",
+                    "call",
+                    "call",
+                    "raise",
+                ]  # 17% fold, 67% call, 17% raise
             else:
-                actions = ["fold", "fold", "call", "call", "call", "raise"]  # 33% fold, 50% call, 17% raise
+                actions = [
+                    "fold",
+                    "fold",
+                    "call",
+                    "call",
+                    "call",
+                    "raise",
+                ]  # 33% fold, 50% call, 17% raise
 
         action = random.choice(actions)
         bet_size = 0
@@ -478,7 +500,6 @@ class ProfessionalPokerTable:
 
         # Redraw table
         self._redraw_professional_table()
-        self._update_turn_indicator()
 
         # Schedule next bot action if needed
         if self.current_game_state:
@@ -512,12 +533,12 @@ class ProfessionalPokerTable:
         """Check if we're in showdown phase (river betting complete)."""
         if not self.current_game_state or self.current_hand_phase != "river":
             return False
-        
+
         # Check if river betting is complete
         active_players = [p for p in self.current_game_state.players if p.is_active]
         if len(active_players) <= 1:
             return False
-            
+
         # If all active players have acted and bets are equal, it's showdown
         for player in active_players:
             if player.current_bet != self.current_game_state.current_bet:
@@ -1034,10 +1055,16 @@ class ProfessionalPokerTable:
             return
 
         current_player = self.current_game_state.players[self.current_action_player]
+        
+        # Only update button states if they need to change
         if current_player.is_human:
-            self._activate_buttons_for_human_turn()
+            # Check if buttons are currently deactivated
+            if self.action_buttons["fold"].cget("state") == "disabled":
+                self._activate_buttons_for_human_turn()
         else:
-            self._deactivate_buttons_for_bot_turn()
+            # Check if buttons are currently activated
+            if self.action_buttons["fold"].cget("state") == "normal":
+                self._deactivate_buttons_for_bot_turn()
 
     def _submit_professional_action(self):
         """Submit action with proper turn progression and logging."""
@@ -1074,9 +1101,6 @@ class ProfessionalPokerTable:
             # Redraw table
             self._redraw_professional_table()
 
-            # Update turn indicator
-            self._update_turn_indicator()
-
             # Start bot actions if next player is bot
             if self.current_game_state:
                 next_player = self.current_game_state.players[
@@ -1099,6 +1123,9 @@ class ProfessionalPokerTable:
         # Skip folded players
         while not self.current_game_state.players[self.current_action_player].is_active:
             self.current_action_player = (self.current_action_player + 1) % num_players
+
+        # Update turn indicator when player changes
+        self._update_turn_indicator()
 
     def _is_round_complete(self):
         """Check if the current betting round is complete."""
@@ -1187,7 +1214,9 @@ class ProfessionalPokerTable:
                 # Log each card dealt
                 rank, suit = card[0], card[1]
                 suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
-                self._log_action("DEALER", f"Dealt: {rank}{suit_symbol}", 0, play_sound=True)
+                self._log_action(
+                    "DEALER", f"Dealt: {rank}{suit_symbol}", 0, play_sound=True
+                )
                 time.sleep(0.3)  # Deal cards with delay
 
     def _show_hand_results(self):
