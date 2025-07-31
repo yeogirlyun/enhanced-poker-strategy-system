@@ -59,8 +59,8 @@ class ProfessionalPokerTable:
 
         # Action log and sound effects
         self.action_log = []
-        self.bot_action_delay = 1.5  # Seconds between bot actions
-        self.action_sound_delay = 0.5  # Delay for sound effects
+        self.bot_action_delay = 0.75  # Seconds between bot actions (reduced from 1.5)
+        self.action_sound_delay = 0.25  # Delay for sound effects (reduced from 0.5)
 
         # Create controls first (they will contain the canvas)
         self._create_professional_controls(parent_frame)
@@ -1356,15 +1356,15 @@ class ProfessionalPokerTable:
         # Check if all active players have acted and bets are equal
         # A round is complete when all active players have the same bet amount
         target_bet = self.current_game_state.current_bet
-        
+
         # Debug logging
         self._log_action(
-            "SYSTEM", 
-            f"Round check - Target bet: {target_bet}, Active players: {len(active_players)}", 
-            0, 
-            play_sound=False
+            "SYSTEM",
+            f"Round check - Target bet: {target_bet}, Active players: {len(active_players)}",
+            0,
+            play_sound=False,
         )
-        
+
         # Special case: if no bet to call (PFA situation) and all players have bet 0, round is complete
         if target_bet == 0:
             all_checked = True
@@ -1374,29 +1374,29 @@ class ProfessionalPokerTable:
                     break
             if all_checked:
                 self._log_action(
-                    "SYSTEM", 
-                    f"Round complete - all players checked (no bet to call)", 
-                    0, 
-                    play_sound=False
+                    "SYSTEM",
+                    f"Round complete - all players checked (no bet to call)",
+                    0,
+                    play_sound=False,
                 )
                 return True
-        
+
         # Normal case: check if all players have matched the current bet
         for player in active_players:
             if player.current_bet != target_bet:
                 self._log_action(
-                    "SYSTEM", 
-                    f"  {player.name}: bet={player.current_bet} != target={target_bet}", 
-                    0, 
-                    play_sound=False
+                    "SYSTEM",
+                    f"  {player.name}: bet={player.current_bet} != target={target_bet}",
+                    0,
+                    play_sound=False,
                 )
                 return False
-        
+
         self._log_action(
-            "SYSTEM", 
-            f"Round complete - all players have bet {target_bet}", 
-            0, 
-            play_sound=False
+            "SYSTEM",
+            f"Round complete - all players have bet {target_bet}",
+            0,
+            play_sound=False,
         )
         return True
 
@@ -1447,7 +1447,7 @@ class ProfessionalPokerTable:
             self._log_action("DEALER", "SHOWDOWN", 0, play_sound=True)
             # Redraw to show all cards
             self._redraw_professional_table()
-            time.sleep(2)  # Show cards for 2 seconds
+            time.sleep(1)  # Show cards for 1 second (reduced from 2)
             self._show_hand_results()
             return
 
@@ -1459,7 +1459,7 @@ class ProfessionalPokerTable:
         self.current_game_state.street = (
             self.current_hand_phase
         )  # Update game state street
-        
+
         # Set action player based on street
         if self.current_hand_phase == "preflop":
             # Preflop: UTG starts (after big blind)
@@ -1472,7 +1472,9 @@ class ProfessionalPokerTable:
                 self.current_game_state.players
             )
             # Skip to first active player
-            while not self.current_game_state.players[self.current_action_player].is_active:
+            while not self.current_game_state.players[
+                self.current_action_player
+            ].is_active:
                 self.current_action_player = (self.current_action_player + 1) % len(
                     self.current_game_state.players
                 )
@@ -1496,7 +1498,7 @@ class ProfessionalPokerTable:
                 self._log_action(
                     "DEALER", f"Dealt: {rank}{suit_symbol}", 0, play_sound=True
                 )
-                time.sleep(0.3)  # Deal cards with delay
+                time.sleep(0.15)  # Deal cards with delay (reduced from 0.3)
 
     def _show_hand_results(self):
         """Show the results of the hand."""
