@@ -146,7 +146,7 @@ class ProfessionalPokerTable:
         self.player_count_var = tk.StringVar(value="6")
         player_count_frame = ttk.Frame(center_frame)
         player_count_frame.pack(side=tk.LEFT, padx=5)
-        
+
         ttk.Label(player_count_frame, text="Players:", font=("Arial", 14, "bold")).pack(
             side=tk.LEFT, padx=2
         )
@@ -192,26 +192,42 @@ class ProfessionalPokerTable:
         # Action buttons with clear labels - ALL CONSISTENT SIZE
         self.action_var = tk.StringVar(value="check")
         actions = [
-            ("FOLD", "fold"),
-            ("CHECK", "check"),
-            ("CALL", "call"),
-            ("BET", "bet"),
-            ("RAISE", "raise"),
+            ("FOLD", "fold", True),  # Immediate action
+            ("CHECK", "check", True),  # Immediate action
+            ("CALL", "call", True),  # Immediate action
+            ("BET", "bet", False),  # Requires submit
+            ("RAISE", "raise", False),  # Requires submit
         ]
 
-        for text, value in actions:
-            btn = tk.Button(
-                center_frame,
-                text=text,
-                command=lambda v=value: self._set_action(v),
-                bg="#CCCCCC",  # Gray background
-                fg="black",  # Black font
-                font=("Arial", 16, "bold"),  # Consistent font
-                relief="raised",
-                bd=4,  # Consistent border
-                width=12,  # ALL CONSISTENT SIZE
-                height=2,  # ALL CONSISTENT SIZE
-            )
+        for text, value, immediate in actions:
+            if immediate:
+                # Immediate action buttons
+                btn = tk.Button(
+                    center_frame,
+                    text=text,
+                    command=lambda v=value: self._execute_immediate_action(v),
+                    bg="#CCCCCC",  # Gray background
+                    fg="black",  # Black font
+                    font=("Arial", 16, "bold"),  # Consistent font
+                    relief="raised",
+                    bd=4,  # Consistent border
+                    width=12,  # ALL CONSISTENT SIZE
+                    height=2,  # ALL CONSISTENT SIZE
+                )
+            else:
+                # Action buttons that require submit
+                btn = tk.Button(
+                    center_frame,
+                    text=text,
+                    command=lambda v=value: self._set_action(v),
+                    bg="#CCCCCC",  # Gray background
+                    fg="black",  # Black font
+                    font=("Arial", 16, "bold"),  # Consistent font
+                    relief="raised",
+                    bd=4,  # Consistent border
+                    width=12,  # ALL CONSISTENT SIZE
+                    height=2,  # ALL CONSISTENT SIZE
+                )
             btn.pack(side=tk.LEFT, padx=5)  # Consistent spacing
 
         # Bet input - next to action buttons
@@ -227,32 +243,80 @@ class ProfessionalPokerTable:
         )
         bet_entry.pack(side=tk.LEFT, padx=5)
 
-        # Professional submit button - CONSISTENT SIZE
-        submit_button = tk.Button(
+        # Professional submit button - MORE PROMINENT
+        self.submit_button = tk.Button(
             center_frame,
             text="SUBMIT",
             command=self._submit_professional_action,
-            bg="#CCCCCC",  # Gray background
-            fg="black",  # Black font
+            bg="#4CAF50",  # Green background to make it stand out
+            fg="white",  # White font for contrast
             font=("Arial", 16, "bold"),
             relief="raised",
             bd=4,
             width=12,  # Consistent size
             height=2,  # Consistent size
         )
-        submit_button.pack(side=tk.LEFT, padx=5)
+        self.submit_button.pack(side=tk.LEFT, padx=5)
 
     def update_font_size(self, font_size: int):
         """Update the action log font size to match the app's font size."""
         # Update action log font size only - width stays fixed
         self.action_log_text.configure(font=("Arial", font_size))
 
+    def _execute_immediate_action(self, action):
+        """Execute an action immediately (FOLD, CHECK, CALL)."""
+        if not self.current_game_state:
+            messagebox.showwarning("No Active Hand", "Please start a new hand first.")
+            return
+
+        try:
+            # Execute action for current player
+            current_player = self.current_game_state.players[self.current_action_player]
+            
+            # Execute the action
+            self._execute_action(current_player, action, 0)
+
+            # Play sound effect for the action
+            self._play_sound_effect(action)
+
+            # Log the action
+            self._log_action(current_player.name, action.upper(), 0)
+
+            # Move to next player
+            self._advance_to_next_player()
+
+            # Check if round is complete
+            if self._is_round_complete():
+                self._advance_to_next_street()
+
+            # Redraw table
+            self._redraw_professional_table()
+
+            # Update turn indicator
+            self._update_turn_indicator()
+
+            # Start bot actions if next player is bot
+            if self.current_game_state:
+                next_player = self.current_game_state.players[
+                    self.current_action_player
+                ]
+                if not next_player.is_human:
+                    threading.Timer(self.bot_action_delay, self._bot_action).start()
+
+            # Show professional feedback
+            self._show_professional_feedback(action, 0)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to execute action: {str(e)}")
+
     def _set_action(self, action):
-        """Set the selected action."""
+        """Set the selected action (for BET/RAISE that require submit)."""
         self.action_var.set(action)
         print(f"Action selected: {action}")  # Debug info
         # Update turn label to show selected action
         self.turn_label.config(text=f"SELECTED: {action.upper()}")
+        # Make submit button more prominent when action is selected
+        self.submit_button.config(bg="#FF6B35", text="SUBMIT NOW!")  # Orange background
 
     def _log_action(self, player_name: str, action: str, amount: float = 0):
         """Log an action to the action log."""
@@ -761,7 +825,14 @@ class ProfessionalPokerTable:
             )
             # Add helpful instructions
             self._log_action(
-                "SYSTEM", "INSTRUCTIONS: Click an action button (FOLD, CHECK, etc.), then click SUBMIT!", 0
+                "SYSTEM",
+                "INSTRUCTIONS: FOLD, CHECK, CALL execute immediately. BET/RAISE require SUBMIT!",
+                0,
+            )
+            self._log_action(
+                "SYSTEM",
+                "TIP: For betting actions, enter amount and click SUBMIT!",
+                0,
             )
 
         except Exception as e:
