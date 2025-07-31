@@ -362,21 +362,30 @@ class ProfessionalPokerTable:
             width=4,
         )
 
-        # Draw professional felt pattern
-        for i in range(0, self.table_width, 25):
-            for j in range(0, self.table_height, 25):
+        # Draw professional felt pattern with poker suit symbols
+        suit_symbols = ["♠", "♥", "♦", "♣"]
+        pattern_spacing = 40  # Larger spacing for better visibility
+        
+        for i in range(0, self.table_width, pattern_spacing):
+            for j in range(0, self.table_height, pattern_spacing):
                 pattern_x = table_x + i
                 pattern_y = table_y + j
+                
+                # Check if pattern is within the table area
                 if (pattern_x - self.center_x) ** 2 + (
                     pattern_y - self.center_y
-                ) ** 2 < (self.player_radius - 30) ** 2:
-                    self.canvas.create_oval(
+                ) ** 2 < (self.player_radius - 50) ** 2:
+                    # Alternate suit symbols for variety
+                    suit_index = (i + j) // pattern_spacing % len(suit_symbols)
+                    suit_symbol = suit_symbols[suit_index]
+                    
+                    # Use darker green for subtle pattern
+                    self.canvas.create_text(
                         pattern_x,
                         pattern_y,
-                        pattern_x + 3,
-                        pattern_y + 3,
-                        fill="#228B22",
-                        outline="",
+                        text=suit_symbol,
+                        font=("Arial", 12),
+                        fill="#1B4D2E",  # Darker green for subtle pattern
                     )
 
         # Draw professional pot area - PERFECTLY CENTERED
@@ -538,7 +547,7 @@ class ProfessionalPokerTable:
             card_x = first_card_x + (i * total_card_width)
 
             # Professional card background - MUCH BIGGER
-            card_color = "#FFD700" if player.is_human else "#FFFFFF"
+            card_color = "#F5F5F5"  # Very light gray for all cards
             self.canvas.create_rectangle(
                 card_x,
                 card_y,
@@ -589,7 +598,7 @@ class ProfessionalPokerTable:
                 card_y,
                 card_x + self.card_width,
                 card_y + self.card_height,
-                fill="#FFFFFF",  # White background
+                fill="#F5F5F5",  # Very light gray background
                 outline="black",
                 width=2,
             )
