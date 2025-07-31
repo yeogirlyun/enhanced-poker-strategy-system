@@ -44,9 +44,9 @@ class ProfessionalPokerTable:
             min(self.table_width, self.table_height) * 0.45
         )  # Larger player radius
 
-        # Card dimensions - larger for better visibility
-        self.card_width = 65  # Increased from 55
-        self.card_height = 85  # Increased from 75
+        # Card dimensions - much larger for better visibility
+        self.card_width = 80  # Much larger cards
+        self.card_height = 110  # Much larger cards
 
         # Game state tracking
         self.current_hand_phase = "preflop"  # preflop, flop, turn, river
@@ -140,17 +140,27 @@ class ProfessionalPokerTable:
             anchor=tk.W
         )
 
-        # Action log text area - FIXED WIDTH
+        # Action log text area - FIXED WIDTH with scrollbar
         self.action_log_text = tk.Text(
             log_frame,
-            width=50,  # Fixed width, not expandable
+            width=50,  # Fixed width, never changes
             height=25,  # Much taller
             font=("Arial", 14),  # Default font size
             bg="#2C3E50",
             fg="white",
             relief="sunken",
             bd=2,
+            wrap=tk.NONE,  # No word wrapping to enable horizontal scroll
         )
+        
+        # Add scrollbars
+        log_scrollbar_v = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.action_log_text.yview)
+        log_scrollbar_h = ttk.Scrollbar(log_frame, orient=tk.HORIZONTAL, command=self.action_log_text.xview)
+        self.action_log_text.configure(yscrollcommand=log_scrollbar_v.set, xscrollcommand=log_scrollbar_h.set)
+        
+        # Pack with scrollbars
+        log_scrollbar_v.pack(side=tk.RIGHT, fill=tk.Y)
+        log_scrollbar_h.pack(side=tk.BOTTOM, fill=tk.X)
         self.action_log_text.pack(fill=tk.BOTH, expand=True)
 
         # Table frame - RIGHT SIDE (for canvas and controls)
@@ -223,15 +233,8 @@ class ProfessionalPokerTable:
 
     def update_font_size(self, font_size: int):
         """Update the action log font size to match the app's font size."""
-        # Update action log font size
+        # Update action log font size only - width stays fixed
         self.action_log_text.configure(font=("Arial", font_size))
-        
-        # Adjust action log width based on font size to maintain readability
-        # Larger fonts need more width for the same number of characters
-        base_width = 50
-        width_adjustment = max(1, font_size - 14)  # Adjust width for larger fonts
-        new_width = base_width + (width_adjustment * 2)
-        self.action_log_text.configure(width=new_width)
 
     def _set_action(self, action):
         """Set the selected action."""
@@ -401,7 +404,7 @@ class ProfessionalPokerTable:
 
         # Professional player circle
         if player.is_human:
-            color = "#FFD700"  # Yellow gold for human player
+            color = "#F4A460"  # Human skin color for human player
         elif not player.is_active:
             color = "#95A5A6"  # Gray for folded players
         else:
@@ -431,28 +434,33 @@ class ProfessionalPokerTable:
             width=3,
         )
 
-        # Professional player name - MUCH BIGGER
+        # Professional player name - MUCH BIGGER with 10% margin
         name = "You" if player.is_human else f"P{player.name.split()[-1]}"
         text_color = (
             "#000080" if player.is_human else "black"
         )  # Deep ocean blue for human, black for bots
+        
+        # Calculate 10% margin from circle edge
+        margin = int(player_radius * 0.1)
+        text_radius = player_radius - margin
+        
         self.canvas.create_text(
-            x, y - 12, text=name, font=("Arial", 16, "bold"), fill=text_color
+            x, y - text_radius, text=name, font=("Arial", 16, "bold"), fill=text_color
         )
 
-        # Professional position indicator - MUCH BIGGER
+        # Professional position indicator - MUCH BIGGER with margin
         self.canvas.create_text(
             x,
-            y + 12,
+            y + text_radius * 0.3,
             text=player.position.value,
             font=("Arial", 14, "bold"),
             fill=text_color,
         )
 
-        # Professional stack size - MUCH BIGGER
+        # Professional stack size - MUCH BIGGER with margin
         self.canvas.create_text(
             x,
-            y + 45,
+            y + text_radius * 0.8,
             text=f"${player.stack:.0f}",
             font=("Arial", 14, "bold"),
             fill=text_color,
@@ -467,10 +475,10 @@ class ProfessionalPokerTable:
         x, y = position
 
         # Position cards below player with professional spacing - MUCH BIGGER
-        card_y = y + 80  # Further below player
+        card_y = y + 100  # Further below player
 
         for i, card in enumerate(player.cards):
-            card_x = x - 45 + (i * 50)  # Bigger card spacing
+            card_x = x - 60 + (i * 60)  # Bigger card spacing
 
             # Professional card background - MUCH BIGGER
             card_color = "#FFD700" if player.is_human else "#FFFFFF"
@@ -484,16 +492,19 @@ class ProfessionalPokerTable:
                 width=3,  # Thicker border
             )
 
-            # Professional card text - MUCH BIGGER
+            # Professional card text - 60% of card size
             rank, suit = card[0], card[1]
             suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
             color = "red" if suit in ["h", "d"] else "black"
+            
+            # Calculate font size as 60% of card height
+            font_size = int(self.card_height * 0.6)
 
             self.canvas.create_text(
                 card_x + self.card_width // 2,
                 card_y + self.card_height // 2,
                 text=f"{rank}{suit_symbol}",
-                font=("Arial", 18, "bold"),  # MUCH BIGGER font
+                font=("Arial", font_size, "bold"),  # 60% of card size
                 fill=color,
             )
 
