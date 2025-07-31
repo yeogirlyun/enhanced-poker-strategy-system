@@ -345,6 +345,10 @@ Strategy: {self.strategy_data.get_strategy_file_display_name()}
         self.current_bet = 0.0
         self.min_bet = 20.0
         
+        # Reset player actions
+        for seat in self.player_seats:
+            seat['action'].config(text="")
+        
         # Deal cards (simplified)
         import random
         ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
@@ -367,10 +371,18 @@ Strategy: {self.strategy_data.get_strategy_file_display_name()}
         self.player_stacks[5] -= 20  # Big blind
         self.pot = 30.0
         
+        # Update blinds display
+        self.player_seats[4]['action'].config(text="SB $10")
+        self.player_seats[5]['action'].config(text="BB $20")
+        
         # Start with first player after big blind
         self.current_player = 0
         
         self.update_display()
+        
+        # Show message that hand has started
+        messagebox.showinfo("New Hand", "🎯 New poker hand started!\n\nYou are Player 1 (UTG).\nYour cards are displayed on your seat.\n\nClick 'OK' to begin your turn.")
+        
         self.prompt_human_action()
 
     def prompt_human_action(self):
