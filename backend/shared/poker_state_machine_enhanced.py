@@ -498,23 +498,43 @@ class ImprovedPokerStateMachine:
         
         try:
             if street == "preflop":
-                # Use preflop hand strength table from strategy
                 hand_strength = self.get_preflop_hand_strength(player.cards)
-                thresholds = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
-                threshold = thresholds.get(position, {}).get("threshold", 20)
-                sizing = thresholds.get(position, {}).get("sizing", 3.0)
                 
-                if hand_strength >= threshold:
-                    if self.game_state.current_bet == 0:
-                        return ActionType.BET, min(sizing, player.stack)
-                    else:
+                # --- IMPROVED BOT LOGIC WITH 3-BETTING ---
+                if self.game_state.current_bet > 0:  # Facing a raise
+                    # Get vs_raise rules from strategy (or use defaults)
+                    vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
+                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 40)  # Top ~5% of hands
+                    call_threshold = vs_raise_rules.get("call_thresh", 25)  # Decent hands
+                    sizing = vs_raise_rules.get("sizing", 3.0)
+                    
+                    if hand_strength >= value_3bet_thresh:
+                        # 3-bet with very strong hands
+                        raise_amount = min(self.game_state.current_bet * sizing, player.stack)
+                        return ActionType.RAISE, raise_amount
+                    elif hand_strength >= call_threshold:
+                        # Call with decent hands
                         call_amount = self.game_state.current_bet - player.current_bet
-                        if call_amount <= player.stack * 0.2:  # Don't call too much
+                        if call_amount <= player.stack * 0.3:  # Don't call too much
                             return ActionType.CALL, call_amount
                         else:
                             return ActionType.FOLD, 0
-                else:
-                    return ActionType.FOLD, 0
+                    else:
+                        return ActionType.FOLD, 0
+                else:  # No raise, this is an opening opportunity
+                    # Use existing open_rules for opening
+                    open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
+                    threshold = open_rules.get(position, {}).get("threshold", 20)
+                    sizing = open_rules.get(position, {}).get("sizing", 3.0)
+                    
+                    if hand_strength >= threshold:
+                        return ActionType.BET, min(sizing, player.stack)
+                    else:
+                        # Check/fold from blind positions
+                        if position in ["SB", "BB"] and self.game_state.current_bet == 0:
+                            return ActionType.CHECK, 0
+                        else:
+                            return ActionType.FOLD, 0
             else:
                 # Use postflop strategy with advanced pot odds
                 hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
