@@ -70,7 +70,7 @@ class ProfessionalPokerTable:
             self.table_frame,  # Use table_frame instead of parent_frame
             width=self.canvas_width,
             height=self.canvas_height,
-            bg="#2C3E50",  # Same dark gray as action log pane
+            bg="SystemButtonFace",  # Use system default background
             highlightthickness=0,
         )
         self.canvas.pack(
@@ -89,11 +89,6 @@ class ProfessionalPokerTable:
         # Action log frame - LEFT SIDE (FIXED WIDTH, NO EXPAND)
         log_frame = ttk.Frame(main_container)
         log_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-
-        # Action log label
-        ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
-            anchor=tk.W
-        )
 
         # Action log label
         ttk.Label(log_frame, text="Action Log:", font=("Arial", 14, "bold")).pack(
@@ -139,41 +134,42 @@ class ProfessionalPokerTable:
         action_frame = ttk.Frame(self.table_frame)
         action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
 
-        # Top row - Player controls and bet input
-        top_controls_frame = ttk.Frame(action_frame)
-        top_controls_frame.pack(fill=tk.X, pady=(0, 10))
+        # Center the action controls
+        center_frame = ttk.Frame(action_frame)
+        center_frame.pack(expand=True)
 
-        # Left side - Player controls
-        left_controls = ttk.Frame(top_controls_frame)
-        left_controls.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Player controls - SAME SIZE AS ACTION BUTTONS
+        player_frame = ttk.Frame(center_frame)
+        player_frame.pack(side=tk.LEFT, padx=10)
 
-        # Player count with professional styling
-        ttk.Label(left_controls, text="Players:", font=("Arial", 10, "bold")).pack(
-            side=tk.LEFT, padx=5
+        # Player count button - same size as action buttons
+        player_count_btn = tk.Button(
+            player_frame,
+            text="Players: 6",
+            bg="#CCCCCC",  # Gray background
+            fg="black",  # Black font
+            font=("Arial", 16, "bold"),
+            relief="raised",
+            bd=4,
+            width=12,  # Same width as action buttons
+            height=2,  # Same height as action buttons
         )
-        self.player_count_var = tk.StringVar(value="6")
-        player_combo = ttk.Combobox(
-            left_controls,
-            textvariable=self.player_count_var,
-            values=["2", "3", "4", "5", "6", "7", "8"],
-            state="readonly",
-            width=5,
-            font=("Arial", 10),
-        )
-        player_combo.pack(side=tk.LEFT, padx=5)
+        player_count_btn.pack(side=tk.LEFT, padx=5)
 
-        # Professional start button
-        start_button = ttk.Button(
-            left_controls,
-            text="🎯 Start New Hand",
+        # Professional start button - same size as action buttons
+        start_button = tk.Button(
+            player_frame,
+            text="🎯 Start Hand",
             command=self._start_professional_hand,
-            style="Accent.TButton",
+            bg="#CCCCCC",  # Gray background
+            fg="black",  # Black font
+            font=("Arial", 16, "bold"),
+            relief="raised",
+            bd=4,
+            width=12,  # Same width as action buttons
+            height=2,  # Same height as action buttons
         )
-        start_button.pack(side=tk.LEFT, padx=10)
-
-        # Right side - Empty for now (bet input moved to action area)
-        right_controls = ttk.Frame(top_controls_frame)
-        right_controls.pack(side=tk.RIGHT, fill=tk.X)
+        start_button.pack(side=tk.LEFT, padx=5)
 
         # Center the action controls
         center_frame = ttk.Frame(action_frame)
