@@ -367,6 +367,15 @@ class PokerStrategyGUI:
             style="TopMenu.TButton",
         )
         self.clear_all_btn.grid(row=0, column=14, padx=2, pady=2, sticky="nsew")
+        
+        # Add poker table button
+        self.poker_table_btn = ttk.Button(
+            controls_container,
+            text="🎮 Poker Table",
+            command=self._launch_poker_table,
+            style="TopMenu.TButton",
+        )
+        self.poker_table_btn.grid(row=0, column=15, padx=3, pady=2, sticky="nsew")
 
         # LEFT AREA: Hand grid (60% width, 80% height)
         grid_frame = ttk.Frame(self.root, style="Dark.TFrame")
@@ -682,6 +691,17 @@ class PokerStrategyGUI:
         shortcuts_text += "Cmd+F: Force Clear Highlights"
 
         messagebox.showinfo("Keyboard Shortcuts", shortcuts_text)
+    
+    def _launch_poker_table(self):
+        """Launch the professional poker table interface."""
+        try:
+            from enhanced_visual_poker_table import ProfessionalPokerTableGUI
+            self._update_status("Launching professional poker table...")
+            poker_table = ProfessionalPokerTableGUI(self.strategy_data)
+            print("🎮 Professional poker table launched successfully!")
+        except Exception as e:
+            self._update_status(f"Error launching poker table: {e}")
+            print(f"⚠️  Error launching poker table: {e}")
 
     def run(self):
         """Run the application."""
