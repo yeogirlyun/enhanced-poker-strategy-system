@@ -289,7 +289,9 @@ class ProfessionalPokerTable:
 
             # Check if round is complete
             if self._is_round_complete():
-                self._advance_to_next_street()
+                # Check for all-fold scenario first
+                if not self._handle_all_fold_scenario():
+                    self._advance_to_next_street()
 
             # Redraw table
             self._redraw_professional_table()
@@ -334,7 +336,9 @@ class ProfessionalPokerTable:
             btn.config(state=tk.DISABLED, bg="#E0E0E0")
         self.turn_label.config(text="BOT TURN", bg="#FF9800", fg="white")
 
-    def _log_action(self, player_name: str, action: str, amount: float = 0, play_sound: bool = True):
+    def _log_action(
+        self, player_name: str, action: str, amount: float = 0, play_sound: bool = True
+    ):
         """Log an action to the action log."""
         timestamp = time.strftime("%H:%M:%S")
         if amount > 0:
@@ -364,7 +368,6 @@ class ProfessionalPokerTable:
                 "bet": "SystemAsterisk",  # Attention sound
                 "raise": "SystemAsterisk",  # Same as bet
                 "all_in": "SystemExclamation",  # Dramatic sound
-                
                 # Game events (like 888 Poker)
                 "deal": "SystemStart",  # Card dealing sound
                 "shuffle": "SystemStart",  # Shuffle sound
@@ -376,8 +379,7 @@ class ProfessionalPokerTable:
                 "chips": "SystemAsterisk",  # Chip movement
             }
             winsound.PlaySound(
-                sound_effects.get(action.lower(), "SystemAsterisk"), 
-                winsound.SND_ALIAS
+                sound_effects.get(action.lower(), "SystemAsterisk"), winsound.SND_ALIAS
             )
         except ImportError:
             try:
@@ -392,7 +394,6 @@ class ProfessionalPokerTable:
                     "bet": "afplay /System/Library/Sounds/Glass.aiff",  # Attention bet
                     "raise": "afplay /System/Library/Sounds/Glass.aiff",  # Same as bet
                     "all_in": "afplay /System/Library/Sounds/Glass.aiff",  # Dramatic
-                    
                     # Game events (like 888 Poker)
                     "deal": "afplay /System/Library/Sounds/Pop.aiff",  # Card dealing
                     "shuffle": "afplay /System/Library/Sounds/Pop.aiff",  # Shuffle
@@ -418,7 +419,6 @@ class ProfessionalPokerTable:
                     "bet": "💰 Bet (attention)",
                     "raise": "💰 Raise (attention)",
                     "all_in": "🎰 All-in (dramatic)",
-                    
                     # Game events
                     "deal": "🃏 Deal cards",
                     "shuffle": "🔀 Shuffle deck",
@@ -444,16 +444,18 @@ class ProfessionalPokerTable:
         # Simulate bot thinking time
         time.sleep(self.bot_action_delay)
 
-        # Bot decision logic with realistic actions
+        # Bot decision logic with realistic actions (less aggressive folding)
         if self.current_game_state.current_bet == 0:
-            actions = ["check", "bet"]
+            # No bet to call - more likely to check or bet
+            actions = ["check", "check", "check", "bet"]  # 75% check, 25% bet
         else:
-            actions = ["fold", "call", "raise"]
+            # There's a bet to call - more realistic distribution
+            actions = ["fold", "fold", "call", "call", "call", "raise"]  # 33% fold, 50% call, 17% raise
 
         action = random.choice(actions)
         bet_size = 0
         if action in ["bet", "raise"]:
-            bet_size = random.randint(1, 10)
+            bet_size = random.randint(1, min(10, int(self.current_game_state.current_bet * 2)))
         elif action == "call":
             bet_size = self.current_game_state.current_bet
 
@@ -687,14 +689,13 @@ class ProfessionalPokerTable:
             self._draw_professional_hole_cards(player, position)
 
     def _draw_professional_hole_cards(self, player: Player, position: tuple[int, int]):
-        """Draw professional hole cards with perfect spacing."""
+        """Draw professional hole cards with perfect spacing and card mucking."""
         x, y = position
 
-        # Position cards below player with professional spacing - MUCH BIGGER
+        # Position cards below player with professional spacing
         card_y = y + 100  # Further below player
 
         # Calculate proper spacing to show both cards fully
-        # Card width is 80, so we need spacing of card_width + gap
         gap = 8  # 0.1 cm equivalent gap (approximately 8 pixels)
         total_card_width = self.card_width + gap
 
@@ -704,8 +705,21 @@ class ProfessionalPokerTable:
         for i, card in enumerate(player.cards):
             card_x = first_card_x + (i * total_card_width)
 
-            # Professional card background - MUCH BIGGER
-            card_color = "#F5F5F5"  # Very light gray for all cards
+            # Determine card appearance based on player status
+            if player.is_human:
+                # Human player - always show cards
+                card_color = "#F5F5F5"  # Very light gray
+                show_card_text = True
+            elif not player.is_active:
+                # Folded player - show mucked cards (face down with "MUCKED" text)
+                card_color = "#2C3E50"  # Dark gray for mucked cards
+                show_card_text = False
+            else:
+                # Active bot player - show face down cards
+                card_color = "#F5F5F5"  # Very light gray
+                show_card_text = False
+
+            # Draw card background
             self.canvas.create_rectangle(
                 card_x,
                 card_y,
@@ -716,21 +730,40 @@ class ProfessionalPokerTable:
                 width=3,  # Thicker border
             )
 
-            # Professional card text - 60% of card size
-            rank, suit = card[0], card[1]
-            suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
-            color = "red" if suit in ["h", "d"] else "black"
+            if show_card_text:
+                # Show card text for human player
+                rank, suit = card[0], card[1]
+                suit_symbol = {"h": "♥", "d": "♦", "c": "♣", "s": "♠"}[suit]
+                color = "red" if suit in ["h", "d"] else "black"
 
-            # Calculate font size as 60% of card height
-            font_size = int(self.card_height * 0.6)
+                # Calculate font size as 60% of card height
+                font_size = int(self.card_height * 0.6)
 
-            self.canvas.create_text(
-                card_x + self.card_width // 2,
-                card_y + self.card_height // 2,
-                text=f"{rank}{suit_symbol}",
-                font=("Arial", font_size, "bold"),  # 60% of card size
-                fill=color,
-            )
+                self.canvas.create_text(
+                    card_x + self.card_width // 2,
+                    card_y + self.card_height // 2,
+                    text=f"{rank}{suit_symbol}",
+                    font=("Arial", font_size, "bold"),
+                    fill=color,
+                )
+            elif not player.is_active:
+                # Show "MUCKED" text for folded players
+                self.canvas.create_text(
+                    card_x + self.card_width // 2,
+                    card_y + self.card_height // 2,
+                    text="MUCKED",
+                    font=("Arial", 10, "bold"),
+                    fill="white",
+                )
+            else:
+                # Show "XX" for active bot players (face down)
+                self.canvas.create_text(
+                    card_x + self.card_width // 2,
+                    card_y + self.card_height // 2,
+                    text="XX",
+                    font=("Arial", 12, "bold"),
+                    fill="gray",
+                )
 
     def _draw_professional_community_cards(self):
         """Draw professional community cards with perfect centering."""
@@ -790,16 +823,6 @@ class ProfessionalPokerTable:
             font=("Arial", 20, "bold"),  # MUCH BIGGER font
             fill="black",
         )
-
-        # Professional current bet - MUCH BIGGER
-        if self.current_game_state.current_bet > 0:
-            self.canvas.create_text(
-                self.center_x,
-                self.center_y - 30,  # Below pot amount
-                text=f"Bet: ${self.current_game_state.current_bet:.0f}",
-                font=("Arial", 16, "bold"),  # MUCH BIGGER font
-                fill="black",
-            )
 
     def _draw_professional_street_info(self):
         """Draw professional street information."""
@@ -899,7 +922,10 @@ class ProfessionalPokerTable:
 
             # Log detailed hand start info instead of popup
             self._log_action(
-                "SYSTEM", f"New hand started with {num_players} players!", 0, play_sound=False
+                "SYSTEM",
+                f"New hand started with {num_players} players!",
+                0,
+                play_sound=False,
             )
             self._log_action(
                 "SYSTEM",
@@ -987,7 +1013,9 @@ class ProfessionalPokerTable:
 
             # Check if round is complete
             if self._is_round_complete():
-                self._advance_to_next_street()
+                # Check for all-fold scenario first
+                if not self._handle_all_fold_scenario():
+                    self._advance_to_next_street()
 
             # Redraw table
             self._redraw_professional_table()
@@ -1021,6 +1049,8 @@ class ProfessionalPokerTable:
     def _is_round_complete(self):
         """Check if the current betting round is complete."""
         active_players = [p for p in self.current_game_state.players if p.is_active]
+        
+        # If only one player remains, hand is complete
         if len(active_players) <= 1:
             return True
 
@@ -1029,6 +1059,31 @@ class ProfessionalPokerTable:
             if player.stack < self.current_game_state.current_bet:
                 return False
         return True
+
+    def _handle_all_fold_scenario(self):
+        """Handle scenario when all players fold except one."""
+        active_players = [p for p in self.current_game_state.players if p.is_active]
+        
+        if len(active_players) == 1:
+            winner = active_players[0]
+            self.current_game_state.pot += winner.current_bet  # Add any remaining bet
+            winner.stack += self.current_game_state.pot
+            
+            # Log the result
+            self._log_action(
+                "SYSTEM", 
+                f"All players folded! {winner.name} wins ${self.current_game_state.pot:.2f}",
+                0,
+                play_sound=False
+            )
+            
+            # Play winner sound
+            self._play_sound_effect("winner")
+            
+            # Show results and start new hand
+            self._show_hand_results()
+            return True
+        return False
 
     def _advance_to_next_street(self):
         """Advance to the next street (flop, turn, river)."""
