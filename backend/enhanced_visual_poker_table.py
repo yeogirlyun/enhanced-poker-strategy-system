@@ -900,7 +900,7 @@ class ProfessionalPokerTable:
         self.canvas.create_text(
             x,
             y + text_radius * 0.1,
-            text=player.position.value,
+                            text=player.position,
             font=("Arial", 14, "bold"),
             fill=text_color,
         )
@@ -1154,7 +1154,7 @@ class ProfessionalPokerTable:
             )
             self._log_action(
                 "SYSTEM",
-                f"Your position: {self.current_game_state.players[0].position.value}",
+                f"Your position: {self.current_game_state.players[0].position}",
                 0,
                 play_sound=False,
             )
@@ -1172,7 +1172,7 @@ class ProfessionalPokerTable:
             )
             self._log_action(
                 "SYSTEM",
-                f"Your position: {self.current_game_state.players[0].position.value}",
+                f"Your position: {self.current_game_state.players[0].position}",
                 0,
                 play_sound=False,
             )
@@ -1520,7 +1520,7 @@ class ProfessionalPokerTable:
         )
         feedback_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        feedback_text.insert(tk.END, f"🎯 Your Action: {action.value}\n")
+        feedback_text.insert(tk.END, f"🎯 Your Action: {action}\n")
         if bet_size > 0:
             feedback_text.insert(tk.END, f"💰 Bet Size: ${bet_size:.2f}\n\n")
         feedback_text.insert(tk.END, f"📊 Strategy Feedback:\n{feedback}")
