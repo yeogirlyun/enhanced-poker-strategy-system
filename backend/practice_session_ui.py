@@ -63,8 +63,11 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Use scaled drawing from the start to ensure centering
-        self._redraw_table_with_scale()
+        # Bind canvas resize to redraw table
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
+        
+        # Schedule initial redraw after canvas is properly sized
+        self.after(100, self._redraw_table_with_scale)
         self._create_human_action_controls()
 
     def _draw_table(self):
@@ -715,18 +718,18 @@ class PracticeSessionUI(ttk.Frame):
             self.info_panel.destroy()
         
         # Create scaled info panel with larger dimensions
-        panel_width = int(250 * self.table_scale)
-        panel_height = int(200 * self.table_scale)
+        panel_width = int(300 * self.table_scale)
+        panel_height = int(250 * self.table_scale)
         
         self.info_panel = tk.Frame(
             self.canvas, 
             bg=THEME["secondary_bg"], 
-            bd=int(2 * self.table_scale), 
+            bd=int(3 * self.table_scale), 
             relief="ridge"
         )
         
-        # Scale title font
-        title_font_size = int(FONTS["header"][1] * self.table_scale)
+        # Scale title font with better scaling
+        title_font_size = max(10, int(FONTS["header"][1] * self.table_scale))
         title_label = tk.Label(
             self.info_panel, 
             text="Game Information", 
@@ -734,12 +737,12 @@ class PracticeSessionUI(ttk.Frame):
             fg=THEME["text"], 
             font=(FONTS["header"][0], title_font_size, "bold")
         )
-        title_label.pack(pady=int(5 * self.table_scale))
+        title_label.pack(pady=int(8 * self.table_scale))
         
-        # Scale text widget with larger dimensions
-        text_height = int(12 * self.table_scale)
-        text_width = int(30 * self.table_scale)
-        text_font_size = int(12 * self.table_scale)
+        # Scale text widget with larger dimensions and better font scaling
+        text_height = int(15 * self.table_scale)
+        text_width = int(35 * self.table_scale)
+        text_font_size = max(8, int(14 * self.table_scale))
         
         self.info_text = tk.Text(
             self.info_panel,
@@ -749,12 +752,14 @@ class PracticeSessionUI(ttk.Frame):
             bg=THEME["secondary_bg"],
             fg=THEME["text"],
             state=tk.DISABLED,
-            wrap=tk.WORD
+            wrap=tk.WORD,
+            padx=int(8 * self.table_scale),
+            pady=int(8 * self.table_scale)
         )
-        self.info_text.pack(padx=int(5 * self.table_scale), pady=int(5 * self.table_scale))
+        self.info_text.pack(padx=int(8 * self.table_scale), pady=int(8 * self.table_scale))
         
-        # Position info panel in top-left with scaled positioning
-        panel_x = int(50 * self.table_scale)
+        # Position info panel in top-right with scaled positioning
+        panel_x = canvas_width - int(320 * self.table_scale)
         panel_y = int(50 * self.table_scale)
         self.canvas.create_window(
             panel_x, 
@@ -766,6 +771,18 @@ class PracticeSessionUI(ttk.Frame):
         
         # Update the info panel with current game state
         self._update_info_panel()
+
+    def _on_canvas_resize(self, event):
+        """Handle canvas resize events to keep table centered."""
+        # Only redraw if the canvas size actually changed significantly
+        if hasattr(self, '_last_canvas_size'):
+            last_width, last_height = self._last_canvas_size
+            if abs(event.width - last_width) > 10 or abs(event.height - last_height) > 10:
+                self._redraw_table_with_scale()
+        else:
+            self._redraw_table_with_scale()
+        
+        self._last_canvas_size = (event.width, event.height)
 
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display (e.g., 'As' -> 'A♠')."""
