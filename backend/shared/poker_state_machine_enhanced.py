@@ -1436,6 +1436,10 @@ class ImprovedPokerStateMachine:
         self._log_action("Showdown")
         self.sfx.play("winner_announce")
         
+        # FIX: Save pot amount before distribution
+        original_pot = self.game_state.pot
+        print(f"🎯 SHOWDOWN: Original pot amount: ${original_pot}")  # Debug
+        
         # Create side pots if needed
         side_pots = self.create_side_pots()
         
@@ -1467,6 +1471,10 @@ class ImprovedPokerStateMachine:
                 for winner in winners:
                     winner.stack += split_amount
                     self._log_action(f"{winner.name} wins ${split_amount:.2f}")
+        
+        # FIX: Restore pot amount for handle_end_hand to use
+        self.game_state.pot = original_pot
+        print(f"🎯 SHOWDOWN: Restored pot amount: ${self.game_state.pot}")  # Debug
         
         # Call handle_end_hand to trigger UI callbacks for winner announcement
         self.handle_end_hand()
@@ -1520,6 +1528,10 @@ class ImprovedPokerStateMachine:
         Handles hand completion, determines winner, awards pot, and notifies UI.
         This is now the single source of truth for ending a hand.
         """
+        print(f"🏆 DEBUG: Starting winner determination")  # Debug
+        print(f"💰 DEBUG: Current pot: ${self.game_state.pot}")  # Debug
+        print(f"👥 DEBUG: Active players: {[p.name for p in self.game_state.players if p.is_active]}")  # Debug
+        
         self._log_action("Hand complete")
 
         # Determine winner(s) whether from a showdown or everyone folding
@@ -1529,16 +1541,21 @@ class ImprovedPokerStateMachine:
             winner_names = ", ".join([p.name for p in winners])
             split_amount = self.game_state.pot / len(winners)
             
+            # FIX: Save pot amount BEFORE resetting it
+            pot_amount = self.game_state.pot
+            print(f"✅ DEBUG: Awarding ${pot_amount} to {len(winners)} winners")  # Debug
+            
             for winner in winners:
                 winner.stack += split_amount
                 self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
             
-            winner_info = {"name": winner_names, "amount": self.game_state.pot}
+            winner_info = {"name": winner_names, "amount": pot_amount}  # Use saved amount
             self._last_winner = winner_info
-            self._log_action(f"🏆 Winner(s): {winner_names} win ${self.game_state.pot:.2f}")
+            self._log_action(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
         else:
             self._log_action("No winner determined (should not happen in a normal game).")
             winner_info = None
+            print(f"❌ DEBUG: No winner found!")  # Debug
 
         # Reset game state for next hand
         if self.game_state:
