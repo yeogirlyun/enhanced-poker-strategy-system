@@ -103,16 +103,29 @@ class PracticeSessionUI(ttk.Frame):
         self.update_display() # Refresh data after redraw
 
     def _draw_table(self):
-        """Draws the poker table based on the current canvas size."""
+        """Draws the main poker table shape with correctly contained texture."""
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
+
+        # Main table oval
         self.canvas.create_oval(width*0.05, height*0.1, width*0.95, height*0.9, fill="#013f28", outline=THEME["border"], width=10)
         self.canvas.create_oval(width*0.06, height*0.11, width*0.94, height*0.89, fill="#015939", outline="#222222", width=2)
-        # Add felt texture
-        for i in range(0, int(width * 0.88), 20):
-            for j in range(0, int(height * 0.78), 20):
-                if (i + j) % 40 == 0:
-                    self.canvas.create_oval(width*0.07 + i, height*0.12 + j, width*0.085 + i, height*0.135 + j, fill="#014a2f", outline="")
+        
+        # --- CORRECTED FELT TEXTURE LOGIC ---
+        # Adjust the loop bounds to be tighter and inside the table border
+        x_start = int(width * 0.1)
+        x_end = int(width * 0.9)
+        y_start = int(height * 0.15)
+        y_end = int(height * 0.85)
+
+        for i in range(x_start, x_end, 20):
+            for j in range(y_start, y_end, 20):
+                # Check if the point is inside the oval before drawing
+                # This prevents the texture from spilling outside the table
+                if (((i - width/2)**2 / (width*0.4)**2) + ((j - height/2)**2 / (height*0.35)**2)) < 1:
+                    if (i + j) % 40 == 0:
+                        self.canvas.create_oval(i, j, i + 15, j + 15, fill="#014a2f", outline="")
+        # --- END CORRECTION ---
 
     def _draw_player_seats(self):
         """Calculates positions and draws player seats on the canvas."""
