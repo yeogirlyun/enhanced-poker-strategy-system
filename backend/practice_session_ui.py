@@ -220,6 +220,7 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message("\n--- UI UPDATE ---")
         self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
         self._log_message(f"Total Player Seat Frames in UI: {len(self.player_seat_frames)}")
+        self._log_message(f"Current State: {self.state_machine.get_current_state()}")
 
         # Update pot and community cards
         pot_text = f"Pot: ${game_info['pot']:.2f}"
@@ -432,13 +433,15 @@ class PracticeSessionUI(ttk.Frame):
             self.sfx.play(sound_to_play)
 
         self.state_machine.execute_action(player, action, amount)
-        self.update_display()
         
         # Hide controls and let the state machine continue
         for widget in self.human_action_controls.values():
             if isinstance(widget, ttk.Button): # Check if it's a button before packing
                 widget.pack_forget()
+        
+        # Update display AFTER the state machine processes the action
         self.state_machine.handle_current_player_action()
+        self.update_display()
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
