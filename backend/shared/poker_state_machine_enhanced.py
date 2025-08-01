@@ -1006,7 +1006,7 @@ class ImprovedPokerStateMachine:
         """Basic bot logic as fallback."""
         # Use the enhanced hand evaluator instead of the old method
         hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
-        hand_strength = hand_info.rank.value  # Use the rank value as strength
+        hand_strength = hand_info['strength_score']  # Use the strength score from the dict
         
         if self.game_state.current_bet == 0:
             if hand_strength > 20:
