@@ -1157,8 +1157,11 @@ class ImprovedPokerStateMachine:
 
         elif action == ActionType.CHECK:
             self.sfx.play("player_check")
-            # Only valid when current_bet is 0
-            if self.game_state.current_bet != 0:
+            # FIX: Add proper CHECK logging
+            self._log_action(f"✅ {player.name}: CHECK")
+            # Only valid when current_bet is 0 or player already has current bet
+            call_amount = self.game_state.current_bet - player.current_bet
+            if call_amount > 0:
                 self._log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
                 return
             player.current_bet = 0
@@ -1522,12 +1525,40 @@ class ImprovedPokerStateMachine:
                     winner.stack += split_amount
                     self._log_action(f"{winner.name} wins ${split_amount:.2f}")
         
-        # FIX: Restore pot amount for handle_end_hand to use
-        self.game_state.pot = original_pot
-        print(f"🎯 SHOWDOWN: Restored pot amount: ${self.game_state.pot}")  # Debug
+        # FIX: Don't call handle_end_hand from showdown to prevent double distribution
+        # Instead, handle UI callbacks directly here
+        winner_names = ", ".join([w.name for w in winners]) if winners else "No winner"
+        winner_info = {"name": winner_names, "amount": original_pot}
+        self._last_winner = winner_info
+        self._log_action(f"🏆 Winner(s): {winner_names} win ${original_pot:.2f}")
         
-        # Call handle_end_hand to trigger UI callbacks for winner announcement
-        self.handle_end_hand()
+        # Reset game state for next hand
+        if self.game_state:
+            self.game_state.pot = 0
+            self.game_state.current_bet = 0
+            self.game_state.min_raise = 1.0
+            self.game_state.players_acted.clear()
+            self.game_state.round_complete = False
+            self.game_state.board = []
+            self.game_state.street = "preflop"
+            
+            # Reset all player bets and status
+            for player in self.game_state.players:
+                player.cards = []
+                player.current_bet = 0
+                player.total_invested = 0
+                player.has_acted_this_round = False
+                player.is_all_in = False
+                player.is_active = True  # Reactivate all players for new hand
+        
+        # Advance dealer position for next hand
+        self.advance_dealer_position()
+        
+        if self.on_hand_complete:
+            print(f"🎯 SHOWDOWN: Calling on_hand_complete with: {winner_info}")  # Debug
+            self.on_hand_complete(winner_info)
+        else:
+            print("❌ SHOWDOWN: on_hand_complete callback is None!")  # Debug
 
     def create_side_pots(self) -> List[dict]:
         """Create side pots for all-in scenarios with proper tracking."""
