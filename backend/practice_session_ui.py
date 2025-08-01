@@ -256,12 +256,12 @@ class PracticeSessionUI(ttk.Frame):
             # Update stack and bet info
             stack_label.config(text=f"${player_info['stack']:.2f}")
             
-            # --- NEW: Update bet amount display ---
+            # --- ENHANCED: Update bet amount display with chip emoji ---
             if player_info['current_bet'] > 0:
-                bet_label.config(text=f"Bet: ${player_info['current_bet']:.2f}")
+                bet_label.config(text=f"💰 ${player_info['current_bet']:.2f}")
             else:
                 bet_label.config(text="")
-            # --- END NEW ---
+            # --- END ENHANCED ---
 
             if player_info['is_active']:
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
