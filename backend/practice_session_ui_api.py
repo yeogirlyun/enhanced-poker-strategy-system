@@ -153,10 +153,10 @@ class PracticeSessionUI(ttk.Frame):
         info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
         info_frame.pack()
         
-        stack_label = tk.Label(info_frame, text="$100.00", font=FONTS["small"], bg=THEME["secondary_bg"], fg="yellow")
+        stack_label = tk.Label(info_frame, text="$100.00", font=FONTS["stack_bet"], bg=THEME["secondary_bg"], fg="yellow")
         stack_label.pack()
         
-        bet_label = tk.Label(info_frame, text="", font=FONTS["small"], bg=THEME["secondary_bg"], fg="blue")
+        bet_label = tk.Label(info_frame, text="", font=FONTS["stack_bet"], bg=THEME["secondary_bg"], fg="blue")
         bet_label.pack()
         
         cards_label = tk.Label(info_frame, text="🂠 🂠", font=FONTS["small"], bg=THEME["secondary_bg"], fg=THEME["text"])

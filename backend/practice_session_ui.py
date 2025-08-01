@@ -110,20 +110,20 @@ class PracticeSessionUI(ttk.Frame):
             bet_radius_x, bet_radius_y = radius_x * 0.7, radius_y * 0.7
             bet_x = center_x + bet_radius_x * math.cos(angle)
             bet_y = center_y + bet_radius_y * math.sin(angle)
-            bet_label = tk.Label(self.canvas, text="", bg="#015939", fg="yellow", font=FONTS["header"])
+            bet_label = tk.Label(self.canvas, text="", bg="#015939", fg="yellow", font=FONTS["stack_bet"])
             bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_label, anchor="center", state="hidden")
             self.player_seats[i]["bet_label_widget"] = bet_label
             self.player_seats[i]["bet_label_window"] = bet_window
 
     def _create_player_seat_widget(self, x, y, name, position, index):
         seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
-        name_label = tk.Label(seat_frame, text=f"{name}\n{position}", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
+        name_label = tk.Label(seat_frame, text=f"{name}\n{position}", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["player_name"])
         name_label.pack()
         info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
         info_frame.pack(pady=(2, 0))
-        stack_label = tk.Label(info_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["small"])
+        stack_label = tk.Label(info_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["stack_bet"])
         stack_label.pack(side=tk.LEFT, padx=5)
-        bet_label = tk.Label(info_frame, text="", bg=THEME["secondary_bg"], fg="orange", font=FONTS["small"])
+        bet_label = tk.Label(info_frame, text="", bg=THEME["secondary_bg"], fg="orange", font=FONTS["stack_bet"])
         bet_label.pack(side=tk.LEFT, padx=5)
         card_font_size = max(12, int(self.canvas.winfo_height() / 35))
         card_font = ("Arial", card_font_size, "bold")
