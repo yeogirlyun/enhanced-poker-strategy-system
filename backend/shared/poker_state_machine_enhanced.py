@@ -23,6 +23,9 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sound_manager import SoundManager
 
+# Import the enhanced hand evaluator for accurate winner determination
+from enhanced_hand_evaluation import EnhancedHandEvaluator, HandRank
+
 
 class PokerState(Enum):
     """Poker game states following standard Texas Hold'em flow."""
@@ -1250,216 +1253,84 @@ class ImprovedPokerStateMachine:
         else:
             self._log_action(f"❌ No valid transition found for state {self.current_state}")
 
-    def evaluate_hand_cached(self, player_cards: List[str], board: List[str]) -> Tuple[int, List[int]]:
-        """Cached version of hand evaluation."""
-        # Create cache key
-        cache_key = tuple(sorted(player_cards + board))
+    def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
+        """Initialize the state machine with enhanced hand evaluator."""
+        self.num_players = num_players
+        self.strategy_data = strategy_data
+        self.root_tk = root_tk
         
-        # Check cache
-        if cache_key in self._hand_eval_cache:
-            self._cache_hits += 1
-            return self._hand_eval_cache[cache_key]
+        # Initialize the enhanced hand evaluator
+        self.hand_evaluator = EnhancedHandEvaluator()
         
-        # Cache miss - evaluate
-        self._cache_misses += 1
-        result = self.evaluate_hand(player_cards, board)
+        # Game state
+        self.game_state = GameState(
+            players=[],
+            board=[],
+            pot=0.0,
+            current_bet=0.0,
+            street="preflop",
+            deck=[]
+        )
         
-        # Add to cache if not too big
-        if len(self._hand_eval_cache) < self._max_cache_size:
-            self._hand_eval_cache[cache_key] = result
-        else:
-            # Simple cache eviction - remove oldest entries
-            if len(self._hand_eval_cache) > 0:
-                # Remove first 10% of cache
-                keys_to_remove = list(self._hand_eval_cache.keys())[:self._max_cache_size // 10]
-                for key in keys_to_remove:
-                    del self._hand_eval_cache[key]
-            self._hand_eval_cache[cache_key] = result
+        # State tracking
+        self.current_state = PokerState.START_HAND
+        self.action_player_index = 0
+        self.dealer_position = 0
         
-        return result
-
-    def evaluate_hand(self, player_cards: List[str], board: List[str]) -> Tuple[int, List[int]]:
-        """Enhanced hand evaluation with kickers for proper tiebreaking."""
-        all_cards = player_cards + board
+        # Callbacks
+        self.on_action_required = None
+        self.on_hand_complete = None
+        self.on_state_change = None
+        self.on_log_entry = None
         
-        # Count cards by rank and suit
-        rank_counts = {}
-        suit_counts = {}
+        # Sound manager
+        self.sfx = SoundManager()
         
-        for card in all_cards:
-            rank, suit = card[0], card[1]
-            rank_counts[rank] = rank_counts.get(rank, 0) + 1
-            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        # Hand history
+        self.hand_history = []
         
-        score = 0
+        # Initialize players
+        self._initialize_players()
         
-        # Hand rankings
-        rank_values = sorted(rank_counts.values(), reverse=True)
+        # Strategy integration
+        if self.strategy_data:
+            self._log_action("Strategy data loaded successfully")
         
-        # Get top 5 cards for kickers (including board)
-        rank_order = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, 
-                      '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, 
-                      '4': 4, '3': 3, '2': 2}
-        kickers = []
-        for c in all_cards:
-            if c[0] in rank_order:
-                kickers.append(rank_order[c[0]])
-            else:
-                try:
-                    kickers.append(int(c[0]))
-                except ValueError:
-                    continue  # Skip invalid cards
-        kickers = sorted(kickers, reverse=True)[:5]
-        
-        # Four of a kind
-        if 4 in rank_values:
-            score += 800
-        # Full house
-        elif 3 in rank_values and 2 in rank_values:
-            score += 700
-        # Flush
-        elif max(suit_counts.values()) >= 5:
-            score += 600
-        # Straight (simplified check)
-        elif self._has_straight(list(rank_counts.keys())):
-            score += 500
-        # Three of a kind
-        elif 3 in rank_values:
-            score += 300
-        # Two pair
-        elif rank_values.count(2) >= 2:
-            score += 200
-        # One pair
-        elif 2 in rank_values:
-            score += 100
-        
-        return max(score, 1), kickers
-
-    def get_hand_strength_percentile(self, hand_strength: int) -> float:
-        """Convert raw hand strength to percentile (0-100)."""
-        # Define strength brackets based on hand rankings
-        strength_brackets = {
-            0: 0,      # No hand
-            100: 20,   # One pair
-            200: 40,   # Two pair  
-            300: 60,   # Three of a kind
-            500: 75,   # Straight
-            600: 85,   # Flush
-            700: 95,   # Full house
-            800: 99,   # Four of a kind
-            1000: 100  # Straight flush
-        }
-        
-        # Find the appropriate bracket
-        for min_strength, percentile in sorted(strength_brackets.items()):
-            if hand_strength <= min_strength:
-                return percentile
-        
-        return 100  # Royal flush territory
-
-    def calculate_pot_odds(self, call_amount: float) -> float:
-        """Calculate pot odds for a call decision."""
-        if call_amount <= 0:
-            return float('inf')  # Can check for free
-        
-        # Pot odds = (pot + opponent bets) : call_amount
-        total_pot = self.game_state.pot + call_amount
-        pot_odds = total_pot / call_amount
-        return pot_odds
-
-    def estimate_hand_equity(self, player_cards: List[str], board: List[str], 
-                            num_opponents: int) -> float:
-        """Estimate winning probability against opponents."""
-        # This is a simplified equity calculation
-        # In a real implementation, you'd use Monte Carlo simulation
-        
-        # Get base hand strength
-        hand_strength, _ = self.evaluate_hand(player_cards, board)
-        
-        # Convert to rough win probability (0-1)
-        base_equity = hand_strength / 1000.0
-        
-        # Adjust for number of opponents
-        # More opponents = lower chance of winning
-        equity = base_equity ** (0.8 + (num_opponents * 0.2))
-        
-        # Add some adjustments based on board texture
-        if board:
-            # Check for dangerous boards
-            suits = [card[1] for card in board]
-            ranks = [card[0] for card in board]
-            
-            # Flush-heavy board
-            if max(suits.count(s) for s in set(suits)) >= 3:
-                equity *= 0.9  # Reduce equity on flush boards
-            
-            # Straight-heavy board  
-            if self._is_board_connected(ranks):
-                equity *= 0.9  # Reduce equity on connected boards
-            
-            # Paired board
-            if len(set(ranks)) < len(ranks):
-                equity *= 0.95  # Slightly reduce on paired boards
-        
-        return max(0.05, min(0.95, equity))  # Cap between 5% and 95%
-
-    def should_call_by_pot_odds(self, player: Player, call_amount: float) -> bool:
-        """Determine if calling is profitable based on pot odds."""
-        pot_odds = self.calculate_pot_odds(call_amount)
-        
-        # Estimate our equity
-        active_opponents = len([p for p in self.game_state.players 
-                              if p.is_active and p != player])
-        equity = self.estimate_hand_equity(player.cards, self.game_state.board, 
-                                          active_opponents)
-        
-        # Need equity > 1/(pot_odds + 1) to make calling profitable
-        required_equity = 1 / (pot_odds + 1)
-        
-        return equity >= required_equity
-
-    def _has_straight(self, ranks: List[str]) -> bool:
-        """Fixed straight detection with proper duplicate handling."""
-        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, 
-                      '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2}
-        
-        # BUG FIX: Use set to remove duplicates
-        values = sorted(set(rank_values[rank] for rank in ranks if rank in rank_values))
-        
-        # Check for regular straights
-        for i in range(len(values) - 4):
-            # Check if we have 5 consecutive values
-            consecutive = True
-            for j in range(4):
-                if values[i+j+1] - values[i+j] != 1:
-                    consecutive = False
-                    break
-            if consecutive:
-                return True
-        
-        # Check for A-2-3-4-5 straight (wheel)
-        if set([14, 2, 3, 4, 5]).issubset(set(values)):
-            return True
-        
-        return False
+        # Initialize hand evaluator cache
+        self._hand_eval_cache = {}
+        self._cache_hits = 0
+        self._cache_misses = 0
+        self._max_cache_size = 1000
 
     def determine_winner(self) -> List[Player]:
-        """Determine winners with proper tie handling using kickers."""
+        """Determine winners with proper tie handling using the enhanced evaluator."""
         active_players = [p for p in self.game_state.players if p.is_active]
         
         if len(active_players) == 1:
             return active_players
         
-        best_score = (-1, [])
+        best_hand_info = None
         winners = []
         
         for player in active_players:
-            score, kickers = self.evaluate_hand(player.cards, self.game_state.board)
-            if (score, kickers) > best_score:
-                best_score = (score, kickers)
+            # Use the single, authoritative hand evaluator
+            hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+            
+            if not winners:  # First player to be evaluated
+                best_hand_info = hand_info
                 winners = [player]
-            elif (score, kickers) == best_score:
-                winners.append(player)
+            else:
+                # Compare current player's hand with the best so far
+                comparison = self.hand_evaluator._compare_hands(
+                    (hand_info['hand_rank'], hand_info['rank_values']),
+                    (best_hand_info['hand_rank'], best_hand_info['rank_values'])
+                )
+                
+                if comparison > 0:  # Current player has a better hand
+                    best_hand_info = hand_info
+                    winners = [player]
+                elif comparison == 0:  # It's a tie
+                    winners.append(player)
         
         return winners
 
