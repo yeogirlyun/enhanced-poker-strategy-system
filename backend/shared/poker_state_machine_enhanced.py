@@ -666,8 +666,10 @@ class ImprovedPokerStateMachine:
                 hand_strength = self.get_preflop_hand_strength(player.cards)
                 
                 # If facing a raise (current_bet > big blind)
-                if self.game_state.current_bet > self.game_state.big_blind:
-                    print(f"   🤖 Logic: Facing a raise (current_bet ${self.game_state.current_bet} > big_blind ${self.game_state.big_blind})")  # Debug
+                # FIX: Use constant big blind amount instead of non-existent field
+                BIG_BLIND_AMOUNT = 1.0  # Fixed big blind amount
+                if self.game_state.current_bet > BIG_BLIND_AMOUNT:
+                    print(f"   🤖 Logic: Facing a raise (current_bet ${self.game_state.current_bet} > big_blind ${BIG_BLIND_AMOUNT})")  # Debug
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
@@ -694,7 +696,7 @@ class ImprovedPokerStateMachine:
                         return ActionType.FOLD, 0
                     # --- END IMPROVED LOGIC ---
                 else:  # This is an opening opportunity
-                    print(f"   🤖 Logic: Opening opportunity (current_bet ${self.game_state.current_bet} <= big_blind ${self.game_state.big_blind})")  # Debug
+                    print(f"   🤖 Logic: Opening opportunity (current_bet ${self.game_state.current_bet} <= big_blind ${BIG_BLIND_AMOUNT})")  # Debug
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 60)
@@ -702,7 +704,7 @@ class ImprovedPokerStateMachine:
                     
                     # --- NEW: ADJUST FOR LIMPERS ---
                     limpers = len([p for p in self.game_state.players 
-                                 if p.current_bet == self.game_state.big_blind and p.position != "BB"])
+                                 if p.current_bet == BIG_BLIND_AMOUNT and p.position != "BB"])
                     if limpers > 0:
                         sizing += limpers  # Add one extra BB for each limper
                     # --- END LIMPER ADJUSTMENT ---
@@ -721,7 +723,7 @@ class ImprovedPokerStateMachine:
                         return ActionType.BET, min(sizing, player.stack)
                     else:
                         # Player should check if in BB and no one raised, otherwise fold
-                        if player.position == "BB" and self.game_state.current_bet == self.game_state.big_blind:
+                        if player.position == "BB" and self.game_state.current_bet == BIG_BLIND_AMOUNT:
                             print(f"   🤖 Action: CHECK (BB with no raise)")  # Debug
                             return ActionType.CHECK, 0
                         print(f"   🤖 Action: FOLD (hand_strength too low)")  # Debug
