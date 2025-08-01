@@ -124,10 +124,9 @@ class PracticeSessionUI(ttk.Frame):
         center_x, center_y = width / 2, height / 2
         radius_x, radius_y = width * 0.42, height * 0.35
         
-        # Clear old frames before redrawing
-        for frame in self.player_seat_frames:
-            frame.destroy()
-        self.player_seat_frames.clear()
+        # --- NEW: Initialize the list with placeholders ---
+        self.player_seat_frames = [None] * self.num_players
+        # --- END NEW ---
 
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
@@ -164,7 +163,9 @@ class PracticeSessionUI(ttk.Frame):
         )
         cards_label.pack(pady=5)
         
-        self.player_seat_frames.append(seat_frame) # Store the new frame
+        # --- NEW: Store the frame at the correct index ---
+        self.player_seat_frames[index] = seat_frame
+        # --- END NEW ---
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
 
     def _draw_community_card_area(self):
