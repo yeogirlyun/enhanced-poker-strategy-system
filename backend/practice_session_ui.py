@@ -516,4 +516,10 @@ class PracticeSessionUI(ttk.Frame):
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
         suit_symbol = suit_symbols.get(suit, suit)
         
-        return f"{rank}{suit_symbol}" 
+        return f"{rank}{suit_symbol}"
+
+    def update_font_size(self, font_size: int):
+        """Updates the font size for all components in the practice session."""
+        new_font = (THEME["font_family"], font_size)
+        self.info_text.config(font=new_font)
+        # You can add other component font updates here if needed 
