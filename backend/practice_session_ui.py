@@ -433,11 +433,6 @@ class PracticeSessionUI(ttk.Frame):
         self.start_button.pack_forget()
         self.reset_button.pack_forget()
         
-        # Show action buttons
-        for widget in self.human_action_controls.values():
-            if hasattr(widget, 'pack'):
-                widget.pack(side=tk.LEFT, padx=5)
-        
         # Show bet sizing controls
         if hasattr(self, 'bet_slider'):
             self.bet_slider.pack(fill=tk.X)
@@ -534,10 +529,17 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message(f"💰 Player stack: ${player.stack:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
         # --- END ENHANCED ---
 
-        # --- NEW: Use the new button management system ---
-        self._show_action_buttons()
+        # --- NEW: Dynamic button visibility based on game state ---
+        # Hide all action buttons initially to ensure a clean state
+        self.human_action_controls['fold'].pack_forget()
+        self.human_action_controls['check'].pack_forget()
+        self.human_action_controls['call'].pack_forget()
+        self.human_action_controls['bet_raise'].pack_forget()
         
-        # Configure Check or Call button
+        # Always show the Fold button
+        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
+        
+        # --- NEW: Dynamically show Check or Call based on current bet ---
         call_amount = game_info['current_bet'] - player.current_bet
         self._log_message(f"🔍 CALL AMOUNT CALCULATION:")
         self._log_message(f"   Current bet from game state: ${game_info['current_bet']:.2f}")
@@ -545,10 +547,15 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message(f"   Calculated call amount: ${call_amount:.2f}")
         
         if call_amount > 0:
+            # There is a bet to call, so show the Call button
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
-            self._log_message(f"📞 Call button configured with amount: ${call_amount:.2f}")
+            self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
+            self._log_message(f"📞 Call button shown with amount: ${call_amount:.2f}")
         else:
+            # There is no bet, so show the Check button
+            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
             self._log_message(f"✅ Check button shown (no call needed)")
+        # --- END NEW ---
 
         # Configure the bet/raise slider and button
         if game_info['current_bet'] > 0:
@@ -564,13 +571,16 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_var.set(min_bet)
         self._update_bet_size_label()
 
-        # Configure the bet/raise button text
+        # Configure the bet/raise button text and show it
         if game_info['current_bet'] > 0:
             self.human_action_controls['bet_raise'].config(text="Raise To")
             self._log_message(f"📈 Raise button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
             self._log_message(f"💰 Bet button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
+        
+        # Show the bet/raise button
+        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
         
         # --- ENHANCED: Ensure action bar is visible ---
         if hasattr(self, 'action_bar_frame'):
