@@ -235,22 +235,26 @@ class PracticeSessionUI(ttk.Frame):
         # The state machine will automatically determine who acts first
         # and call prompt_human_action if it's the human's turn.
 
-    def handle_hand_complete(self, winner_info):
-        """Handles hand completion and displays the winner."""
-        print(f"🎉 HAND COMPLETE CALLED with winner_info: {winner_info}")  # Debug
+    def handle_hand_complete(self, winner_info=None):
+        """
+        Handles hand completion by displaying the winner info received from the state machine.
+        """
         self.sfx.play("winner_announce")
-        if winner_info:
-            self.add_game_message(f"🏆 {winner_info['name']} wins ${winner_info['amount']:.2f}!")
-            self.pot_label.config(text=f"Winner: {winner_info['name']}!", fg=THEME["accent_secondary"])
+        
+        if winner_info and winner_info.get("name"):
+            winner_names = winner_info["name"]
+            pot_amount = winner_info["amount"]
             
-            # Animate pot money moving to winner
-            print(f"🎬 Calling animation for: {winner_info}")  # Debug
-            self._animate_pot_to_winner(winner_info)
+            # Update the pot label to announce the winner
+            self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
+            self.add_game_message(f"🏆 {winner_names} wins ${pot_amount:.2f}!")
+
+            # (Optional animation logic can be added here)
         else:
             self.add_game_message("🏁 Hand complete!")
 
-        self.sfx.play("pot_rake")
-        self._show_game_control_buttons() # Show "Start New Hand" button
+        # Show the "Start New Hand" button after a delay
+        self.after(3000, self._show_game_control_buttons)
 
     def _animate_pot_to_winner(self, winner_info):
         """Animate pot money moving to the winner's stack."""
