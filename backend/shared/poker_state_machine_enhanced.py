@@ -647,6 +647,19 @@ class ImprovedPokerStateMachine:
         print(f"   Call amount: ${call_amount}")
         print(f"   Street: {street}")
         
+        # --- CRITICAL BUG FIX: Big Blind Check Logic ---
+        # If it's the Big Blind's turn pre-flop and there's no raise,
+        # they have the option to check. They should never fold in this spot.
+        is_preflop_bb_option = (
+            street == 'preflop' and
+            position == 'BB' and
+            call_amount == 0
+        )
+        if is_preflop_bb_option:
+            print(f"   🤖 CRITICAL FIX: BB has option to check, defaulting to CHECK")  # Debug
+            return ActionType.CHECK, 0
+        # --- End of Critical Bug Fix ---
+        
         try:
             if street == "preflop":
                 # --- NEW: TIER-BASED DECISION LOGIC ---
