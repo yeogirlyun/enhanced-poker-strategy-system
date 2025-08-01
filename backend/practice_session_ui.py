@@ -76,20 +76,35 @@ class PracticeSessionUI(ttk.Frame):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Sets up the main UI components for the practice session."""
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        """Sets up the main UI components with a proper two-column grid layout."""
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=3)  # Canvas takes 3/4 of the space
+        self.grid_columnconfigure(1, weight=1)  # Info panel takes 1/4 of the space
 
         # Main canvas for the poker table
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # --- NEW: Bind the resize event ---
-        self.canvas.bind("<Configure>", self._on_resize)
-        # --- END NEW ---
+        # Right-side panel for messages
+        right_panel_frame = ttk.Frame(self)
+        right_panel_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        
+        info_frame = ttk.LabelFrame(right_panel_frame, text="Game Messages", padding=10)
+        info_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.info_text = tk.Text(info_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"])
+        self.info_text.pack(fill=tk.BOTH, expand=True)
 
-        self._create_human_action_controls()
-        self._create_game_message_area()
+        # Human Action Controls (placed below the main canvas)
+        controls_frame = ttk.Frame(self)
+        controls_frame.grid(row=1, column=0, sticky="ew", pady=10)
+        self._create_human_action_controls(controls_frame)
+
+        # Bind the resize event
+        self.canvas.bind("<Configure>", self._on_resize)
+        
+        # Add initial message
+        self.add_game_message("Welcome to Poker Practice Session!\nClick 'Start New Hand' to begin.")
         
         # Initial draw only - don't initialize state machine automatically
         self.after(100, self._on_resize, None)
@@ -387,49 +402,24 @@ class PracticeSessionUI(ttk.Frame):
         
         ToolTip(info_frame, "Current game information and status")
 
-    def _create_game_message_area(self):
-        """Creates a game message area for displaying hand actions and game state."""
-        # Create a frame for game messages on the right side - adjusted positioning
-        self.game_message_frame = ttk.LabelFrame(self, text="Game Messages", padding=10)
-        self.game_message_frame.place(relx=0.78, rely=0.05, relwidth=0.20, relheight=0.85)
-        
-        # Create text widget for messages
-        self.game_message_text = tk.Text(
-            self.game_message_frame,
-            height=15,
-            width=35,
-            font=("Consolas", 9),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED,
-            wrap=tk.WORD
-        )
-        self.game_message_text.pack(fill=tk.BOTH, expand=True)
-        
-        # Add scrollbar
-        scrollbar = ttk.Scrollbar(self.game_message_frame, orient=tk.VERTICAL, command=self.game_message_text.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.game_message_text.config(yscrollcommand=scrollbar.set)
-        
-        # Add initial message
-        self.add_game_message("Welcome to Poker Practice Session!\nClick 'Start New Hand' to begin.")
-
     def add_game_message(self, message):
         """Add a message to the game message area."""
-        if hasattr(self, 'game_message_text'):
-            self.game_message_text.config(state=tk.NORMAL)
-            self.game_message_text.insert(tk.END, f"{message}\n")
-            self.game_message_text.see(tk.END)
-            self.game_message_text.config(state=tk.DISABLED)
+        if hasattr(self, 'info_text'):
+            self.info_text.config(state=tk.NORMAL)
+            self.info_text.insert(tk.END, f"{message}\n")
+            self.info_text.see(tk.END)
+            self.info_text.config(state=tk.DISABLED)
 
-    def _create_human_action_controls(self):
+    def _create_human_action_controls(self, parent_frame):
         """Creates the buttons and entry for human player actions."""
-        controls_frame = ttk.Frame(self, style="TFrame")
-        controls_frame.place(relx=0.5, rely=0.95, anchor="center")
+        # Center the controls frame itself
+        parent_frame.grid_columnconfigure(0, weight=1)
+        inner_frame = ttk.Frame(parent_frame)
+        inner_frame.grid(row=0, column=0)
 
         # Action buttons
         self.human_action_controls['fold'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Fold", 
             command=lambda: self._submit_human_action("fold"),
             style="Danger.TButton"
@@ -437,21 +427,21 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['fold'], "Fold your hand and exit the current round")
         
         self.human_action_controls['check'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Check", 
             command=lambda: self._submit_human_action("check")
         )
         ToolTip(self.human_action_controls['check'], "Check (pass) if no bet to call")
         
         self.human_action_controls['call'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Call", 
             command=lambda: self._submit_human_action("call")
         )
         ToolTip(self.human_action_controls['call'], "Call the current bet")
         
         self.human_action_controls['bet'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Bet", 
             command=lambda: self._submit_human_action("bet"),
             style="Primary.TButton"
@@ -459,7 +449,7 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['bet'], "Make a bet")
         
         self.human_action_controls['raise'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Raise", 
             command=lambda: self._submit_human_action("raise"),
             style="Primary.TButton"
@@ -469,7 +459,7 @@ class PracticeSessionUI(ttk.Frame):
         # Amount entry
         self.amount_var = tk.StringVar(value="20")
         self.human_action_controls['amount_entry'] = ttk.Entry(
-            controls_frame, 
+            inner_frame, 
             textvariable=self.amount_var, 
             width=10
         )
@@ -477,7 +467,7 @@ class PracticeSessionUI(ttk.Frame):
 
         # Start hand button
         self.human_action_controls['start_hand'] = ttk.Button(
-            controls_frame, 
+            inner_frame, 
             text="Start Hand", 
             command=self.start_new_hand,
             style="Success.TButton"
@@ -669,17 +659,10 @@ class PracticeSessionUI(ttk.Frame):
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
-        print(f"🎮 Starting new hand with state machine")
+        self.sound_manager.play("card_deal")
         self.add_game_message("🎮 Starting new hand...")
-        
-        # Initialize the state machine properly with existing players
-        self.state_machine.start_hand(existing_players=None)
-        
-        # Force an immediate update to show the initial state
-        self.update_display()
-        
-        # Wait a moment for state machine to initialize
-        self.after(100, self._continue_hand_start)
+        self.state_machine.start_hand()
+        # The state machine will now automatically call prompt_human_action via its callback
     
     def _continue_hand_start(self):
         """Continue hand start after state machine is initialized."""
@@ -768,15 +751,11 @@ class PracticeSessionUI(ttk.Frame):
         self.add_game_message(f"🎮 Player 1: {action_str.upper()} ${amount:.2f}")
         self.state_machine.execute_action(player, action, amount)
         self.update_display()
-
-        # --- NEW: Start the game loop in a separate thread ---
-        game_thread = threading.Thread(target=self.run_game_loop, daemon=True)
-        game_thread.start()
-        # --- END NEW ---
-
-        # Hide controls after action
+        
+        # Hide controls and let the state machine continue
         for widget in self.human_action_controls.values():
             widget.pack_forget()
+        self.state_machine.handle_current_player_action()
 
     def run_game_loop(self):
         """Handles the game flow for all non-human players."""
