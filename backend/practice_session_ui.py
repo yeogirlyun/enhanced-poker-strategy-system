@@ -379,8 +379,8 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['call'], "Call the current bet")
 
         # --- Bet Sizing Slider (Center-Right) ---
-        sizing_frame = ttk.Frame(self.action_bar_frame)
-        sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+        self.sizing_frame = ttk.Frame(self.action_bar_frame)
+        self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
         
         self.bet_size_var = tk.DoubleVar()
         self.bet_slider = ttk.Scale(
@@ -426,6 +426,8 @@ class PracticeSessionUI(ttk.Frame):
             self.bet_slider.pack_forget()
         if hasattr(self, 'bet_size_label'):
             self.bet_size_label.pack_forget()
+        if hasattr(self, 'sizing_frame'):
+            self.sizing_frame.pack_forget()
 
     def _show_action_buttons(self):
         """Shows the action buttons and hides game control buttons."""
@@ -438,6 +440,8 @@ class PracticeSessionUI(ttk.Frame):
             self.bet_slider.pack(fill=tk.X)
         if hasattr(self, 'bet_size_label'):
             self.bet_size_label.pack()
+        if hasattr(self, 'sizing_frame'):
+            self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
 
     def _reset_game(self):
         """Resets the game state and UI."""
@@ -581,6 +585,15 @@ class PracticeSessionUI(ttk.Frame):
         
         # Show the bet/raise button
         self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
+        
+        # --- NEW: Show bet sizing controls ---
+        if hasattr(self, 'bet_slider'):
+            self.bet_slider.pack(fill=tk.X)
+        if hasattr(self, 'bet_size_label'):
+            self.bet_size_label.pack()
+        if hasattr(self, 'sizing_frame'):
+            self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+        # --- END NEW ---
         
         # --- ENHANCED: Ensure action bar is visible ---
         if hasattr(self, 'action_bar_frame'):
