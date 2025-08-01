@@ -753,102 +753,69 @@ class PracticeSessionUI(ttk.Frame):
         # The state machine will now automatically call prompt_human_action via its callback
 
     def handle_hand_complete(self, winner_info=None):
-        """Handles the completion of a hand by displaying the winner on the UI."""
+        """
+        Handles hand completion by getting the definitive winner from the state machine
+        and updating the UI accordingly.
+        """
         self.sfx.play("winner_announce")
         
-        # --- NEW: Get the final game state to ensure we have the correct winner ---
-        game_info = self.state_machine.get_game_info()
-        winner_players = self.state_machine.determine_winner()
+        # --- THIS IS THE CRITICAL FIX ---
+        # Get the one true winner directly from the state machine's trusted method
+        winner_list = self.state_machine.determine_winner()
         
-        self._log_message(f"🔍 HAND COMPLETE DEBUG:")
-        self._log_message(f"   Game info available: {game_info is not None}")
-        self._log_message(f"   Winner players: {[p.name for p in winner_players] if winner_players else 'None'}")
-        self._log_message(f"   Parameter winner_info: {winner_info}")
-        # --- END NEW ---
-
-        # --- ENHANCED: Prioritize state machine winner over parameter ---
-        winner_name = None
-        winner_amount = 0
-        
-        # First priority: Use winner from state machine (most accurate)
-        if winner_players:
-            winner_name = winner_players[0].name
+        if winner_list:
+            winner_names = ", ".join(p.name for p in winner_list)
             winner_amount = self.state_machine.game_state.pot
-            self._log_message(f"🏆 Winner from state machine: {winner_name} wins ${winner_amount:.2f}")
-        
-        # Second priority: Use parameter winner_info (fallback)
-        elif winner_info and isinstance(winner_info, dict):
-            winner_name = winner_info.get("name")
-            winner_amount = winner_info.get("amount", 0)
-            self._log_message(f"🏆 Winner from parameter: {winner_name} wins ${winner_amount:.2f}")
-        
-        # Third priority: Check last winner from state machine
-        elif hasattr(self.state_machine, '_last_winner') and self.state_machine._last_winner:
-            last_winner = self.state_machine._last_winner
-            winner_name = last_winner.get("name")
-            winner_amount = last_winner.get("amount", 0)
-            self._log_message(f"🏆 Winner from last winner: {winner_name} wins ${winner_amount:.2f}")
-        
-        # Display winner information
-        if winner_name:
-            self.add_game_message(f"🏆 {winner_name} wins ${winner_amount:.2f}!")
             
-            # --- ENHANCED: Visual feedback for winner ---
-            # Find and highlight the winning player's seat
-            winner_seat = None
-            for i, player_seat in enumerate(self.player_seats):
+            self._log_message(f"🏆 DEFINITIVE WINNER: {winner_names} wins ${winner_amount:.2f}")
+            
+            # Update the main pot label to announce the winner
+            if hasattr(self, 'pot_label'):
+                self.pot_label.config(text=f"🏆 {winner_names} wins ${winner_amount:.2f}!", fg="gold")
+            
+            # Add game message
+            self.add_game_message(f"🏆 {winner_names} wins ${winner_amount:.2f}!")
+            
+            # Highlight all winning players on the table
+            for i, seat_widgets in enumerate(self.player_seats):
                 if i < len(self.state_machine.game_state.players):
-                    player = self.state_machine.game_state.players[i]
-                    if player.name == winner_name:
-                        frame = player_seat["frame"]
-                        frame.config(bg=THEME["accent_secondary"])  # Winner highlight
-                        winner_seat = player_seat
-                        self._log_message(f"🎯 Highlighting winner seat {i}: {player.name}")
-                        break
+                    player_info = self.state_machine.game_state.players[i]
+                    if player_info.name in [p.name for p in winner_list]:
+                        seat_widgets["frame"].config(bg=THEME["accent_secondary"])
+                        self._log_message(f"🎯 Highlighting winner seat {i}: {player_info.name}")
             
-            # --- NEW: Animate pot collection ---
-            if hasattr(self, 'pot_label') and winner_seat:
-                # Get winner seat position
-                winner_x = winner_seat["frame"].winfo_x()
-                winner_y = winner_seat["frame"].winfo_y()
-                
-                # Create animated pot collection effect
-                self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
-                
-                # Animate pot collection
-                self._animate_pot_collection(winner_name, winner_x, winner_y)
-                
-                # Flash the winner's seat multiple times
-                def flash_winner(count=0):
-                    if count < 6:  # Flash 3 times (6 state changes)
-                        if count % 2 == 0:
-                            winner_seat["frame"].config(bg=THEME["accent_primary"])
-                        else:
-                            winner_seat["frame"].config(bg=THEME["accent_secondary"])
-                        self.after(300, lambda: flash_winner(count + 1))
-                    else:
-                        # Reset to normal after flashing
-                        winner_seat["frame"].config(bg=THEME["secondary_bg"])
-                        self.pot_label.config(text="Pot: $0.00", fg="yellow")
-                
-                # Start the flashing animation
-                self.after(500, flash_winner)
-            else:
-                # Fallback if no winner seat found
-                if hasattr(self, 'pot_label'):
-                    self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
-                    self.after(3000, lambda: self.pot_label.config(text="Pot: $0.00", fg="yellow"))
+            # Animate pot collection for the first winner
+            if winner_list and hasattr(self, 'pot_label'):
+                first_winner = winner_list[0]
+                # Find the first winner's seat for animation
+                for i, seat_widgets in enumerate(self.player_seats):
+                    if i < len(self.state_machine.game_state.players):
+                        player_info = self.state_machine.game_state.players[i]
+                        if player_info.name == first_winner.name:
+                            winner_x = seat_widgets["frame"].winfo_x()
+                            winner_y = seat_widgets["frame"].winfo_y()
+                            self._animate_pot_collection(first_winner.name, winner_x, winner_y)
+                            break
         else:
+            self._log_message("🏁 No winner determined - hand may have ended in a tie or error")
             self.add_game_message("🏁 Hand complete!")
+            if hasattr(self, 'pot_label'):
+                self.pot_label.config(text="Pot: $0.00", fg="yellow")
         
-        # --- NEW: Use the new button management system ---
+        # Play winner sound
+        self.sfx.play("pot_rake")
+        
+        # Hide the action controls
+        for control in self.human_action_controls.values():
+            if hasattr(control, 'pack_forget'):
+                control.pack_forget()
+        
+        # Show game control buttons
         self._show_game_control_buttons()
         
         # Add message about starting new hand
         self.add_game_message("💡 Click '🚀 Start New Hand' to begin a new game!")
-        
-        # Play winner sound
-        self.sfx.play("winner_announce")
+        # --- END FIX ---
 
     def _animate_pot_collection(self, winner_name, winner_x, winner_y):
         """Animates the pot moving to the winner."""
