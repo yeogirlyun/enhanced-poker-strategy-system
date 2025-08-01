@@ -649,6 +649,17 @@ class PracticeSessionUI(ttk.Frame):
         # Update display to show the action
         self.update_display()
         
+        # --- NEW: Properly advance the game state ---
+        # Check if the round is complete after the action
+        if self.state_machine.is_round_complete():
+            self._log_message(f"🔄 Round complete, transitioning to next street")
+            self.state_machine.handle_round_complete()
+        else:
+            self._log_message(f"🔄 Advancing to next player")
+            self.state_machine.advance_to_next_player()
+            self.state_machine.handle_current_player_action()
+        # --- END NEW ---
+        
         # Continue the game loop after a short delay
         self.after(500, self._continue_game_loop)
         # --- END ENHANCED ---
