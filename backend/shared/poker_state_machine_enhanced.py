@@ -395,7 +395,13 @@ class ImprovedPokerStateMachine:
         """Handle preflop betting round."""
         self._log_action("Preflop betting round")
         self.game_state.street = "preflop"
-        self.reset_round_tracking()
+        
+        # --- NEW: Only reset round tracking, NOT the action player index ---
+        # The action player index was already set correctly in handle_start_hand
+        self.game_state.players_acted.clear()
+        for player in self.game_state.players:
+            player.has_acted_this_round = False
+        # --- END NEW ---
 
         if not self.is_round_complete():
             self.handle_current_player_action()
