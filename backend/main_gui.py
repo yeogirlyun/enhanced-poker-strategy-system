@@ -952,7 +952,7 @@ class EnhancedMainGUI:
         self.hand_log_text.pack(fill=tk.BOTH, expand=True)
 
         # Initial placeholder text
-        self._reset_enhanced_game()
+        self._initialize_enhanced_game_display()
 
     def update_hand_log(self, log_entry):
         """Update the hand log with a new entry."""
@@ -1052,6 +1052,27 @@ Ready to track performance...
             
         except ValueError as e:
             self.set_status("Error: Please enter valid numbers for game settings", duration=3000)
+
+    def _initialize_enhanced_game_display(self):
+        """Initialize the enhanced game display with welcome guide (no confirmation)."""
+        # --- NEW: Welcome and Guide Text ---
+        welcome_guide = """Welcome to the Game Dashboard!
+
+1. Configure your game settings on the left.
+2. Click 'Start New Game' to initialize a session.
+3. Switch to the 'Practice Session' tab to begin playing.
+4. As you play, this dashboard will update with live analysis and statistics.
+"""
+        # --- END NEW ---
+
+        # Clear all displays and show the guide
+        for text_widget in [self.enhanced_game_state, self.strategy_analysis, self.game_statistics]:
+            text_widget.config(state=tk.NORMAL)
+            text_widget.delete(1.0, tk.END)
+            text_widget.insert(1.0, welcome_guide)
+            text_widget.config(state=tk.DISABLED)
+        
+        self.set_status("Game Dashboard ready. Configure settings and start a new game.")
 
     def _reset_enhanced_game(self):
         """Reset the enhanced game and display a welcome guide."""
