@@ -58,8 +58,10 @@ class EnhancedMainGUI:
         if os.path.exists("modern_strategy.json"):
             self.strategy_data.load_strategy_from_file("modern_strategy.json")
         else:
-            # Fallback to default tiers
-            self.strategy_data.load_default_tiers()
+            # Generate default strategy files if they don't exist
+            self._generate_default_strategy_files()
+            # Load the generated modern strategy
+            self.strategy_data.load_strategy_from_file("modern_strategy.json")
 
         # --- NEW: Status Bar Variable ---
         self.status_bar_text = tk.StringVar()
@@ -185,6 +187,42 @@ class EnhancedMainGUI:
                 self.set_status(f"Saved strategy to {os.path.basename(filename)}")
             else:
                 self.set_status("Failed to save strategy.", duration=3000)
+
+    def _generate_default_strategy_files(self):
+        """Generate default strategy files if they don't exist."""
+        print("🔧 Generating default strategy files...")
+        
+        # Get the current working directory
+        current_dir = os.getcwd()
+        print(f"📁 Current directory: {current_dir}")
+        
+        # Create StrategyData instance with default tiers
+        default_strategy = StrategyData()
+        default_strategy.load_default_tiers()
+        
+        # Generate modern_strategy.json
+        modern_file = "modern_strategy.json"
+        if not os.path.exists(modern_file):
+            print(f"📝 Creating {modern_file}...")
+            if default_strategy.save_strategy_to_file(modern_file):
+                print(f"✅ Generated {modern_file}")
+            else:
+                print(f"❌ Failed to generate {modern_file}")
+        else:
+            print(f"📁 {modern_file} already exists")
+        
+        # Generate gto_strategy_default.json
+        gto_file = "gto_strategy_default.json"
+        if not os.path.exists(gto_file):
+            print(f"📝 Creating {gto_file}...")
+            if default_strategy.save_strategy_to_file(gto_file):
+                print(f"✅ Generated {gto_file}")
+            else:
+                print(f"❌ Failed to generate {gto_file}")
+        else:
+            print(f"📁 {gto_file} already exists")
+        
+        print("🎯 Default strategy files generation complete!")
 
     def _generate_default_strategy(self):
         """Generate a default strategy."""
