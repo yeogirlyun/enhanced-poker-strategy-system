@@ -415,10 +415,12 @@ class PracticeSessionUI(ttk.Frame):
         else:
             self.add_game_message("🏁 Hand complete!")
         
-        # Show start hand button again
+        # --- FIX: Hide all action buttons and show only start hand button ---
         for widget in self.human_action_controls.values():
-            widget.pack_forget()
+            if hasattr(widget, 'pack_forget'):
+                widget.pack_forget()
         self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+        # --- END FIX ---
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
