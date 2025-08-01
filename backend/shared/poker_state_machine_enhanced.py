@@ -1013,22 +1013,6 @@ class ImprovedPokerStateMachine:
                 self.sfx.play("card_fold")    # Generated fallback
             player.is_active = False
             player.current_bet = 0
-            
-            # --- NEW: Check if the hand is over ---
-            active_players = [p for p in self.game_state.players if p.is_active]
-            if len(active_players) == 1:
-                winner = active_players[0]
-                winner.stack += self.game_state.pot
-                pot_amount = self.game_state.pot
-                self.game_state.pot = 0
-                self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
-                # Only transition if not already in END_HAND state
-                if self.current_state != PokerState.END_HAND:
-                    self.transition_to(PokerState.END_HAND)
-                # Store winner info for UI callback
-                self._last_winner = {"name": winner.name, "amount": pot_amount}
-                return  # End the action here since the hand is over
-            # --- END NEW ---
 
         elif action == ActionType.CHECK:
             self.sfx.play("player_check")
@@ -1125,12 +1109,29 @@ class ImprovedPokerStateMachine:
         player.has_acted_this_round = True
         self.game_state.players_acted.add(self.action_player_index)
 
-        # Move to next player or check round completion
-        if not self.is_round_complete():
+        # --- CORRECTED GAME FLOW LOGIC ---
+        # Check for a winner first
+        active_players = [p for p in self.game_state.players if p.is_active]
+        if len(active_players) == 1:
+            winner = active_players[0]
+            winner.stack += self.game_state.pot
+            pot_amount = self.game_state.pot
+            self.game_state.pot = 0
+            self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
+            # Only transition if not already in END_HAND state
+            if self.current_state != PokerState.END_HAND:
+                self.transition_to(PokerState.END_HAND)
+            # Store winner info for UI callback
+            self._last_winner = {"name": winner.name, "amount": pot_amount}
+            return  # End the action here since the hand is over
+
+        # If the hand is not over, check if the round is complete
+        if self.is_round_complete():
+            self.handle_round_complete()
+        else:
             self.advance_to_next_player()
             self.handle_current_player_action()
-        else:
-            self.handle_round_complete()
+        # --- END CORRECTION ---
 
     def advance_to_next_player(self):
         """Move to the next active player who can act."""
