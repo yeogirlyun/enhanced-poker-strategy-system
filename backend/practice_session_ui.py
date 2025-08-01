@@ -259,6 +259,7 @@ class PracticeSessionUI(ttk.Frame):
             # --- ENHANCED: Update bet amount display with chip emoji ---
             if player_info['current_bet'] > 0:
                 bet_label.config(text=f"💰 ${player_info['current_bet']:.2f}")
+                self._log_message(f"DEBUG: Updated bet display for {player_info['name']}: ${player_info['current_bet']:.2f}")
             else:
                 bet_label.config(text="")
             # --- END ENHANCED ---
@@ -411,13 +412,19 @@ class PracticeSessionUI(ttk.Frame):
             self.human_action_controls['bet_raise'].config(text="Bet")
         self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
         
-        # --- FIX: Show the slider and label ---
-        # The slider and label are always visible, but we need to ensure they're properly configured
+        # --- ENHANCED: Ensure all action bar elements are visible ---
+        # Make sure the action bar frame itself is visible
+        if hasattr(self, 'action_bar_frame'):
+            self.action_bar_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
+        
+        # Ensure slider and label are visible
         if hasattr(self, 'bet_slider') and hasattr(self, 'bet_size_label'):
-            # Ensure slider is visible and properly configured
             self.bet_slider.pack(fill=tk.X)
             self.bet_size_label.pack()
-        # --- END FIX ---
+        
+        # Add debug message
+        self._log_message(f"DEBUG: Action bar configured - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
+        # --- END ENHANCED ---
 
     def _submit_human_action(self, action_str):
         """Submits the human's chosen action to the state machine."""
@@ -440,13 +447,14 @@ class PracticeSessionUI(ttk.Frame):
 
         self.state_machine.execute_action(player, action, amount)
         
-        # Hide controls and let the state machine continue
+        # Hide controls
         for widget in self.human_action_controls.values():
             if isinstance(widget, ttk.Button): # Check if it's a button before packing
                 widget.pack_forget()
         
-        # Update display AFTER the state machine processes the action
-        self.state_machine.handle_current_player_action()
+        # --- FIX: Don't call handle_current_player_action here ---
+        # The state machine will handle the next player automatically
+        # Just update the display
         self.update_display()
 
     def start_new_hand(self):
