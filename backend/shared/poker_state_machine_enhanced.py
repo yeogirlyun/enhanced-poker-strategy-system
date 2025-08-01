@@ -640,6 +640,13 @@ class ImprovedPokerStateMachine:
         street = self.game_state.street
         position = player.position
         
+        # DEBUG: Add comprehensive debugging for action selection
+        call_amount = self.game_state.current_bet - player.current_bet
+        print(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
+        print(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
+        print(f"   Call amount: ${call_amount}")
+        print(f"   Street: {street}")
+        
         try:
             if street == "preflop":
                 # --- NEW: TIER-BASED DECISION LOGIC ---
@@ -660,6 +667,7 @@ class ImprovedPokerStateMachine:
                 
                 # If facing a raise (current_bet > big blind)
                 if self.game_state.current_bet > self.game_state.big_blind:
+                    print(f"   🤖 Logic: Facing a raise (current_bet ${self.game_state.current_bet} > big_blind ${self.game_state.big_blind})")  # Debug
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
@@ -674,14 +682,19 @@ class ImprovedPokerStateMachine:
                         call_thresh = vs_raise_rules.get("call_thresh", 65)
                         call_range = [call_thresh, value_3bet_thresh - 1]
                     
+                    print(f"   🤖 Hand strength: {hand_strength}, 3bet threshold: {value_3bet_thresh}, call range: {call_range}")  # Debug
                     if hand_strength >= value_3bet_thresh:
+                        print(f"   🤖 Action: RAISE (hand_strength >= {value_3bet_thresh})")  # Debug
                         return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
                     elif call_range[0] <= hand_strength <= call_range[1]:
+                        print(f"   🤖 Action: CALL (hand_strength {hand_strength} in range {call_range})")  # Debug
                         return ActionType.CALL, self.game_state.current_bet - player.current_bet
                     else:
+                        print(f"   🤖 Action: FOLD (hand_strength {hand_strength} too low)")  # Debug
                         return ActionType.FOLD, 0
                     # --- END IMPROVED LOGIC ---
                 else:  # This is an opening opportunity
+                    print(f"   🤖 Logic: Opening opportunity (current_bet ${self.game_state.current_bet} <= big_blind ${self.game_state.big_blind})")  # Debug
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 60)
@@ -696,16 +709,22 @@ class ImprovedPokerStateMachine:
                     
                     # FIX: Check if player already has the current bet amount
                     call_amount = self.game_state.current_bet - player.current_bet
+                    print(f"   🤖 Call amount check: ${call_amount}")  # Debug
                     if call_amount <= 0:
                         # Player already has the current bet amount, they should CHECK
+                        print(f"   🤖 Action: CHECK (call_amount <= 0)")  # Debug
                         return ActionType.CHECK, 0
                     
+                    print(f"   🤖 Hand strength: {hand_strength}, threshold: {threshold}")  # Debug
                     if hand_strength >= threshold:
+                        print(f"   🤖 Action: BET (hand_strength >= threshold)")  # Debug
                         return ActionType.BET, min(sizing, player.stack)
                     else:
                         # Player should check if in BB and no one raised, otherwise fold
                         if player.position == "BB" and self.game_state.current_bet == self.game_state.big_blind:
+                            print(f"   🤖 Action: CHECK (BB with no raise)")  # Debug
                             return ActionType.CHECK, 0
+                        print(f"   🤖 Action: FOLD (hand_strength too low)")  # Debug
                         return ActionType.FOLD, 0
                 # --- END TIER-BASED LOGIC ---
             else:
