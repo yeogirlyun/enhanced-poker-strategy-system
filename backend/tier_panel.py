@@ -587,8 +587,7 @@ class TierPanel:
         
         # Add hand to the correct tier
         if target_tier:
-            target_tier.hands.append(hand)
-            target_tier.hands.sort()  # Keep hands sorted
+            target_tier.hands.add(hand)  # Use add() for sets
             print(f"DEBUG: Moved {hand} (HS: {new_hs}) to tier '{target_tier.name}' (HS {target_tier.min_hs}-{target_tier.max_hs})")
         else:
             print(f"DEBUG: No tier found for {hand} with HS {new_hs}")
