@@ -20,6 +20,7 @@ from typing import Optional
 
 from gui_models import THEME, FONTS
 from tooltips import ToolTip
+from sound_manager import SoundManager
 
 
 class PracticeSessionUI(ttk.Frame):
@@ -40,19 +41,24 @@ class PracticeSessionUI(ttk.Frame):
         self.player_cards = [[] for _ in range(self.num_players)]
         self.current_bet = 0.0
         self.min_bet = 20.0  # Big blind
+        self.player_acted = [False] * self.num_players  # Track if each player has acted
         
-        # Table size control
-        self.table_scale = 1.0  # Default scale
-        self.min_scale = 0.7
+        # Table size control - calculate initial scale for 70% of game pane
+        self.min_scale = 0.5
         self.max_scale = 2.0
+        # Initial scale will be calculated based on canvas size to take 70% of available space
+        self.table_scale = 1.0  # Will be recalculated in _calculate_initial_scale()
         
         # UI components
         self.player_seats = []
         self.community_card_labels = []
         self.human_action_controls = {}
         
+        # Initialize sound manager
+        self.sound_manager = SoundManager()
+        print(f"🔊 Sound manager initialized: {self.sound_manager.sound_enabled}")
+        
         self._setup_ui()
-        self.update_display()
 
     def _setup_ui(self):
         """Sets up the main UI components for the practice session."""
@@ -67,8 +73,37 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.bind("<Configure>", self._on_canvas_resize)
         
         # Schedule initial redraw after canvas is properly sized
-        self.after(100, self._redraw_table_with_scale)
+        self.after(100, self._calculate_initial_scale_and_redraw)
         self._create_human_action_controls()
+
+    def _calculate_initial_scale_and_redraw(self):
+        """Calculate initial scale based on canvas size and redraw the table."""
+        # Get canvas dimensions
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        
+        if canvas_width > 0 and canvas_height > 0:
+            # Calculate scale to fit table in 70% of available space
+            # Base table size is 900x600
+            # Use the smaller dimension to ensure table fits in both directions
+            scale_x = (canvas_width * 0.7) / 900
+            scale_y = (canvas_height * 0.7) / 600
+            # Use the larger scale to maximize table size while fitting
+            self.table_scale = min(max(scale_x, scale_y), self.max_scale)
+            self.table_scale = max(self.table_scale, self.min_scale)
+            
+            # Ensure minimum reasonable scale for better visibility
+            if self.table_scale < 0.8:
+                self.table_scale = 0.8
+        else:
+            # Fallback scale if canvas not yet sized
+            self.table_scale = 1.0
+        
+        # Redraw the table with calculated scale
+        self._redraw_table_with_scale()
+        
+        # Update display after table is created
+        self.update_display()
 
     def _draw_table(self):
         """Draws the main poker table shape."""
@@ -358,9 +393,10 @@ class PracticeSessionUI(ttk.Frame):
         self.current_bet = 0.0
         self.min_bet = 20.0
         
-        # Reset player actions
+        # Reset player actions and tracking
         for seat in self.player_seats:
             seat['action'].config(text="")
+        self.player_acted = [False] * self.num_players
         
         # Deal cards (simplified)
         import random
@@ -375,9 +411,10 @@ class PracticeSessionUI(ttk.Frame):
         
         random.shuffle(all_cards)
         
-        # Deal cards to players
+        # Deal cards to players with sound effects
         for i in range(self.num_players):
             self.player_cards[i] = [all_cards.pop(), all_cards.pop()]
+            self.sound_manager.play("card_deal")
         
         # Set blinds
         self.player_stacks[4] -= 10  # Small blind
@@ -400,8 +437,17 @@ class PracticeSessionUI(ttk.Frame):
 
     def prompt_human_action(self):
         """Shows the action controls for the human player."""
+        print(f"🎮 prompt_human_action called - current_player: {self.current_player}, player_acted[0]: {self.player_acted[0]}")
+        
         if self.current_player != 0:  # Not human's turn
+            print(f"❌ Not human's turn (current_player: {self.current_player})")
             return
+        
+        if self.player_acted[0]:  # Human has already acted
+            print(f"❌ Human has already acted (player_acted[0]: {self.player_acted[0]})")
+            return
+        
+        print(f"✅ Showing action controls for human player")
         
         # Hide all controls first
         for widget in self.human_action_controls.values():
@@ -432,21 +478,36 @@ class PracticeSessionUI(ttk.Frame):
                 messagebox.showerror("Invalid Amount", "Please enter a valid number for the amount.")
                 return
         
-        # Execute action
+        # Execute action with sound effects
         if action == "fold":
             self.player_seats[0]['action'].config(text="Folded")
+            print(f"🔊 Playing fold sound for human player")
+            self.sound_manager.play("player_fold")
         elif action == "check":
             self.player_seats[0]['action'].config(text="Checked")
+            print(f"🔊 Playing check sound for human player")
+            self.sound_manager.play("player_check")
         elif action == "call":
             call_amount = self.current_bet
             self.player_stacks[0] -= call_amount
             self.pot += call_amount
             self.player_seats[0]['action'].config(text=f"Called ${call_amount:.2f}")
+            print(f"🔊 Playing call sound for human player")
+            self.sound_manager.play("player_call")
         elif action in ["bet", "raise"]:
             self.player_stacks[0] -= amount
             self.pot += amount
             self.current_bet = amount
             self.player_seats[0]['action'].config(text=f"{action.title()} ${amount:.2f}")
+            print(f"🔊 Playing bet sound for human player")
+            self.sound_manager.play("chip_bet")
+            if action == "raise":
+                print(f"🔊 Playing raise sound for human player")
+                self.sound_manager.play("player_raise")
+        
+        # Mark human as having acted
+        self.player_acted[0] = True
+        print(f"🎯 Human player marked as acted: {self.player_acted[0]}")
         
         # Hide controls after action
         for widget in self.human_action_controls.values():
@@ -457,11 +518,37 @@ class PracticeSessionUI(ttk.Frame):
 
     def _ai_turn(self):
         """Simulates AI player turns."""
-        self.current_player = (self.current_player + 1) % self.num_players
+        print(f"🎮 _ai_turn called - current_player: {self.current_player}")
+        print(f"🎮 player_acted status: {self.player_acted}")
+        
+        # Find next player who hasn't acted
+        original_player = self.current_player
+        attempts = 0
+        while attempts < self.num_players:
+            self.current_player = (self.current_player + 1) % self.num_players
+            attempts += 1
+            print(f"🎮 Checking player {self.current_player}, acted: {self.player_acted[self.current_player]}")
+            
+            if not self.player_acted[self.current_player]:
+                print(f"✅ Found player {self.current_player} who hasn't acted")
+                break
+            
+            if self.current_player == original_player:
+                print(f"🔄 All players have acted, starting new round")
+                # All players have acted, start new round or end hand
+                self._start_new_round()
+                return
+        
+        if attempts >= self.num_players:
+            print(f"❌ No players found who haven't acted, starting new round")
+            self._start_new_round()
+            return
         
         if self.current_player == 0:  # Back to human
+            print(f"👤 Back to human player")
             self.prompt_human_action()
         else:
+            print(f"🤖 AI player {self.current_player} taking action")
             # Simple AI logic
             import random
             actions = ["fold", "call", "bet"]
@@ -473,18 +560,124 @@ class PracticeSessionUI(ttk.Frame):
                 self.pot += bet_amount
                 self.current_bet = bet_amount
                 self.player_seats[self.current_player]['action'].config(text=f"Bet ${bet_amount:.2f}")
+                self.sound_manager.play("chip_bet")
             elif action == "call":
                 call_amount = self.current_bet
                 self.player_stacks[self.current_player] -= call_amount
                 self.pot += call_amount
                 self.player_seats[self.current_player]['action'].config(text=f"Called ${call_amount:.2f}")
+                self.sound_manager.play("player_call")
             else:  # fold
                 self.player_seats[self.current_player]['action'].config(text="Folded")
+                self.sound_manager.play("player_fold")
+            
+            # Mark AI player as having acted
+            self.player_acted[self.current_player] = True
             
             # Continue to next player after a short delay
             self.after(1000, self._ai_turn)
         
         self.update_display()
+
+    def _start_new_round(self):
+        """Starts a new betting round (flop, turn, river)."""
+        print(f"🔄 Starting new round - resetting action tracking")
+        
+        # Reset player action tracking for new round
+        # Players who folded in previous rounds should stay folded
+        for i in range(self.num_players):
+            if "Folded" in self.player_seats[i]['action'].cget("text"):
+                # Keep folded players marked as acted
+                self.player_acted[i] = True
+                print(f"🎯 Player {i} stays folded")
+            else:
+                # Reset action tracking for active players
+                self.player_acted[i] = False
+                print(f"🔄 Player {i} action reset for new round")
+        
+        self.current_bet = 0.0
+        
+        # Deal community cards based on current round
+        if len(self.community_cards) == 0:
+            # Deal flop (3 cards)
+            import random
+            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+            suits = ['s', 'h', 'd', 'c']
+            all_cards = []
+            for rank in ranks:
+                for suit in suits:
+                    all_cards.append(f"{rank}{suit}")
+            random.shuffle(all_cards)
+            
+            # Remove cards already dealt to players
+            for player_cards in self.player_cards:
+                for card in player_cards:
+                    if card in all_cards:
+                        all_cards.remove(card)
+            
+            # Deal flop with sound effects
+            for i in range(3):
+                if all_cards:
+                    self.community_cards.append(all_cards.pop())
+                    self.sound_manager.play("card_deal")
+        elif len(self.community_cards) == 3:
+            # Deal turn
+            import random
+            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+            suits = ['s', 'h', 'd', 'c']
+            all_cards = []
+            for rank in ranks:
+                for suit in suits:
+                    all_cards.append(f"{rank}{suit}")
+            
+            # Remove cards already dealt
+            for player_cards in self.player_cards:
+                for card in player_cards:
+                    if card in all_cards:
+                        all_cards.remove(card)
+            for card in self.community_cards:
+                if card in all_cards:
+                    all_cards.remove(card)
+            
+            if all_cards:
+                self.community_cards.append(all_cards.pop())
+        elif len(self.community_cards) == 4:
+            # Deal river
+            import random
+            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+            suits = ['s', 'h', 'd', 'c']
+            all_cards = []
+            for rank in ranks:
+                for suit in suits:
+                    all_cards.append(f"{rank}{suit}")
+            
+            # Remove cards already dealt
+            for player_cards in self.player_cards:
+                for card in player_cards:
+                    if card in all_cards:
+                        all_cards.remove(card)
+            for card in self.community_cards:
+                if card in all_cards:
+                    all_cards.remove(card)
+            
+            if all_cards:
+                self.community_cards.append(all_cards.pop())
+                self.sound_manager.play("card_deal")
+        else:
+            # Hand is complete, show results
+            self._show_hand_results()
+            return
+        
+        # Start with first player after dealer
+        self.current_player = 0
+        self.update_display()
+        self.prompt_human_action()
+
+    def _show_hand_results(self):
+        """Shows the results of the completed hand."""
+        # Simple result display
+        messagebox.showinfo("Hand Complete", f"Hand finished! Final pot: ${self.pot:.2f}")
+        self.start_new_hand()
 
     def increase_table_size(self):
         """Increase the table size."""
@@ -565,13 +758,13 @@ class PracticeSessionUI(ttk.Frame):
     
     def _create_player_seat_scaled(self, x, y, name, position, index):
         """Creates the widgets for a single player seat with scaling."""
-        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=int(2 * self.table_scale), relief="ridge")
+        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=int(3 * self.table_scale), relief="ridge")
         
-        # Scale font sizes
-        name_font_size = int(FONTS["header"][1] * self.table_scale)
-        main_font_size = int(FONTS["main"][1] * self.table_scale)
-        small_font_size = int(FONTS["small"][1] * self.table_scale)
-        card_font_size = int(24 * self.table_scale)
+        # Scale font sizes with better minimums for visibility
+        name_font_size = max(10, int(FONTS["header"][1] * self.table_scale))
+        main_font_size = max(8, int(FONTS["main"][1] * self.table_scale))
+        small_font_size = max(6, int(FONTS["small"][1] * self.table_scale))
+        card_font_size = max(16, int(24 * self.table_scale))
         
         # Player name and position
         name_label = tk.Label(
@@ -662,10 +855,10 @@ class PracticeSessionUI(ttk.Frame):
             label.destroy()
         self.community_card_labels = []
         
-        # Create scaled community card area
-        card_width = int(60 * self.table_scale)
-        card_height = int(90 * self.table_scale)
-        card_spacing = int(70 * self.table_scale)
+        # Create scaled community card area with better sizing
+        card_width = int(70 * self.table_scale)
+        card_height = int(100 * self.table_scale)
+        card_spacing = int(80 * self.table_scale)
         
         for i in range(5):
             x = center_x - (card_spacing * 2) + (i * card_spacing)
@@ -675,8 +868,8 @@ class PracticeSessionUI(ttk.Frame):
                 text="", 
                 bg="#015939", 
                 fg="white", 
-                font=("Arial", int(28 * self.table_scale), "bold"), 
-                bd=int(2 * self.table_scale), 
+                font=("Arial", max(16, int(28 * self.table_scale)), "bold"), 
+                bd=int(3 * self.table_scale), 
                 relief="groove"
             )
             self.canvas.create_window(x, y, window=card_label, width=card_width, height=card_height)
@@ -701,9 +894,9 @@ class PracticeSessionUI(ttk.Frame):
             text="Pot: $0.00", 
             bg="#013f28", 
             fg="yellow", 
-            font=(FONTS["title"][0], int(FONTS["title"][1] * self.table_scale))
+            font=(FONTS["title"][0], max(12, int(FONTS["title"][1] * self.table_scale)))
         )
-        self.canvas.create_window(center_x, center_y + int(130 * self.table_scale), window=self.pot_label)
+        self.canvas.create_window(center_x, center_y + int(150 * self.table_scale), window=self.pot_label)
     
     def _setup_info_panel_scaled(self):
         """Creates the game information panel with scaling."""
@@ -718,8 +911,9 @@ class PracticeSessionUI(ttk.Frame):
             self.info_panel.destroy()
         
         # Create scaled info panel with larger dimensions
-        panel_width = int(300 * self.table_scale)
-        panel_height = int(250 * self.table_scale)
+        # Scale panel size more aggressively for better visibility
+        panel_width = int(350 * self.table_scale)
+        panel_height = int(300 * self.table_scale)
         
         self.info_panel = tk.Frame(
             self.canvas, 
@@ -729,7 +923,7 @@ class PracticeSessionUI(ttk.Frame):
         )
         
         # Scale title font with better scaling
-        title_font_size = max(10, int(FONTS["header"][1] * self.table_scale))
+        title_font_size = max(12, int(FONTS["header"][1] * self.table_scale))
         title_label = tk.Label(
             self.info_panel, 
             text="Game Information", 
@@ -737,12 +931,12 @@ class PracticeSessionUI(ttk.Frame):
             fg=THEME["text"], 
             font=(FONTS["header"][0], title_font_size, "bold")
         )
-        title_label.pack(pady=int(8 * self.table_scale))
+        title_label.pack(pady=int(10 * self.table_scale))
         
         # Scale text widget with larger dimensions and better font scaling
-        text_height = int(15 * self.table_scale)
-        text_width = int(35 * self.table_scale)
-        text_font_size = max(8, int(14 * self.table_scale))
+        text_height = int(18 * self.table_scale)
+        text_width = int(40 * self.table_scale)
+        text_font_size = max(10, int(16 * self.table_scale))
         
         self.info_text = tk.Text(
             self.info_panel,
@@ -753,13 +947,13 @@ class PracticeSessionUI(ttk.Frame):
             fg=THEME["text"],
             state=tk.DISABLED,
             wrap=tk.WORD,
-            padx=int(8 * self.table_scale),
-            pady=int(8 * self.table_scale)
+            padx=int(10 * self.table_scale),
+            pady=int(10 * self.table_scale)
         )
-        self.info_text.pack(padx=int(8 * self.table_scale), pady=int(8 * self.table_scale))
+        self.info_text.pack(padx=int(10 * self.table_scale), pady=int(10 * self.table_scale))
         
         # Position info panel in top-right with scaled positioning
-        panel_x = canvas_width - int(320 * self.table_scale)
+        panel_x = canvas_width - int(370 * self.table_scale)
         panel_y = int(50 * self.table_scale)
         self.canvas.create_window(
             panel_x, 
