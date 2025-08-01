@@ -118,7 +118,7 @@ class PracticeSessionUI(ttk.Frame):
         # --- END CORRECTION ---
 
     def _draw_player_seats(self):
-        """Calculates positions and draws player seats on the canvas."""
+        """Calculates positions and draws player seats and their bet displays."""
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
         center_x, center_y = width / 2, height / 2
@@ -132,9 +132,23 @@ class PracticeSessionUI(ttk.Frame):
         
         for i in range(self.num_players):
             angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
-            x = center_x + radius_x * math.cos(angle)
-            y = center_y + radius_y * math.sin(angle)
-            self._create_player_seat_widget(x, y, f"Player {i+1}", positions[i], i)
+            
+            # Player Seat Position
+            seat_x = center_x + radius_x * math.cos(angle)
+            seat_y = center_y + radius_y * math.sin(angle)
+            self._create_player_seat_widget(seat_x, seat_y, f"Player {i+1}", positions[i], i)
+
+            # --- NEW: Create a Bet Label in front of the player ---
+            bet_radius_x, bet_radius_y = radius_x * 0.7, radius_y * 0.7
+            bet_x = center_x + bet_radius_x * math.cos(angle)
+            bet_y = center_y + bet_radius_y * math.sin(angle)
+
+            bet_label = tk.Label(self.canvas, text="", bg="#015939", fg="yellow", font=FONTS["header"])
+            bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_label, anchor="center", state="hidden")
+            
+            self.player_seats[i]["bet_label_widget"] = bet_label
+            self.player_seats[i]["bet_label_window"] = bet_window
+            # --- END NEW ---
 
     def _create_player_seat_widget(self, x, y, name, position, index):
         """Creates and stores all Tkinter widgets for a single player seat."""
@@ -268,6 +282,20 @@ class PracticeSessionUI(ttk.Frame):
             else:
                 bet_label.config(text="")
             # --- END ENHANCED ---
+
+            # --- NEW: Update the prominent bet display on the table ---
+            bet_label_widget = player_seat.get("bet_label_widget")
+            bet_label_window = player_seat.get("bet_label_window")
+            if bet_label_widget and bet_label_window:
+                current_bet = player_info.get("current_bet", 0.0)
+                if current_bet > 0 and player_info['is_active']:
+                    bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
+                    self.canvas.itemconfig(bet_label_window, state="normal")  # Show the bet
+                    self._log_message(f"DEBUG: Showing prominent bet display for {player_info['name']}: ${current_bet:.2f}")
+                else:
+                    self.canvas.itemconfig(bet_label_window, state="hidden")  # Hide the bet
+                    self._log_message(f"DEBUG: Hiding bet display for {player_info['name']} (bet: ${current_bet:.2f}, active: {player_info['is_active']})")
+            # --- END NEW ---
 
             if player_info['is_active']:
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
