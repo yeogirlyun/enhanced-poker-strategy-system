@@ -1281,6 +1281,10 @@ class ImprovedPokerStateMachine:
         self.action_player_index = 0
         self.dealer_position = 0
         
+        # Blind positions
+        self.small_blind_position = 0
+        self.big_blind_position = 0
+        
         # Callbacks
         self.on_action_required = None
         self.on_hand_complete = None
@@ -1325,6 +1329,9 @@ class ImprovedPokerStateMachine:
                 total_invested=0.0
             )
             self.game_state.players.append(player)
+        
+        # Initialize blind positions after players are created
+        self.update_blind_positions()
 
     def determine_winner(self) -> List[Player]:
         """Determine winners with proper tie handling using the enhanced evaluator."""
