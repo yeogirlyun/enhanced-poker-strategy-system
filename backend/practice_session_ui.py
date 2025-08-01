@@ -649,16 +649,17 @@ class PracticeSessionUI(ttk.Frame):
         # Update display to show the action
         self.update_display()
         
-        # --- NEW: Properly advance the game state ---
+        # --- FIXED: Properly advance the game state ---
         # Check if the round is complete after the action
         if self.state_machine.is_round_complete():
             self._log_message(f"🔄 Round complete, transitioning to next street")
             self.state_machine.handle_round_complete()
         else:
             self._log_message(f"🔄 Advancing to next player")
+            # Only advance to next player, don't call handle_current_player_action
+            # The state machine will handle the next player's action automatically
             self.state_machine.advance_to_next_player()
-            self.state_machine.handle_current_player_action()
-        # --- END NEW ---
+        # --- END FIXED ---
         
         # --- NEW: Start the game loop in a separate thread ---
         game_thread = threading.Thread(target=self._run_game_loop, daemon=True)
@@ -690,6 +691,9 @@ class PracticeSessionUI(ttk.Frame):
                 self._log_message(f"🤖 Bot turn: {current_player.name}")
                 self.state_machine.execute_bot_action(current_player)
                 time.sleep(1)  # Add delay for bot actions
+                
+                # Update display after bot action
+                self.after(0, self.update_display)
             else:
                 self._log_message(f"👤 Human turn: {current_player.name}")
                 break  # Stop the loop for human turns
