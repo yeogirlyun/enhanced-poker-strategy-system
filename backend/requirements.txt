@@ -1,5 +1,3 @@
-# CLI Poker Game Requirements
-# Core dependencies for the CLI poker game
-
-# No external dependencies required - uses only Python standard library
-# The game uses custom poker logic and state machine implementation
+fastapi
+uvicorn[standard]
+requests
