@@ -219,6 +219,11 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
         self._log_message(f"Total Player Seats in UI: {len(self.player_seats)}")
         self._log_message(f"Current State: {self.state_machine.get_current_state()}")
+        
+        # --- ENHANCED: Community Card Debugging ---
+        self._log_message(f"Community Cards: {game_info['board']}")
+        self._log_message(f"Pot: ${game_info['pot']:.2f}, Current Bet: ${game_info['current_bet']:.2f}")
+        # --- END ENHANCED ---
 
         # Update pot and community cards
         pot_text = f"Pot: ${game_info['pot']:.2f}"
@@ -416,6 +421,7 @@ class PracticeSessionUI(ttk.Frame):
         # Make sure the action bar frame itself is visible
         if hasattr(self, 'action_bar_frame'):
             self.action_bar_frame.grid()  # Ensure it's visible in the grid
+            self._log_message(f"DEBUG: Action bar frame grid info: {self.action_bar_frame.grid_info()}")
         
         # Ensure slider and label are visible
         if hasattr(self, 'bet_slider') and hasattr(self, 'bet_size_label'):
@@ -425,6 +431,7 @@ class PracticeSessionUI(ttk.Frame):
         # Add debug message
         self._log_message(f"DEBUG: Action bar configured - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
         self._log_message(f"DEBUG: Action bar frame visible: {self.action_bar_frame.winfo_viewable()}")
+        self._log_message(f"DEBUG: Buttons packed - Fold: {self.human_action_controls['fold'].winfo_viewable()}, Call: {self.human_action_controls['call'].winfo_viewable()}, Bet: {self.human_action_controls['bet_raise'].winfo_viewable()}")
         # --- END ENHANCED ---
 
     def _submit_human_action(self, action_str):
