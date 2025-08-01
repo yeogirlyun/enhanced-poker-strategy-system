@@ -207,7 +207,7 @@ class PracticeSessionUI(ttk.Frame):
 
         self._log_message("\n--- UI UPDATE ---")
         self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
-        self._log_message(f"Total Player Seat Frames in UI: {len(self.player_seat_frames)}")
+        self._log_message(f"Total Player Seats in UI: {len(self.player_seats)}")
         self._log_message(f"Current State: {self.state_machine.get_current_state()}")
 
         # Update pot and community cards
