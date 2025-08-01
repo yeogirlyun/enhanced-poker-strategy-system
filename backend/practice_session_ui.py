@@ -212,6 +212,12 @@ class PracticeSessionUI(ttk.Frame):
         # Update player info
         for i, frame in enumerate(self.player_seat_frames):
             player_info = game_info['players'][i]
+            
+            # --- NEW: Update the Name and Position Label ---
+            name_label = frame.winfo_children()[0]
+            name_label.config(text=f"{player_info['name']} ({player_info['position']})")
+            # --- END NEW ---
+            
             # Assumes widgets are children of the frame in a known order
             stack_label = frame.winfo_children()[1]
             cards_label = frame.winfo_children()[2]
