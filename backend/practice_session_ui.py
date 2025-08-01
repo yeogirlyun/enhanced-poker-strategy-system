@@ -124,18 +124,35 @@ class PracticeSessionUI(ttk.Frame):
         center_x, center_y = width / 2, height / 2
         radius_x, radius_y = width * 0.42, height * 0.35
         
-        # --- NEW: Initialize the list with placeholders ---
+        # Initialize the list with placeholders
         self.player_seat_frames = [None] * self.num_players
-        # --- END NEW ---
 
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
-        for i in range(self.num_players):
-            angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
+        # FIX: Create a position mapping for 6 players
+        # This maps drawing order (visual position) to actual player index
+        # Drawing order: top(0), top-right(1), bottom-right(2), bottom(3), bottom-left(4), top-left(5)
+        # We want: Player 1 at top, Player 2 at top-right, etc.
+        position_map = [0, 1, 2, 3, 4, 5]  # Default mapping
+        
+        if self.num_players == 6:
+            # Adjust mapping to fix the offset
+            # Visual position 0 (top) -> Player 1 (index 0)
+            # Visual position 1 (top-right) -> Player 2 (index 1)
+            # But currently it seems offset by 3, so we need to adjust
+            position_map = [3, 4, 5, 0, 1, 2]  # This reverses the 3-position offset
+        
+        for visual_pos in range(self.num_players):
+            # Calculate angle for this visual position
+            angle = (2 * math.pi / self.num_players) * visual_pos - (math.pi / 2)
             x = center_x + radius_x * math.cos(angle)
             y = center_y + radius_y * math.sin(angle)
-            self._log_message(f"DEBUG: Creating seat {i} at position ({x:.0f}, {y:.0f}) for Player {i+1}")
-            self._create_player_seat_widget(x, y, f"Player {i+1}", positions[i], i)
+            
+            # Get the correct player index for this visual position
+            player_index = position_map[visual_pos]
+            
+            self._log_message(f"DEBUG: Visual position {visual_pos} -> Player {player_index+1} at ({x:.0f}, {y:.0f})")
+            self._create_player_seat_widget(x, y, f"Player {player_index+1}", positions[player_index], player_index)
 
     def _create_player_seat_widget(self, x, y, name, position, index):
         """Creates the Tkinter widgets for a single player seat."""
