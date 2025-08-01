@@ -16,8 +16,6 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk
 import math
-import threading
-import time
 
 from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from sound_manager import SoundManager
@@ -604,138 +602,35 @@ class PracticeSessionUI(ttk.Frame):
         # --- END ENHANCED ---
 
     def _submit_human_action(self, action_str):
-        """Submits the human's chosen action to the state machine."""
+        """Submits the human's chosen action and lets the state machine control the game flow."""
         player = self.state_machine.get_action_player()
         if not player or not player.is_human:
+            self.add_game_message("ERROR: Not your turn.")
             return
 
         action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
         action = action_map.get(action_str)
-        
-        # --- ENHANCED: Get amount from the slider for bets/raises ---
+
         amount = 0
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
-            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()} ${amount:.2f}")
-            self._log_message(f"📊 Current bet: ${self.state_machine.game_state.current_bet:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
-        elif action == ActionType.CALL:
-            # For calls, calculate the amount needed
-            call_amount = self.state_machine.game_state.current_bet - player.current_bet
-            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()} ${call_amount:.2f}")
-            self._log_message(f"📊 Call calculation - Current bet: ${self.state_machine.game_state.current_bet:.2f}, Player bet: ${player.current_bet:.2f}")
-        else:
-            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()}")
-        # --- END ENHANCED ---
 
         sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
         if sound_to_play:
             self.sfx.play(sound_to_play)
 
-        # --- NEW: Animate betting actions ---
-        if action in [ActionType.BET, ActionType.RAISE, ActionType.CALL]:
-            player_index = self.state_machine.game_state.players.index(player)
-            self._animate_bet(player_index)  # Trigger the animation
-        # --- END NEW ---
-
-        self.state_machine.execute_action(player, action, amount)
-        
-        # Hide controls
+        # Hide controls immediately. The state machine will show them again when it's the human's turn.
         for widget in self.human_action_controls.values():
-            if isinstance(widget, ttk.Button): # Check if it's a button before packing
+            if hasattr(widget, 'pack_forget'):
                 widget.pack_forget()
-        
-        # --- ENHANCED: Continue the game after human action ---
-        self._log_message(f"🎮 Human action completed: {action_str}")
-        self._log_message(f"🔄 Continuing game with next player...")
-        
-        # Update display to show the action
-        self.update_display()
-        
-        # --- FIXED: Properly advance the game state ---
-        # Check if the round is complete after the action
-        if self.state_machine.is_round_complete():
-            self._log_message(f"🔄 Round complete, transitioning to next street")
-            self.state_machine.handle_round_complete()
-        else:
-            self._log_message(f"🔄 Advancing to next player")
-            # Only advance to next player, don't call handle_current_player_action
-            # The state machine will handle the next player's action automatically
-            self.state_machine.advance_to_next_player()
-            
-            # --- NEW: Ensure proper synchronization ---
-            # Get the current action player and verify it's correct
-            current_player = self.state_machine.get_action_player()
-            if current_player:
-                self._log_message(f"🎯 Current action player: {current_player.name} (Human: {current_player.is_human})")
-            # --- END NEW ---
-        # --- END FIXED ---
-        
-        # --- NEW: Start the game loop in a separate thread ---
-        game_thread = threading.Thread(target=self._run_game_loop, daemon=True)
-        game_thread.start()
-        # --- END NEW ---
-        
-        # Continue the game loop after a short delay
-        self.after(500, self._continue_game_loop)
-        # --- END ENHANCED ---
+        if hasattr(self, 'sizing_frame'):
+            self.sizing_frame.pack_forget()
 
-    def _run_game_loop(self):
-        """Runs the game loop in a separate thread to handle bot actions."""
-        self._log_message(f"🎮 Game loop thread started")
-        
-        while True:
-            # Check if the game has ended
-            if self.state_machine.get_current_state() == PokerState.END_HAND:
-                self._log_message(f"🏁 Game ended, stopping game loop")
-                break
-            
-            # Get the current action player
-            current_player = self.state_machine.get_action_player()
-            if not current_player:
-                self._log_message(f"❌ No action player found, stopping game loop")
-                break
-            
-            # If it's a bot's turn, execute the action
-            if not current_player.is_human:
-                self._log_message(f"🤖 Bot turn: {current_player.name}")
-                self.state_machine.execute_bot_action(current_player)
-                time.sleep(1)  # Add delay for bot actions
-                
-                # Update display after bot action
-                self.after(0, self.update_display)
-            else:
-                self._log_message(f"👤 Human turn: {current_player.name}")
-                break  # Stop the loop for human turns
-        
-        self._log_message(f"🎮 Game loop thread ended")
+        # Execute the action. The state machine will now run all bot turns
+        # and call prompt_human_action() via its callback when ready.
+        self.state_machine.execute_action(player, action, amount)
 
-    def _continue_game_loop(self):
-        """Continues the game loop after a human action."""
-        self._log_message(f"🔄 Game loop continuation started")
-        
-        # Check if the game is still active
-        if self.state_machine.get_current_state() == PokerState.END_HAND:
-            self._log_message(f"🏁 Game ended, no continuation needed")
-            return
-        
-        # Get the current action player
-        current_player = self.state_machine.get_action_player()
-        if not current_player:
-            self._log_message(f"❌ No action player found, stopping game loop")
-            return
-        
-        self._log_message(f"🎯 Current action player: {current_player.name} (Human: {current_player.is_human})")
-        
-        # If it's a bot's turn, let the state machine handle it
-        if not current_player.is_human:
-            self._log_message(f"🤖 Bot turn: {current_player.name}")
-            # The state machine will handle bot actions automatically via callbacks
-            # Just update the display to show the current state
-            self.update_display()
-        else:
-            self._log_message(f"👤 Human turn: {current_player.name}")
-            # Human turn - the state machine will call prompt_human_action via callback
-            self.update_display()
+
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
