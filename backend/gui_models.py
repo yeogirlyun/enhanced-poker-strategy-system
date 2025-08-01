@@ -308,11 +308,18 @@ class StrategyData:
             },
             "preflop": {
                 "open_rules": {
-                    "UTG": {"threshold": 30, "sizing": 3.0},
-                    "MP": {"threshold": 20, "sizing": 3.0},
-                    "CO": {"threshold": 15, "sizing": 2.5},
-                    "BTN": {"threshold": 10, "sizing": 2.5},
-                    "SB": {"threshold": 20, "sizing": 3.0},
+                    "UTG": {"threshold": 60, "sizing": 3.0},  # Tighter: Only plays hands like AJ+ / KQ / 77+
+                    "MP": {"threshold": 55, "sizing": 3.0},   # Opens up slightly to include hands like A8s+ / KJs / 55+
+                    "CO": {"threshold": 48, "sizing": 2.5},   # Wider range, includes suited connectors and more broadways
+                    "BTN": {"threshold": 40, "sizing": 2.5},  # Very wide range, plays most suited hands and any pair
+                    "SB": {"threshold": 50, "sizing": 3.0},   # A bit tighter than the button due to being out of position
+                },
+                "vs_raise": {
+                    "UTG": {"value_thresh": 75, "call_thresh": 65, "sizing": 3.0},  # 3-bet only with premium hands like TT+ / AQ+
+                    "MP": {"value_thresh": 72, "call_thresh": 62, "sizing": 3.0},   # Call with strong hands like AJ / KQ / 99
+                    "CO": {"value_thresh": 70, "call_thresh": 60, "sizing": 2.5},   # Can call with a wider range in position
+                    "BTN": {"value_thresh": 68, "call_thresh": 55, "sizing": 2.5},  # Very wide calling range in position
+                    "SB": {"value_thresh": 70, "call_thresh": 60, "sizing": 3.0},   # Balanced approach from small blind
                 }
             },
             "postflop": postflop_strategy,
