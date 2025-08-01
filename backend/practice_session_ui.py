@@ -384,7 +384,7 @@ class PracticeSessionUI(ttk.Frame):
         
         self.bet_size_var = tk.DoubleVar()
         self.bet_slider = ttk.Scale(
-            sizing_frame, 
+            self.sizing_frame, 
             from_=0, 
             to=100, 
             orient=tk.HORIZONTAL, 
@@ -394,7 +394,7 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_slider.pack(fill=tk.X)
         self.bet_slider.bind("<B1-Motion>", self._update_bet_size_label)
         
-        self.bet_size_label = ttk.Label(sizing_frame, text="$0.00", font=FONTS["main"])
+        self.bet_size_label = ttk.Label(self.sizing_frame, text="$0.00", font=FONTS["main"])
         self.bet_size_label.pack()
 
         # --- Bet/Raise Button (Right) ---
