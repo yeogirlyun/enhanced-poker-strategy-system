@@ -386,10 +386,17 @@ class PracticeSessionUI(ttk.Frame):
         if not game_info:
             return
 
+        # --- ENHANCED: Add detailed debugging ---
+        self._log_message(f"🎯 CONFIGURING ACTION BAR for {player.name}")
+        self._log_message(f"📊 Game state - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
+        self._log_message(f"💰 Player stack: ${player.stack:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
+        # --- END ENHANCED ---
+
         # Hide all action buttons initially
         self.human_action_controls['fold'].pack_forget()
         self.human_action_controls['check'].pack_forget()
         self.human_action_controls['call'].pack_forget()
+        self.human_action_controls['bet_raise'].pack_forget()
 
         # Show Fold button
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
@@ -399,11 +406,19 @@ class PracticeSessionUI(ttk.Frame):
         if call_amount > 0:
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
+            self._log_message(f"📞 Call button configured with amount: ${call_amount:.2f}")
         else:
             self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
+            self._log_message(f"✅ Check button shown (no call needed)")
 
         # Configure the bet/raise slider and button
-        min_bet = self.state_machine.game_state.min_raise
+        if game_info['current_bet'] > 0:
+            # For raises, minimum is current bet + min raise
+            min_bet = game_info['current_bet'] + self.state_machine.game_state.min_raise
+        else:
+            # For bets, minimum is min raise
+            min_bet = self.state_machine.game_state.min_raise
+        
         max_bet = player.stack + player.current_bet
 
         self.bet_slider.config(from_=min_bet, to=max_bet)
@@ -413,8 +428,10 @@ class PracticeSessionUI(ttk.Frame):
         # Show the bet/raise button
         if game_info['current_bet'] > 0:
             self.human_action_controls['bet_raise'].config(text="Raise To")
+            self._log_message(f"📈 Raise button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
+            self._log_message(f"💰 Bet button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
         self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
         
         # --- ENHANCED: Ensure all action bar elements are visible ---
@@ -443,11 +460,15 @@ class PracticeSessionUI(ttk.Frame):
         action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
         action = action_map.get(action_str)
         
-        # --- NEW: Get amount from the slider for bets/raises ---
+        # --- ENHANCED: Get amount from the slider for bets/raises ---
         amount = 0
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
-        # --- END NEW ---
+            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()} ${amount:.2f}")
+            self._log_message(f"📊 Current bet: ${self.state_machine.game_state.current_bet:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
+        else:
+            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()}")
+        # --- END ENHANCED ---
 
         sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
         if sound_to_play:
