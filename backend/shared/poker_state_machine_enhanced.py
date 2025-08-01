@@ -1285,6 +1285,9 @@ class ImprovedPokerStateMachine:
         self.small_blind_position = 0
         self.big_blind_position = 0
         
+        # Winner tracking
+        self._last_winner = None
+        
         # Callbacks
         self.on_action_required = None
         self.on_hand_complete = None
@@ -1449,18 +1452,43 @@ class ImprovedPokerStateMachine:
         return side_pots
 
     def handle_end_hand(self):
-        """Handle hand completion."""
+        """
+        Handles hand completion, determines winner, awards pot, and notifies UI.
+        This is now the single source of truth for ending a hand.
+        """
         self._log_action("Hand complete")
+
+        # Determine winner(s) whether from a showdown or everyone folding
+        winners = self.determine_winner()
         
+        if winners:
+            winner_names = ", ".join([p.name for p in winners])
+            split_amount = self.game_state.pot / len(winners)
+            
+            for winner in winners:
+                winner.stack += split_amount
+                self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
+            
+            winner_info = {"name": winner_names, "amount": self.game_state.pot}
+            self._last_winner = winner_info
+            self._log_action(f"🏆 Winner(s): {winner_names} win ${self.game_state.pot:.2f}")
+        else:
+            self._log_action("No winner determined (should not happen in a normal game).")
+            winner_info = None
+
         # Reset game state for next hand
         if self.game_state:
+            self.game_state.pot = 0
             self.game_state.current_bet = 0
             self.game_state.min_raise = 1.0
             self.game_state.players_acted.clear()
             self.game_state.round_complete = False
+            self.game_state.board = []
+            self.game_state.street = "preflop"
             
             # Reset all player bets and status
             for player in self.game_state.players:
+                player.cards = []
                 player.current_bet = 0
                 player.total_invested = 0
                 player.has_acted_this_round = False
@@ -1471,9 +1499,6 @@ class ImprovedPokerStateMachine:
         self.advance_dealer_position()
         
         if self.on_hand_complete:
-            # Pass winner information to UI if available
-            winner_info = self._last_winner
-            self._last_winner = None  # Reset for next hand
             self.on_hand_complete(winner_info)
 
     # FIX 6: Better Input Validation
