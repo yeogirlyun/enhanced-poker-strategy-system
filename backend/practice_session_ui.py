@@ -531,39 +531,41 @@ class PracticeSessionUI(ttk.Frame):
         # The state machine will now automatically call prompt_human_action via its callback
 
     def handle_hand_complete(self, winner_info=None):
-        """Handles the completion of a hand with enhanced visual feedback."""
-        # --- NEW: Call update_display to show the final state ---
-        self.update_display()
-        # --- END NEW ---
+        """Handles the completion of a hand by displaying the winner on the UI."""
+        self.sfx.play("winner_announce")
         
-        # --- ENHANCED: Robust winner determination ---
+        # --- NEW: Get the final game state to ensure we have the correct winner ---
+        game_info = self.state_machine.get_game_info()
+        winner_players = self.state_machine.determine_winner()
+        
+        self._log_message(f"🔍 HAND COMPLETE DEBUG:")
+        self._log_message(f"   Game info available: {game_info is not None}")
+        self._log_message(f"   Winner players: {[p.name for p in winner_players] if winner_players else 'None'}")
+        self._log_message(f"   Parameter winner_info: {winner_info}")
+        # --- END NEW ---
+
+        # --- ENHANCED: Prioritize state machine winner over parameter ---
         winner_name = None
         winner_amount = 0
         
-        # Try to get winner info from parameter first
-        if winner_info and isinstance(winner_info, dict):
+        # First priority: Use winner from state machine (most accurate)
+        if winner_players:
+            winner_name = winner_players[0].name
+            winner_amount = self.state_machine.game_state.pot
+            self._log_message(f"🏆 Winner from state machine: {winner_name} wins ${winner_amount:.2f}")
+        
+        # Second priority: Use parameter winner_info (fallback)
+        elif winner_info and isinstance(winner_info, dict):
             winner_name = winner_info.get("name")
             winner_amount = winner_info.get("amount", 0)
             self._log_message(f"🏆 Winner from parameter: {winner_name} wins ${winner_amount:.2f}")
         
-        # If no winner from parameter, try to determine from state machine
-        if not winner_name:
-            try:
-                winner_players = self.state_machine.determine_winner()
-                if winner_players:
-                    winner_name = winner_players[0].name
-                    winner_amount = self.state_machine.game_state.pot
-                    self._log_message(f"🏆 Winner from state machine: {winner_name} wins ${winner_amount:.2f}")
-            except Exception as e:
-                self._log_message(f"❌ Error determining winner: {e}")
-        
-        # If still no winner, check for last winner from state machine
-        if not winner_name and hasattr(self.state_machine, '_last_winner'):
+        # Third priority: Check last winner from state machine
+        elif hasattr(self.state_machine, '_last_winner') and self.state_machine._last_winner:
             last_winner = self.state_machine._last_winner
-            if last_winner:
-                winner_name = last_winner.get("name")
-                winner_amount = last_winner.get("amount", 0)
-                self._log_message(f"🏆 Winner from last winner: {winner_name} wins ${winner_amount:.2f}")
+            winner_name = last_winner.get("name")
+            winner_amount = last_winner.get("amount", 0)
+            self._log_message(f"🏆 Winner from last winner: {winner_name} wins ${winner_amount:.2f}")
         
         # Display winner information
         if winner_name:
@@ -579,6 +581,7 @@ class PracticeSessionUI(ttk.Frame):
                         frame = player_seat["frame"]
                         frame.config(bg=THEME["accent_secondary"])  # Winner highlight
                         winner_seat = player_seat
+                        self._log_message(f"🎯 Highlighting winner seat {i}: {player.name}")
                         break
             
             # --- NEW: Animate pot collection ---
