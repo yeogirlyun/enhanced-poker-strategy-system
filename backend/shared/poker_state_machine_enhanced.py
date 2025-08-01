@@ -1010,6 +1010,17 @@ class ImprovedPokerStateMachine:
                 self.sfx.play("card_fold")    # Generated fallback
             player.is_active = False
             player.current_bet = 0
+            
+            # --- NEW: Check if the hand is over ---
+            active_players = [p for p in self.game_state.players if p.is_active]
+            if len(active_players) == 1:
+                winner = active_players[0]
+                winner.stack += self.game_state.pot
+                self.game_state.pot = 0
+                self._log_action(f"{winner.name} wins ${winner.stack:.2f} (all others folded)")
+                self.transition_to(PokerState.END_HAND)
+                return  # End the action here since the hand is over
+            # --- END NEW ---
 
         elif action == ActionType.CHECK:
             self.sfx.play("player_check")
