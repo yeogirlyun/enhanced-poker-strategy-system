@@ -1451,19 +1451,33 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🔍 SHOWDOWN: Evaluating {len(active_players)} active players")
         self._log_action(f"🎴 Board: {' '.join(self.game_state.board)}")
         
+        # Collect all hand evaluations for detailed comparison
+        player_hands = []
         best_hand_info = None
         winners = []
         
+        # First pass: evaluate all hands
         for player in active_players:
-            # Use the single, authoritative hand evaluator
             hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+            player_hands.append({
+                'player': player,
+                'hand_info': hand_info
+            })
             
-            self._log_action(f"📊 {player.name} ({' '.join(player.cards)}): {hand_info['hand_description']} (Score: {hand_info['strength_score']})")
+            # Log each player's hand details
+            hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
+            self._log_action(f"📊 {player.name} ({' '.join(player.cards)}): {hand_rank} - {hand_info['hand_description']}")
+        
+        # Second pass: determine winner(s)
+        for player_hand in player_hands:
+            player = player_hand['player']
+            hand_info = player_hand['hand_info']
             
             if not winners:  # First player to be evaluated
                 best_hand_info = hand_info
                 winners = [player]
-                self._log_action(f"🏆 {player.name} is the first winner")
+                hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
+                self._log_action(f"🏆 {player.name} leads with {hand_rank}")
             else:
                 # Compare current player's hand with the best so far
                 comparison = self.hand_evaluator._compare_hands(
@@ -1471,17 +1485,29 @@ class ImprovedPokerStateMachine:
                     (best_hand_info['hand_rank'], best_hand_info['rank_values'])
                 )
                 
+                current_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
+                best_rank = best_hand_info['hand_rank'].name.replace('_', ' ').title()
+                
                 if comparison > 0:  # Current player has a better hand
                     best_hand_info = hand_info
                     winners = [player]
-                    self._log_action(f"🏆 {player.name} wins with better hand")
+                    self._log_action(f"🏆 {player.name} wins with {current_rank} vs {best_rank}")
                 elif comparison == 0:  # It's a tie
                     winners.append(player)
-                    self._log_action(f"🤝 {player.name} ties with current winners")
+                    self._log_action(f"🤝 {player.name} ties with {current_rank}")
                 else:
-                    self._log_action(f"❌ {player.name} loses to current winners")
+                    self._log_action(f"❌ {player.name} loses with {current_rank} vs {best_rank}")
         
-        self._log_action(f"🎉 FINAL WINNERS: {[w.name for w in winners]}")
+        # Final showdown summary
+        if len(winners) == 1:
+            winner = winners[0]
+            winner_hand = next(ph for ph in player_hands if ph['player'] == winner)
+            hand_rank = winner_hand['hand_info']['hand_rank'].name.replace('_', ' ').title()
+            self._log_action(f"🎉 {winner.name} wins with {hand_rank}!")
+        else:
+            winner_names = [w.name for w in winners]
+            self._log_action(f"🎉 Split pot between {', '.join(winner_names)}")
+        
         return winners
 
     def handle_showdown(self):
