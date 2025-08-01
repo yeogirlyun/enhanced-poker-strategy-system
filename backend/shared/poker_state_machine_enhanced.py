@@ -1137,7 +1137,11 @@ class ImprovedPokerStateMachine:
             # Update game state
             old_bet = self.game_state.current_bet
             self.game_state.current_bet = total_bet
+            # --- CORRECTED MIN RAISE CALCULATION ---
+            # The minimum raise should be the amount by which the current bet was raised
             self.game_state.min_raise = total_bet - old_bet
+            self._log_action(f"📈 Min raise updated to: ${self.game_state.min_raise:.2f}")
+            # --- END CORRECTION ---
             
             # Clear acted players (they get another chance after raise)
             self.game_state.players_acted.clear()
@@ -1151,25 +1155,25 @@ class ImprovedPokerStateMachine:
         self.game_state.players_acted.add(self.action_player_index)
 
         # --- CORRECTED GAME FLOW LOGIC ---
-        # Check for a winner only if this was a fold action
-        if action == ActionType.FOLD:
-            active_players = [p for p in self.game_state.players if p.is_active]
-            self._log_action(f"🎯 After {player.name} folded, active players: {[p.name for p in active_players]}")
+        # Check for a winner after any action that might end the hand
+        active_players = [p for p in self.game_state.players if p.is_active]
+        self._log_action(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
+        
+        if len(active_players) == 1:
+            winner = active_players[0]
+            winner.stack += self.game_state.pot
+            pot_amount = self.game_state.pot
+            self.game_state.pot = 0
+            self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
+            self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
             
-            if len(active_players) == 1:
-                winner = active_players[0]
-                winner.stack += self.game_state.pot
-                pot_amount = self.game_state.pot
-                self.game_state.pot = 0
-                self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
-                self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
-                
-                # Only transition if not already in END_HAND state
-                if self.current_state != PokerState.END_HAND:
-                    self.transition_to(PokerState.END_HAND)
-                # Store winner info for UI callback
-                self._last_winner = {"name": winner.name, "amount": pot_amount}
-                return  # End the action here since the hand is over
+            # Only transition if not already in END_HAND state
+            if self.current_state != PokerState.END_HAND:
+                self.transition_to(PokerState.END_HAND)
+            # Store winner info for UI callback
+            self._last_winner = {"name": winner.name, "amount": pot_amount}
+            self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
+            return  # End the action here since the hand is over
 
         # If the hand is not over, check if the round is complete
         if self.is_round_complete():
