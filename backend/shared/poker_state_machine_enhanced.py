@@ -220,6 +220,10 @@ class ImprovedPokerStateMachine:
         """Transition to a new state with validation."""
         if new_state in self.STATE_TRANSITIONS[self.current_state]:
             old_state = self.current_state
+            print(f"🔄 STATE: {old_state.value} → {new_state.value}")  # Debug
+            print(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")  # Debug
+            print(f"   Current pot: ${self.game_state.pot}")  # Debug
+            
             self.current_state = new_state
             self._log_action(f"STATE TRANSITION: {old_state.value} → {new_state.value}")
             if self.on_state_change:
@@ -542,7 +546,8 @@ class ImprovedPokerStateMachine:
     def _handle_betting_round(self, next_state: PokerState):
         """Generic betting round handler."""
         if self.is_round_complete():
-            self.transition_to(next_state)
+            # FIX: Call handle_round_complete() instead of direct transition
+            self.handle_round_complete()
         else:
             self.handle_current_player_action()
 
@@ -1106,6 +1111,7 @@ class ImprovedPokerStateMachine:
         # --- END NEW ---
         
         # --- ENHANCED: Detailed Action Logging ---
+        old_pot = self.game_state.pot  # Track pot changes
         self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
         self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
         self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
@@ -1253,6 +1259,10 @@ class ImprovedPokerStateMachine:
             self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
             return  # End the action here since the hand is over
 
+        # Track pot changes for debugging
+        if self.game_state.pot != old_pot:
+            print(f"💰 Pot changed: ${old_pot} → ${self.game_state.pot} (action: {action.value}, amount: ${amount})")  # Debug
+        
         # If the hand is not over, check if the round is complete
         if self.is_round_complete():
             self.handle_round_complete()
