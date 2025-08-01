@@ -1165,6 +1165,13 @@ class ImprovedPokerStateMachine:
             # Clear acted players (they get another chance after raise)
             self.game_state.players_acted.clear()
             
+            # --- BUG FIX: Reset has_acted flags for all other players after a raise ---
+            self._log_action(f"🔄 Resetting 'has_acted' for other players due to raise")
+            for p in self.game_state.players:
+                if p.is_active and p != player:
+                    p.has_acted_this_round = False
+            # --- END BUG FIX ---
+            
             if player.stack == 0:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
