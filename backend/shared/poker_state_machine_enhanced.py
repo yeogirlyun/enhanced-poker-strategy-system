@@ -1018,7 +1018,9 @@ class ImprovedPokerStateMachine:
                 winner.stack += self.game_state.pot
                 self.game_state.pot = 0
                 self._log_action(f"{winner.name} wins ${winner.stack:.2f} (all others folded)")
-                self.transition_to(PokerState.END_HAND)
+                # Only transition if not already in END_HAND state
+                if self.current_state != PokerState.END_HAND:
+                    self.transition_to(PokerState.END_HAND)
                 return  # End the action here since the hand is over
             # --- END NEW ---
 
@@ -1461,6 +1463,21 @@ class ImprovedPokerStateMachine:
     def handle_end_hand(self):
         """Handle hand completion."""
         self._log_action("Hand complete")
+        
+        # Reset game state for next hand
+        if self.game_state:
+            self.game_state.current_bet = 0
+            self.game_state.min_raise = 1.0
+            self.game_state.players_acted.clear()
+            self.game_state.round_complete = False
+            
+            # Reset all player bets and status
+            for player in self.game_state.players:
+                player.current_bet = 0
+                player.total_invested = 0
+                player.has_acted_this_round = False
+                player.is_all_in = False
+                player.is_active = True  # Reactivate all players for new hand
         
         # Advance dealer position for next hand
         self.advance_dealer_position()
