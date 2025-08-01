@@ -764,9 +764,14 @@ class PracticeSessionUI(ttk.Frame):
 
         if winner_info:
             winner_names = ", ".join(p.name for p in winner_info)
-            winner_amount = self.state_machine.game_state.pot
+            
+            # --- FIX: Get the actual pot amount before it's distributed ---
+            # Calculate total pot from all player investments
+            total_pot = sum(p.total_invested for p in self.state_machine.game_state.players)
+            winner_amount = total_pot / len(winner_info) if winner_info else 0
             
             self._log_message(f"🏆 WINNER ANNOUNCEMENT: {winner_names} wins ${winner_amount:.2f}")
+            self._log_message(f"💰 Total pot: ${total_pot:.2f}, Split among {len(winner_info)} winners")
             
             # Update pot label with winner announcement
             if hasattr(self, 'pot_label'):
