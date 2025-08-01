@@ -16,6 +16,12 @@ from typing import List, Optional, Set, Tuple
 from dataclasses import dataclass, field
 import time
 import random
+import sys
+import os
+
+# Add the parent directory to the path to import sound_manager
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sound_manager import SoundManager
 
 
 class PokerState(Enum):
@@ -109,6 +115,9 @@ class ImprovedPokerStateMachine:
         self.action_player_index = 0
         self.num_players = num_players
         self.strategy_data = strategy_data  # NEW: Strategy integration
+
+        # Initialize sound manager
+        self.sfx = SoundManager()
 
         # FIX 1: Dynamic position tracking
         self.dealer_position = 0
@@ -365,6 +374,14 @@ class ImprovedPokerStateMachine:
         """Deal hole cards to all players."""
         for player in self.game_state.players:
             player.cards = [self.deal_card(), self.deal_card()]
+            # Only play sound if we're in an active game state (not during initialization)
+            if self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
+                                    PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
+                # Use authentic dealing sound if available
+                if "card_deal" in self.sfx.sounds:
+                    self.sfx.play("card_deal")  # Authentic dealing sound
+                else:
+                    self.sfx.play("card_deal")  # Generated fallback
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
@@ -943,11 +960,18 @@ class ImprovedPokerStateMachine:
             self._log_action(f"ERROR in execute_action: {e}")
             return
 
+        # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
+            # Use authentic fold sound if available, otherwise generated
+            if "player_fold" in self.sfx.sounds:
+                self.sfx.play("player_fold")  # Authentic fold sound
+            else:
+                self.sfx.play("card_fold")    # Generated fallback
             player.is_active = False
             player.current_bet = 0
 
         elif action == ActionType.CHECK:
+            self.sfx.play("player_check")
             # Only valid when current_bet is 0
             if self.game_state.current_bet != 0:
                 self._log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
@@ -955,6 +979,11 @@ class ImprovedPokerStateMachine:
             player.current_bet = 0
 
         elif action == ActionType.CALL:
+            # Use authentic chip sound for calls
+            if "chip_bet" in self.sfx.sounds:
+                self.sfx.play("chip_bet")     # Authentic chip sound
+            else:
+                self.sfx.play("player_call")  # Generated fallback
             call_amount = self.game_state.current_bet - player.current_bet
             actual_call = min(call_amount, player.stack)
             
@@ -980,6 +1009,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.BET:
+            # Use authentic chip sound for betting
+            if "chip_bet" in self.sfx.sounds:
+                self.sfx.play("chip_bet")     # Authentic chip sound
+            else:
+                self.sfx.play("player_bet")   # Generated fallback
             if self.game_state.current_bet > 0:
                 self._log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
                 return
@@ -997,6 +1031,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
+            # Use authentic chip sound for raising (more chips = louder/more dramatic)
+            if "chip_bet" in self.sfx.sounds:
+                self.sfx.play("chip_bet")     # Authentic chip sound
+            else:
+                self.sfx.play("player_raise") # Generated fallback
             if amount <= self.game_state.current_bet:
                 min_raise_total = self.game_state.current_bet + self.game_state.min_raise
                 self._log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
@@ -1287,6 +1326,7 @@ class ImprovedPokerStateMachine:
     def handle_showdown(self):
         """Handle showdown with tie handling and side pots."""
         self._log_action("Showdown")
+        self.sfx.play("winner_announce")
         
         # Create side pots if needed
         side_pots = self.create_side_pots()
@@ -1461,6 +1501,7 @@ class ImprovedPokerStateMachine:
                     "total_invested": p.total_invested,  # BUG FIX: Add missing field
                     "is_active": p.is_active,
                     "is_all_in": p.is_all_in,
+                    "is_human": p.is_human,  # BUG FIX: Add missing is_human field
                     "cards": p.cards if p.is_human else ["**", "**"],
                 }
                 for p in self.game_state.players
