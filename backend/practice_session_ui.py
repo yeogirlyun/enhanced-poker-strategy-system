@@ -216,12 +216,14 @@ class PracticeSessionUI(ttk.Frame):
 
     def handle_hand_complete(self, winner_info):
         """Handles hand completion and displays the winner."""
+        print(f"🎉 HAND COMPLETE CALLED with winner_info: {winner_info}")  # Debug
         self.sfx.play("winner_announce")
         if winner_info:
             self.add_game_message(f"🏆 {winner_info['name']} wins ${winner_info['amount']:.2f}!")
             self.pot_label.config(text=f"Winner: {winner_info['name']}!", fg=THEME["accent_secondary"])
             
             # Animate pot money moving to winner
+            print(f"🎬 Calling animation for: {winner_info}")  # Debug
             self._animate_pot_to_winner(winner_info)
         else:
             self.add_game_message("🏁 Hand complete!")
@@ -231,16 +233,22 @@ class PracticeSessionUI(ttk.Frame):
 
     def _animate_pot_to_winner(self, winner_info):
         """Animate pot money moving to the winner's stack."""
+        print(f"🎬 Starting animation for winner: {winner_info}")  # Debug
+        
         # Find the winner's seat
         winner_seat = None
         for i, seat in enumerate(self.player_seats):
             if seat and seat.get("name_label"):
                 player_name = seat["name_label"].cget("text").split('\n')[0]
+                print(f"🔍 Checking seat {i}: {player_name} vs {winner_info['name']}")  # Debug
                 if player_name == winner_info['name']:
                     winner_seat = i
+                    print(f"✅ Found winner at seat {i}")  # Debug
                     break
         
         if winner_seat is not None:
+            print(f"🎯 Animating to seat {winner_seat}")  # Debug
+            
             # Get pot center position
             pot_x = self.canvas.winfo_width() / 2
             pot_y = self.canvas.winfo_height() / 2 + 130  # Pot label position
@@ -256,6 +264,7 @@ class PracticeSessionUI(ttk.Frame):
             ]
             
             winner_x, winner_y = seat_positions[winner_seat]
+            print(f"📍 From ({pot_x:.0f}, {pot_y:.0f}) to ({winner_x:.0f}, {winner_y:.0f})")  # Debug
             
             # Create animated money object
             money_obj = self.canvas.create_text(
@@ -265,6 +274,7 @@ class PracticeSessionUI(ttk.Frame):
                 font=("Arial", 16, "bold"),
                 tags="money_animation"
             )
+            print(f"💰 Created money object: ${winner_info['amount']:.2f}")  # Debug
             
             # Animate the money moving to the winner
             def animate_money(step=0):
@@ -288,11 +298,15 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     # Remove the animated object
                     self.canvas.delete(money_obj)
+                    print("🎬 Animation complete")  # Debug
                     # Update the winner's stack display
                     self.update_display()
             
             # Start the animation
             animate_money()
+        else:
+            print(f"❌ Could not find winner seat for: {winner_info['name']}")  # Debug
+            print(f"🔍 Available seats: {[seat.get('name_label').cget('text').split('\n')[0] if seat and seat.get('name_label') else 'None' for seat in self.player_seats]}")  # Debug
     
     def add_game_message(self, message):
         """Add a message to the game message area."""
