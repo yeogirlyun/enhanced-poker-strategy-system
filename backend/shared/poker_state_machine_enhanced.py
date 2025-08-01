@@ -80,6 +80,7 @@ class GameState:
     round_complete: bool = False
     deck: List[str] = field(default_factory=list)
     min_raise: float = 1.0  # NEW: Track minimum raise amount
+    big_blind: float = 1.0  # <-- ADD THIS LINE
 
 
 @dataclass
