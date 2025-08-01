@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 """
-Practice Session UI Module for Enhanced Poker Strategy GUI
+Practice Session UI Module for Enhanced Poker Strategy GUI (Corrected)
 
-Provides a graphical, interactive practice session interface with a visual poker table.
-
-REVISION HISTORY:
-================
-Version 1.0 (2025-07-29) - Initial Version
-- Created graphical poker table interface
-- Integrated with poker state machine
-- Added professional styling and tooltips
-- Enhanced user interaction and feedback
+This version resolves the game stall bug by making the UI a pure renderer
+and letting the state machine control the entire game flow.
 """
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import math
+import threading # Still needed for bot action delays in the state machine
+import time
 
 from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from sound_manager import SoundManager
@@ -24,43 +19,41 @@ from tooltips import ToolTip
 
 class PracticeSessionUI(ttk.Frame):
     """
-    A graphical, interactive practice session tab that integrates the poker state machine.
+    A graphical, interactive practice session tab that correctly follows the
+    state machine's flow.
     """
     
     def __init__(self, parent, strategy_data, **kwargs):
         super().__init__(parent, **kwargs)
         self.strategy_data = strategy_data
         
-        # Initialize State Machine and Sound Manager
-        self.state_machine = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data, root_tk=self.winfo_toplevel())
+        self.state_machine = ImprovedPokerStateMachine(
+            num_players=6, 
+            strategy_data=self.strategy_data, 
+            root_tk=self.winfo_toplevel()
+        )
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_state_change = self.update_display
-        self.state_machine.on_log_entry = self.add_game_message  # NEW: Connect detailed logging
+        self.state_machine.on_log_entry = self.add_game_message
+        
         self.sfx = SoundManager()
-
-        # UI components
-        self.num_players = 6
-        self.player_seats = []  # Store player seat widget dictionaries
+        self.player_seats = []
         self.community_card_labels = []
         self.human_action_controls = {}
+        self.num_players = 6
         
         self._setup_ui()
-        # Don't automatically start a hand - let user click button
 
     def _setup_ui(self):
         """Sets up the UI layout with a responsive grid."""
         self.grid_rowconfigure(0, weight=1)
-        # --- CHANGE THIS LINE FOR THE FINAL TIME ---
-        self.grid_columnconfigure(0, weight=5) # Canvas now takes 5/6 of the space ( ~83%)
-        # --- END CHANGE ---
-        self.grid_columnconfigure(1, weight=1) # Info panel takes 1/6 of the space ( ~17%)
+        self.grid_columnconfigure(0, weight=5)
+        self.grid_columnconfigure(1, weight=1)
 
-        # Main canvas for the poker table
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Right-side panel for messages
         right_panel_frame = ttk.Frame(self)
         right_panel_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
         info_frame = ttk.LabelFrame(right_panel_frame, text="Game Messages", padding=10)
@@ -71,241 +64,168 @@ class PracticeSessionUI(ttk.Frame):
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
-            font=FONTS["small"]  # Use the default font from your theme
+            font=FONTS["small"]
         )
         self.info_text.pack(fill=tk.BOTH, expand=True)
 
-        # Human Action Controls (placed at the bottom)
         controls_frame = ttk.Frame(self)
         controls_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=10)
         self._create_human_action_controls(controls_frame)
 
-        # Bind the resize event
         self.canvas.bind("<Configure>", self._on_resize)
-
+    
+    # --- All _draw methods remain the same ---
     def _on_resize(self, event=None):
-        """Redraws all canvas elements when the window is resized."""
         self.canvas.delete("all")
         self._draw_table()
         self._draw_player_seats()
         self._draw_community_card_area()
         self._draw_pot_display()
-        self.update_display() # Refresh data after redraw
+        self.update_display()
 
     def _draw_table(self):
-        """Draws the main poker table shape with correctly contained texture."""
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
-
-        # Main table oval
         self.canvas.create_oval(width*0.05, height*0.1, width*0.95, height*0.9, fill="#013f28", outline=THEME["border"], width=10)
         self.canvas.create_oval(width*0.06, height*0.11, width*0.94, height*0.89, fill="#015939", outline="#222222", width=2)
-        
-        # --- CORRECTED FELT TEXTURE LOGIC ---
-        # Adjust the loop bounds to be tighter and inside the table border
-        x_start = int(width * 0.1)
-        x_end = int(width * 0.9)
-        y_start = int(height * 0.15)
-        y_end = int(height * 0.85)
-
+        x_start, x_end = int(width * 0.1), int(width * 0.9)
+        y_start, y_end = int(height * 0.15), int(height * 0.85)
         for i in range(x_start, x_end, 20):
             for j in range(y_start, y_end, 20):
-                # Check if the point is inside the oval before drawing
-                # This prevents the texture from spilling outside the table
                 if (((i - width/2)**2 / (width*0.4)**2) + ((j - height/2)**2 / (height*0.35)**2)) < 1:
                     if (i + j) % 40 == 0:
                         self.canvas.create_oval(i, j, i + 15, j + 15, fill="#014a2f", outline="")
-        # --- END CORRECTION ---
 
     def _draw_player_seats(self):
-        """Calculates positions and draws player seats and their bet displays."""
-        width = self.canvas.winfo_width()
-        height = self.canvas.winfo_height()
+        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         center_x, center_y = width / 2, height / 2
         radius_x, radius_y = width * 0.42, height * 0.35
-        
-        # --- NEW: Initialize the list to store widget dictionaries ---
         self.player_seats = [{} for _ in range(self.num_players)]
-        # --- END NEW ---
-
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
-        
         for i in range(self.num_players):
             angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
-            
-            # Player Seat Position
             seat_x = center_x + radius_x * math.cos(angle)
             seat_y = center_y + radius_y * math.sin(angle)
             self._create_player_seat_widget(seat_x, seat_y, f"Player {i+1}", positions[i], i)
-
-            # --- NEW: Create a Bet Label in front of the player ---
             bet_radius_x, bet_radius_y = radius_x * 0.7, radius_y * 0.7
             bet_x = center_x + bet_radius_x * math.cos(angle)
             bet_y = center_y + bet_radius_y * math.sin(angle)
-
             bet_label = tk.Label(self.canvas, text="", bg="#015939", fg="yellow", font=FONTS["header"])
             bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_label, anchor="center", state="hidden")
-            
             self.player_seats[i]["bet_label_widget"] = bet_label
             self.player_seats[i]["bet_label_window"] = bet_window
-            # --- END NEW ---
 
     def _create_player_seat_widget(self, x, y, name, position, index):
-        """Creates and stores all Tkinter widgets for a single player seat."""
         seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
-        
-        # Player name and position
         name_label = tk.Label(seat_frame, text=f"{name}\n{position}", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
         name_label.pack()
-        
-        # --- NEW: Dedicated frame for stack and bet info ---
         info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
         info_frame.pack(pady=(2, 0))
-        
-        # Stack amount with better formatting
         stack_label = tk.Label(info_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["small"])
         stack_label.pack(side=tk.LEFT, padx=5)
-        
-        # Bet amount (initially empty)
         bet_label = tk.Label(info_frame, text="", bg=THEME["secondary_bg"], fg="orange", font=FONTS["small"])
         bet_label.pack(side=tk.LEFT, padx=5)
-        # --- END NEW ---
-        
-        # --- NEW: Dynamic font size for cards ---
         card_font_size = max(12, int(self.canvas.winfo_height() / 35))
         card_font = ("Arial", card_font_size, "bold")
-        # --- END NEW ---
-
-        # Cards
-        cards_label = tk.Label(
-            seat_frame, 
-            text="🂠 🂠", 
-            bg=THEME["secondary_bg"], 
-            fg="#CCCCCC", 
-            font=card_font  # Use the new dynamic font
-        )
+        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg="#CCCCCC", font=card_font)
         cards_label.pack(pady=5)
-        
-        # --- NEW: Store all widgets in the player_seats list ---
-        self.player_seats[index] = {
-            "frame": seat_frame,
-            "name_label": name_label,
-            "stack_label": stack_label,
-            "bet_label": bet_label,  # NEW: Add bet label
-            "cards_label": cards_label,
-        }
-        # --- END NEW ---
-        
+        self.player_seats[index] = {"frame": seat_frame, "name_label": name_label, "stack_label": stack_label, "bet_label": bet_label, "cards_label": cards_label}
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
 
     def _draw_community_card_area(self):
-        """Draws the community card area in the center of the table."""
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
         community_frame = tk.Frame(self.canvas, bg="#015939", bd=2, relief="groove")
-        
-        # Create labels for community cards
         self.community_card_labels = []
         for i in range(5):
-            # --- FIX: Larger font for community cards ---
             card_font_size = max(16, int(self.canvas.winfo_height() / 25))
             card_font = ("Arial", card_font_size, "bold")
             card_label = tk.Label(community_frame, text="", bg="#015939", fg="white", font=card_font, width=4)
             card_label.pack(side=tk.LEFT, padx=3)
             self.community_card_labels.append(card_label)
-            # --- END FIX ---
-        
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
     def _draw_pot_display(self):
-        """Draws the pot display."""
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
         self.pot_label = tk.Label(self.canvas, text="Pot: $0.00", bg="#013f28", fg="yellow", font=FONTS["title"])
         self.canvas.create_window(center_x, center_y + 130, window=self.pot_label)
+    
+    # --- UI Update and Action Handling (Corrected) ---
 
-    def update_display(self, new_state=None):
-        """Updates the UI and logs detailed debugging information."""
-        game_info = self.state_machine.get_game_info()
-        if not game_info:
-            self._log_message("DEBUG: update_display called but no game_info available.")
+    def _submit_human_action(self, action_str):
+        """Submits the human's chosen action and lets the state machine control the game flow."""
+        player = self.state_machine.get_action_player()
+        if not player or not player.is_human:
+            self.add_game_message("ERROR: Not your turn.")
             return
 
-        self._log_message("\n--- UI UPDATE ---")
-        self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
-        self._log_message(f"Total Player Seats in UI: {len(self.player_seats)}")
-        self._log_message(f"Current State: {self.state_machine.get_current_state()}")
+        action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
+        action = action_map.get(action_str)
         
-        # --- ENHANCED: Community Card Debugging ---
-        self._log_message(f"Community Cards: {game_info['board']}")
-        self._log_message(f"Pot: ${game_info['pot']:.2f}, Current Bet: ${game_info['current_bet']:.2f}")
-        # --- END ENHANCED ---
+        amount = 0
+        if action in [ActionType.BET, ActionType.RAISE]:
+            amount = self.bet_size_var.get()
+        
+        self.add_game_message(f"▶️ You chose to {action_str.upper()}...")
+        
+        # Disable controls while the state machine processes
+        self._show_game_control_buttons()
 
-        # Update pot and community cards
-        pot_text = f"Pot: ${game_info['pot']:.2f}"
-        if game_info['current_bet'] > 0:
-            pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
-        self.pot_label.config(text=pot_text)
+        # The state machine will now execute the action, run all bot turns,
+        # and then call prompt_human_action() via its callback when it's our turn again.
+        self.state_machine.execute_action(player, action, amount)
 
-        for i, card_label in enumerate(self.community_card_labels):
-            card_label.config(text=self._format_card(game_info['board'][i]) if i < len(game_info['board']) else "")
-
-        # Update player info
-        for i, player_seat in enumerate(self.player_seats):
-            if not player_seat:  # Skip if player seat is empty
-                self._log_message(f"DEBUG: ERROR - Player seat at index {i} is empty!")
-                continue
-
-            player_info = game_info['players'][i]
-            frame = player_seat["frame"]
-            name_label = player_seat["name_label"]
-            stack_label = player_seat["stack_label"]
-            bet_label = player_seat["bet_label"]  # NEW: Get bet label
-            cards_label = player_seat["cards_label"]
+    def prompt_human_action(self, player):
+        """Shows and configures action controls when it's the human's turn."""
+        self.add_game_message("🎯 YOUR TURN!")
+        self._show_action_buttons()
+        
+        # Configure the slider and button text based on game state
+        game_info = self.state_machine.get_game_info()
+        if game_info:
+            current_bet = game_info.get('current_bet', 0)
+            to_call = current_bet - game_info['players'][0].get('current_bet', 0)
             
-            # Highlight current player
-            if i == game_info['action_player'] and player_info['is_active']:
-                frame.config(bg=THEME["accent_primary"])
-                self._log_message(f"HIGHLIGHTING Player at index {i} ({player_info['name']})")
-                self._log_message(f"DEBUG: Frame {i} position: {frame.winfo_x()}, {frame.winfo_y()}")
+            if to_call > 0:
+                # There's a bet to call
+                self.human_action_controls['call'].config(text=f"Call ${to_call:.2f}")
+                self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
+                self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
+                self.human_action_controls['bet_raise'].config(text="Raise")
+                self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+                
+                # Configure slider for raise
+                min_raise = max(current_bet * 2, 1)
+                self.bet_size_var.set(min_raise)
+                self.bet_slider.config(from_=min_raise, to=100)
             else:
-                frame.config(bg=THEME["secondary_bg"])
+                # No bet to call
+                self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
+                self.human_action_controls['bet_raise'].config(text="Bet")
+                self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+                
+                # Configure slider for bet
+                self.bet_size_var.set(10)
+                self.bet_slider.config(from_=1, to=100)
 
-            # Update name and position
-            name_label.config(text=f"{player_info['name']} ({player_info['position']})")
-            
-            # Update stack and bet info
-            stack_label.config(text=f"${player_info['stack']:.2f}")
-            
-            # --- ENHANCED: Update bet amount display with chip emoji ---
-            if player_info['current_bet'] > 0:
-                bet_label.config(text=f"💰 ${player_info['current_bet']:.2f}")
-                self._log_message(f"DEBUG: Updated bet display for {player_info['name']}: ${player_info['current_bet']:.2f}")
-            else:
-                bet_label.config(text="")
-            # --- END ENHANCED ---
+    def start_new_hand(self):
+        """Starts a new hand using the state machine."""
+        self.add_game_message("🎮 Starting new hand...")
+        self.state_machine.start_hand()
+        # The state machine will automatically determine who acts first
+        # and call prompt_human_action if it's the human's turn.
 
-            # --- NEW: Update the prominent bet display on the table ---
-            bet_label_widget = player_seat.get("bet_label_widget")
-            bet_label_window = player_seat.get("bet_label_window")
-            if bet_label_widget and bet_label_window:
-                current_bet = player_info.get("current_bet", 0.0)
-                if current_bet > 0 and player_info['is_active']:
-                    bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
-                    self.canvas.itemconfig(bet_label_window, state="normal")  # Show the bet
-                    self._log_message(f"DEBUG: Showing prominent bet display for {player_info['name']}: ${current_bet:.2f}")
-                else:
-                    self.canvas.itemconfig(bet_label_window, state="hidden")  # Hide the bet
-                    self._log_message(f"DEBUG: Hiding bet display for {player_info['name']} (bet: ${current_bet:.2f}, active: {player_info['is_active']})")
-            # --- END NEW ---
+    def handle_hand_complete(self, winner_info):
+        """Handles hand completion and displays the winner."""
+        self.sfx.play("winner_announce")
+        if winner_info:
+            self.add_game_message(f"🏆 {winner_info['name']} wins ${winner_info['amount']:.2f}!")
+            self.pot_label.config(text=f"Winner: {winner_info['name']}!", fg=THEME["accent_secondary"])
+        else:
+            self.add_game_message("🏁 Hand complete!")
 
-            if player_info['is_active']:
-                if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
-                    cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
-                    cards_label.config(text=cards_text)
-                else:
-                    cards_label.config(text="🂠 🂠")
-            else:
-                cards_label.config(text="Folded")
-
+        self.sfx.play("pot_rake")
+        self._show_game_control_buttons() # Show "Start New Hand" button
+    
     def add_game_message(self, message):
         """Add a message to the game message area."""
         if hasattr(self, 'info_text'):
@@ -508,7 +428,71 @@ class PracticeSessionUI(ttk.Frame):
         
         # Show game control buttons
         self._show_game_control_buttons()
+    
+    def update_display(self, new_state=None):
+        """Updates the UI and logs detailed debugging information."""
+        game_info = self.state_machine.get_game_info()
+        if not game_info:
+            self._log_message("DEBUG: update_display called but no game_info available.")
+            return
 
+        # Update pot and community cards
+        pot_text = f"Pot: ${game_info['pot']:.2f}"
+        if game_info['current_bet'] > 0:
+            pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
+        self.pot_label.config(text=pot_text)
+
+        for i, card_label in enumerate(self.community_card_labels):
+            card_label.config(text=self._format_card(game_info['board'][i]) if i < len(game_info['board']) else "")
+
+        # Update player info
+        for i, player_seat in enumerate(self.player_seats):
+            if not player_seat:  # Skip if player seat is empty
+                continue
+
+            player_info = game_info['players'][i]
+            frame = player_seat["frame"]
+            name_label = player_seat["name_label"]
+            stack_label = player_seat["stack_label"]
+            bet_label = player_seat["bet_label"]
+            cards_label = player_seat["cards_label"]
+            
+            # Highlight current player
+            if i == game_info['action_player'] and player_info['is_active']:
+                frame.config(bg=THEME["accent_primary"])
+            else:
+                frame.config(bg=THEME["secondary_bg"])
+
+            # Update name and position
+            name_label.config(text=f"{player_info['name']} ({player_info['position']})")
+            
+            # Update stack and bet info
+            stack_label.config(text=f"${player_info['stack']:.2f}")
+            
+            if player_info['current_bet'] > 0:
+                bet_label.config(text=f"💰 ${player_info['current_bet']:.2f}")
+            else:
+                bet_label.config(text="")
+            
+            bet_label_widget = player_seat.get("bet_label_widget")
+            bet_label_window = player_seat.get("bet_label_window")
+            if bet_label_widget and bet_label_window:
+                current_bet = player_info.get("current_bet", 0.0)
+                if current_bet > 0 and player_info['is_active']:
+                    bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
+                    self.canvas.itemconfig(bet_label_window, state="normal")
+                else:
+                    self.canvas.itemconfig(bet_label_window, state="hidden")
+
+            if player_info['is_active']:
+                if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
+                    cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
+                    cards_label.config(text=cards_text)
+                else:
+                    cards_label.config(text="🂠 🂠")
+            else:
+                cards_label.config(text="Folded")
+    
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
         self.bet_size_label.config(text=f"${self.bet_size_var.get():.2f}")
@@ -520,276 +504,7 @@ class PracticeSessionUI(ttk.Frame):
             self._submit_human_action("raise")
         else:
             self._submit_human_action("bet")
-
-    def prompt_human_action(self, player):
-        """Shows and configures the action controls for the human player."""
-        game_info = self.state_machine.get_game_info()
-        if not game_info:
-            return
-
-        # --- ENHANCED: Add detailed debugging ---
-        self._log_message(f"🎯 CONFIGURING ACTION BAR for {player.name}")
-        self._log_message(f"📊 Game state - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
-        self._log_message(f"💰 Player stack: ${player.stack:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
-        # --- END ENHANCED ---
-
-        # --- NEW: Dynamic button visibility based on game state ---
-        # Hide all action buttons initially to ensure a clean state
-        self.human_action_controls['fold'].pack_forget()
-        self.human_action_controls['check'].pack_forget()
-        self.human_action_controls['call'].pack_forget()
-        self.human_action_controls['bet_raise'].pack_forget()
-        
-        # Always show the Fold button
-        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
-        
-        # --- NEW: Dynamically show Check or Call based on current bet ---
-        call_amount = game_info['current_bet'] - player.current_bet
-        self._log_message(f"🔍 CALL AMOUNT CALCULATION:")
-        self._log_message(f"   Current bet from game state: ${game_info['current_bet']:.2f}")
-        self._log_message(f"   Player's current bet: ${player.current_bet:.2f}")
-        self._log_message(f"   Calculated call amount: ${call_amount:.2f}")
-        
-        if call_amount > 0:
-            # There is a bet to call, so show the Call button
-            self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
-            self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
-            self._log_message(f"📞 Call button shown with amount: ${call_amount:.2f}")
-        else:
-            # There is no bet, so show the Check button
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
-            self._log_message(f"✅ Check button shown (no call needed)")
-        # --- END NEW ---
-
-        # Configure the bet/raise slider and button
-        if game_info['current_bet'] > 0:
-            # For raises, minimum is current bet + min raise
-            min_bet = game_info['current_bet'] + self.state_machine.game_state.min_raise
-        else:
-            # For bets, minimum is min raise
-            min_bet = self.state_machine.game_state.min_raise
-        
-        max_bet = player.stack + player.current_bet
-
-        self.bet_slider.config(from_=min_bet, to=max_bet)
-        self.bet_size_var.set(min_bet)
-        self._update_bet_size_label()
-
-        # Configure the bet/raise button text and show it
-        if game_info['current_bet'] > 0:
-            self.human_action_controls['bet_raise'].config(text="Raise To")
-            self._log_message(f"📈 Raise button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
-        else:
-            self.human_action_controls['bet_raise'].config(text="Bet")
-            self._log_message(f"💰 Bet button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
-        
-        # Show the bet/raise button
-        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
-        
-        # --- NEW: Show bet sizing controls ---
-        if hasattr(self, 'bet_slider'):
-            self.bet_slider.pack(fill=tk.X)
-        if hasattr(self, 'bet_size_label'):
-            self.bet_size_label.pack()
-        if hasattr(self, 'sizing_frame'):
-            self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
-        # --- END NEW ---
-        
-        # --- ENHANCED: Ensure action bar is visible ---
-        if hasattr(self, 'action_bar_frame'):
-            self.action_bar_frame.grid()
-            self._log_message(f"DEBUG: Action bar frame visible: {self.action_bar_frame.winfo_viewable()}")
-        # --- END ENHANCED ---
-
-    def _submit_human_action(self, action_str):
-        """Submits the human's chosen action and lets the state machine control the game flow."""
-        player = self.state_machine.get_action_player()
-        if not player or not player.is_human:
-            self.add_game_message("ERROR: Not your turn.")
-            return
-
-        action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
-        action = action_map.get(action_str)
-
-        amount = 0
-        if action in [ActionType.BET, ActionType.RAISE]:
-            amount = self.bet_size_var.get()
-
-        sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
-        if sound_to_play:
-            self.sfx.play(sound_to_play)
-
-        # Hide controls immediately. The state machine will show them again when it's the human's turn.
-        for widget in self.human_action_controls.values():
-            if hasattr(widget, 'pack_forget'):
-                widget.pack_forget()
-        if hasattr(self, 'sizing_frame'):
-            self.sizing_frame.pack_forget()
-
-        # Execute the action. The state machine will now run all bot turns
-        # and call prompt_human_action() via its callback when ready.
-        self.state_machine.execute_action(player, action, amount)
-
-
-
-    def start_new_hand(self):
-        """Starts a new hand using the state machine."""
-        self.sfx.play("card_deal")
-        self.add_game_message("🎮 Starting new hand...")
-        
-        # Add debugging before starting the hand
-        self._log_message("\n=== BEFORE HAND START ===")
-        self._log_message(f"Number of players: {self.num_players}")
-        
-        self.state_machine.start_hand()
-        
-        # Add debugging after starting the hand
-        game_info = self.state_machine.get_game_info()
-        if game_info:
-            self._log_message("\n=== AFTER HAND START ===")
-            self._log_message(f"Action player index: {game_info['action_player']}")
-            for i, player in enumerate(game_info['players']):
-                self._log_message(f"Player {i}: {player['name']}, Position: {player['position']}, Active: {player['is_active']}")
-            
-            # Check who should act first
-            self._log_message(f"\nFirst to act should be UTG (Under the Gun)")
-            for i, player in enumerate(game_info['players']):
-                if player['position'] == 'UTG':
-                    self._log_message(f"UTG is Player {i+1} at index {i}")
-                    self._log_message(f"But action_player is set to index {game_info['action_player']}")
-                    break
-        # The state machine will now automatically call prompt_human_action via its callback
-
-    def handle_hand_complete(self, winner_info=None):
-        """
-        Handles hand completion by getting the definitive winner from the state machine
-        and updating the UI accordingly.
-        """
-        self.sfx.play("winner_announce")
-        
-        # Get the one true winner directly from the state machine's trusted method
-        winner_list = self.state_machine.determine_winner()
-        
-        if winner_list:
-            winner_names = ", ".join(p.name for p in winner_list)
-            
-            # Calculate total pot from all player investments
-            total_pot = sum(p.total_invested for p in self.state_machine.game_state.players)
-            winner_amount = total_pot / len(winner_list) if winner_list else 0
-            
-            self._log_message(f"🏆 DEFINITIVE WINNER: {winner_names} wins ${winner_amount:.2f}")
-            self._log_message(f"💰 Total pot: ${total_pot:.2f}, Split among {len(winner_list)} winners")
-            
-            # Update the main pot label to announce the winner
-            if hasattr(self, 'pot_label'):
-                self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
-            
-            # Add game message
-            self.add_game_message(f"🏆 {winner_names} wins ${winner_amount:.2f}!")
-            
-            # Highlight all winning players on the table
-            for i, seat_widgets in enumerate(self.player_seats):
-                if i < len(self.state_machine.game_state.players):
-                    player_info = self.state_machine.game_state.players[i]
-                    if player_info.name in [p.name for p in winner_list]:
-                        seat_widgets["frame"].config(bg=THEME["accent_secondary"])
-                        self._log_message(f"🎯 Highlighting winner seat {i}: {player_info.name}")
-        else:
-            self._log_message("🏁 No winner determined - hand may have ended in a tie or error")
-            self.add_game_message("🏁 Hand complete!")
-            if hasattr(self, 'pot_label'):
-                self.pot_label.config(text="Pot: $0.00", fg="yellow")
-
-        self.sfx.play("pot_rake")
-        
-        # Hide the action controls
-        for control in self.human_action_controls.values():
-            if hasattr(control, 'pack_forget'):
-                control.pack_forget()
-
-        # Show game control buttons
-        self._show_game_control_buttons()
-        
-        # Add message about starting new hand
-        self.add_game_message("💡 Click '🚀 Start New Hand' to begin a new game!")
-        
-        # Prompt for a new hand after a delay
-        self.after(3000, self._show_game_control_buttons)
-
-    def _animate_pot_collection(self, winner_name, winner_x, winner_y):
-        """Animates the pot moving to the winner."""
-        # Create a temporary label to represent the pot
-        pot_anim_label = tk.Label(
-            self.canvas, 
-            text="💰", 
-            font=("Arial", 30), 
-            bg=THEME["primary_bg"], 
-            fg="yellow"
-        )
-        
-        # Position at center of table (where pot is)
-        center_x = self.canvas.winfo_width() / 2
-        center_y = self.canvas.winfo_height() / 2 + 130
-        
-        pot_window = self.canvas.create_window(
-            center_x, center_y, 
-            window=pot_anim_label
-        )
-
-        # Animate the movement
-        self._move_widget(
-            pot_window, winner_x, winner_y, 20, 
-            callback=lambda: pot_anim_label.destroy()
-        )
-
-    def _animate_bet(self, player_index):
-        """Animates chips moving from the player to the pot area."""
-        player_frame = self.player_seats[player_index]["frame"]
-        start_x, start_y = player_frame.winfo_x(), player_frame.winfo_y()
-        
-        # Target is near the center of the table
-        target_x = self.canvas.winfo_width() / 2
-        target_y = self.canvas.winfo_height() / 2 + 100
-
-        # Create temporary chip labels for the animation
-        for i in range(3):  # Animate 3 chips
-            chip_label = tk.Label(
-                self.canvas, 
-                text="💰", 
-                font=("Arial", 12), 
-                bg=THEME["primary_bg"]
-            )
-            chip_window = self.canvas.create_window(start_x, start_y, window=chip_label)
-            
-            # Stagger the animation start time for a nice effect
-            self.after(
-                i * 50, 
-                lambda w=chip_window: self._move_widget(
-                    w, target_x, target_y, 15, 
-                    callback=lambda: chip_label.destroy()
-                )
-            )
-
-    def _move_widget(self, widget, target_x, target_y, steps=20, callback=None):
-        """Helper function for smooth animation."""
-        start_x, start_y = self.canvas.coords(widget)
-        dx = (target_x - start_x) / steps
-        dy = (target_y - start_y) / steps
-
-        def step(i):
-            if i < steps:
-                self.canvas.move(widget, dx, dy)
-                self.after(20, lambda: step(i+1))
-            elif callback:
-                callback()
-        step(0)
-
-    def update_font_size(self, font_size: int):
-        """Updates the font size for all components in the practice session."""
-        new_font = (THEME["font_family"], font_size)
-        self.info_text.config(font=new_font)
-        # You can add other component font updates here if needed
-
+    
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display."""
         if not card_str or card_str == "**":
@@ -801,48 +516,4 @@ class PracticeSessionUI(ttk.Frame):
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
         suit_symbol = suit_symbols.get(suit, suit)
         
-        return f"{rank}{suit_symbol}"
-
-    def _safe_set_card_image(self, widget, card_str):
-        """
-        Safely set a card image on a widget with proper reference management.
-        This prevents TclError: image "pyimageX" doesn't exist errors.
-        """
-        try:
-            from PIL import Image, ImageTk
-            
-            # Create a simple card representation as an image
-            width, height = 60, 80
-            img = Image.new('RGB', (width, height), color='white')
-            
-            # Add card text
-            from PIL import ImageDraw, ImageFont
-            draw = ImageDraw.Draw(img)
-            
-            # Try to use a default font, fallback to basic if not available
-            try:
-                font = ImageFont.truetype("arial.ttf", 16)
-            except:
-                font = ImageFont.load_default()
-            
-            # Draw card text
-            text = self._format_card(card_str) if card_str else "🂠"
-            draw.text((10, 30), text, fill='black', font=font)
-            
-            # Convert to PhotoImage
-            photo_image = ImageTk.PhotoImage(img)
-            
-            # Set the image on the widget
-            widget.configure(image=photo_image)
-            
-            # CRITICAL: Keep a reference to prevent garbage collection
-            widget.image = photo_image
-            
-            return True
-        except Exception as e:
-            self._log_message(f"Error creating card image for {card_str}: {e}")
-            return False
-
-    def run(self):
-        """Main run method for the practice session."""
-        self.add_game_message("Welcome to Poker Practice Session!\nClick 'Start New Hand' to begin.") 
+        return f"{rank}{suit_symbol}" 
