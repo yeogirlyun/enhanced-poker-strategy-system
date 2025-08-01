@@ -1261,8 +1261,11 @@ class ImprovedPokerStateMachine:
             self.on_state_change()
 
     def handle_round_complete(self):
-        """Handle round completion."""
-        self._log_action("🔄 ROUND COMPLETE")
+        """
+        Handles the completion of a betting round by advancing to the next street
+        (flop, turn, river) or proceeding to showdown.
+        """
+        self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
         self._log_action(f"📊 Current state: {self.current_state}")
         self._log_action(f"🎴 Community cards: {self.game_state.board}")
         self._log_action(f"💰 Pot size: ${self.game_state.pot:.2f}")
@@ -1270,19 +1273,22 @@ class ImprovedPokerStateMachine:
         if self.on_round_complete:
             self.on_round_complete()
 
-        state_transitions = {
-            PokerState.PREFLOP_BETTING: PokerState.DEAL_FLOP,
-            PokerState.FLOP_BETTING: PokerState.DEAL_TURN,
-            PokerState.TURN_BETTING: PokerState.DEAL_RIVER,
-            PokerState.RIVER_BETTING: PokerState.SHOWDOWN,
-        }
-        
-        next_state = state_transitions.get(self.current_state)
-        if next_state:
-            self._log_action(f"🔄 Transitioning from {self.current_state} to {next_state}")
-            self.transition_to(next_state)
+        # --- THIS IS THE CRITICAL BUG FIX ---
+        if self.game_state.street == 'preflop':
+            self._log_action("🔄 Transitioning from preflop to DEAL_FLOP")
+            self.transition_to(PokerState.DEAL_FLOP)
+        elif self.game_state.street == 'flop':
+            self._log_action("🔄 Transitioning from flop to DEAL_TURN")
+            self.transition_to(PokerState.DEAL_TURN)
+        elif self.game_state.street == 'turn':
+            self._log_action("🔄 Transitioning from turn to DEAL_RIVER")
+            self.transition_to(PokerState.DEAL_RIVER)
+        elif self.game_state.street == 'river':
+            self._log_action("🔄 Transitioning from river to SHOWDOWN")
+            self.transition_to(PokerState.SHOWDOWN)
         else:
-            self._log_action(f"❌ No valid transition found for state {self.current_state}")
+            self._log_action(f"❌ ERROR: Unknown street '{self.game_state.street}'")
+        # --- End of Bug Fix ---
 
     def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
         """Initialize the state machine with enhanced hand evaluator."""
