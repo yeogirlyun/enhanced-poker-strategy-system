@@ -291,8 +291,9 @@ class PracticeSessionUI(ttk.Frame):
         cards_label.pack()
         
         # Action
+        action_font_size = min(8, int(8 * self.table_scale))
         action_label = tk.Label(frame, text="", 
-                              font=(FONTS["main"], small_font_size), 
+                              font=(FONTS["main"], action_font_size), 
                               bg=THEME["secondary_bg"], fg=THEME["accent_primary"])
         action_label.pack()
         
