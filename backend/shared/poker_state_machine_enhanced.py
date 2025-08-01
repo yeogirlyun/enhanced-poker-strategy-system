@@ -129,6 +129,7 @@ class ImprovedPokerStateMachine:
         self.on_action_required = None
         self.on_round_complete = None
         self.on_hand_complete = None
+        self.on_log_entry = None  # NEW: Callback for detailed action logging
 
         # Logging with size limit
         self.action_log = []
@@ -206,6 +207,10 @@ class ImprovedPokerStateMachine:
             self.action_log = self.action_log[-self.max_log_size:]
         
         print(log_entry)
+        
+        # NEW: Call the UI callback for detailed logging
+        if self.on_log_entry:
+            self.on_log_entry(message)
 
     def transition_to(self, new_state: PokerState):
         """Transition to a new state with validation."""
@@ -1110,20 +1115,21 @@ class ImprovedPokerStateMachine:
         self.game_state.players_acted.add(self.action_player_index)
 
         # --- CORRECTED GAME FLOW LOGIC ---
-        # Check for a winner first
-        active_players = [p for p in self.game_state.players if p.is_active]
-        if len(active_players) == 1:
-            winner = active_players[0]
-            winner.stack += self.game_state.pot
-            pot_amount = self.game_state.pot
-            self.game_state.pot = 0
-            self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
-            # Only transition if not already in END_HAND state
-            if self.current_state != PokerState.END_HAND:
-                self.transition_to(PokerState.END_HAND)
-            # Store winner info for UI callback
-            self._last_winner = {"name": winner.name, "amount": pot_amount}
-            return  # End the action here since the hand is over
+        # Check for a winner only if this was a fold action
+        if action == ActionType.FOLD:
+            active_players = [p for p in self.game_state.players if p.is_active]
+            if len(active_players) == 1:
+                winner = active_players[0]
+                winner.stack += self.game_state.pot
+                pot_amount = self.game_state.pot
+                self.game_state.pot = 0
+                self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
+                # Only transition if not already in END_HAND state
+                if self.current_state != PokerState.END_HAND:
+                    self.transition_to(PokerState.END_HAND)
+                # Store winner info for UI callback
+                self._last_winner = {"name": winner.name, "amount": pot_amount}
+                return  # End the action here since the hand is over
 
         # If the hand is not over, check if the round is complete
         if self.is_round_complete():
