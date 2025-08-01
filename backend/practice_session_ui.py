@@ -423,6 +423,15 @@ class PracticeSessionUI(ttk.Frame):
                 widget.pack_forget()
         self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
         # --- END FIX ---
+        
+        # --- NEW: Prompt for new hand after a delay ---
+        self.after(2000, self._prompt_new_hand)
+        # --- END NEW ---
+
+    def _prompt_new_hand(self):
+        """Asks the user to start a new hand."""
+        if messagebox.askyesno("New Hand", "Start a new hand?"):
+            self.start_new_hand()
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
