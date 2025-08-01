@@ -89,7 +89,6 @@ class PracticeSessionUI(ttk.Frame):
         # --- END NEW ---
 
         self._create_human_action_controls()
-        self._setup_info_panel()
         
         # Initial draw
         self.after(100, self._on_resize, None)
@@ -461,8 +460,13 @@ class PracticeSessionUI(ttk.Frame):
 
         print(f"🎮 Updating display with game info: {game_info}")
 
-        # Update pot and community cards
-        self.pot_label.config(text=f"Pot: ${game_info['pot']:.2f}")
+        # --- NEW: Enhanced Pot and Bet Display ---
+        pot_text = f"Pot: ${game_info['pot']:.2f}"
+        if game_info.get('current_bet', 0) > 0:
+            pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
+        self.pot_label.config(text=pot_text)
+        # --- END NEW ---
+        
         for i, card in enumerate(game_info['board']):
             if i < len(self.community_card_labels):
                 self.community_card_labels[i].config(text=self._format_card(card))
