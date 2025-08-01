@@ -1004,7 +1004,9 @@ class ImprovedPokerStateMachine:
 
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
         """Basic bot logic as fallback."""
-        hand_strength, _ = self.evaluate_hand(player.cards, self.game_state.board)
+        # Use the enhanced hand evaluator instead of the old method
+        hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+        hand_strength = hand_info.rank.value  # Use the rank value as strength
         
         if self.game_state.current_bet == 0:
             if hand_strength > 20:
