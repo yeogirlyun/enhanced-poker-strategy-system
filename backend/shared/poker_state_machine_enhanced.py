@@ -1155,12 +1155,18 @@ class ImprovedPokerStateMachine:
                 not current_player.is_all_in and
                 (self.action_player_index not in self.game_state.players_acted or
                  current_player.current_bet < self.game_state.current_bet)):
+                # --- NEW: Call the state change callback to update UI ---
+                if self.on_state_change:
+                    self.on_state_change()
                 return
             
             attempts += 1
         
         # No one can act - round is complete
         self.action_player_index = -1
+        # --- NEW: Call the state change callback even when round is complete ---
+        if self.on_state_change:
+            self.on_state_change()
 
     def handle_round_complete(self):
         """Handle round completion."""
