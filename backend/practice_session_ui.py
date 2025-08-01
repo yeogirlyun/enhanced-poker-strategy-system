@@ -93,6 +93,9 @@ class PracticeSessionUI(ttk.Frame):
         
         # Initial draw only - don't initialize state machine automatically
         self.after(100, self._on_resize, None)
+        
+        # Force initial table sizing
+        self.after(200, self._calculate_initial_scale_and_redraw)
 
     def _on_resize(self, event):
         """Redraws the entire table and its elements when the window is resized."""
@@ -386,16 +389,16 @@ class PracticeSessionUI(ttk.Frame):
 
     def _create_game_message_area(self):
         """Creates a game message area for displaying hand actions and game state."""
-        # Create a frame for game messages on the right side
+        # Create a frame for game messages on the right side - adjusted positioning
         self.game_message_frame = ttk.LabelFrame(self, text="Game Messages", padding=10)
-        self.game_message_frame.place(relx=0.75, rely=0.1, relwidth=0.23, relheight=0.8)
+        self.game_message_frame.place(relx=0.78, rely=0.05, relwidth=0.20, relheight=0.85)
         
         # Create text widget for messages
         self.game_message_text = tk.Text(
             self.game_message_frame,
-            height=20,
-            width=40,
-            font=("Consolas", 10),
+            height=15,
+            width=35,
+            font=("Consolas", 9),
             bg=THEME["secondary_bg"],
             fg=THEME["text"],
             state=tk.DISABLED,
@@ -531,7 +534,10 @@ class PracticeSessionUI(ttk.Frame):
                     if player_info['cards'] and player_info['cards'] != ['**', '**']:
                         cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
                         seat['cards'].config(text=cards_text)
+                        # Force update and debug
+                        seat['cards'].update()
                         print(f"🎴 Showing cards for {player_info['name']}: {cards_text}")
+                        print(f"🔍 Card label text after update: {seat['cards'].cget('text')}")
                     else:
                         seat['cards'].config(text="🂠 🂠")
                         print(f"🂠 No cards for {player_info['name']}")
