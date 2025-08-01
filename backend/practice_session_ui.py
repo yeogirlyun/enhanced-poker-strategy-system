@@ -459,6 +459,14 @@ class PracticeSessionUI(ttk.Frame):
             return
 
         print(f"🎮 Updating display with game info: {game_info}")
+        
+        # Debug: Check human player cards
+        human_players = [p for p in game_info['players'] if p['is_human']]
+        if human_players:
+            human = human_players[0]
+            print(f"🎯 Human player found: {human['name']}, cards: {human['cards']}, is_human: {human['is_human']}")
+        else:
+            print(f"❌ No human player found in game info")
 
         # --- NEW: Enhanced Pot and Bet Display ---
         pot_text = f"Pot: ${game_info['pot']:.2f}"
@@ -482,8 +490,10 @@ class PracticeSessionUI(ttk.Frame):
                     player_info['is_human']):
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
                     seat['cards'].config(text=cards_text)
+                    print(f"🎴 Showing cards for {player_info['name']}: {cards_text}")
                 else:
                     seat['cards'].config(text="🂠 🂠" if player_info['is_active'] else "")
+                    print(f"🂠 Hiding cards for {player_info['name']}")
 
                 # Highlight the current player to act
                 if i == game_info['action_player'] and player_info['is_active']:
