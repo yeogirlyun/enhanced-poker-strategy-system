@@ -232,6 +232,8 @@ class ImprovedPokerStateMachine:
 
     def handle_state_entry(self, existing_players: Optional[List[Player]] = None):
         """Handle specific logic for each state entry."""
+        print(f"🎯 HANDLE_STATE_ENTRY called for state: {self.current_state.value}")  # Debug
+        
         handlers = {
             PokerState.START_HAND: lambda: self.handle_start_hand(existing_players),
             PokerState.PREFLOP_BETTING: self.handle_preflop_betting,
@@ -247,7 +249,10 @@ class ImprovedPokerStateMachine:
         
         handler = handlers.get(self.current_state)
         if handler:
+            print(f"✅ Found handler for {self.current_state.value}, calling it...")  # Debug
             handler()
+        else:
+            print(f"❌ No handler found for state: {self.current_state.value}")  # Debug
 
     # FIX 1: Dynamic Position Tracking
     def advance_dealer_position(self):
@@ -420,6 +425,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_flop(self):
         """Deal the flop."""
+        print("🎴 HANDLE_DEAL_FLOP called!")  # Debug
         self._log_action("🎴 DEALING FLOP")
         
         # Burn card
@@ -440,6 +446,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_turn(self):
         """Deal the turn."""
+        print("🎴 HANDLE_DEAL_TURN called!")  # Debug
         self._log_action("Dealing turn")
         
         # Burn card
@@ -452,6 +459,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_river(self):
         """Deal the river."""
+        print("🎴 HANDLE_DEAL_RIVER called!")  # Debug
         self._log_action("Dealing river")
         
         # Burn card
