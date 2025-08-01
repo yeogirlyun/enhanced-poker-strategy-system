@@ -1375,6 +1375,9 @@ class ImprovedPokerStateMachine:
         if len(active_players) == 1:
             return active_players
         
+        self._log_action(f"🔍 SHOWDOWN: Evaluating {len(active_players)} active players")
+        self._log_action(f"🎴 Board: {' '.join(self.game_state.board)}")
+        
         best_hand_info = None
         winners = []
         
@@ -1382,9 +1385,12 @@ class ImprovedPokerStateMachine:
             # Use the single, authoritative hand evaluator
             hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
             
+            self._log_action(f"📊 {player.name} ({' '.join(player.cards)}): {hand_info['hand_description']} (Score: {hand_info['strength_score']})")
+            
             if not winners:  # First player to be evaluated
                 best_hand_info = hand_info
                 winners = [player]
+                self._log_action(f"🏆 {player.name} is the first winner")
             else:
                 # Compare current player's hand with the best so far
                 comparison = self.hand_evaluator._compare_hands(
@@ -1395,9 +1401,14 @@ class ImprovedPokerStateMachine:
                 if comparison > 0:  # Current player has a better hand
                     best_hand_info = hand_info
                     winners = [player]
+                    self._log_action(f"🏆 {player.name} wins with better hand")
                 elif comparison == 0:  # It's a tie
                     winners.append(player)
+                    self._log_action(f"🤝 {player.name} ties with current winners")
+                else:
+                    self._log_action(f"❌ {player.name} loses to current winners")
         
+        self._log_action(f"🎉 FINAL WINNERS: {[w.name for w in winners]}")
         return winners
 
     def handle_showdown(self):
