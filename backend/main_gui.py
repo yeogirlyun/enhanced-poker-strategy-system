@@ -469,9 +469,9 @@ class EnhancedMainGUI:
         self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
         self.practice_ui.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        # Tab 7: Enhanced Game (NEW)
+        # Tab 7: Game Dashboard & Setup (NEW)
         enhanced_game_frame = ttk.Frame(self.notebook)
-        self.notebook.add(enhanced_game_frame, text="🎮 Enhanced Game")
+        self.notebook.add(enhanced_game_frame, text="📊 Game Dashboard & Setup")
 
         self._create_enhanced_game_tab(enhanced_game_frame)
 
@@ -858,187 +858,101 @@ class EnhancedMainGUI:
             self.root.after(duration, lambda: self.status_bar_text.set("Ready."))
 
     def _create_enhanced_game_tab(self, parent_frame):
-        """Create the enhanced game tab with modern styling and tooltips."""
-        # Main container
+        """Creates a more intuitive game dashboard and setup tab."""
+        # --- NEW: Main container with two-panel layout ---
         main_container = ttk.Frame(parent_frame)
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        main_container.grid_columnconfigure(0, weight=1)  # Left panel
+        main_container.grid_columnconfigure(1, weight=2)  # Right panel
+        main_container.grid_rowconfigure(0, weight=1)
 
-        # Title section
-        title_frame = ttk.Frame(main_container)
-        title_frame.pack(fill=tk.X, pady=(0, 20))
+        # --- Left Panel: Game Setup ---
+        setup_frame = ttk.LabelFrame(main_container, text="Game Setup", padding=15)
+        setup_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
-        title_label = ttk.Label(
-            title_frame, 
-            text="Enhanced Poker Strategy Game", 
-            font=FONTS["title"]
+        # Start game button
+        self.start_enhanced_game_btn = ttk.Button(
+            setup_frame,
+            text="🚀 Start New Game",
+            command=self._start_enhanced_game,
+            style="Primary.TButton"
         )
-        title_label.pack()
-        ToolTip(title_label, "Advanced poker practice with strategy analysis")
-
-        # Controls section
-        controls_frame = ttk.LabelFrame(
-            main_container, 
-            text="Game Controls", 
-            padding=15
-        )
-        controls_frame.pack(fill=tk.X, pady=(0, 20))
-
-        # Game settings row
-        settings_frame = ttk.Frame(controls_frame)
-        settings_frame.pack(fill=tk.X, pady=(0, 15))
+        self.start_enhanced_game_btn.pack(fill=tk.X, pady=(0, 20))
+        ToolTip(self.start_enhanced_game_btn, "Start a new poker game with the settings below")
 
         # Player count
-        player_frame = ttk.Frame(settings_frame)
-        player_frame.pack(side=tk.LEFT, padx=(0, 20))
-
+        player_frame = ttk.Frame(setup_frame)
+        player_frame.pack(fill=tk.X, pady=5)
         player_label = ttk.Label(player_frame, text="Players:")
-        player_label.pack(side=tk.LEFT)
-        ToolTip(player_label, "Number of players in the game (2-8)")
-
+        player_label.pack(side=tk.LEFT, anchor="w")
         self.enhanced_player_count = tk.StringVar(value="6")
         player_combo = ttk.Combobox(
             player_frame,
             textvariable=self.enhanced_player_count,
             values=["2", "3", "4", "5", "6", "7", "8"],
             state="readonly",
-            width=8
+            width=10
         )
-        player_combo.pack(side=tk.LEFT, padx=(5, 0))
-        ToolTip(player_combo, "Select the number of players for the game")
+        player_combo.pack(side=tk.RIGHT, anchor="e")
 
         # Starting stack
-        stack_frame = ttk.Frame(settings_frame)
-        stack_frame.pack(side=tk.LEFT, padx=(0, 20))
-
+        stack_frame = ttk.Frame(setup_frame)
+        stack_frame.pack(fill=tk.X, pady=5)
         stack_label = ttk.Label(stack_frame, text="Starting Stack:")
-        stack_label.pack(side=tk.LEFT)
-        ToolTip(stack_label, "Initial chip stack for each player")
-
+        stack_label.pack(side=tk.LEFT, anchor="w")
         self.starting_stack = tk.StringVar(value="1000")
-        stack_entry = ttk.Entry(stack_frame, textvariable=self.starting_stack, width=10)
-        stack_entry.pack(side=tk.LEFT, padx=(5, 0))
-        ToolTip(stack_entry, "Enter the starting chip amount")
-
+        stack_entry = ttk.Entry(stack_frame, textvariable=self.starting_stack, width=12)
+        stack_entry.pack(side=tk.RIGHT, anchor="e")
+        
         # Blind levels
-        blind_frame = ttk.Frame(settings_frame)
-        blind_frame.pack(side=tk.LEFT)
-
-        blind_label = ttk.Label(blind_frame, text="Blinds:")
-        blind_label.pack(side=tk.LEFT)
-        ToolTip(blind_label, "Small and big blind amounts")
-
+        blind_frame = ttk.Frame(setup_frame)
+        blind_frame.pack(fill=tk.X, pady=5)
+        blind_label = ttk.Label(blind_frame, text="Blinds (SB/BB):")
+        blind_label.pack(side=tk.LEFT, anchor="w")
+        
+        blind_entry_frame = ttk.Frame(blind_frame)
+        blind_entry_frame.pack(side=tk.RIGHT, anchor="e")
         self.small_blind = tk.StringVar(value="10")
-        small_blind_entry = ttk.Entry(blind_frame, textvariable=self.small_blind, width=5)
-        small_blind_entry.pack(side=tk.LEFT, padx=(5, 2))
-        ToolTip(small_blind_entry, "Small blind amount")
-
-        ttk.Label(blind_frame, text="/").pack(side=tk.LEFT, padx=2)
-
+        small_blind_entry = ttk.Entry(blind_entry_frame, textvariable=self.small_blind, width=5)
+        small_blind_entry.pack(side=tk.LEFT, padx=(0, 2))
+        ttk.Label(blind_entry_frame, text="/").pack(side=tk.LEFT)
         self.big_blind = tk.StringVar(value="20")
-        big_blind_entry = ttk.Entry(blind_frame, textvariable=self.big_blind, width=5)
+        big_blind_entry = ttk.Entry(blind_entry_frame, textvariable=self.big_blind, width=5)
         big_blind_entry.pack(side=tk.LEFT, padx=(2, 0))
-        ToolTip(big_blind_entry, "Big blind amount")
 
-        # Action buttons
-        button_frame = ttk.Frame(controls_frame)
-        button_frame.pack(fill=tk.X)
-
-        # Start game button
-        self.start_enhanced_game_btn = ttk.Button(
-            button_frame,
-            text="🎮 Start Enhanced Game",
-            command=self._start_enhanced_game,
-            style="Primary.TButton"
-        )
-        self.start_enhanced_game_btn.pack(side=tk.LEFT, padx=(0, 10))
-        ToolTip(self.start_enhanced_game_btn, "Start a new enhanced poker game with strategy analysis")
-
-        # Reset button
-        reset_btn = ttk.Button(
-            button_frame,
-            text="🔄 Reset Game",
-            command=self._reset_enhanced_game,
-            style="Danger.TButton"
-        )
-        reset_btn.pack(side=tk.LEFT, padx=(0, 10))
-        ToolTip(reset_btn, "Reset the current game and start fresh")
-
-        # Settings button
-        settings_btn = ttk.Button(
-            button_frame,
-            text="⚙️ Game Settings",
-            command=self._show_game_settings
-        )
-        settings_btn.pack(side=tk.LEFT)
-        ToolTip(settings_btn, "Configure advanced game settings and options")
-
-        # Game display section
-        game_display_frame = ttk.LabelFrame(
-            main_container,
-            text="Game Display",
-            padding=15
-        )
-        game_display_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Create notebook for game tabs
-        self.game_notebook = ttk.Notebook(game_display_frame)
+        # --- Right Panel: Live Game Analysis ---
+        analysis_frame = ttk.LabelFrame(main_container, text="Live Game Analysis", padding=15)
+        analysis_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        
+        self.game_notebook = ttk.Notebook(analysis_frame)
         self.game_notebook.pack(fill=tk.BOTH, expand=True)
 
         # Game state tab
         game_state_frame = ttk.Frame(self.game_notebook)
         self.game_notebook.add(game_state_frame, text="Game State")
-
-        self.enhanced_game_state = tk.Text(
-            game_state_frame,
-            height=15,
-            font=("Consolas", 10),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED
-        )
-        self.enhanced_game_state.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.enhanced_game_state = tk.Text(game_state_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"])
+        self.enhanced_game_state.pack(fill=tk.BOTH, expand=True)
 
         # Strategy analysis tab
         strategy_frame = ttk.Frame(self.game_notebook)
-        self.game_notebook.add(strategy_frame, text="Strategy Analysis")
-
-        self.strategy_analysis = tk.Text(
-            strategy_frame,
-            height=15,
-            font=("Arial", 10),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED
-        )
-        self.strategy_analysis.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.game_notebook.add(strategy_frame, text="Strategy Insights")
+        self.strategy_analysis = tk.Text(strategy_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"])
+        self.strategy_analysis.pack(fill=tk.BOTH, expand=True)
 
         # Statistics tab
         stats_frame = ttk.Frame(self.game_notebook)
-        self.game_notebook.add(stats_frame, text="Statistics")
-
-        self.game_statistics = tk.Text(
-            stats_frame,
-            height=15,
-            font=("Arial", 10),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED
-        )
-        self.game_statistics.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.game_notebook.add(stats_frame, text="Session Stats")
+        self.game_statistics = tk.Text(stats_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"])
+        self.game_statistics.pack(fill=tk.BOTH, expand=True)
 
         # Hand Log tab
         hand_log_frame = ttk.Frame(self.game_notebook)
         self.game_notebook.add(hand_log_frame, text="Hand Log")
+        self.hand_log_text = tk.Text(hand_log_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"])
+        self.hand_log_text.pack(fill=tk.BOTH, expand=True)
 
-        self.hand_log_text = tk.Text(
-            hand_log_frame,
-            height=15,
-            font=("Consolas", 10),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED
-        )
-        self.hand_log_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Initial placeholder text
+        self._reset_enhanced_game()
 
     def update_hand_log(self, log_entry):
         """Update the hand log with a new entry."""
