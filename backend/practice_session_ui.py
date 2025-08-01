@@ -175,9 +175,13 @@ class PracticeSessionUI(ttk.Frame):
         # Create labels for community cards
         self.community_card_labels = []
         for i in range(5):
-            card_label = tk.Label(community_frame, text="", bg="#015939", fg="white", font=FONTS["small"], width=3)
-            card_label.pack(side=tk.LEFT, padx=2)
+            # --- FIX: Larger font for community cards ---
+            card_font_size = max(16, int(self.canvas.winfo_height() / 25))
+            card_font = ("Arial", card_font_size, "bold")
+            card_label = tk.Label(community_frame, text="", bg="#015939", fg="white", font=card_font, width=4)
+            card_label.pack(side=tk.LEFT, padx=3)
             self.community_card_labels.append(card_label)
+            # --- END FIX ---
         
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
@@ -362,6 +366,14 @@ class PracticeSessionUI(ttk.Frame):
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
         self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+        
+        # --- FIX: Show the slider and label ---
+        # The slider and label are always visible, but we need to ensure they're properly configured
+        if hasattr(self, 'bet_slider') and hasattr(self, 'bet_size_label'):
+            # Ensure slider is visible and properly configured
+            self.bet_slider.pack(fill=tk.X)
+            self.bet_size_label.pack()
+        # --- END FIX ---
 
     def _submit_human_action(self, action_str):
         """Submits the human's chosen action to the state machine."""
