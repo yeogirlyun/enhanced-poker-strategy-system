@@ -531,9 +531,11 @@ class ImprovedPokerStateMachine:
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
         if self.action_player_index == -1:
+            self._log_action("DEBUG: No action player index, round is likely complete.")
             return
 
         current_player = self.game_state.players[self.action_player_index]
+        self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
 
         if current_player.is_human:
             self._log_action(f"Human turn: {current_player.name}")

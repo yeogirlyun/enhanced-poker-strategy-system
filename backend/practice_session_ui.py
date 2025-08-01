@@ -134,6 +134,7 @@ class PracticeSessionUI(ttk.Frame):
             angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
             x = center_x + radius_x * math.cos(angle)
             y = center_y + radius_y * math.sin(angle)
+            self._log_message(f"DEBUG: Creating seat {i} at position ({x:.0f}, {y:.0f}) for Player {i+1}")
             self._create_player_seat_widget(x, y, f"Player {i+1}", positions[i], i)
 
     def _create_player_seat_widget(self, x, y, name, position, index):
@@ -193,40 +194,51 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.create_window(center_x, center_y + 130, window=self.pot_label)
 
     def update_display(self, new_state=None):
-        """Updates the text and colors of UI elements based on game state."""
+        """Updates the UI and logs detailed debugging information."""
         game_info = self.state_machine.get_game_info()
-        if not game_info or not self.player_seat_frames:
+        if not game_info:
+            self._log_message("DEBUG: update_display called but no game_info available.")
             return
 
-        # Update pot label
+        self._log_message("\n--- UI UPDATE ---")
+        self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
+        self._log_message(f"Total Player Seat Frames in UI: {len(self.player_seat_frames)}")
+
+        # Update pot and community cards
         pot_text = f"Pot: ${game_info['pot']:.2f}"
         if game_info['current_bet'] > 0:
             pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
         self.pot_label.config(text=pot_text)
 
-        # Update community cards
-        for i in range(len(self.community_card_labels)):
-            if i < len(game_info['board']):
-                self.community_card_labels[i].config(text=self._format_card(game_info['board'][i]))
-            else:
-                self.community_card_labels[i].config(text="")
+        for i, card_label in enumerate(self.community_card_labels):
+            card_label.config(text=self._format_card(game_info['board'][i]) if i < len(game_info['board']) else "")
 
         # Update player info
         for i, frame in enumerate(self.player_seat_frames):
+            if frame is None:
+                self._log_message(f"DEBUG: ERROR - Frame at index {i} is None!")
+                continue
+
             player_info = game_info['players'][i]
             
-            # --- NEW: Update the Name and Position Label ---
+            # Highlight current player
+            if i == game_info['action_player'] and player_info['is_active']:
+                frame.config(bg=THEME["accent_primary"])
+                self._log_message(f"HIGHLIGHTING Player at index {i} ({player_info['name']})")
+                self._log_message(f"DEBUG: Frame {i} position: {frame.winfo_x()}, {frame.winfo_y()}")
+            else:
+                frame.config(bg=THEME["secondary_bg"])
+
+            # Update name and position
             name_label = frame.winfo_children()[0]
             name_label.config(text=f"{player_info['name']} ({player_info['position']})")
-            # --- END NEW ---
             
-            # Assumes widgets are children of the frame in a known order
+            # Update stack and cards
             stack_label = frame.winfo_children()[1]
             cards_label = frame.winfo_children()[2]
 
             stack_label.config(text=f"${player_info['stack']:.2f}")
 
-            # Correctly display cards
             if player_info['is_active']:
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
@@ -236,12 +248,6 @@ class PracticeSessionUI(ttk.Frame):
             else:
                 cards_label.config(text="Folded")
 
-            # Highlight current player (FIXED: Use game_info action_player index)
-            if i == game_info['action_player'] and player_info['is_active']:
-                frame.config(bg=THEME["accent_primary"])
-            else:
-                frame.config(bg=THEME["secondary_bg"])
-
     def add_game_message(self, message):
         """Add a message to the game message area."""
         if hasattr(self, 'info_text'):
@@ -249,6 +255,13 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.insert(tk.END, f"{message}\n")
             self.info_text.see(tk.END)
             self.info_text.config(state=tk.DISABLED)
+
+    def _log_message(self, message: str):
+        """Logs a message to the Game Messages panel."""
+        self.info_text.config(state=tk.NORMAL)
+        self.info_text.insert(tk.END, f"{message}\n")
+        self.info_text.see(tk.END) # Auto-scroll to the bottom
+        self.info_text.config(state=tk.DISABLED)
 
     def _create_human_action_controls(self, parent_frame):
         """Creates a modern, dynamic action bar for the human player."""
