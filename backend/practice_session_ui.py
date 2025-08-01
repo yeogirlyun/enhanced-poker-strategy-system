@@ -327,9 +327,34 @@ class PracticeSessionUI(ttk.Frame):
         self.action_bar_frame = ttk.Frame(parent_frame)  # Store reference
         self.action_bar_frame.grid(row=0, column=0, pady=5)
 
-        # --- Action Buttons ---
+        # --- NEW: Game Control Buttons (Left Side) ---
+        control_frame = ttk.Frame(self.action_bar_frame)
+        control_frame.pack(side=tk.LEFT, padx=(0, 20))
+        
+        self.start_button = ttk.Button(
+            control_frame, 
+            text="🚀 Start New Hand", 
+            style="Success.TButton", 
+            command=self.start_new_hand
+        )
+        self.start_button.pack(side=tk.LEFT, padx=5)
+        ToolTip(self.start_button, "Start a new poker hand")
+        
+        self.reset_button = ttk.Button(
+            control_frame, 
+            text="🔄 Reset Game", 
+            command=self._reset_game
+        )
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+        ToolTip(self.reset_button, "Reset the entire game state")
+        # --- END NEW ---
+
+        # --- Action Buttons (Center) ---
+        action_frame = ttk.Frame(self.action_bar_frame)
+        action_frame.pack(side=tk.LEFT, padx=10)
+        
         self.human_action_controls['fold'] = ttk.Button(
-            self.action_bar_frame, 
+            action_frame, 
             text="Fold", 
             style="Danger.TButton", 
             command=lambda: self._submit_human_action("fold")
@@ -338,7 +363,7 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['fold'], "Fold your hand and exit the current round")
 
         self.human_action_controls['check'] = ttk.Button(
-            self.action_bar_frame, 
+            action_frame, 
             text="Check", 
             command=lambda: self._submit_human_action("check")
         )
@@ -346,14 +371,14 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['check'], "Check (pass) if no bet to call")
         
         self.human_action_controls['call'] = ttk.Button(
-            self.action_bar_frame, 
+            action_frame, 
             text="Call", 
             command=lambda: self._submit_human_action("call")
         )
         self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
         ToolTip(self.human_action_controls['call'], "Call the current bet")
 
-        # --- Bet Sizing Slider ---
+        # --- Bet Sizing Slider (Center-Right) ---
         sizing_frame = ttk.Frame(self.action_bar_frame)
         sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
         
@@ -372,29 +397,118 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_label = ttk.Label(sizing_frame, text="$0.00", font=FONTS["main"])
         self.bet_size_label.pack()
 
-        # --- Bet/Raise Button ---
+        # --- Bet/Raise Button (Right) ---
         self.human_action_controls['bet_raise'] = ttk.Button(
             self.action_bar_frame, 
             text="Bet", 
             style="Primary.TButton", 
             command=self._submit_bet_raise
         )
-        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
         ToolTip(self.human_action_controls['bet_raise'], "Make a bet or raise")
 
-        # --- Start Hand Button ---
-        self.human_action_controls['start_hand'] = ttk.Button(
-            self.action_bar_frame, 
-            text="Start Hand", 
-            command=self.start_new_hand,
-            style="Success.TButton"
-        )
-        ToolTip(self.human_action_controls['start_hand'], "Start a new poker hand")
+        # Initially show only game control buttons
+        self._show_game_control_buttons()
 
-        # Initially hide all controls except start hand
+    def _show_game_control_buttons(self):
+        """Shows only the game control buttons (Start/Reset)."""
+        # Hide all action buttons
         for widget in self.human_action_controls.values():
-            widget.pack_forget()
-        self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+            if hasattr(widget, 'pack_forget'):
+                widget.pack_forget()
+        
+        # Show game control buttons
+        self.start_button.pack(side=tk.LEFT, padx=5)
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+        
+        # Hide bet sizing controls
+        if hasattr(self, 'bet_slider'):
+            self.bet_slider.pack_forget()
+        if hasattr(self, 'bet_size_label'):
+            self.bet_size_label.pack_forget()
+
+    def _show_action_buttons(self):
+        """Shows the action buttons and hides game control buttons."""
+        # Hide game control buttons
+        self.start_button.pack_forget()
+        self.reset_button.pack_forget()
+        
+        # Show action buttons
+        for widget in self.human_action_controls.values():
+            if hasattr(widget, 'pack'):
+                widget.pack(side=tk.LEFT, padx=5)
+        
+        # Show bet sizing controls
+        if hasattr(self, 'bet_slider'):
+            self.bet_slider.pack(fill=tk.X)
+        if hasattr(self, 'bet_size_label'):
+            self.bet_size_label.pack()
+
+    def _reset_game(self):
+        """Resets the game state and UI."""
+        try:
+            from tkinter import messagebox
+            if messagebox.askyesno("Reset Game", "Are you sure you want to reset the game?"):
+                self._log_message("🔄 Resetting game state...")
+                
+                # Reinitialize the state machine
+                self.state_machine = ImprovedPokerStateMachine(
+                    num_players=6, 
+                    strategy_data=self.strategy_data
+                )
+                
+                # Re-assign callbacks
+                self.state_machine.on_action_required = self.prompt_human_action
+                self.state_machine.on_hand_complete = self.handle_hand_complete
+                self.state_machine.on_state_change = self.update_display
+                self.state_machine.on_log_entry = self.add_game_message
+                
+                # Reset UI
+                self._reset_ui_for_new_hand()
+                self.add_game_message("🔄 Game has been reset!")
+                self._log_message("✅ Game reset completed")
+        except Exception as e:
+            self._log_message(f"❌ Error resetting game: {e}")
+
+    def _reset_ui_for_new_hand(self):
+        """Resets the UI for a new hand."""
+        # Clear game messages
+        if hasattr(self, 'info_text'):
+            self.info_text.config(state=tk.NORMAL)
+            self.info_text.delete(1.0, tk.END)
+            self.info_text.config(state=tk.DISABLED)
+        
+        # Reset pot display
+        if hasattr(self, 'pot_label'):
+            self.pot_label.config(text="Pot: $0.00", fg="yellow")
+        
+        # Clear community cards
+        for card_label in self.community_card_labels:
+            card_label.config(text="")
+        
+        # Reset player displays
+        for player_seat in self.player_seats:
+            if player_seat:
+                frame = player_seat.get("frame")
+                if frame:
+                    frame.config(bg=THEME["secondary_bg"])
+                
+                cards_label = player_seat.get("cards_label")
+                if cards_label:
+                    cards_label.config(text="")
+                
+                bet_label = player_seat.get("bet_label")
+                if bet_label:
+                    bet_label.config(text="")
+                
+                # Hide prominent bet displays
+                bet_label_widget = player_seat.get("bet_label_widget")
+                bet_label_window = player_seat.get("bet_label_window")
+                if bet_label_widget and bet_label_window:
+                    self.canvas.itemconfig(bet_label_window, state="hidden")
+        
+        # Show game control buttons
+        self._show_game_control_buttons()
 
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
@@ -420,16 +534,10 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message(f"💰 Player stack: ${player.stack:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
         # --- END ENHANCED ---
 
-        # Hide all action buttons initially
-        self.human_action_controls['fold'].pack_forget()
-        self.human_action_controls['check'].pack_forget()
-        self.human_action_controls['call'].pack_forget()
-        self.human_action_controls['bet_raise'].pack_forget()
-
-        # Show Fold button
-        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
-
-        # Show Check or Call button
+        # --- NEW: Use the new button management system ---
+        self._show_action_buttons()
+        
+        # Configure Check or Call button
         call_amount = game_info['current_bet'] - player.current_bet
         self._log_message(f"🔍 CALL AMOUNT CALCULATION:")
         self._log_message(f"   Current bet from game state: ${game_info['current_bet']:.2f}")
@@ -438,10 +546,8 @@ class PracticeSessionUI(ttk.Frame):
         
         if call_amount > 0:
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
-            self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
             self._log_message(f"📞 Call button configured with amount: ${call_amount:.2f}")
         else:
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
             self._log_message(f"✅ Check button shown (no call needed)")
 
         # Configure the bet/raise slider and button
@@ -458,30 +564,18 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_var.set(min_bet)
         self._update_bet_size_label()
 
-        # Show the bet/raise button
+        # Configure the bet/raise button text
         if game_info['current_bet'] > 0:
             self.human_action_controls['bet_raise'].config(text="Raise To")
             self._log_message(f"📈 Raise button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
             self._log_message(f"💰 Bet button configured - Min: ${min_bet:.2f}, Max: ${max_bet:.2f}")
-        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
         
-        # --- ENHANCED: Ensure all action bar elements are visible ---
-        # Make sure the action bar frame itself is visible
+        # --- ENHANCED: Ensure action bar is visible ---
         if hasattr(self, 'action_bar_frame'):
-            self.action_bar_frame.grid()  # Ensure it's visible in the grid
-            self._log_message(f"DEBUG: Action bar frame grid info: {self.action_bar_frame.grid_info()}")
-        
-        # Ensure slider and label are visible
-        if hasattr(self, 'bet_slider') and hasattr(self, 'bet_size_label'):
-            self.bet_slider.pack(fill=tk.X)
-            self.bet_size_label.pack()
-        
-        # Add debug message
-        self._log_message(f"DEBUG: Action bar configured - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
-        self._log_message(f"DEBUG: Action bar frame visible: {self.action_bar_frame.winfo_viewable()}")
-        self._log_message(f"DEBUG: Buttons packed - Fold: {self.human_action_controls['fold'].winfo_viewable()}, Call: {self.human_action_controls['call'].winfo_viewable()}, Bet: {self.human_action_controls['bet_raise'].winfo_viewable()}")
+            self.action_bar_frame.grid()
+            self._log_message(f"DEBUG: Action bar frame visible: {self.action_bar_frame.winfo_viewable()}")
         # --- END ENHANCED ---
 
     def _submit_human_action(self, action_str):
@@ -681,13 +775,11 @@ class PracticeSessionUI(ttk.Frame):
         else:
             self.add_game_message("🏁 Hand complete!")
         
-        # Hide all action buttons
-        for widget in self.human_action_controls.values():
-            if hasattr(widget, 'pack_forget'):
-                widget.pack_forget()
+        # --- NEW: Use the new button management system ---
+        self._show_game_control_buttons()
         
         # Add message about starting new hand
-        self.add_game_message("💡 Click 'Start New Hand' to begin a new game!")
+        self.add_game_message("💡 Click '🚀 Start New Hand' to begin a new game!")
         
         # Play winner sound
         self.sfx.play("winner_announce")
