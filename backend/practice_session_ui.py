@@ -220,11 +220,79 @@ class PracticeSessionUI(ttk.Frame):
         if winner_info:
             self.add_game_message(f"🏆 {winner_info['name']} wins ${winner_info['amount']:.2f}!")
             self.pot_label.config(text=f"Winner: {winner_info['name']}!", fg=THEME["accent_secondary"])
+            
+            # Animate pot money moving to winner
+            self._animate_pot_to_winner(winner_info)
         else:
             self.add_game_message("🏁 Hand complete!")
 
         self.sfx.play("pot_rake")
         self._show_game_control_buttons() # Show "Start New Hand" button
+
+    def _animate_pot_to_winner(self, winner_info):
+        """Animate pot money moving to the winner's stack."""
+        # Find the winner's seat
+        winner_seat = None
+        for i, seat in enumerate(self.player_seats):
+            if seat and seat.get("name_label"):
+                player_name = seat["name_label"].cget("text").split('\n')[0]
+                if player_name == winner_info['name']:
+                    winner_seat = i
+                    break
+        
+        if winner_seat is not None:
+            # Get pot center position
+            pot_x = self.canvas.winfo_width() / 2
+            pot_y = self.canvas.winfo_height() / 2 + 130  # Pot label position
+            
+            # Get winner's position
+            seat_positions = [
+                (self.canvas.winfo_width() * 0.5, self.canvas.winfo_height() * 0.1),  # Top
+                (self.canvas.winfo_width() * 0.8, self.canvas.winfo_height() * 0.2),  # Top-right
+                (self.canvas.winfo_width() * 0.9, self.canvas.winfo_height() * 0.5),  # Right
+                (self.canvas.winfo_width() * 0.8, self.canvas.winfo_height() * 0.8),  # Bottom-right
+                (self.canvas.winfo_width() * 0.5, self.canvas.winfo_height() * 0.9),  # Bottom
+                (self.canvas.winfo_width() * 0.2, self.canvas.winfo_height() * 0.8),  # Bottom-left
+            ]
+            
+            winner_x, winner_y = seat_positions[winner_seat]
+            
+            # Create animated money object
+            money_obj = self.canvas.create_text(
+                pot_x, pot_y, 
+                text=f"${winner_info['amount']:.2f}", 
+                fill="gold", 
+                font=("Arial", 16, "bold"),
+                tags="money_animation"
+            )
+            
+            # Animate the money moving to the winner
+            def animate_money(step=0):
+                if step <= 20:  # 20 steps for smooth animation
+                    progress = step / 20
+                    # Easing function for smooth movement
+                    ease = 1 - (1 - progress) ** 3
+                    
+                    current_x = pot_x + (winner_x - pot_x) * ease
+                    current_y = pot_y + (winner_y - pot_y) * ease
+                    
+                    self.canvas.coords(money_obj, current_x, current_y)
+                    
+                    # Make the text fade out as it approaches the winner
+                    if progress > 0.7:
+                        alpha = int(255 * (1 - (progress - 0.7) / 0.3))
+                        color = f"#{alpha:02x}ff{alpha:02x}"  # Gold color with alpha
+                        self.canvas.itemconfig(money_obj, fill=color)
+                    
+                    self.canvas.after(50, lambda: animate_money(step + 1))
+                else:
+                    # Remove the animated object
+                    self.canvas.delete(money_obj)
+                    # Update the winner's stack display
+                    self.update_display()
+            
+            # Start the animation
+            animate_money()
     
     def add_game_message(self, message):
         """Add a message to the game message area."""

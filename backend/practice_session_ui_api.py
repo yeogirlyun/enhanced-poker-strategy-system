@@ -375,6 +375,16 @@ class PracticeSessionUI(ttk.Frame):
             self.prompt_human_action(game_state)
         else:
             self._toggle_action_controls(False)
+        
+        # Handle winner announcement
+        if game_state.get('winner_info'):
+            winner_info = game_state['winner_info']
+            self.sfx.play("winner_announce")
+            self.add_game_message(f"🏆 {winner_info['name']} wins ${winner_info['amount']:.2f}!")
+            if hasattr(self, 'pot_label'):
+                self.pot_label.config(text=f"Winner: {winner_info['name']}!", fg=THEME["accent_secondary"])
+            self.sfx.play("pot_rake")
+            self._show_game_control_buttons()
 
     def _submit_human_action(self, action_str):
         """Submits the human's action to the backend in a separate thread."""
