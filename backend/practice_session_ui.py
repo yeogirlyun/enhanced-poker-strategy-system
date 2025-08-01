@@ -63,12 +63,9 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        self._draw_table()
-        self._setup_player_seats(self.num_players)
-        self._setup_community_card_area()
-        self._setup_pot_display()
+        # Use scaled drawing from the start to ensure centering
+        self._redraw_table_with_scale()
         self._create_human_action_controls()
-        self._setup_info_panel()
 
     def _draw_table(self):
         """Draws the main poker table shape."""
@@ -323,24 +320,32 @@ class PracticeSessionUI(ttk.Frame):
 
     def _update_info_panel(self):
         """Updates the information panel with current game state."""
-        info_text = f"""GAME STATE
-{'='*20}
+        # Get player position name
+        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        current_position = positions[self.current_player] if self.current_player < len(positions) else "Unknown"
+        
+        info_text = f"""🎮 GAME STATE
+{'='*30}
 
-Current Player: Player {self.current_player + 1}
-Position: {self.player_seats[self.current_player]['position']}
-Current Bet: ${self.current_bet:.2f}
-Min Bet: ${self.min_bet:.2f}
+👤 Current Player: Player {self.current_player + 1}
+📍 Position: {current_position}
+💰 Current Bet: ${self.current_bet:.2f}
+🎯 Min Bet: ${self.min_bet:.2f}
 
-Community Cards: {len(self.community_cards)}/5
-Pot Size: ${self.pot:.2f}
+🃏 Community Cards: {len(self.community_cards)}/5
+🏆 Pot Size: ${self.pot:.2f}
 
-Strategy: {self.strategy_data.get_strategy_file_display_name()}
+📊 Strategy: {self.strategy_data.get_strategy_file_display_name()}
+
+🎯 Your Turn: {'Yes' if self.current_player == 0 else 'No'}
 """
         
-        self.info_text.config(state=tk.NORMAL)
-        self.info_text.delete(1.0, tk.END)
-        self.info_text.insert(1.0, info_text)
-        self.info_text.config(state=tk.DISABLED)
+        # Only update if info_text widget exists
+        if hasattr(self, 'info_text'):
+            self.info_text.config(state=tk.NORMAL)
+            self.info_text.delete(1.0, tk.END)
+            self.info_text.insert(1.0, info_text)
+            self.info_text.config(state=tk.DISABLED)
 
     def start_new_hand(self):
         """Starts a new hand."""
@@ -709,9 +714,9 @@ Strategy: {self.strategy_data.get_strategy_file_display_name()}
         if hasattr(self, 'info_panel'):
             self.info_panel.destroy()
         
-        # Create scaled info panel
-        panel_width = int(200 * self.table_scale)
-        panel_height = int(150 * self.table_scale)
+        # Create scaled info panel with larger dimensions
+        panel_width = int(250 * self.table_scale)
+        panel_height = int(200 * self.table_scale)
         
         self.info_panel = tk.Frame(
             self.canvas, 
@@ -720,34 +725,47 @@ Strategy: {self.strategy_data.get_strategy_file_display_name()}
             relief="ridge"
         )
         
+        # Scale title font
+        title_font_size = int(FONTS["header"][1] * self.table_scale)
         title_label = tk.Label(
             self.info_panel, 
             text="Game Information", 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
-            font=(FONTS["header"][0], int(FONTS["header"][1] * self.table_scale), "bold")
+            font=(FONTS["header"][0], title_font_size, "bold")
         )
-        title_label.pack(pady=5)
+        title_label.pack(pady=int(5 * self.table_scale))
+        
+        # Scale text widget with larger dimensions
+        text_height = int(12 * self.table_scale)
+        text_width = int(30 * self.table_scale)
+        text_font_size = int(12 * self.table_scale)
         
         self.info_text = tk.Text(
             self.info_panel,
-            height=int(8 * self.table_scale),
-            width=int(25 * self.table_scale),
-            font=("Consolas", int(10 * self.table_scale)),
+            height=text_height,
+            width=text_width,
+            font=("Consolas", text_font_size),
             bg=THEME["secondary_bg"],
             fg=THEME["text"],
-            state=tk.DISABLED
+            state=tk.DISABLED,
+            wrap=tk.WORD
         )
-        self.info_text.pack(padx=5, pady=5)
+        self.info_text.pack(padx=int(5 * self.table_scale), pady=int(5 * self.table_scale))
         
-        # Position info panel in top-left
+        # Position info panel in top-left with scaled positioning
+        panel_x = int(50 * self.table_scale)
+        panel_y = int(50 * self.table_scale)
         self.canvas.create_window(
-            int(50 * self.table_scale), 
-            int(50 * self.table_scale), 
+            panel_x, 
+            panel_y, 
             window=self.info_panel, 
             width=panel_width, 
             height=panel_height
         )
+        
+        # Update the info panel with current game state
+        self._update_info_panel()
 
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display (e.g., 'As' -> 'A♠')."""
