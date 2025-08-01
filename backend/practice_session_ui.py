@@ -16,6 +16,8 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk, messagebox
 import math
+import threading
+import time
 from typing import Optional
 
 from gui_models import THEME, FONTS
@@ -41,6 +43,8 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_state_change = self.update_display
+        # Connect hand log callback
+        self.state_machine.on_log_entry = self._log_hand_action
         # --- END NEW ---
         
         # Initialize game state (keep for backward compatibility)
@@ -573,9 +577,49 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.execute_action(player, action, amount)
         self.update_display()
 
+        # --- NEW: Start the game loop in a separate thread ---
+        game_thread = threading.Thread(target=self.run_game_loop, daemon=True)
+        game_thread.start()
+        # --- END NEW ---
+
         # Hide controls after action
         for widget in self.human_action_controls.values():
             widget.pack_forget()
+
+    def run_game_loop(self):
+        """Handles the game flow for all non-human players."""
+        while True:
+            current_player = self.state_machine.get_action_player()
+            if not current_player or self.state_machine.get_current_state() == PokerState.END_HAND:
+                break  # End the loop if the hand is over or no one can act
+
+            if not current_player.is_human:
+                time.sleep(1.0)  # Artificial delay for bot "thinking"
+                self.state_machine.execute_bot_action(current_player)
+                self.winfo_toplevel().after(0, self.update_display)  # Schedule UI update on the main thread
+            else:
+                # It's the human's turn again, break the loop and wait for input
+                break
+
+    def show_action_animation(self, player_index, action_text, color="yellow"):
+        """Displays a temporary action message over a player's seat."""
+        if player_index < len(self.player_seats):
+            player_seat = self.player_seats[player_index]
+            x, y = player_seat["frame"].winfo_x(), player_seat["frame"].winfo_y()
+
+            action_label = tk.Label(self.canvas, text=action_text, bg=color, fg="black", 
+                                  font=(FONTS["main"], 12, "bold"))
+            self.canvas.create_window(x, y - 40, window=action_label, anchor="s")
+
+            # Fade out the label after 1.5 seconds
+            self.after(1500, lambda: action_label.destroy())
+
+    def _log_hand_action(self, log_entry):
+        """Log hand actions to the main GUI hand log."""
+        # Find the main GUI window and update its hand log
+        root = self.winfo_toplevel()
+        if hasattr(root, 'update_hand_log'):
+            root.update_hand_log(log_entry)
 
     def increase_table_size(self):
         """Increase table size."""

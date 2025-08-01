@@ -988,6 +988,30 @@ class EnhancedMainGUI:
         )
         self.game_statistics.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Hand Log tab
+        hand_log_frame = ttk.Frame(self.game_notebook)
+        self.game_notebook.add(hand_log_frame, text="Hand Log")
+
+        self.hand_log_text = tk.Text(
+            hand_log_frame,
+            height=15,
+            font=("Consolas", 10),
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            state=tk.DISABLED
+        )
+        self.hand_log_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def update_hand_log(self, log_entry):
+        """Update the hand log with a new entry."""
+        if hasattr(self, 'hand_log_text'):
+            self.hand_log_text.config(state=tk.NORMAL)
+            timestamp = datetime.now().strftime('%H:%M:%S')
+            formatted_entry = f"[{timestamp}] {log_entry}\n"
+            self.hand_log_text.insert(tk.END, formatted_entry)
+            self.hand_log_text.see(tk.END)  # Auto-scroll to bottom
+            self.hand_log_text.config(state=tk.DISABLED)
+
     def _start_enhanced_game(self):
         """Start the enhanced poker game."""
         try:
