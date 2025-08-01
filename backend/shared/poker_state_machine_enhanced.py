@@ -417,16 +417,21 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_flop(self):
         """Deal the flop."""
-        self._log_action("Dealing flop")
+        self._log_action("🎴 DEALING FLOP")
         
         # Burn card
         if self.game_state.deck:
             self.game_state.deck.pop()
 
         # Deal 3 community cards
-        for _ in range(3):
-            self.game_state.board.append(self.deal_card())
+        for i in range(3):
+            card = self.deal_card()
+            self.game_state.board.append(card)
+            self._log_action(f"🎴 Dealt card {i+1}: {card}")
 
+        self._log_action(f"🎴 FLOP COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_action(f"📊 Pot before flop betting: ${self.game_state.pot:.2f}")
+        
         self.prepare_new_betting_round()
         self.transition_to(PokerState.FLOP_BETTING)
 
@@ -1028,7 +1033,12 @@ class ImprovedPokerStateMachine:
             if errors:
                 raise ValueError(f"Invalid action: {'; '.join(errors)}")
             
-            # --- NEW: Call the state logger here ---
+            # --- ENHANCED: Detailed Action Logging ---
+            self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
+            self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
+            self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
+            
+            # Call the state logger here
             self.log_state_change(player, action, amount)
             
         except Exception as e:
@@ -1144,12 +1154,16 @@ class ImprovedPokerStateMachine:
         # Check for a winner only if this was a fold action
         if action == ActionType.FOLD:
             active_players = [p for p in self.game_state.players if p.is_active]
+            self._log_action(f"🎯 After {player.name} folded, active players: {[p.name for p in active_players]}")
+            
             if len(active_players) == 1:
                 winner = active_players[0]
                 winner.stack += self.game_state.pot
                 pot_amount = self.game_state.pot
                 self.game_state.pot = 0
-                self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
+                self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
+                self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
+                
                 # Only transition if not already in END_HAND state
                 if self.current_state != PokerState.END_HAND:
                     self.transition_to(PokerState.END_HAND)
@@ -1194,7 +1208,11 @@ class ImprovedPokerStateMachine:
 
     def handle_round_complete(self):
         """Handle round completion."""
-        self._log_action("Round complete")
+        self._log_action("🔄 ROUND COMPLETE")
+        self._log_action(f"📊 Current state: {self.current_state}")
+        self._log_action(f"🎴 Community cards: {self.game_state.board}")
+        self._log_action(f"💰 Pot size: ${self.game_state.pot:.2f}")
+        
         if self.on_round_complete:
             self.on_round_complete()
 
@@ -1207,7 +1225,10 @@ class ImprovedPokerStateMachine:
         
         next_state = state_transitions.get(self.current_state)
         if next_state:
+            self._log_action(f"🔄 Transitioning from {self.current_state} to {next_state}")
             self.transition_to(next_state)
+        else:
+            self._log_action(f"❌ No valid transition found for state {self.current_state}")
 
     def evaluate_hand_cached(self, player_cards: List[str], board: List[str]) -> Tuple[int, List[int]]:
         """Cached version of hand evaluation."""
