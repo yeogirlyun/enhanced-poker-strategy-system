@@ -411,63 +411,69 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.config(state=tk.DISABLED)
 
     def _create_human_action_controls(self, parent_frame):
-        """Creates the buttons and entry for human player actions."""
-        # Center the controls frame itself
+        """Creates a modern, dynamic action bar for the human player."""
         parent_frame.grid_columnconfigure(0, weight=1)
-        inner_frame = ttk.Frame(parent_frame)
-        inner_frame.grid(row=0, column=0)
+        action_bar_frame = ttk.Frame(parent_frame)
+        action_bar_frame.grid(row=0, column=0, pady=5)
 
-        # Action buttons
+        # --- Action Buttons ---
         self.human_action_controls['fold'] = ttk.Button(
-            inner_frame, 
+            action_bar_frame, 
             text="Fold", 
-            command=lambda: self._submit_human_action("fold"),
-            style="Danger.TButton"
+            style="Danger.TButton", 
+            command=lambda: self._submit_human_action("fold")
         )
+        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
         ToolTip(self.human_action_controls['fold'], "Fold your hand and exit the current round")
-        
+
         self.human_action_controls['check'] = ttk.Button(
-            inner_frame, 
+            action_bar_frame, 
             text="Check", 
             command=lambda: self._submit_human_action("check")
         )
+        self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
         ToolTip(self.human_action_controls['check'], "Check (pass) if no bet to call")
         
         self.human_action_controls['call'] = ttk.Button(
-            inner_frame, 
+            action_bar_frame, 
             text="Call", 
             command=lambda: self._submit_human_action("call")
         )
+        self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
         ToolTip(self.human_action_controls['call'], "Call the current bet")
-        
-        self.human_action_controls['bet'] = ttk.Button(
-            inner_frame, 
-            text="Bet", 
-            command=lambda: self._submit_human_action("bet"),
-            style="Primary.TButton"
-        )
-        ToolTip(self.human_action_controls['bet'], "Make a bet")
-        
-        self.human_action_controls['raise'] = ttk.Button(
-            inner_frame, 
-            text="Raise", 
-            command=lambda: self._submit_human_action("raise"),
-            style="Primary.TButton"
-        )
-        ToolTip(self.human_action_controls['raise'], "Raise the current bet")
-        
-        # Amount entry
-        self.amount_var = tk.StringVar(value="20")
-        self.human_action_controls['amount_entry'] = ttk.Entry(
-            inner_frame, 
-            textvariable=self.amount_var, 
-            width=10
-        )
-        ToolTip(self.human_action_controls['amount_entry'], "Enter bet/raise amount")
 
-        # Start hand button
+        # --- Bet Sizing Slider ---
+        sizing_frame = ttk.Frame(action_bar_frame)
+        sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+        
+        self.bet_size_var = tk.DoubleVar()
+        self.bet_slider = ttk.Scale(
+            sizing_frame, 
+            from_=0, 
+            to=100, 
+            orient=tk.HORIZONTAL, 
+            variable=self.bet_size_var, 
+            length=200
+        )
+        self.bet_slider.pack(fill=tk.X)
+        self.bet_slider.bind("<B1-Motion>", self._update_bet_size_label)
+        
+        self.bet_size_label = ttk.Label(sizing_frame, text="$0.00", font=FONTS["main"])
+        self.bet_size_label.pack()
+
+        # --- Bet/Raise Button ---
+        self.human_action_controls['bet_raise'] = ttk.Button(
+            action_bar_frame, 
+            text="Bet", 
+            style="Primary.TButton", 
+            command=self._submit_bet_raise
+        )
+        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+        ToolTip(self.human_action_controls['bet_raise'], "Make a bet or raise")
+
+        # --- Start Hand Button ---
         self.human_action_controls['start_hand'] = ttk.Button(
-            inner_frame, 
+            action_bar_frame, 
             text="Start Hand", 
             command=self.start_new_hand,
             style="Success.TButton"
@@ -477,9 +483,19 @@ class PracticeSessionUI(ttk.Frame):
         # Initially hide all controls except start hand
         for widget in self.human_action_controls.values():
             widget.pack_forget()
-        
-        # Show start hand button initially
         self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+
+    def _update_bet_size_label(self, event=None):
+        """Updates the label for the bet sizing slider."""
+        self.bet_size_label.config(text=f"${self.bet_size_var.get():.2f}")
+
+    def _submit_bet_raise(self):
+        """Submits a bet or raise action based on context."""
+        game_info = self.state_machine.get_game_info()
+        if game_info and game_info.get('current_bet', 0) > 0:
+            self._submit_human_action("raise")
+        else:
+            self._submit_human_action("bet")
 
     def update_display(self, new_state=None):
         """Updates the entire UI based on the current game state from the state machine."""
@@ -696,15 +712,33 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
         
         # Check if player can check (no current bet) or must call
-        current_bet = self.state_machine.game_state.current_bet
+        game_info = self.state_machine.get_game_info()
+        current_bet = game_info.get('current_bet', 0) if game_info else 0
+        
         if current_bet == 0:
             self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
         else:
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
         
-        self.human_action_controls['bet'].pack(side=tk.LEFT, padx=5)
-        self.human_action_controls['raise'].pack(side=tk.LEFT, padx=5)
-        self.human_action_controls['amount_entry'].pack(side=tk.LEFT, padx=5)
+        # Show bet sizing slider and bet/raise button
+        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
+        
+        # Configure slider range and button text based on context
+        if current_bet > 0:
+            self.human_action_controls['bet_raise'].config(text="Raise")
+            # Set slider range for raise (current bet to player stack)
+            player_stack = game_info['players'][0]['stack'] if game_info else 100
+            self.bet_slider.config(from_=current_bet, to=player_stack)
+            self.bet_size_var.set(current_bet * 2)  # Default to 2x current bet
+        else:
+            self.human_action_controls['bet_raise'].config(text="Bet")
+            # Set slider range for bet (min bet to player stack)
+            player_stack = game_info['players'][0]['stack'] if game_info else 100
+            min_bet = game_info.get('min_raise', 1) if game_info else 1
+            self.bet_slider.config(from_=min_bet, to=player_stack)
+            self.bet_size_var.set(min_bet)
+        
+        self._update_bet_size_label()
 
     def _submit_human_action(self, action_str):
         """Submits the human's chosen action to the state machine."""
@@ -728,10 +762,9 @@ class PracticeSessionUI(ttk.Frame):
 
         amount = 0
         if action in [ActionType.BET, ActionType.RAISE]:
-            try:
-                amount = float(self.amount_var.get())
-            except ValueError:
-                messagebox.showerror("Invalid Amount", "Please enter a valid number.")
+            amount = self.bet_size_var.get()
+            if amount <= 0:
+                messagebox.showerror("Invalid Amount", "Please set a valid bet amount using the slider.")
                 return
 
         # Play sound effect based on action
