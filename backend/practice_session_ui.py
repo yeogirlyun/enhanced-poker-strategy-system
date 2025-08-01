@@ -753,56 +753,59 @@ class PracticeSessionUI(ttk.Frame):
         # The state machine will now automatically call prompt_human_action via its callback
 
     def handle_hand_complete(self, winner_info=None):
-        """Handles the completion of a hand by displaying the winner on the UI."""
+        """
+        Handles hand completion by getting the definitive winner from the state machine
+        and updating the UI accordingly.
+        """
         self.sfx.play("winner_announce")
         
-        # --- NEW: Call update_display to show the final state ---
-        self.update_display()
-        # --- END NEW ---
-
-        winner_info = self.state_machine.determine_winner()
-
-        if winner_info:
-            winner_names = ", ".join(p.name for p in winner_info)
+        # Get the one true winner directly from the state machine's trusted method
+        winner_list = self.state_machine.determine_winner()
+        
+        if winner_list:
+            winner_names = ", ".join(p.name for p in winner_list)
             
-            # --- FIX: Get the actual pot amount before it's distributed ---
             # Calculate total pot from all player investments
             total_pot = sum(p.total_invested for p in self.state_machine.game_state.players)
-            winner_amount = total_pot / len(winner_info) if winner_info else 0
+            winner_amount = total_pot / len(winner_list) if winner_list else 0
             
-            self._log_message(f"🏆 WINNER ANNOUNCEMENT: {winner_names} wins ${winner_amount:.2f}")
-            self._log_message(f"💰 Total pot: ${total_pot:.2f}, Split among {len(winner_info)} winners")
+            self._log_message(f"🏆 DEFINITIVE WINNER: {winner_names} wins ${winner_amount:.2f}")
+            self._log_message(f"💰 Total pot: ${total_pot:.2f}, Split among {len(winner_list)} winners")
             
-            # Update pot label with winner announcement
+            # Update the main pot label to announce the winner
             if hasattr(self, 'pot_label'):
                 self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
             
             # Add game message
             self.add_game_message(f"🏆 {winner_names} wins ${winner_amount:.2f}!")
             
-            # Highlight winning players
-            for i, seat in enumerate(self.player_seats):
+            # Highlight all winning players on the table
+            for i, seat_widgets in enumerate(self.player_seats):
                 if i < len(self.state_machine.game_state.players):
                     player_info = self.state_machine.game_state.players[i]
-                    if player_info.name in [p.name for p in winner_info]:
-                        seat["frame"].config(bg=THEME["accent_secondary"])
+                    if player_info.name in [p.name for p in winner_list]:
+                        seat_widgets["frame"].config(bg=THEME["accent_secondary"])
                         self._log_message(f"🎯 Highlighting winner seat {i}: {player_info.name}")
+        else:
+            self._log_message("🏁 No winner determined - hand may have ended in a tie or error")
+            self.add_game_message("🏁 Hand complete!")
+            if hasattr(self, 'pot_label'):
+                self.pot_label.config(text="Pot: $0.00", fg="yellow")
 
-        # Play winner sound
         self.sfx.play("pot_rake")
         
         # Hide the action controls
         for control in self.human_action_controls.values():
             if hasattr(control, 'pack_forget'):
                 control.pack_forget()
-        
+
         # Show game control buttons
         self._show_game_control_buttons()
         
         # Add message about starting new hand
         self.add_game_message("💡 Click '🚀 Start New Hand' to begin a new game!")
         
-        # Prompt for new hand after delay
+        # Prompt for a new hand after a delay
         self.after(3000, self._show_game_control_buttons)
 
     def _animate_pot_collection(self, winner_name, winner_x, winner_y):
