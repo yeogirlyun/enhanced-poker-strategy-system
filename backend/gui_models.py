@@ -219,9 +219,14 @@ class StrategyData:
             return False
 
     def _create_strategy_from_tiers(self) -> Dict[str, Any]:
-        """Creates strategy data using the comprehensive equity table for HS scores."""
-        # --- NEW: Use the equity table as the single source of truth for HS scores ---
-        hand_strength_table = PREFLOP_EQUITY_TABLE.copy()
+        """Creates strategy data from tiers, using the equity table for HS scores."""
+        hand_strength_table = {}
+
+        # --- NEW: Only include hands that are in a tier ---
+        for tier in self.tiers:
+            for hand in tier.hands:
+                if hand in PREFLOP_EQUITY_TABLE:
+                    hand_strength_table[hand] = PREFLOP_EQUITY_TABLE[hand]
         # --- END NEW ---
 
         # Complete postflop strategy with all positions and streets

@@ -560,23 +560,36 @@ class ImprovedPokerStateMachine:
         
         try:
             if street == "preflop":
+                # --- NEW: TIER-BASED DECISION LOGIC ---
+                tier_name = None
+                player_hand_str = self.get_hand_notation(player.cards)
+                
+                # Check if hand is in any tier
+                for tier in self.strategy_data.tiers:
+                    if player_hand_str in tier.hands:
+                        tier_name = tier.name
+                        break
+
+                if not tier_name:
+                    return ActionType.FOLD, 0  # If the hand is not in any tier, fold it
+
+                # Now, use the tier name and HS score for decisions
                 hand_strength = self.get_preflop_hand_strength(player.cards)
                 
-                # --- IMPROVED BOT LOGIC WITH 3-BETTING ---
                 # If facing a raise (current_bet > big blind)
                 if self.game_state.current_bet > self.game_state.big_blind:
                     # Get vs_raise rules from strategy (or use defaults)
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
                     # --- IMPROVED 3-BETTING LOGIC WITH BACKWARD COMPATIBILITY ---
-                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 40)
+                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 75)
                     sizing = vs_raise_rules.get("sizing", 3.0)
                     
                     # Handle both call_range (new) and call_thresh (old) formats
                     call_range = vs_raise_rules.get("call_range", None)
                     if call_range is None:
                         # Backward compatibility: convert call_thresh to call_range
-                        call_thresh = vs_raise_rules.get("call_thresh", 0)
+                        call_thresh = vs_raise_rules.get("call_thresh", 65)
                         call_range = [call_thresh, value_3bet_thresh - 1]
                     
                     if hand_strength >= value_3bet_thresh:
@@ -589,7 +602,7 @@ class ImprovedPokerStateMachine:
                 else:  # This is an opening opportunity
                     # Use existing open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
-                    threshold = open_rules.get(position, {}).get("threshold", 20)
+                    threshold = open_rules.get(position, {}).get("threshold", 60)
                     sizing = open_rules.get(position, {}).get("sizing", 3.0)
                     
                     # --- NEW: ADJUST FOR LIMPERS ---
@@ -606,6 +619,7 @@ class ImprovedPokerStateMachine:
                         if player.position == "BB" and self.game_state.current_bet == self.game_state.big_blind:
                             return ActionType.CHECK, 0
                         return ActionType.FOLD, 0
+                # --- END TIER-BASED LOGIC ---
             else:
                 # Use postflop strategy with advanced pot odds
                 hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
@@ -651,6 +665,25 @@ class ImprovedPokerStateMachine:
             pass
         
         return self.get_basic_bot_action(player)
+
+    def get_hand_notation(self, cards: List[str]) -> str:
+        """Converts two cards into standard poker notation (e.g., AKs, T9o, 77)."""
+        if len(cards) != 2:
+            return ""
+
+        rank1, suit1 = cards[0][0], cards[0][1]
+        rank2, suit2 = cards[1][0], cards[1][1]
+
+        if rank1 == rank2:
+            return f"{rank1}{rank2}"
+        else:
+            suited = "s" if suit1 == suit2 else "o"
+            # Order the ranks correctly (e.g., AKs, not KAs)
+            rank_order = "AKQJT98765432"
+            if rank_order.index(rank1) < rank_order.index(rank2):
+                return f"{rank1}{rank2}{suited}"
+            else:
+                return f"{rank2}{rank1}{suited}"
 
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using enhanced evaluator."""
