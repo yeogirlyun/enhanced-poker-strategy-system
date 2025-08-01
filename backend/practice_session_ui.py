@@ -90,8 +90,10 @@ class PracticeSessionUI(ttk.Frame):
 
         self._create_human_action_controls()
         
-        # Initial draw
+        # Initial draw and state machine initialization
         self.after(100, self._on_resize, None)
+        # Initialize state machine after UI is set up
+        self.after(200, self._initialize_state_machine)
 
     def _on_resize(self, event):
         """Redraws the entire table and its elements when the window is resized."""
@@ -524,7 +526,11 @@ class PracticeSessionUI(ttk.Frame):
         for i, seat in enumerate(self.player_seats):
             if i < len(self.player_stacks):
                 seat['stack'].config(text=f"${self.player_stacks[i]:.2f}")
-                seat['cards'].config(text="")
+                # Show placeholder cards instead of empty strings
+                if i == 0:  # Human player
+                    seat['cards'].config(text="🂠 🂠")
+                else:
+                    seat['cards'].config(text="🂠 🂠" if i < 6 else "")
                 seat['frame'].config(bg=THEME["secondary_bg"])
                 seat['name'].config(fg=THEME["text"])
         
@@ -612,12 +618,22 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.insert(1.0, info_text)
             self.info_text.config(state=tk.DISABLED)
 
+    def _initialize_state_machine(self):
+        """Initialize the state machine and start the first hand."""
+        print(f"🎮 Initializing state machine")
+        self.state_machine.start_hand(existing_players=None)
+        self.update_display()
+        print(f"✅ State machine initialized")
+
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
         print(f"🎮 Starting new hand with state machine")
         
         # Initialize the state machine properly with existing players
         self.state_machine.start_hand(existing_players=None)
+        
+        # Force an immediate update to show the initial state
+        self.update_display()
         
         # Wait a moment for state machine to initialize
         self.after(100, self._continue_hand_start)
