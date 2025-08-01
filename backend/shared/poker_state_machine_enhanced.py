@@ -514,8 +514,15 @@ class ImprovedPokerStateMachine:
         """Check if betting round is complete with all-in handling."""
         active_players = [p for p in self.game_state.players if p.is_active]
 
-        if len(active_players) <= 1:
-            return True
+        # --- NEW: For practice sessions, always deal community cards ---
+        # Only end the hand immediately if we're in a later street (flop, turn, river)
+        # This ensures we always see the flop for practice purposes
+        if len(active_players) <= 1 and self.game_state.street == "preflop":
+            self._log_action("🎯 PRACTICE MODE: Only one player active, but continuing to flop for practice")
+            return False  # Don't end the hand, continue to flop
+        elif len(active_players) <= 1:
+            return True  # End hand in later streets if only one player remains
+        # --- END NEW ---
 
         can_act_players = [p for p in active_players if not p.is_all_in]
 
