@@ -89,6 +89,7 @@ class PracticeSessionUI(ttk.Frame):
         # --- END NEW ---
 
         self._create_human_action_controls()
+        self._create_game_message_area()
         
         # Initial draw only - don't initialize state machine automatically
         self.after(100, self._on_resize, None)
@@ -383,6 +384,41 @@ class PracticeSessionUI(ttk.Frame):
         
         ToolTip(info_frame, "Current game information and status")
 
+    def _create_game_message_area(self):
+        """Creates a game message area for displaying hand actions and game state."""
+        # Create a frame for game messages on the right side
+        self.game_message_frame = ttk.LabelFrame(self, text="Game Messages", padding=10)
+        self.game_message_frame.place(relx=0.75, rely=0.1, relwidth=0.23, relheight=0.8)
+        
+        # Create text widget for messages
+        self.game_message_text = tk.Text(
+            self.game_message_frame,
+            height=20,
+            width=40,
+            font=("Consolas", 10),
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            state=tk.DISABLED,
+            wrap=tk.WORD
+        )
+        self.game_message_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(self.game_message_frame, orient=tk.VERTICAL, command=self.game_message_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.game_message_text.config(yscrollcommand=scrollbar.set)
+        
+        # Add initial message
+        self.add_game_message("Welcome to Poker Practice Session!\nClick 'Start New Hand' to begin.")
+
+    def add_game_message(self, message):
+        """Add a message to the game message area."""
+        if hasattr(self, 'game_message_text'):
+            self.game_message_text.config(state=tk.NORMAL)
+            self.game_message_text.insert(tk.END, f"{message}\n")
+            self.game_message_text.see(tk.END)
+            self.game_message_text.config(state=tk.DISABLED)
+
     def _create_human_action_controls(self):
         """Creates the buttons and entry for human player actions."""
         controls_frame = ttk.Frame(self, style="TFrame")
@@ -491,9 +527,14 @@ class PracticeSessionUI(ttk.Frame):
                 # Show cards for all players at showdown, otherwise only for the human
                 if (self.state_machine.get_current_state() == PokerState.SHOWDOWN or 
                     player_info['is_human']):
-                    cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
-                    seat['cards'].config(text=cards_text)
-                    print(f"🎴 Showing cards for {player_info['name']}: {cards_text}")
+                    # Format cards properly and ensure they display
+                    if player_info['cards'] and player_info['cards'] != ['**', '**']:
+                        cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
+                        seat['cards'].config(text=cards_text)
+                        print(f"🎴 Showing cards for {player_info['name']}: {cards_text}")
+                    else:
+                        seat['cards'].config(text="🂠 🂠")
+                        print(f"🂠 No cards for {player_info['name']}")
                 else:
                     seat['cards'].config(text="🂠 🂠" if player_info['is_active'] else "")
                     print(f"🂠 Hiding cards for {player_info['name']}")
@@ -623,6 +664,7 @@ class PracticeSessionUI(ttk.Frame):
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
         print(f"🎮 Starting new hand with state machine")
+        self.add_game_message("🎮 Starting new hand...")
         
         # Initialize the state machine properly with existing players
         self.state_machine.start_hand(existing_players=None)
@@ -717,6 +759,7 @@ class PracticeSessionUI(ttk.Frame):
 
         # Use the state machine to execute the action
         print(f"🎮 Executing action: {action_str} with amount: {amount}")
+        self.add_game_message(f"🎮 Player 1: {action_str.upper()} ${amount:.2f}")
         self.state_machine.execute_action(player, action, amount)
         self.update_display()
 
