@@ -399,6 +399,34 @@ class EnhancedMainGUI:
         reset_game_btn.pack(side=tk.LEFT, padx=5)
         ToolTip(reset_game_btn, "Reset the current game state")
         
+        # Add table size controls
+        size_frame = ttk.Frame(control_frame)
+        size_frame.pack(side=tk.RIGHT, padx=10)
+        
+        size_label = ttk.Label(size_frame, text="Table Size:")
+        size_label.pack(side=tk.LEFT, padx=5)
+        ToolTip(size_label, "Adjust the size of the poker table")
+        
+        # Smaller table button
+        smaller_btn = ttk.Button(
+            size_frame, 
+            text="🔍 -", 
+            command=self._decrease_table_size,
+            width=3
+        )
+        smaller_btn.pack(side=tk.LEFT, padx=2)
+        ToolTip(smaller_btn, "Make table smaller")
+        
+        # Larger table button
+        larger_btn = ttk.Button(
+            size_frame, 
+            text="🔍 +", 
+            command=self._increase_table_size,
+            width=3
+        )
+        larger_btn.pack(side=tk.LEFT, padx=2)
+        ToolTip(larger_btn, "Make table larger")
+        
         # Create the graphical practice session UI
         self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
         self.practice_ui.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -1075,6 +1103,22 @@ Ready to track performance...
             # Reset the practice session
             self.practice_ui.__init__(self.practice_ui.master, self.strategy_data)
             self.set_status("🔄 Practice game reset successfully")
+        else:
+            self.set_status("Error: Practice session not initialized", duration=3000)
+
+    def _increase_table_size(self):
+        """Increase the table size."""
+        if hasattr(self, 'practice_ui'):
+            self.practice_ui.increase_table_size()
+            self.set_status("🔍 Table size increased")
+        else:
+            self.set_status("Error: Practice session not initialized", duration=3000)
+
+    def _decrease_table_size(self):
+        """Decrease the table size."""
+        if hasattr(self, 'practice_ui'):
+            self.practice_ui.decrease_table_size()
+            self.set_status("🔍 Table size decreased")
         else:
             self.set_status("Error: Practice session not initialized", duration=3000)
 
