@@ -235,9 +235,8 @@ class PracticeSessionUI(ttk.Frame):
             else:
                 cards_label.config(text="Folded")
 
-            # Highlight current player (FIXED: Use correct player index)
-            current_action_player = self.state_machine.get_action_player()
-            if current_action_player and i == self.state_machine.action_player_index and player_info['is_active']:
+            # Highlight current player (FIXED: Use game_info action_player index)
+            if i == game_info['action_player'] and player_info['is_active']:
                 frame.config(bg=THEME["accent_primary"])
             else:
                 frame.config(bg=THEME["secondary_bg"])
