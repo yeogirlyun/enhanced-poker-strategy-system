@@ -46,8 +46,7 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls = {}
         
         self._setup_ui()
-        # Schedule the first draw after the UI has been mapped
-        self.after(50, self.start_new_hand)
+        # Don't automatically start a hand - let user click button
 
     def _setup_ui(self):
         """Sets up the UI layout with a responsive grid."""
@@ -71,6 +70,18 @@ class PracticeSessionUI(ttk.Frame):
         controls_frame = ttk.Frame(self)
         controls_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=10)
         self._create_human_action_controls(controls_frame)
+
+        # --- NEW: Add a Start New Hand button ---
+        start_button_frame = ttk.Frame(self)
+        start_button_frame.grid(row=1, column=1, sticky="se", padx=10, pady=10)
+        start_button = ttk.Button(
+            start_button_frame,
+            text="🚀 Start New Hand",
+            style="Primary.TButton",
+            command=self.start_new_hand
+        )
+        start_button.pack()
+        # --- END NEW ---
 
         # Bind the resize event
         self.canvas.bind("<Configure>", self._on_resize)
@@ -128,9 +139,20 @@ class PracticeSessionUI(ttk.Frame):
         stack_label = tk.Label(seat_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["small"])
         stack_label.pack()
         
+        # --- NEW: Dynamic font size for cards ---
+        card_font_size = max(12, int(self.canvas.winfo_height() / 35))
+        card_font = ("Arial", card_font_size, "bold")
+        # --- END NEW ---
+
         # Cards
-        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
-        cards_label.pack()
+        cards_label = tk.Label(
+            seat_frame, 
+            text="🂠 🂠", 
+            bg=THEME["secondary_bg"], 
+            fg="#CCCCCC", 
+            font=card_font  # Use the new dynamic font
+        )
+        cards_label.pack(pady=5)
         
         self.player_seat_frames.append(seat_frame) # Store the new frame
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
