@@ -291,12 +291,12 @@ class PracticeSessionUI(ttk.Frame):
     def _create_human_action_controls(self, parent_frame):
         """Creates a modern, dynamic action bar for the human player."""
         parent_frame.grid_columnconfigure(0, weight=1)
-        action_bar_frame = ttk.Frame(parent_frame)
-        action_bar_frame.grid(row=0, column=0, pady=5)
+        self.action_bar_frame = ttk.Frame(parent_frame)  # Store reference
+        self.action_bar_frame.grid(row=0, column=0, pady=5)
 
         # --- Action Buttons ---
         self.human_action_controls['fold'] = ttk.Button(
-            action_bar_frame, 
+            self.action_bar_frame, 
             text="Fold", 
             style="Danger.TButton", 
             command=lambda: self._submit_human_action("fold")
@@ -305,7 +305,7 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['fold'], "Fold your hand and exit the current round")
 
         self.human_action_controls['check'] = ttk.Button(
-            action_bar_frame, 
+            self.action_bar_frame, 
             text="Check", 
             command=lambda: self._submit_human_action("check")
         )
@@ -313,7 +313,7 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['check'], "Check (pass) if no bet to call")
         
         self.human_action_controls['call'] = ttk.Button(
-            action_bar_frame, 
+            self.action_bar_frame, 
             text="Call", 
             command=lambda: self._submit_human_action("call")
         )
@@ -321,7 +321,7 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.human_action_controls['call'], "Call the current bet")
 
         # --- Bet Sizing Slider ---
-        sizing_frame = ttk.Frame(action_bar_frame)
+        sizing_frame = ttk.Frame(self.action_bar_frame)
         sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
         
         self.bet_size_var = tk.DoubleVar()
@@ -341,7 +341,7 @@ class PracticeSessionUI(ttk.Frame):
 
         # --- Bet/Raise Button ---
         self.human_action_controls['bet_raise'] = ttk.Button(
-            action_bar_frame, 
+            self.action_bar_frame, 
             text="Bet", 
             style="Primary.TButton", 
             command=self._submit_bet_raise
@@ -351,7 +351,7 @@ class PracticeSessionUI(ttk.Frame):
 
         # --- Start Hand Button ---
         self.human_action_controls['start_hand'] = ttk.Button(
-            action_bar_frame, 
+            self.action_bar_frame, 
             text="Start Hand", 
             command=self.start_new_hand,
             style="Success.TButton"
@@ -415,7 +415,7 @@ class PracticeSessionUI(ttk.Frame):
         # --- ENHANCED: Ensure all action bar elements are visible ---
         # Make sure the action bar frame itself is visible
         if hasattr(self, 'action_bar_frame'):
-            self.action_bar_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
+            self.action_bar_frame.grid()  # Ensure it's visible in the grid
         
         # Ensure slider and label are visible
         if hasattr(self, 'bet_slider') and hasattr(self, 'bet_size_label'):
@@ -424,6 +424,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Add debug message
         self._log_message(f"DEBUG: Action bar configured - Current bet: ${game_info['current_bet']:.2f}, Player bet: ${player.current_bet:.2f}")
+        self._log_message(f"DEBUG: Action bar frame visible: {self.action_bar_frame.winfo_viewable()}")
         # --- END ENHANCED ---
 
     def _submit_human_action(self, action_str):
