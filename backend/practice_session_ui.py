@@ -468,10 +468,11 @@ class PracticeSessionUI(ttk.Frame):
             
             # --- NEW: Visual feedback for winner ---
             # Highlight the winning player's seat
-            for i, frame in enumerate(self.player_seat_frames):
+            for i, player_seat in enumerate(self.player_seats):
                 if i < len(self.state_machine.game_state.players):
                     player = self.state_machine.game_state.players[i]
                     if player.name == winner_name:
+                        frame = player_seat["frame"]
                         frame.config(bg=THEME["accent_secondary"])  # Winner highlight
                         # Add a temporary winner animation
                         self.after(2000, lambda f=frame: f.config(bg=THEME["secondary_bg"]))
