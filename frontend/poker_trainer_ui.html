@@ -288,14 +288,14 @@
             return (
                 <div className={playerClasses} style={positionStyles[seat]}>
                     <div className="p-2 rounded-lg bg-black/30 backdrop-blur-sm relative">
-                        <div className="font-bold text-lg">{player.name}</div>
-                        <div className="text-yellow-300 text-md">${player.stack.toFixed(2)}</div>
-                        <div className="text-xs uppercase opacity-80">{player.position}</div>
+                        <div className="font-bold text-2xl">{player.name}</div>
+                        <div className="text-yellow-300 text-xl font-bold">${player.stack.toFixed(2)}</div>
+                        <div className="text-sm uppercase opacity-80">{player.position}</div>
                         
                         {/* Betting indicator */}
                         {player.contributed > 0 && (
                             <>
-                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-10">
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-lg font-bold px-3 py-1 rounded-full shadow-lg z-10">
                                     ${player.contributed.toFixed(2)}
                                 </div>
                                 
