@@ -152,7 +152,10 @@ class PracticeSessionUI(ttk.Frame):
     # --- UI Update and Action Handling (Corrected) ---
 
     def _submit_human_action(self, action_str):
-        """Submits the human's chosen action to the state machine."""
+        """
+        Submits the human's action to the state machine and does nothing else.
+        The state machine will control all subsequent game flow via callbacks.
+        """
         player = self.state_machine.get_action_player()
         if not player or not player.is_human:
             return
@@ -160,19 +163,20 @@ class PracticeSessionUI(ttk.Frame):
         action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
         action = action_map.get(action_str)
         
-        # --- THIS IS THE CRITICAL BUG FIX ---
+        # FIX: Only get an amount for a bet or raise.
         amount = 0
-        # Only get an amount from the slider if the action is a BET or RAISE.
-        # For CHECK, FOLD, and CALL, the amount is handled by the state machine.
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
-        # --- End of Bug Fix ---
 
-        # (The rest of the method remains the same)
+        # Play sound
         sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
         if sound_to_play:
             self.sfx.play(sound_to_play)
 
+        # Hide the controls immediately. The state machine will show them again when it's our turn.
+        self._show_game_control_buttons()
+        
+        # Let the state machine handle EVERYTHING from here.
         self.state_machine.execute_action(player, action, amount)
 
     def prompt_human_action(self, player):
