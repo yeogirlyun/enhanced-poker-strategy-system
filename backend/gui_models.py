@@ -57,45 +57,34 @@ FONTS = {
     "small": ("Arial", 9),
 }
 
-# --- Preflop Equity Table ---
+# --- COMPREHENSIVE PREFLOP EQUITY TABLE ---
 PREFLOP_EQUITY_TABLE = {
-    # Premium hands
     'AA': 85, 'KK': 82, 'QQ': 80, 'JJ': 77, 'TT': 75,
-    'AKs': 67, 'AQs': 66, 'AJs': 65, 'ATs': 64,
-    'AKo': 65, 'AQo': 64, 'AJo': 63, 'ATo': 62,
-    
-    # Strong hands
     '99': 72, '88': 70, '77': 68, '66': 66, '55': 64,
-    'KQs': 63, 'KJs': 62, 'KTs': 61, 'KQo': 60,
-    'QJs': 61, 'QTs': 60, 'JTs': 59,
-    
-    # Medium hands
     '44': 62, '33': 60, '22': 58,
-    'A9s': 61, 'A8s': 60, 'A7s': 59, 'A6s': 58, 'A5s': 57, 'A4s': 56, 'A3s': 55, 'A2s': 54,
-    'K9s': 58, 'K8s': 57, 'K7s': 56, 'K6s': 55, 'K5s': 54, 'K4s': 53, 'K3s': 52, 'K2s': 51,
-    'Q9s': 57, 'Q8s': 56, 'Q7s': 55, 'Q6s': 54, 'Q5s': 53, 'Q4s': 52, 'Q3s': 51, 'Q2s': 50,
-    'J9s': 56, 'J8s': 55, 'J7s': 54, 'J6s': 53, 'J5s': 52, 'J4s': 51, 'J3s': 50, 'J2s': 49,
+    'AKs': 67, 'AQs': 66, 'AJs': 65, 'ATs': 64, 'A9s': 61, 'A8s': 60, 'A7s': 59, 'A6s': 58, 'A5s': 57, 'A4s': 56, 'A3s': 55, 'A2s': 54,
+    'AKo': 65, 'AQo': 64, 'AJo': 63, 'ATo': 62, 'A9o': 58, 'A8o': 57, 'A7o': 56, 'A6o': 55, 'A5o': 54, 'A4o': 53, 'A3o': 52, 'A2o': 51,
+    'KQs': 63, 'KJs': 62, 'KTs': 61, 'K9s': 58, 'K8s': 57, 'K7s': 56, 'K6s': 55, 'K5s': 54, 'K4s': 53, 'K3s': 52, 'K2s': 51,
+    'KQo': 61, 'KJo': 60, 'KTo': 59, 'K9o': 55, 'K8o': 54, 'K7o': 53, 'K6o': 52, 'K5o': 51, 'K4o': 50, 'K3o': 49, 'K2o': 48,
+    'QJs': 60, 'QTs': 59, 'Q9s': 57, 'Q8s': 56, 'Q7s': 55, 'Q6s': 54, 'Q5s': 53, 'Q4s': 52, 'Q3s': 51, 'Q2s': 50,
+    'QJo': 58, 'QTo': 57, 'Q9o': 54, 'Q8o': 53, 'Q7o': 52, 'Q6o': 51, 'Q5o': 50, 'Q4o': 49, 'Q3o': 48, 'Q2o': 47,
+    'JTs': 58, 'J9s': 56, 'J8s': 55, 'J7s': 54, 'J6s': 53, 'J5s': 52, 'J4s': 51, 'J3s': 50, 'J2s': 49,
+    'JTo': 57, 'J9o': 53, 'J8o': 52, 'J7o': 51, 'J6o': 50, 'J5o': 49, 'J4o': 48, 'J3o': 47, 'J2o': 46,
     'T9s': 55, 'T8s': 54, 'T7s': 53, 'T6s': 52, 'T5s': 51, 'T4s': 50, 'T3s': 49, 'T2s': 48,
-    '98s': 54, '97s': 53, '96s': 52, '95s': 51, '94s': 50, '93s': 49, '92s': 48,
-    '87s': 53, '86s': 52, '85s': 51, '84s': 50, '83s': 49, '82s': 48,
-    '76s': 52, '75s': 51, '74s': 50, '73s': 49, '72s': 48,
-    '65s': 51, '64s': 50, '63s': 49, '62s': 48,
-    '54s': 50, '53s': 49, '52s': 48,
-    '43s': 49, '42s': 48,
-    '32s': 48,
-    
-    # Weak hands (offsuit)
-    'A9o': 58, 'A8o': 57, 'A7o': 56, 'A6o': 55, 'A5o': 54, 'A4o': 53, 'A3o': 52, 'A2o': 51,
-    'K9o': 55, 'K8o': 54, 'K7o': 53, 'K6o': 52, 'K5o': 51, 'K4o': 50, 'K3o': 49, 'K2o': 48,
-    'Q9o': 54, 'Q8o': 53, 'Q7o': 52, 'Q6o': 51, 'Q5o': 50, 'Q4o': 49, 'Q3o': 48, 'Q2o': 47,
-    'J9o': 53, 'J8o': 52, 'J7o': 51, 'J6o': 50, 'J5o': 49, 'J4o': 48, 'J3o': 47, 'J2o': 46,
     'T9o': 52, 'T8o': 51, 'T7o': 50, 'T6o': 49, 'T5o': 48, 'T4o': 47, 'T3o': 46, 'T2o': 45,
+    '98s': 54, '97s': 53, '96s': 52, '95s': 51, '94s': 50, '93s': 49, '92s': 48,
     '98o': 51, '97o': 50, '96o': 49, '95o': 48, '94o': 47, '93o': 46, '92o': 45,
+    '87s': 53, '86s': 52, '85s': 51, '84s': 50, '83s': 49, '82s': 48,
     '87o': 50, '86o': 49, '85o': 48, '84o': 47, '83o': 46, '82o': 45,
+    '76s': 52, '75s': 51, '74s': 50, '73s': 49, '72s': 48,
     '76o': 49, '75o': 48, '74o': 47, '73o': 46, '72o': 45,
+    '65s': 51, '64s': 50, '63s': 49, '62s': 48,
     '65o': 48, '64o': 47, '63o': 46, '62o': 45,
+    '54s': 50, '53s': 49, '52s': 48,
     '54o': 47, '53o': 46, '52o': 45,
+    '43s': 49, '42s': 48,
     '43o': 46, '42o': 45,
+    '32s': 48,
     '32o': 45,
 }
 
@@ -230,30 +219,10 @@ class StrategyData:
             return False
 
     def _create_strategy_from_tiers(self) -> Dict[str, Any]:
-        """Creates strategy data from current tiers with complete decision tables."""
-        # Create hand strength table from tiers
-        hand_strength_table = {}
-
-        for tier in self.tiers:
-            for hand in tier.hands:
-                # Use equity table if available, otherwise fallback to tier-based
-                if hand in PREFLOP_EQUITY_TABLE:
-                    strength = PREFLOP_EQUITY_TABLE[hand]
-                else:
-                    # Fallback to tier-based assignment
-                    if tier.name == "Elite":
-                        base_strength = 45
-                    elif tier.name == "Premium":
-                        base_strength = 35
-                    elif tier.name == "Gold":
-                        base_strength = 25
-                    elif tier.name == "Silver":
-                        base_strength = 15
-                    else:  # Bronze
-                        base_strength = 5
-                    strength = base_strength
-                
-                hand_strength_table[hand] = max(strength, 1)
+        """Creates strategy data using the comprehensive equity table for HS scores."""
+        # --- NEW: Use the equity table as the single source of truth for HS scores ---
+        hand_strength_table = PREFLOP_EQUITY_TABLE.copy()
+        # --- END NEW ---
 
         # Complete postflop strategy with all positions and streets
         postflop_strategy = {
