@@ -129,30 +129,29 @@ class PracticeSessionUI(ttk.Frame):
 
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
-        # FIX: Create a position mapping for 6 players
-        # This maps drawing order (visual position) to actual player index
-        # Drawing order: top(0), top-right(1), bottom-right(2), bottom(3), bottom-left(4), top-left(5)
-        # We want: Player 1 at top, Player 2 at top-right, etc.
-        position_map = [0, 1, 2, 3, 4, 5]  # Default mapping
+        # FIX: Create a reverse mapping to find the actual player index
+        # position_map tells us which player to draw at each visual position
+        position_map = [3, 4, 5, 0, 1, 2]
         
-        if self.num_players == 6:
-            # Adjust mapping to fix the offset
-            # Visual position 0 (top) -> Player 1 (index 0)
-            # Visual position 1 (top-right) -> Player 2 (index 1)
-            # But currently it seems offset by 3, so we need to adjust
-            position_map = [3, 4, 5, 0, 1, 2]  # This reverses the 3-position offset
+        # Create reverse map: for each player, find their visual position
+        reverse_map = [0] * self.num_players
+        for visual_pos, player_idx in enumerate(position_map):
+            reverse_map[player_idx] = visual_pos
         
-        for visual_pos in range(self.num_players):
+        # Now draw each player at their correct visual position
+        for actual_player_index in range(self.num_players):
+            # Find where this player should be drawn visually
+            visual_pos = reverse_map[actual_player_index]
+            
             # Calculate angle for this visual position
             angle = (2 * math.pi / self.num_players) * visual_pos - (math.pi / 2)
             x = center_x + radius_x * math.cos(angle)
             y = center_y + radius_y * math.sin(angle)
             
-            # Get the correct player index for this visual position
-            player_index = position_map[visual_pos]
+            self._log_message(f"DEBUG: Player {actual_player_index+1} -> Visual position {visual_pos} at ({x:.0f}, {y:.0f})")
             
-            self._log_message(f"DEBUG: Visual position {visual_pos} -> Player {player_index+1} at ({x:.0f}, {y:.0f})")
-            self._create_player_seat_widget(x, y, f"Player {player_index+1}", positions[player_index], player_index)
+            # Create widget and store at the ACTUAL player index
+            self._create_player_seat_widget(x, y, f"Player {actual_player_index+1}", positions[actual_player_index], actual_player_index)
 
     def _create_player_seat_widget(self, x, y, name, position, index):
         """Creates the Tkinter widgets for a single player seat."""
