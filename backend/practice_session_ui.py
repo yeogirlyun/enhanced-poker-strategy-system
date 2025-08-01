@@ -406,9 +406,15 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.start_hand()
         # The state machine will now automatically call prompt_human_action via its callback
 
-    def handle_hand_complete(self):
+    def handle_hand_complete(self, winner_info=None):
         """Handles the completion of a hand."""
-        self.add_game_message("🏁 Hand complete!")
+        if winner_info:
+            winner_name = winner_info["name"]
+            winner_amount = winner_info["amount"]
+            self.add_game_message(f"🏆 {winner_name} wins ${winner_amount:.2f}!")
+        else:
+            self.add_game_message("🏁 Hand complete!")
+        
         # Show start hand button again
         for widget in self.human_action_controls.values():
             widget.pack_forget()
