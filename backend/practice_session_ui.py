@@ -41,7 +41,7 @@ class PracticeSessionUI(ttk.Frame):
 
         # UI components
         self.num_players = 6
-        self.player_seat_frames = [] # Store frame references for redrawing
+        self.player_seats = []  # Store player seat widget dictionaries
         self.community_card_labels = []
         self.human_action_controls = {}
         
@@ -124,37 +124,20 @@ class PracticeSessionUI(ttk.Frame):
         center_x, center_y = width / 2, height / 2
         radius_x, radius_y = width * 0.42, height * 0.35
         
-        # Initialize the list with placeholders
-        self.player_seat_frames = [None] * self.num_players
+        # --- NEW: Initialize the list to store widget dictionaries ---
+        self.player_seats = [{} for _ in range(self.num_players)]
+        # --- END NEW ---
 
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
-        # FIX: Create a reverse mapping to find the actual player index
-        # position_map tells us which player to draw at each visual position
-        position_map = [3, 4, 5, 0, 1, 2]
-        
-        # Create reverse map: for each player, find their visual position
-        reverse_map = [0] * self.num_players
-        for visual_pos, player_idx in enumerate(position_map):
-            reverse_map[player_idx] = visual_pos
-        
-        # Now draw each player at their correct visual position
-        for actual_player_index in range(self.num_players):
-            # Find where this player should be drawn visually
-            visual_pos = reverse_map[actual_player_index]
-            
-            # Calculate angle for this visual position
-            angle = (2 * math.pi / self.num_players) * visual_pos - (math.pi / 2)
+        for i in range(self.num_players):
+            angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
             x = center_x + radius_x * math.cos(angle)
             y = center_y + radius_y * math.sin(angle)
-            
-            self._log_message(f"DEBUG: Player {actual_player_index+1} -> Visual position {visual_pos} at ({x:.0f}, {y:.0f})")
-            
-            # Create widget and store at the ACTUAL player index
-            self._create_player_seat_widget(x, y, f"Player {actual_player_index+1}", positions[actual_player_index], actual_player_index)
+            self._create_player_seat_widget(x, y, f"Player {i+1}", positions[i], i)
 
     def _create_player_seat_widget(self, x, y, name, position, index):
-        """Creates the Tkinter widgets for a single player seat."""
+        """Creates and stores all Tkinter widgets for a single player seat."""
         seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
         
         # Player name and position
@@ -180,9 +163,15 @@ class PracticeSessionUI(ttk.Frame):
         )
         cards_label.pack(pady=5)
         
-        # --- NEW: Store the frame at the correct index ---
-        self.player_seat_frames[index] = seat_frame
+        # --- NEW: Store all widgets in the player_seats list ---
+        self.player_seats[index] = {
+            "frame": seat_frame,
+            "name_label": name_label,
+            "stack_label": stack_label,
+            "cards_label": cards_label,
+        }
         # --- END NEW ---
+        
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
 
     def _draw_community_card_area(self):
@@ -231,12 +220,16 @@ class PracticeSessionUI(ttk.Frame):
             card_label.config(text=self._format_card(game_info['board'][i]) if i < len(game_info['board']) else "")
 
         # Update player info
-        for i, frame in enumerate(self.player_seat_frames):
-            if frame is None:
-                self._log_message(f"DEBUG: ERROR - Frame at index {i} is None!")
+        for i, player_seat in enumerate(self.player_seats):
+            if not player_seat:  # Skip if player seat is empty
+                self._log_message(f"DEBUG: ERROR - Player seat at index {i} is empty!")
                 continue
 
             player_info = game_info['players'][i]
+            frame = player_seat["frame"]
+            name_label = player_seat["name_label"]
+            stack_label = player_seat["stack_label"]
+            cards_label = player_seat["cards_label"]
             
             # Highlight current player
             if i == game_info['action_player'] and player_info['is_active']:
@@ -247,13 +240,9 @@ class PracticeSessionUI(ttk.Frame):
                 frame.config(bg=THEME["secondary_bg"])
 
             # Update name and position
-            name_label = frame.winfo_children()[0]
             name_label.config(text=f"{player_info['name']} ({player_info['position']})")
             
             # Update stack and cards
-            stack_label = frame.winfo_children()[1]
-            cards_label = frame.winfo_children()[2]
-
             stack_label.config(text=f"${player_info['stack']:.2f}")
 
             if player_info['is_active']:
