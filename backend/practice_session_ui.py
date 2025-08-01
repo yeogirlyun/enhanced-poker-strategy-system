@@ -525,10 +525,44 @@ class PracticeSessionUI(ttk.Frame):
             if isinstance(widget, ttk.Button): # Check if it's a button before packing
                 widget.pack_forget()
         
-        # --- FIX: Don't call handle_current_player_action here ---
-        # The state machine will handle the next player automatically
-        # Just update the display
+        # --- ENHANCED: Continue the game after human action ---
+        self._log_message(f"🎮 Human action completed: {action_str}")
+        self._log_message(f"🔄 Continuing game with next player...")
+        
+        # Update display to show the action
         self.update_display()
+        
+        # Continue the game loop after a short delay
+        self.after(500, self._continue_game_loop)
+        # --- END ENHANCED ---
+
+    def _continue_game_loop(self):
+        """Continues the game loop after a human action."""
+        self._log_message(f"🔄 Game loop continuation started")
+        
+        # Check if the game is still active
+        if self.state_machine.get_current_state() == PokerState.END_HAND:
+            self._log_message(f"🏁 Game ended, no continuation needed")
+            return
+        
+        # Get the current action player
+        current_player = self.state_machine.get_action_player()
+        if not current_player:
+            self._log_message(f"❌ No action player found, stopping game loop")
+            return
+        
+        self._log_message(f"🎯 Current action player: {current_player.name} (Human: {current_player.is_human})")
+        
+        # If it's a bot's turn, let the state machine handle it
+        if not current_player.is_human:
+            self._log_message(f"🤖 Bot turn: {current_player.name}")
+            # The state machine will handle bot actions automatically via callbacks
+            # Just update the display to show the current state
+            self.update_display()
+        else:
+            self._log_message(f"👤 Human turn: {current_player.name}")
+            # Human turn - the state machine will call prompt_human_action via callback
+            self.update_display()
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
