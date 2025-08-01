@@ -35,6 +35,8 @@ class PracticeSessionUI(ttk.Frame):
         
         # --- NEW: Initialize the State Machine ---
         self.state_machine = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
+        # Pass root window for delayed bot actions
+        self.state_machine.root_tk = self.winfo_toplevel()
         # Set up callbacks for state machine events
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_hand_complete = self.handle_hand_complete
@@ -103,172 +105,185 @@ class PracticeSessionUI(ttk.Frame):
             # Use the larger scale to maximize table size while fitting
             self.table_scale = min(max(scale_x, scale_y), self.max_scale)
             self.table_scale = max(self.table_scale, self.min_scale)
-            
-            # Ensure minimum reasonable scale for better visibility
             if self.table_scale < 0.8:
                 self.table_scale = 0.8
         else:
-            # Fallback scale if canvas not yet sized
             self.table_scale = 1.0
         
-        # Redraw the table with calculated scale
         self._redraw_table_with_scale()
-        
-        # Update display after table is created
         self.update_display()
 
     def _draw_table(self):
-        """Draws the main poker table shape."""
-        # Create a professional-looking poker table
-        self.canvas.create_oval(50, 50, 950, 650, fill="#013f28", outline=THEME["border"], width=10)
-        self.canvas.create_oval(60, 60, 940, 640, fill="#015939", outline="#222222", width=2)
+        """Draw the poker table with all components."""
+        self.canvas.delete("all")
         
-        # Add table felt texture effect
-        for i in range(0, 880, 20):
-            for j in range(0, 580, 20):
-                if (i + j) % 40 == 0:
-                    self.canvas.create_oval(70 + i, 70 + j, 85 + i, 85 + j, fill="#014a2f", outline="")
+        # Draw table background
+        table_width = int(900 * self.table_scale)
+        table_height = int(600 * self.table_scale)
+        table_x = (self.canvas.winfo_width() - table_width) // 2
+        table_y = (self.canvas.winfo_height() - table_height) // 2
+        
+        # Draw table
+        self.canvas.create_oval(
+            table_x, table_y, 
+            table_x + table_width, table_y + table_height,
+            fill=THEME["secondary_bg"], outline=THEME["accent_primary"], width=3
+        )
+        
+        # Setup components
+        self._setup_player_seats_scaled(self.num_players)
+        self._setup_community_card_area_scaled()
+        self._setup_pot_display_scaled()
+        self._setup_info_panel_scaled()
 
-    def _setup_player_seats(self, num_players):
-        """Creates and positions the player seats around the table."""
-        center_x, center_y = 500, 350
-        radius_x, radius_y = 400, 250
+    def _setup_player_seats_scaled(self, num_players):
+        """Setup player seats around the table with scaling."""
+        table_center_x = self.canvas.winfo_width() // 2
+        table_center_y = self.canvas.winfo_height() // 2
+        table_radius = int(300 * self.table_scale)
         
-        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        # Position players around the table
+        positions = [
+            (0, -1),      # Top (UTG)
+            (0.5, -0.87), # Top-right (MP)
+            (0.87, -0.5), # Right (CO)
+            (1, 0),       # Bottom-right (BTN)
+            (0.87, 0.5),  # Bottom (SB)
+            (0.5, 0.87),  # Bottom-left (BB)
+        ]
+        
+        names = ["Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6"]
+        position_names = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
         for i in range(num_players):
-            angle = (2 * math.pi / num_players) * i - (math.pi / 2)
-            x = center_x + radius_x * math.cos(angle)
-            y = center_y + radius_y * math.sin(angle)
-            self._create_player_seat(x, y, f"Player {i+1}", positions[i], i)
+            x_offset, y_offset = positions[i]
+            x = table_center_x + int(x_offset * table_radius)
+            y = table_center_y + int(y_offset * table_radius)
+            
+            self._create_player_seat_scaled(x, y, names[i], position_names[i], i)
 
-    def _create_player_seat(self, x, y, name, position, index):
-        """Creates the widgets for a single player seat."""
-        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
+    def _create_player_seat_scaled(self, x, y, name, position, index):
+        """Create a player seat with scaling."""
+        # Seat frame
+        seat_width = int(120 * self.table_scale)
+        seat_height = int(80 * self.table_scale)
+        seat_x = x - seat_width // 2
+        seat_y = y - seat_height // 2
         
-        # Player name and position
-        name_label = tk.Label(
-            seat_frame, 
-            text=f"{name} ({position})", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["text"], 
-            font=FONTS["header"]
-        )
-        name_label.pack(pady=(5, 2))
+        frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=3, relief="raised")
+        self.canvas.create_window(seat_x, seat_y, window=frame, anchor="nw", 
+                                width=seat_width, height=seat_height)
         
-        # Stack display
-        stack_label = tk.Label(
-            seat_frame, 
-            text="$1000.00", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["accent_secondary"], 
-            font=FONTS["main"]
-        )
+        # Player name
+        name_font_size = min(10, int(10 * self.table_scale))
+        name_label = tk.Label(frame, text=f"{name}\n({position})", 
+                            font=(FONTS["main"], name_font_size), 
+                            bg=THEME["secondary_bg"], fg=THEME["text"])
+        name_label.pack(pady=2)
+        
+        # Stack
+        main_font_size = min(8, int(8 * self.table_scale))
+        stack_label = tk.Label(frame, text=f"${self.player_stacks[index]:.2f}", 
+                             font=(FONTS["main"], main_font_size), 
+                             bg=THEME["secondary_bg"], fg=THEME["text"])
         stack_label.pack()
         
-        # Cards display
-        cards_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="#CCCCCC", 
-            font=("Arial", 24)
-        )
-        cards_label.pack(pady=5)
+        # Cards
+        small_font_size = min(6, int(6 * self.table_scale))
+        cards_label = tk.Label(frame, text="🂠 🂠", 
+                             font=(FONTS["main"], small_font_size), 
+                             bg=THEME["secondary_bg"], fg=THEME["text"])
+        cards_label.pack()
         
-        # Action display
-        action_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="yellow", 
-            font=FONTS["small"]
-        )
-        action_label.pack(pady=(2, 5))
+        # Action
+        action_label = tk.Label(frame, text="", 
+                              font=(FONTS["main"], small_font_size), 
+                              bg=THEME["secondary_bg"], fg=THEME["accent_primary"])
+        action_label.pack()
         
-        # Bet amount display
-        bet_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["accent_primary"], 
-            font=FONTS["small"]
-        )
-        bet_label.pack(pady=(0, 5))
-        
-        self.canvas.create_window(x, y, window=seat_frame)
         self.player_seats.append({
-            "frame": seat_frame, 
-            "name": name_label, 
-            "stack": stack_label, 
-            "cards": cards_label, 
-            "action": action_label,
-            "bet": bet_label,
-            "index": index,
-            "position": position
+            'frame': frame,
+            'name': name_label,
+            'stack': stack_label,
+            'cards': cards_label,
+            'action': action_label
         })
 
-    def _setup_community_card_area(self):
-        """Creates labels for the community cards."""
-        # Create a frame for community cards
-        community_frame = tk.Frame(self.canvas, bg="#015939", bd=2, relief="groove")
-        self.canvas.create_window(500, 350, window=community_frame)
+    def _setup_community_card_area_scaled(self):
+        """Setup community card area with scaling."""
+        table_center_x = self.canvas.winfo_width() // 2
+        table_center_y = self.canvas.winfo_height() // 2
         
-        # Add community cards label
-        community_label = tk.Label(
-            community_frame, 
-            text="Community Cards", 
-            bg="#015939", 
-            fg="white", 
-            font=FONTS["header"]
-        )
-        community_label.pack(pady=(5, 10))
+        # Community card area
+        card_width = int(70 * self.table_scale)
+        card_height = int(100 * self.table_scale)
+        card_spacing = int(80 * self.table_scale)
         
-        # Create card labels
-        cards_frame = tk.Frame(community_frame, bg="#015939")
-        cards_frame.pack()
+        start_x = table_center_x - (card_spacing * 2) // 2
         
+        self.community_card_labels = []
         for i in range(5):
-            card_label = tk.Label(
-                cards_frame, 
-                text="", 
-                bg="#013f28", 
-                fg="white", 
-                font=("Arial", 28, "bold"), 
-                bd=2, 
-                relief="groove",
-                width=3,
-                height=2
-            )
-            card_label.pack(side=tk.LEFT, padx=5)
-            self.community_card_labels.append(card_label)
+            card_x = start_x + i * card_spacing
+            card_y = table_center_y - card_height // 2
             
-    def _setup_pot_display(self):
-        """Creates the text display for the pot."""
-        self.pot_label = tk.Label(
-            self.canvas, 
-            text="Pot: $0.00", 
-            bg="#013f28", 
-            fg="yellow", 
-            font=FONTS["title"]
-        )
-        self.canvas.create_window(500, 480, window=self.pot_label)
+            # Card background
+            card_frame = tk.Frame(self.canvas, bg="white", bd=3, relief="raised")
+            self.canvas.create_window(card_x, card_y, window=card_frame, 
+                                    width=card_width, height=card_height)
+            
+            # Card label
+            card_font_size = min(16, int(16 * self.table_scale))
+            card_label = tk.Label(card_frame, text="", 
+                                font=(FONTS["main"], card_font_size), 
+                                bg="white", fg="black")
+            card_label.pack(expand=True, fill="both")
+            
+            self.community_card_labels.append(card_label)
 
-    def _setup_info_panel(self):
-        """Creates an information panel for game details."""
-        info_frame = ttk.LabelFrame(self, text="Game Information", padding=10)
-        info_frame.place(relx=0.02, rely=0.02, anchor="nw")
+    def _setup_pot_display_scaled(self):
+        """Setup pot display with scaling."""
+        table_center_x = self.canvas.winfo_width() // 2
+        table_center_y = self.canvas.winfo_height() // 2
         
-        self.info_text = tk.Text(
-            info_frame,
-            height=8,
-            width=30,
-            font=FONTS["small"],
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED
-        )
-        self.info_text.pack()
+        # Pot label
+        pot_font_size = min(12, int(12 * self.table_scale))
+        self.pot_label = tk.Label(self.canvas, text="Pot: $0.00", 
+                                font=(FONTS["main"], pot_font_size, "bold"), 
+                                bg=THEME["primary_bg"], fg=THEME["accent_primary"])
+        self.canvas.create_window(table_center_x, table_center_y + 150, 
+                                window=self.pot_label)
+
+    def _setup_info_panel_scaled(self):
+        """Setup information panel with scaling."""
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        
+        # Info panel
+        panel_width = int(350 * self.table_scale)
+        panel_height = int(300 * self.table_scale)
+        panel_x = canvas_width - int(370 * self.table_scale)
+        panel_y = 20
+        
+        info_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="raised")
+        self.canvas.create_window(panel_x, panel_y, window=info_frame, 
+                                width=panel_width, height=panel_height, anchor="nw")
+        
+        # Title
+        title_font_size = min(12, int(12 * self.table_scale))
+        title_label = tk.Label(info_frame, text="Game Information", 
+                             font=(FONTS["main"], title_font_size, "bold"), 
+                             bg=THEME["secondary_bg"], fg=THEME["text"])
+        title_label.pack(pady=5)
+        
+        # Info text
+        text_height = 18
+        text_width = 40
+        text_font_size = min(10, int(10 * self.table_scale))
+        self.info_text = tk.Text(info_frame, height=text_height, width=text_width,
+                               font=(FONTS["main"], text_font_size),
+                               bg=THEME["secondary_bg"], fg=THEME["text"],
+                               state=tk.DISABLED, wrap=tk.WORD)
+        self.info_text.pack(padx=10, pady=10, fill="both", expand=True)
         
         ToolTip(info_frame, "Current game information and status")
 
@@ -405,19 +420,31 @@ class PracticeSessionUI(ttk.Frame):
         self._update_info_panel()
 
     def handle_hand_complete(self):
-        """Handles the completion of a hand."""
-        print(f"🏆 Hand complete!")
+        """Handles the completion of a hand by displaying the winner on the UI."""
+        self.sound_manager.play("winner_announce")
         winner_info = self.state_machine.determine_winner()
+
         if winner_info:
             winner_names = ", ".join(p.name for p in winner_info)
-            messagebox.showinfo("Hand Over", f"Winner is: {winner_names}")
+            self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
+
+            # Highlight winning players
+            for seat in self.player_seats:
+                if seat["name"].cget("text").split(" ")[0] in winner_names:
+                    seat["frame"].config(bg=THEME["accent_secondary"])
+
+        self.sound_manager.play("pot_rake")
         
         # Show start hand button again
         for widget in self.human_action_controls.values():
             widget.pack_forget()
         self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
         
-        # Ask to start a new hand
+        # Ask to start a new hand after a delay
+        self.after(3000, self._prompt_new_hand)
+
+    def _prompt_new_hand(self):
+        """Asks the user to start a new hand."""
         if messagebox.askyesno("New Hand", "Start a new hand?"):
             self.start_new_hand()
 
@@ -550,477 +577,37 @@ class PracticeSessionUI(ttk.Frame):
         for widget in self.human_action_controls.values():
             widget.pack_forget()
 
-    def _ai_turn(self):
-        """Simulates AI player turns."""
-        print(f"🎮 _ai_turn called - current_player: {self.current_player}")
-        print(f"🎮 player_acted status: {self.player_acted}")
-        
-        # Find next player who hasn't acted
-        original_player = self.current_player
-        attempts = 0
-        while attempts < self.num_players:
-            self.current_player = (self.current_player + 1) % self.num_players
-            attempts += 1
-            print(f"🎮 Checking player {self.current_player}, acted: {self.player_acted[self.current_player]}")
-            
-            if not self.player_acted[self.current_player]:
-                print(f"✅ Found player {self.current_player} who hasn't acted")
-                break
-            
-            if self.current_player == original_player:
-                print(f"🔄 All players have acted, starting new round")
-                # All players have acted, start new round or end hand
-                self._start_new_round()
-                return
-        
-        if attempts >= self.num_players:
-            print(f"❌ No players found who haven't acted, starting new round")
-            self._start_new_round()
-            return
-        
-        if self.current_player == 0:  # Back to human
-            print(f"👤 Back to human player")
-            self.prompt_human_action()
-        else:
-            print(f"🤖 AI player {self.current_player} taking action")
-            # Simple AI logic
-            import random
-            actions = ["fold", "call", "bet"]
-            action = random.choice(actions)
-            
-            if action == "bet":
-                bet_amount = random.randint(20, 100)
-                self.player_stacks[self.current_player] -= bet_amount
-                self.pot += bet_amount
-                self.current_bet = bet_amount
-                self.player_seats[self.current_player]['action'].config(text=f"Bet ${bet_amount:.2f}")
-                self.sound_manager.play("chip_bet")
-            elif action == "call":
-                call_amount = self.current_bet
-                self.player_stacks[self.current_player] -= call_amount
-                self.pot += call_amount
-                self.player_seats[self.current_player]['action'].config(text=f"Called ${call_amount:.2f}")
-                self.sound_manager.play("player_call")
-            else:  # fold
-                self.player_seats[self.current_player]['action'].config(text="Folded")
-                self.sound_manager.play("player_fold")
-            
-            # Mark AI player as having acted
-            self.player_acted[self.current_player] = True
-            
-            # Continue to next player after a short delay
-            self.after(1000, self._ai_turn)
-        
-        self.update_display()
-
-    def _start_new_round(self):
-        """Starts a new betting round (flop, turn, river)."""
-        print(f"🔄 Starting new round - resetting action tracking")
-        
-        # Reset player action tracking for new round
-        # Players who folded in previous rounds should stay folded
-        for i in range(self.num_players):
-            if "Folded" in self.player_seats[i]['action'].cget("text"):
-                # Keep folded players marked as acted
-                self.player_acted[i] = True
-                print(f"🎯 Player {i} stays folded")
-            else:
-                # Reset action tracking for active players
-                self.player_acted[i] = False
-                print(f"🔄 Player {i} action reset for new round")
-        
-        self.current_bet = 0.0
-        
-        # Deal community cards based on current round
-        if len(self.community_cards) == 0:
-            # Deal flop (3 cards)
-            import random
-            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
-            suits = ['s', 'h', 'd', 'c']
-            all_cards = []
-            for rank in ranks:
-                for suit in suits:
-                    all_cards.append(f"{rank}{suit}")
-            random.shuffle(all_cards)
-            
-            # Remove cards already dealt to players
-            for player_cards in self.player_cards:
-                for card in player_cards:
-                    if card in all_cards:
-                        all_cards.remove(card)
-            
-            # Deal flop with sound effects
-            for i in range(3):
-                if all_cards:
-                    self.community_cards.append(all_cards.pop())
-                    self.sound_manager.play("card_deal")
-        elif len(self.community_cards) == 3:
-            # Deal turn
-            import random
-            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
-            suits = ['s', 'h', 'd', 'c']
-            all_cards = []
-            for rank in ranks:
-                for suit in suits:
-                    all_cards.append(f"{rank}{suit}")
-            
-            # Remove cards already dealt
-            for player_cards in self.player_cards:
-                for card in player_cards:
-                    if card in all_cards:
-                        all_cards.remove(card)
-            for card in self.community_cards:
-                if card in all_cards:
-                    all_cards.remove(card)
-            
-            if all_cards:
-                self.community_cards.append(all_cards.pop())
-        elif len(self.community_cards) == 4:
-            # Deal river
-            import random
-            ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
-            suits = ['s', 'h', 'd', 'c']
-            all_cards = []
-            for rank in ranks:
-                for suit in suits:
-                    all_cards.append(f"{rank}{suit}")
-            
-            # Remove cards already dealt
-            for player_cards in self.player_cards:
-                for card in player_cards:
-                    if card in all_cards:
-                        all_cards.remove(card)
-            for card in self.community_cards:
-                if card in all_cards:
-                    all_cards.remove(card)
-            
-            if all_cards:
-                self.community_cards.append(all_cards.pop())
-                self.sound_manager.play("card_deal")
-        else:
-            # Hand is complete, show results
-            self._show_hand_results()
-            return
-        
-        # Start with first player after dealer
-        self.current_player = 0
-        self.update_display()
-        self.prompt_human_action()
-
-    def _show_hand_results(self):
-        """Shows the results of the completed hand."""
-        # Simple result display
-        messagebox.showinfo("Hand Complete", f"Hand finished! Final pot: ${self.pot:.2f}")
-        self.start_new_hand()
-
     def increase_table_size(self):
-        """Increase the table size."""
-        if self.table_scale < self.max_scale:
-            self.table_scale += 0.1
-            self._redraw_table_with_scale()
-    
+        """Increase table size."""
+        self.table_scale = min(self.table_scale + 0.1, self.max_scale)
+        self._redraw_table_with_scale()
+
     def decrease_table_size(self):
-        """Decrease the table size."""
-        if self.table_scale > self.min_scale:
-            self.table_scale -= 0.1
-            self._redraw_table_with_scale()
-    
+        """Decrease table size."""
+        self.table_scale = max(self.table_scale - 0.1, self.min_scale)
+        self._redraw_table_with_scale()
+
     def _redraw_table_with_scale(self):
         """Redraw the table with current scale."""
-        # Clear canvas
-        self.canvas.delete("all")
-        
-        # Get canvas dimensions
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            # Canvas not yet sized, use default
-            canvas_width, canvas_height = 1000, 700
-        
-        # Calculate centered table dimensions
-        table_width = int(900 * self.table_scale)
-        table_height = int(600 * self.table_scale)
-        
-        # Center the table
-        x1 = (canvas_width - table_width) // 2
-        y1 = (canvas_height - table_height) // 2
-        x2 = x1 + table_width
-        y2 = y1 + table_height
-        
-        # Draw scaled table
-        self.canvas.create_oval(x1, y1, x2, y2, fill="#013f28", outline=THEME["border"], width=int(10 * self.table_scale))
-        self.canvas.create_oval(x1 + 10, y1 + 10, x2 - 10, y2 - 10, fill="#015939", outline="#222222", width=int(2 * self.table_scale))
-        
-        # Add table felt texture effect (scaled)
-        texture_spacing = int(20 * self.table_scale)
-        for i in range(0, table_width - 20, texture_spacing):
-            for j in range(0, table_height - 20, texture_spacing):
-                if (i + j) % (texture_spacing * 2) == 0:
-                    dot_size = int(15 * self.table_scale)
-                    self.canvas.create_oval(
-                        x1 + 20 + i, y1 + 20 + j, 
-                        x1 + 20 + i + dot_size, y1 + 20 + j + dot_size, 
-                        fill="#014a2f", outline=""
-                    )
-        
-        # Redraw all UI elements with new scale
-        self._setup_player_seats_scaled(self.num_players)
-        self._setup_community_card_area_scaled()
-        self._setup_pot_display_scaled()
-        self._setup_info_panel_scaled()
-    
-    def _setup_player_seats_scaled(self, num_players):
-        """Creates and positions the player seats around the table with scaling."""
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            canvas_width, canvas_height = 1000, 700
-        
-        center_x, center_y = canvas_width // 2, canvas_height // 2
-        radius_x = int(400 * self.table_scale)
-        radius_y = int(250 * self.table_scale)
-        
-        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
-        
-        for i in range(num_players):
-            angle = (2 * math.pi / num_players) * i - (math.pi / 2)
-            x = center_x + radius_x * math.cos(angle)
-            y = center_y + radius_y * math.sin(angle)
-            self._create_player_seat_scaled(x, y, f"Player {i+1}", positions[i], i)
-    
-    def _create_player_seat_scaled(self, x, y, name, position, index):
-        """Creates the widgets for a single player seat with scaling."""
-        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=int(3 * self.table_scale), relief="ridge")
-        
-        # Scale font sizes with better minimums for visibility
-        name_font_size = max(10, int(FONTS["header"][1] * self.table_scale))
-        main_font_size = max(8, int(FONTS["main"][1] * self.table_scale))
-        small_font_size = max(6, int(FONTS["small"][1] * self.table_scale))
-        card_font_size = max(16, int(24 * self.table_scale))
-        
-        # Player name and position
-        name_label = tk.Label(
-            seat_frame, 
-            text=f"{name} ({position})", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["text"], 
-            font=(FONTS["header"][0], name_font_size, "bold")
-        )
-        name_label.pack(pady=(5, 2))
-        
-        # Stack display
-        stack_label = tk.Label(
-            seat_frame, 
-            text="$1000.00", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["accent_secondary"], 
-            font=(FONTS["main"][0], main_font_size)
-        )
-        stack_label.pack()
-        
-        # Cards display
-        cards_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="#CCCCCC", 
-            font=("Arial", card_font_size)
-        )
-        cards_label.pack(pady=5)
-        
-        # Action display
-        action_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="yellow", 
-            font=(FONTS["small"][0], small_font_size)
-        )
-        action_label.pack(pady=(2, 5))
-        
-        # Bet amount display
-        bet_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["accent_primary"], 
-            font=(FONTS["small"][0], small_font_size)
-        )
-        bet_label.pack(pady=(0, 5))
-        
-        self.canvas.create_window(x, y, window=seat_frame)
-        
-        # Update existing seat or add new one
-        if index < len(self.player_seats):
-            self.player_seats[index] = {
-                "frame": seat_frame, 
-                "name": name_label, 
-                "stack": stack_label, 
-                "cards": cards_label, 
-                "action": action_label, 
-                "bet": bet_label, 
-                "index": index
-            }
-        else:
-            self.player_seats.append({
-                "frame": seat_frame, 
-                "name": name_label, 
-                "stack": stack_label, 
-                "cards": cards_label, 
-                "action": action_label, 
-                "bet": bet_label, 
-                "index": index
-            })
-    
-    def _setup_community_card_area_scaled(self):
-        """Creates labels for the community cards with scaling."""
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            canvas_width, canvas_height = 1000, 700
-        
-        center_x, center_y = canvas_width // 2, canvas_height // 2
-        
-        # Clear existing community card labels
-        for label in self.community_card_labels:
-            label.destroy()
-        self.community_card_labels = []
-        
-        # Create scaled community card area with better sizing
-        card_width = int(70 * self.table_scale)
-        card_height = int(100 * self.table_scale)
-        card_spacing = int(80 * self.table_scale)
-        
-        for i in range(5):
-            x = center_x - (card_spacing * 2) + (i * card_spacing)
-            y = center_y
-            card_label = tk.Label(
-                self.canvas, 
-                text="", 
-                bg="#015939", 
-                fg="white", 
-                font=("Arial", max(16, int(28 * self.table_scale)), "bold"), 
-                bd=int(3 * self.table_scale), 
-                relief="groove"
-            )
-            self.canvas.create_window(x, y, window=card_label, width=card_width, height=card_height)
-            self.community_card_labels.append(card_label)
-    
-    def _setup_pot_display_scaled(self):
-        """Creates the text display for the pot with scaling."""
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            canvas_width, canvas_height = 1000, 700
-        
-        center_x, center_y = canvas_width // 2, canvas_height // 2
-        
-        # Remove existing pot label if it exists
-        if hasattr(self, 'pot_label'):
-            self.pot_label.destroy()
-        
-        self.pot_label = tk.Label(
-            self.canvas, 
-            text="Pot: $0.00", 
-            bg="#013f28", 
-            fg="yellow", 
-            font=(FONTS["title"][0], max(12, int(FONTS["title"][1] * self.table_scale)))
-        )
-        self.canvas.create_window(center_x, center_y + int(150 * self.table_scale), window=self.pot_label)
-    
-    def _setup_info_panel_scaled(self):
-        """Creates the game information panel with scaling."""
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        
-        if canvas_width <= 1 or canvas_height <= 1:
-            canvas_width, canvas_height = 1000, 700
-        
-        # Remove existing info panel if it exists
-        if hasattr(self, 'info_panel'):
-            self.info_panel.destroy()
-        
-        # Create scaled info panel with larger dimensions
-        # Scale panel size more aggressively for better visibility
-        panel_width = int(350 * self.table_scale)
-        panel_height = int(300 * self.table_scale)
-        
-        self.info_panel = tk.Frame(
-            self.canvas, 
-            bg=THEME["secondary_bg"], 
-            bd=int(3 * self.table_scale), 
-            relief="ridge"
-        )
-        
-        # Scale title font with better scaling
-        title_font_size = max(12, int(FONTS["header"][1] * self.table_scale))
-        title_label = tk.Label(
-            self.info_panel, 
-            text="Game Information", 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["text"], 
-            font=(FONTS["header"][0], title_font_size, "bold")
-        )
-        title_label.pack(pady=int(10 * self.table_scale))
-        
-        # Scale text widget with larger dimensions and better font scaling
-        text_height = int(18 * self.table_scale)
-        text_width = int(40 * self.table_scale)
-        text_font_size = max(10, int(16 * self.table_scale))
-        
-        self.info_text = tk.Text(
-            self.info_panel,
-            height=text_height,
-            width=text_width,
-            font=("Consolas", text_font_size),
-            bg=THEME["secondary_bg"],
-            fg=THEME["text"],
-            state=tk.DISABLED,
-            wrap=tk.WORD,
-            padx=int(10 * self.table_scale),
-            pady=int(10 * self.table_scale)
-        )
-        self.info_text.pack(padx=int(10 * self.table_scale), pady=int(10 * self.table_scale))
-        
-        # Position info panel in top-right with scaled positioning
-        panel_x = canvas_width - int(370 * self.table_scale)
-        panel_y = int(50 * self.table_scale)
-        self.canvas.create_window(
-            panel_x, 
-            panel_y, 
-            window=self.info_panel, 
-            width=panel_width, 
-            height=panel_height
-        )
-        
-        # Update the info panel with current game state
-        self._update_info_panel()
+        self._draw_table()
+        self.update_display()
 
     def _on_canvas_resize(self, event):
-        """Handle canvas resize events to keep table centered."""
-        # Only redraw if the canvas size actually changed significantly
-        if hasattr(self, '_last_canvas_size'):
-            last_width, last_height = self._last_canvas_size
-            if abs(event.width - last_width) > 10 or abs(event.height - last_height) > 10:
-                self._redraw_table_with_scale()
-        else:
-            self._redraw_table_with_scale()
-        
-        self._last_canvas_size = (event.width, event.height)
+        """Handle canvas resize events."""
+        self._redraw_table_with_scale()
 
     def _format_card(self, card_str: str) -> str:
-        """Formats a card string for display (e.g., 'As' -> 'A♠')."""
-        if not card_str or len(card_str) < 2: 
-            return ""
-        rank, suit = card_str[0], card_str[1]
-        suit_map = {'s': '♠', 'h': '♥', 'd': '♦', 'c': '♣'}
-        return f"{rank}{suit_map.get(suit, '')}"
+        """Format card string for display."""
+        if not card_str or card_str == "**":
+            return "🂠"
+        
+        # Convert card format (e.g., "As" -> "A♠")
+        rank = card_str[0]
+        suit = card_str[1]
+        suit_symbols = {'s': '♠', 'h': '♥', 'd': '♦', 'c': '♣'}
+        return f"{rank}{suit_symbols.get(suit, suit)}"
 
     def run(self):
-        """Starts the UI main loop."""
-        self.start_new_hand()
-        self.mainloop() 
+        """Start the practice session."""
+        print("🎮 Practice session started")
+        self.update_display() 
