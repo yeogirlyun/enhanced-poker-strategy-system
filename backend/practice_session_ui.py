@@ -694,100 +694,67 @@ class PracticeSessionUI(ttk.Frame):
             print(f"❌ Game state not properly initialized, retrying...")
             self.after(200, self._continue_hand_start)
 
-    def prompt_human_action(self, player=None):
-        """Shows the action controls for the human player."""
-        if player is None:
-            player = self.state_machine.get_action_player()
-        if not player or not player.is_human:
-            print(f"❌ No human player to act or player is not human")
-            return
-        
-        print(f"✅ Showing action controls for human player: {player.name}")
-        
-        # Hide all controls first (including start hand button)
-        for widget in self.human_action_controls.values():
-            widget.pack_forget()
-
-        # Show relevant controls based on current situation
-        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
-        
-        # Check if player can check (no current bet) or must call
+    def prompt_human_action(self, player):
+        """Shows and configures the action controls for the human player."""
         game_info = self.state_machine.get_game_info()
-        current_bet = game_info.get('current_bet', 0) if game_info else 0
-        
-        if current_bet == 0:
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
-        else:
+        if not game_info:
+            return
+
+        # Hide all action buttons initially
+        self.human_action_controls['fold'].pack_forget()
+        self.human_action_controls['check'].pack_forget()
+        self.human_action_controls['call'].pack_forget()
+
+        # Show Fold button
+        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
+
+        # Show Check or Call button
+        call_amount = game_info['current_bet'] - player.current_bet
+        if call_amount > 0:
+            self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
-        
-        # Show bet sizing slider and bet/raise button
-        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
-        
-        # Configure slider range and button text based on context
-        if current_bet > 0:
-            self.human_action_controls['bet_raise'].config(text="Raise")
-            # Set slider range for raise (current bet to player stack)
-            player_stack = game_info['players'][0]['stack'] if game_info else 100
-            self.bet_slider.config(from_=current_bet, to=player_stack)
-            self.bet_size_var.set(current_bet * 2)  # Default to 2x current bet
+        else:
+            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
+
+        # Configure the bet/raise slider and button
+        min_bet = self.state_machine.game_state.min_raise
+        max_bet = player.stack + player.current_bet
+
+        self.bet_slider.config(from_=min_bet, to=max_bet)
+        self.bet_size_var.set(min_bet)
+        self._update_bet_size_label()
+
+        if game_info['current_bet'] > 0:
+            self.human_action_controls['bet_raise'].config(text="Raise To")
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
-            # Set slider range for bet (min bet to player stack)
-            player_stack = game_info['players'][0]['stack'] if game_info else 100
-            min_bet = game_info.get('min_raise', 1) if game_info else 1
-            self.bet_slider.config(from_=min_bet, to=player_stack)
-            self.bet_size_var.set(min_bet)
-        
-        self._update_bet_size_label()
 
     def _submit_human_action(self, action_str):
         """Submits the human's chosen action to the state machine."""
         player = self.state_machine.get_action_player()
         if not player or not player.is_human:
-            print(f"❌ No human player to act or player is not human")
             return
 
-        action_map = {
-            "fold": ActionType.FOLD,
-            "check": ActionType.CHECK,
-            "call": ActionType.CALL,
-            "bet": ActionType.BET,
-            "raise": ActionType.RAISE
-        }
+        action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
         action = action_map.get(action_str)
         
-        if not action:
-            print(f"❌ Invalid action: {action_str}")
-            return
-
+        # --- NEW: Get amount from the slider for bets/raises ---
         amount = 0
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
-            if amount <= 0:
-                messagebox.showerror("Invalid Amount", "Please set a valid bet amount using the slider.")
-                return
+        # --- END NEW ---
 
-        # Play sound effect based on action
-        if action == ActionType.FOLD:
-            self.sound_manager.play("player_fold")
-        elif action == ActionType.CHECK:
-            self.sound_manager.play("player_check")
-        elif action == ActionType.CALL:
-            self.sound_manager.play("player_call")
-        elif action in [ActionType.BET, ActionType.RAISE]:
-            self.sound_manager.play("chip_bet")
-            if action == ActionType.RAISE:
-                self.sound_manager.play("player_raise")
+        sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
+        if sound_to_play:
+            self.sfx.play(sound_to_play)
 
-        # Use the state machine to execute the action
-        print(f"🎮 Executing action: {action_str} with amount: {amount}")
-        self.add_game_message(f"🎮 Player 1: {action_str.upper()} ${amount:.2f}")
         self.state_machine.execute_action(player, action, amount)
         self.update_display()
         
         # Hide controls and let the state machine continue
         for widget in self.human_action_controls.values():
-            widget.pack_forget()
+            if isinstance(widget, ttk.Button): # Check if it's a button before packing
+                widget.pack_forget()
         self.state_machine.handle_current_player_action()
 
     def run_game_loop(self):
