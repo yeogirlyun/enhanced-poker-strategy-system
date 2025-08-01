@@ -51,8 +51,10 @@ class PracticeSessionUI(ttk.Frame):
     def _setup_ui(self):
         """Sets up the UI layout with a responsive grid."""
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=4) # Canvas now takes 4/5 of the space
-        self.grid_columnconfigure(1, weight=1) # Info panel takes 1/5 of the space
+        # --- CHANGE THIS LINE FOR THE FINAL TIME ---
+        self.grid_columnconfigure(0, weight=5) # Canvas now takes 5/6 of the space ( ~83%)
+        # --- END CHANGE ---
+        self.grid_columnconfigure(1, weight=1) # Info panel takes 1/6 of the space ( ~17%)
 
         # Main canvas for the poker table
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
