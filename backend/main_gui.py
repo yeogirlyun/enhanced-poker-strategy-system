@@ -814,6 +814,11 @@ class EnhancedMainGUI:
         # Update postflop HS editor fonts
         if hasattr(self, "postflop_hs_editor"):
             self.postflop_hs_editor.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
+        
+        # --- NEW: Update the Practice Session UI font ---
+        if hasattr(self, "practice_ui"):
+            self.practice_ui.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
+        # --- END NEW ---
 
     def _on_tier_data_change(self):
         """Handle tier data changes."""
