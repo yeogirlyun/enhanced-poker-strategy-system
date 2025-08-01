@@ -536,9 +536,37 @@ class PracticeSessionUI(ttk.Frame):
         self.update_display()
         # --- END NEW ---
         
-        if winner_info:
-            winner_name = winner_info["name"]
-            winner_amount = winner_info["amount"]
+        # --- ENHANCED: Robust winner determination ---
+        winner_name = None
+        winner_amount = 0
+        
+        # Try to get winner info from parameter first
+        if winner_info and isinstance(winner_info, dict):
+            winner_name = winner_info.get("name")
+            winner_amount = winner_info.get("amount", 0)
+            self._log_message(f"🏆 Winner from parameter: {winner_name} wins ${winner_amount:.2f}")
+        
+        # If no winner from parameter, try to determine from state machine
+        if not winner_name:
+            try:
+                winner_players = self.state_machine.determine_winner()
+                if winner_players:
+                    winner_name = winner_players[0].name
+                    winner_amount = self.state_machine.game_state.pot
+                    self._log_message(f"🏆 Winner from state machine: {winner_name} wins ${winner_amount:.2f}")
+            except Exception as e:
+                self._log_message(f"❌ Error determining winner: {e}")
+        
+        # If still no winner, check for last winner from state machine
+        if not winner_name and hasattr(self.state_machine, '_last_winner'):
+            last_winner = self.state_machine._last_winner
+            if last_winner:
+                winner_name = last_winner.get("name")
+                winner_amount = last_winner.get("amount", 0)
+                self._log_message(f"🏆 Winner from last winner: {winner_name} wins ${winner_amount:.2f}")
+        
+        # Display winner information
+        if winner_name:
             self.add_game_message(f"🏆 {winner_name} wins ${winner_amount:.2f}!")
             
             # --- ENHANCED: Visual feedback for winner ---
