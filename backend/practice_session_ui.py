@@ -403,6 +403,11 @@ class PracticeSessionUI(ttk.Frame):
 
         # Show Check or Call button
         call_amount = game_info['current_bet'] - player.current_bet
+        self._log_message(f"🔍 CALL AMOUNT CALCULATION:")
+        self._log_message(f"   Current bet from game state: ${game_info['current_bet']:.2f}")
+        self._log_message(f"   Player's current bet: ${player.current_bet:.2f}")
+        self._log_message(f"   Calculated call amount: ${call_amount:.2f}")
+        
         if call_amount > 0:
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
@@ -466,6 +471,11 @@ class PracticeSessionUI(ttk.Frame):
             amount = self.bet_size_var.get()
             self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()} ${amount:.2f}")
             self._log_message(f"📊 Current bet: ${self.state_machine.game_state.current_bet:.2f}, Min raise: ${self.state_machine.game_state.min_raise:.2f}")
+        elif action == ActionType.CALL:
+            # For calls, calculate the amount needed
+            call_amount = self.state_machine.game_state.current_bet - player.current_bet
+            self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()} ${call_amount:.2f}")
+            self._log_message(f"📊 Call calculation - Current bet: ${self.state_machine.game_state.current_bet:.2f}, Player bet: ${player.current_bet:.2f}")
         else:
             self._log_message(f"🎯 SUBMITTING ACTION: {action_str.upper()}")
         # --- END ENHANCED ---
