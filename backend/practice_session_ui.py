@@ -446,7 +446,28 @@ class PracticeSessionUI(ttk.Frame):
         """Starts a new hand using the state machine."""
         self.sfx.play("card_deal")
         self.add_game_message("🎮 Starting new hand...")
+        
+        # Add debugging before starting the hand
+        self._log_message("\n=== BEFORE HAND START ===")
+        self._log_message(f"Number of players: {self.num_players}")
+        
         self.state_machine.start_hand()
+        
+        # Add debugging after starting the hand
+        game_info = self.state_machine.get_game_info()
+        if game_info:
+            self._log_message("\n=== AFTER HAND START ===")
+            self._log_message(f"Action player index: {game_info['action_player']}")
+            for i, player in enumerate(game_info['players']):
+                self._log_message(f"Player {i}: {player['name']}, Position: {player['position']}, Active: {player['is_active']}")
+            
+            # Check who should act first
+            self._log_message(f"\nFirst to act should be UTG (Under the Gun)")
+            for i, player in enumerate(game_info['players']):
+                if player['position'] == 'UTG':
+                    self._log_message(f"UTG is Player {i+1} at index {i}")
+                    self._log_message(f"But action_player is set to index {game_info['action_player']}")
+                    break
         # The state machine will now automatically call prompt_human_action via its callback
 
     def handle_hand_complete(self, winner_info=None):
