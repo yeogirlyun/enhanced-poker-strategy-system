@@ -21,6 +21,7 @@ from typing import Optional
 from gui_models import THEME, FONTS
 from tooltips import ToolTip
 from sound_manager import SoundManager
+from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 
 
 class PracticeSessionUI(ttk.Frame):
@@ -32,7 +33,15 @@ class PracticeSessionUI(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.strategy_data = strategy_data
         
-        # Initialize game state
+        # --- NEW: Initialize the State Machine ---
+        self.state_machine = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
+        # Set up callbacks for state machine events
+        self.state_machine.on_action_required = self.prompt_human_action
+        self.state_machine.on_hand_complete = self.handle_hand_complete
+        self.state_machine.on_state_change = self.update_display
+        # --- END NEW ---
+        
+        # Initialize game state (keep for backward compatibility)
         self.num_players = 6
         self.current_player = 0
         self.pot = 0.0
@@ -75,6 +84,9 @@ class PracticeSessionUI(ttk.Frame):
         # Schedule initial redraw after canvas is properly sized
         self.after(100, self._calculate_initial_scale_and_redraw)
         self._create_human_action_controls()
+        
+        # Don't automatically start a hand - let user do it manually
+        # self.after(500, self.start_new_hand)
 
     def _calculate_initial_scale_and_redraw(self):
         """Calculate initial scale based on canvas size and redraw the table."""
@@ -313,48 +325,101 @@ class PracticeSessionUI(ttk.Frame):
         )
         ToolTip(self.human_action_controls['amount_entry'], "Enter bet/raise amount")
 
-        # Initially hide all controls
+        # Start hand button
+        self.human_action_controls['start_hand'] = ttk.Button(
+            controls_frame, 
+            text="Start Hand", 
+            command=self.start_new_hand,
+            style="Success.TButton"
+        )
+        ToolTip(self.human_action_controls['start_hand'], "Start a new poker hand")
+
+        # Initially hide all controls except start hand
         for widget in self.human_action_controls.values():
             widget.pack_forget()
-
-    def update_display(self):
-        """Updates the entire UI based on the current game state."""
-        # Update pot display
-        self.pot_label.config(text=f"Pot: ${self.pot:.2f}")
         
-        # Update community cards
-        for i, card in enumerate(self.community_cards):
+        # Show start hand button initially
+        self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+
+    def update_display(self, new_state=None):
+        """Updates the entire UI based on the current game state from the state machine."""
+        game_info = self.state_machine.get_game_info()
+        if not game_info or not game_info.get('players'):
+            print(f"❌ No game info available from state machine")
+            # Initialize with default values
+            self._update_display_with_defaults()
+            return
+
+        print(f"🎮 Updating display with game info: {game_info}")
+
+        # Update pot and community cards
+        self.pot_label.config(text=f"Pot: ${game_info['pot']:.2f}")
+        for i, card in enumerate(game_info['board']):
             if i < len(self.community_card_labels):
                 self.community_card_labels[i].config(text=self._format_card(card))
-        
-        # Update player seats
+
+        # Update player info
         for i, seat in enumerate(self.player_seats):
-            # Update stack
-            seat['stack'].config(text=f"${self.player_stacks[i]:.2f}")
-            
-            # Update cards (show human cards, hide others)
-            if i == 0:  # Human player
-                if self.player_cards[i]:
-                    cards_text = " ".join(self._format_card(c) for c in self.player_cards[i])
+            if i < len(game_info['players']):
+                player_info = game_info['players'][i]
+                seat['stack'].config(text=f"${player_info['stack']:.2f}")
+                
+                # Show cards for all players at showdown, otherwise only for the human
+                if (self.state_machine.get_current_state() == PokerState.SHOWDOWN or 
+                    player_info['is_human']):
+                    cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
                     seat['cards'].config(text=cards_text)
                 else:
-                    seat['cards'].config(text="")
-            else:  # AI players
-                if self.player_cards[i]:
-                    seat['cards'].config(text="🂠 🂠")  # Card back emoji
+                    seat['cards'].config(text="🂠 🂠" if player_info['is_active'] else "")
+
+                # Highlight the current player to act
+                if i == game_info['action_player'] and player_info['is_active']:
+                    seat['frame'].config(bg=THEME["accent_primary"])
+                    seat['name'].config(fg="white")
                 else:
-                    seat['cards'].config(text="")
-            
-            # Highlight current player
-            if i == self.current_player:
-                seat['frame'].config(bg=THEME["accent_primary"])
-                seat['name'].config(fg="white")
-            else:
+                    seat['frame'].config(bg=THEME["secondary_bg"])
+                    seat['name'].config(fg=THEME["text"])
+        
+        self._update_info_panel()
+
+    def _update_display_with_defaults(self):
+        """Update display with default values when state machine is not ready."""
+        print(f"🎮 Using default display values")
+        
+        # Set default pot
+        if hasattr(self, 'pot_label'):
+            self.pot_label.config(text="Pot: $0.00")
+        
+        # Set default community cards
+        for label in self.community_card_labels:
+            label.config(text="")
+        
+        # Set default player info
+        for i, seat in enumerate(self.player_seats):
+            if i < len(self.player_stacks):
+                seat['stack'].config(text=f"${self.player_stacks[i]:.2f}")
+                seat['cards'].config(text="")
                 seat['frame'].config(bg=THEME["secondary_bg"])
                 seat['name'].config(fg=THEME["text"])
         
-        # Update info panel
         self._update_info_panel()
+
+    def handle_hand_complete(self):
+        """Handles the completion of a hand."""
+        print(f"🏆 Hand complete!")
+        winner_info = self.state_machine.determine_winner()
+        if winner_info:
+            winner_names = ", ".join(p.name for p in winner_info)
+            messagebox.showinfo("Hand Over", f"Winner is: {winner_names}")
+        
+        # Show start hand button again
+        for widget in self.human_action_controls.values():
+            widget.pack_forget()
+        self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+        
+        # Ask to start a new hand
+        if messagebox.askyesno("New Hand", "Start a new hand?"):
+            self.start_new_hand()
 
     def _update_info_panel(self):
         """Updates the information panel with current game state."""
@@ -386,77 +451,48 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.config(state=tk.DISABLED)
 
     def start_new_hand(self):
-        """Starts a new hand."""
-        # Reset game state
-        self.pot = 0.0
-        self.community_cards = []
-        self.current_bet = 0.0
-        self.min_bet = 20.0
+        """Starts a new hand using the state machine."""
+        print(f"🎮 Starting new hand with state machine")
         
-        # Reset player actions and tracking
-        for seat in self.player_seats:
-            seat['action'].config(text="")
-        self.player_acted = [False] * self.num_players
+        # Initialize the state machine properly
+        self.state_machine.start_hand()
         
-        # Deal cards (simplified)
-        import random
-        ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
-        suits = ['s', 'h', 'd', 'c']
-        
-        # Deal 2 cards to each player
-        all_cards = []
-        for rank in ranks:
-            for suit in suits:
-                all_cards.append(f"{rank}{suit}")
-        
-        random.shuffle(all_cards)
-        
-        # Deal cards to players with sound effects
-        for i in range(self.num_players):
-            self.player_cards[i] = [all_cards.pop(), all_cards.pop()]
-            self.sound_manager.play("card_deal")
-        
-        # Set blinds
-        self.player_stacks[4] -= 10  # Small blind
-        self.player_stacks[5] -= 20  # Big blind
-        self.pot = 30.0
-        
-        # Update blinds display
-        self.player_seats[4]['action'].config(text="SB $10")
-        self.player_seats[5]['action'].config(text="BB $20")
-        
-        # Start with first player after big blind
-        self.current_player = 0
-        
+        # Wait a moment for state machine to initialize
+        self.after(100, self._continue_hand_start)
+    
+    def _continue_hand_start(self):
+        """Continue hand start after state machine is initialized."""
+        print(f"🎮 Continuing hand start")
         self.update_display()
         
-        # Update game info panel instead of popup
-        self._update_info_panel()
-        
-        self.prompt_human_action()
+        # Check if we have a valid game state
+        game_info = self.state_machine.get_game_info()
+        if game_info and game_info.get('players'):
+            print(f"✅ Game state initialized successfully")
+            self.state_machine.handle_current_player_action()
+        else:
+            print(f"❌ Game state not properly initialized, retrying...")
+            self.after(200, self._continue_hand_start)
 
     def prompt_human_action(self):
         """Shows the action controls for the human player."""
-        print(f"🎮 prompt_human_action called - current_player: {self.current_player}, player_acted[0]: {self.player_acted[0]}")
-        
-        if self.current_player != 0:  # Not human's turn
-            print(f"❌ Not human's turn (current_player: {self.current_player})")
+        player = self.state_machine.get_action_player()
+        if not player or not player.is_human:
+            print(f"❌ No human player to act or player is not human")
             return
         
-        if self.player_acted[0]:  # Human has already acted
-            print(f"❌ Human has already acted (player_acted[0]: {self.player_acted[0]})")
-            return
+        print(f"✅ Showing action controls for human player: {player.name}")
         
-        print(f"✅ Showing action controls for human player")
-        
-        # Hide all controls first
+        # Hide all controls first (including start hand button)
         for widget in self.human_action_controls.values():
             widget.pack_forget()
 
         # Show relevant controls based on current situation
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
         
-        if self.current_bet == 0:
+        # Check if player can check (no current bet) or must call
+        current_bet = self.state_machine.game_state.current_bet
+        if current_bet == 0:
             self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
         else:
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
@@ -465,56 +501,54 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls['raise'].pack(side=tk.LEFT, padx=5)
         self.human_action_controls['amount_entry'].pack(side=tk.LEFT, padx=5)
 
-    def _submit_human_action(self, action):
-        """Submits the human's chosen action."""
+    def _submit_human_action(self, action_str):
+        """Submits the human's chosen action to the state machine."""
+        player = self.state_machine.get_action_player()
+        if not player or not player.is_human:
+            print(f"❌ No human player to act or player is not human")
+            return
+
+        action_map = {
+            "fold": ActionType.FOLD,
+            "check": ActionType.CHECK,
+            "call": ActionType.CALL,
+            "bet": ActionType.BET,
+            "raise": ActionType.RAISE
+        }
+        action = action_map.get(action_str)
+        
+        if not action:
+            print(f"❌ Invalid action: {action_str}")
+            return
+
         amount = 0
-        if action in ["bet", "raise"]:
+        if action in [ActionType.BET, ActionType.RAISE]:
             try:
                 amount = float(self.amount_var.get())
-                if amount < self.min_bet:
-                    messagebox.showerror("Invalid Amount", f"Minimum bet is ${self.min_bet:.2f}")
-                    return
             except ValueError:
-                messagebox.showerror("Invalid Amount", "Please enter a valid number for the amount.")
+                messagebox.showerror("Invalid Amount", "Please enter a valid number.")
                 return
-        
-        # Execute action with sound effects
-        if action == "fold":
-            self.player_seats[0]['action'].config(text="Folded")
-            print(f"🔊 Playing fold sound for human player")
+
+        # Play sound effect based on action
+        if action == ActionType.FOLD:
             self.sound_manager.play("player_fold")
-        elif action == "check":
-            self.player_seats[0]['action'].config(text="Checked")
-            print(f"🔊 Playing check sound for human player")
+        elif action == ActionType.CHECK:
             self.sound_manager.play("player_check")
-        elif action == "call":
-            call_amount = self.current_bet
-            self.player_stacks[0] -= call_amount
-            self.pot += call_amount
-            self.player_seats[0]['action'].config(text=f"Called ${call_amount:.2f}")
-            print(f"🔊 Playing call sound for human player")
+        elif action == ActionType.CALL:
             self.sound_manager.play("player_call")
-        elif action in ["bet", "raise"]:
-            self.player_stacks[0] -= amount
-            self.pot += amount
-            self.current_bet = amount
-            self.player_seats[0]['action'].config(text=f"{action.title()} ${amount:.2f}")
-            print(f"🔊 Playing bet sound for human player")
+        elif action in [ActionType.BET, ActionType.RAISE]:
             self.sound_manager.play("chip_bet")
-            if action == "raise":
-                print(f"🔊 Playing raise sound for human player")
+            if action == ActionType.RAISE:
                 self.sound_manager.play("player_raise")
-        
-        # Mark human as having acted
-        self.player_acted[0] = True
-        print(f"🎯 Human player marked as acted: {self.player_acted[0]}")
-        
+
+        # Use the state machine to execute the action
+        print(f"🎮 Executing action: {action_str} with amount: {amount}")
+        self.state_machine.execute_action(player, action, amount)
+        self.update_display()
+
         # Hide controls after action
         for widget in self.human_action_controls.values():
             widget.pack_forget()
-        
-        # Move to next player (simplified AI)
-        self._ai_turn()
 
     def _ai_turn(self):
         """Simulates AI player turns."""
