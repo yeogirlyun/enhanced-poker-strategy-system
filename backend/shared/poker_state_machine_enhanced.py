@@ -689,6 +689,12 @@ class ImprovedPokerStateMachine:
                         sizing += limpers  # Add one extra BB for each limper
                     # --- END LIMPER ADJUSTMENT ---
                     
+                    # FIX: Check if player already has the current bet amount
+                    call_amount = self.game_state.current_bet - player.current_bet
+                    if call_amount <= 0:
+                        # Player already has the current bet amount, they should CHECK
+                        return ActionType.CHECK, 0
+                    
                     if hand_strength >= threshold:
                         return ActionType.BET, min(sizing, player.stack)
                     else:
@@ -717,21 +723,29 @@ class ImprovedPokerStateMachine:
                         return ActionType.CALL, call_amount
                     else:
                         return ActionType.FOLD, 0
+                elif call_amount == 0:
+                    # Player already has the current bet amount, they should CHECK
+                    return ActionType.CHECK, 0
                 
                 if hand_strength >= val_thresh:
                     if self.game_state.current_bet == 0:
                         bet_amount = min(self.game_state.pot * sizing, player.stack)
                         return ActionType.BET, bet_amount
                     else:
-                        return ActionType.CALL, call_amount
+                        # FIX: Check call_amount again to avoid "Nothing to call" error
+                        if call_amount > 0:
+                            return ActionType.CALL, call_amount
+                        else:
+                            return ActionType.CHECK, 0
                 elif hand_strength >= check_thresh:
                     if self.game_state.current_bet == 0:
                         return ActionType.CHECK, 0
                     else:
-                        if call_amount <= player.stack * 0.1:
+                        # FIX: Check call_amount again to avoid "Nothing to call" error
+                        if call_amount > 0 and call_amount <= player.stack * 0.1:
                             return ActionType.CALL, call_amount
                         else:
-                            return ActionType.FOLD, 0
+                            return ActionType.CHECK, 0
                 else:
                     if self.game_state.current_bet == 0:
                         return ActionType.CHECK, 0
