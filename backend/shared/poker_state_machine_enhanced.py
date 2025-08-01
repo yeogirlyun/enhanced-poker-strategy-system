@@ -1302,6 +1302,26 @@ class ImprovedPokerStateMachine:
         self._cache_misses = 0
         self._max_cache_size = 1000
 
+    def _initialize_players(self):
+        """Initialize the player list with default players."""
+        position_names = self._get_position_names()
+        self.game_state.players = []
+        
+        for i in range(self.num_players):
+            player = Player(
+                name=f"Player {i+1}",
+                stack=100.0,
+                position=position_names[i],
+                is_human=(i == 0),  # First player is human
+                is_active=True,
+                cards=[],
+                current_bet=0.0,
+                has_acted_this_round=False,
+                is_all_in=False,
+                total_invested=0.0
+            )
+            self.game_state.players.append(player)
+
     def determine_winner(self) -> List[Player]:
         """Determine winners with proper tie handling using the enhanced evaluator."""
         active_players = [p for p in self.game_state.players if p.is_active]
