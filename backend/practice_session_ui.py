@@ -58,11 +58,11 @@ class PracticeSessionUI(ttk.Frame):
         self.min_bet = 20.0  # Big blind
         self.player_acted = [False] * self.num_players  # Track if each player has acted
         
-        # Table size control - calculate initial scale for 70% of game pane
-        self.min_scale = 0.5
+        # Table size control - calculate initial scale for 50% of game pane
+        self.min_scale = 0.3
         self.max_scale = 2.0
-        # Initial scale will be calculated based on canvas size to take 70% of available space
-        self.table_scale = 1.0  # Will be recalculated in _calculate_initial_scale()
+        # Initial scale will be calculated based on canvas size to take 50% of available space
+        self.table_scale = 0.8  # Start smaller for better card visibility
         
         # UI components
         self.player_seats = []
@@ -97,9 +97,9 @@ class PracticeSessionUI(ttk.Frame):
         """Redraws the entire table and its elements when the window is resized."""
         self.canvas.delete("all")  # Clear the canvas
         self._draw_table()
-        self._setup_player_seats(self.num_players)
-        self._setup_community_card_area()
-        self._setup_pot_display()
+        self._setup_player_seats_scaled(self.num_players)
+        self._setup_community_card_area_scaled()
+        self._setup_pot_display_scaled()
 
     def _calculate_initial_scale_and_redraw(self):
         """Calculate initial scale based on canvas size and redraw the table."""
@@ -108,18 +108,19 @@ class PracticeSessionUI(ttk.Frame):
         canvas_height = self.canvas.winfo_height()
         
         if canvas_width > 0 and canvas_height > 0:
-            # Calculate scale to fit table in 70% of available space
+            # Calculate scale to fit table in 50% of available space
             # Base table size is 900x600
             # Use the smaller dimension to ensure table fits in both directions
-            scale_x = (canvas_width * 0.7) / 900
-            scale_y = (canvas_height * 0.7) / 600
-            # Use the larger scale to maximize table size while fitting
-            self.table_scale = min(max(scale_x, scale_y), self.max_scale)
+            scale_x = (canvas_width * 0.5) / 900
+            scale_y = (canvas_height * 0.5) / 600
+            # Use the smaller scale to ensure table fits comfortably
+            self.table_scale = min(min(scale_x, scale_y), self.max_scale)
             self.table_scale = max(self.table_scale, self.min_scale)
-            if self.table_scale < 0.8:
-                self.table_scale = 0.8
+            # Ensure minimum visibility
+            if self.table_scale < 0.6:
+                self.table_scale = 0.6
         else:
-            self.table_scale = 1.0
+            self.table_scale = 0.8
         
         self._redraw_table_with_scale()
         self.update_display()
@@ -180,8 +181,9 @@ class PracticeSessionUI(ttk.Frame):
         stack_label = tk.Label(seat_frame, text="$1000.00", bg=THEME["secondary_bg"], fg="green", font=FONTS["small"])
         stack_label.pack()
         
-        # Cards display
-        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
+        # Cards display - use larger font for better visibility
+        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg=THEME["text"], 
+                              font=("Arial", 14, "bold"))
         cards_label.pack()
         
         # Store seat info
@@ -281,10 +283,10 @@ class PracticeSessionUI(ttk.Frame):
                              bg=THEME["secondary_bg"], fg=THEME["text"])
         stack_label.pack()
         
-        # Cards
-        small_font_size = min(6, int(6 * self.table_scale))
+        # Cards - use larger font for better visibility
+        card_font_size = max(12, int(14 * self.table_scale))
         cards_label = tk.Label(frame, text="🂠 🂠", 
-                             font=(FONTS["main"], small_font_size), 
+                             font=("Arial", card_font_size, "bold"), 
                              bg=THEME["secondary_bg"], fg=THEME["text"])
         cards_label.pack()
         
@@ -324,10 +326,10 @@ class PracticeSessionUI(ttk.Frame):
             self.canvas.create_window(card_x, card_y, window=card_frame, 
                                     width=card_width, height=card_height)
             
-            # Card label
-            card_font_size = min(16, int(16 * self.table_scale))
+            # Card label - use larger font for better visibility
+            card_font_size = max(16, int(20 * self.table_scale))
             card_label = tk.Label(card_frame, text="", 
-                                font=(FONTS["main"], card_font_size), 
+                                font=("Arial", card_font_size, "bold"), 
                                 bg="white", fg="black")
             card_label.pack(expand=True, fill="both")
             
@@ -761,7 +763,11 @@ class PracticeSessionUI(ttk.Frame):
 
     def _redraw_table_with_scale(self):
         """Redraw the table with current scale."""
+        self.canvas.delete("all")  # Clear the canvas
         self._draw_table()
+        self._setup_player_seats_scaled(self.num_players)
+        self._setup_community_card_area_scaled()
+        self._setup_pot_display_scaled()
         self.update_display()
 
     def _on_canvas_resize(self, event):
