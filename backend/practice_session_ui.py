@@ -542,25 +542,36 @@ class PracticeSessionUI(ttk.Frame):
             self._log_message("DEBUG: update_display called but no game_info available.")
             return
 
+        self._log_message("\n--- UI UPDATE ---")
+        self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
+        self._log_message(f"Current State: {self.state_machine.get_current_state()}")
+        self._log_message(f"Community Cards: {game_info['board']}")
+        self._log_message(f"Pot: ${game_info['pot']:.2f}, Current Bet: ${game_info['current_bet']:.2f}")
+
         # Update pot and community cards
         pot_text = f"Pot: ${game_info['pot']:.2f}"
         if game_info['current_bet'] > 0:
             pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
         self.pot_label.config(text=pot_text)
 
+        # --- THIS IS THE CRITICAL BUG FIX ---
+        # Always display the community cards that are available on the board.
         for i, card_label in enumerate(self.community_card_labels):
-            card_label.config(text=self._format_card(game_info['board'][i]) if i < len(game_info['board']) else "")
+            if i < len(game_info['board']):
+                card_label.config(text=self._format_card(game_info['board'][i]))
+            else:
+                card_label.config(text="")
+        # --- End of Bug Fix ---
 
         # Update player info
         for i, player_seat in enumerate(self.player_seats):
-            if not player_seat:  # Skip if player seat is empty
+            if not player_seat:
                 continue
 
             player_info = game_info['players'][i]
             frame = player_seat["frame"]
             name_label = player_seat["name_label"]
             stack_label = player_seat["stack_label"]
-            bet_label = player_seat["bet_label"]
             cards_label = player_seat["cards_label"]
             
             # Highlight current player
@@ -574,12 +585,8 @@ class PracticeSessionUI(ttk.Frame):
             
             # Update stack and bet info
             stack_label.config(text=f"${player_info['stack']:.2f}")
-            
-            if player_info['current_bet'] > 0:
-                bet_label.config(text=f"💰 ${player_info['current_bet']:.2f}")
-            else:
-                bet_label.config(text="")
-            
+
+            # Update the prominent bet display on the table
             bet_label_widget = player_seat.get("bet_label_widget")
             bet_label_window = player_seat.get("bet_label_window")
             if bet_label_widget and bet_label_window:
@@ -590,13 +597,15 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
+            # Update player card display
             if player_info['is_active']:
+                # Show cards only if the player is human or if it's showdown
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
                     cards_label.config(text=cards_text)
-                else:
+                else: # Bot's cards are hidden during play
                     cards_label.config(text="🂠 🂠")
-            else:
+            else: # Player has folded
                 cards_label.config(text="Folded")
     
     def _update_bet_size_label(self, event=None):
