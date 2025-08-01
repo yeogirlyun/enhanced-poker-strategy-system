@@ -91,8 +91,9 @@ class PracticeSessionUI(ttk.Frame):
         self.after(100, self._calculate_initial_scale_and_redraw)
         self._create_human_action_controls()
         
-        # Don't automatically start a hand - let user do it manually
-        # self.after(500, self.start_new_hand)
+        # Optionally start a hand automatically after a delay
+        # Uncomment the next line to auto-start hands
+        # self.after(1000, self.start_new_hand)
 
     def _calculate_initial_scale_and_redraw(self):
         """Calculate initial scale based on canvas size and redraw the table."""
@@ -454,24 +455,48 @@ class PracticeSessionUI(ttk.Frame):
 
     def _update_info_panel(self):
         """Updates the information panel with current game state."""
-        # Get player position name
-        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
-        current_position = positions[self.current_player] if self.current_player < len(positions) else "Unknown"
+        # Get game info from state machine
+        game_info = self.state_machine.get_game_info()
+        
+        if game_info and game_info.get('players'):
+            # Use state machine data
+            action_player = game_info.get('action_player', 0)
+            current_player = game_info['players'][action_player] if action_player < len(game_info['players']) else None
+            
+            if current_player:
+                current_position = current_player.get('position', 'Unknown')
+                current_bet = game_info.get('current_bet', 0.0)
+                pot_size = game_info.get('pot', 0.0)
+                board = game_info.get('board', [])
+                is_human_turn = current_player.get('is_human', False)
+            else:
+                current_position = "Unknown"
+                current_bet = 0.0
+                pot_size = 0.0
+                board = []
+                is_human_turn = False
+        else:
+            # Use default values
+            current_position = "Unknown"
+            current_bet = 0.0
+            pot_size = 0.0
+            board = []
+            is_human_turn = False
         
         info_text = f"""🎮 GAME STATE
 {'='*30}
 
-👤 Current Player: Player {self.current_player + 1}
+👤 Current Player: Player {action_player + 1 if 'action_player' in locals() else 'Unknown'}
 📍 Position: {current_position}
-💰 Current Bet: ${self.current_bet:.2f}
+💰 Current Bet: ${current_bet:.2f}
 🎯 Min Bet: ${self.min_bet:.2f}
 
-🃏 Community Cards: {len(self.community_cards)}/5
-🏆 Pot Size: ${self.pot:.2f}
+🃏 Community Cards: {len(board)}/5
+🏆 Pot Size: ${pot_size:.2f}
 
 📊 Strategy: {self.strategy_data.get_strategy_file_display_name()}
 
-🎯 Your Turn: {'Yes' if self.current_player == 0 else 'No'}
+🎯 Your Turn: {'Yes' if is_human_turn else 'No'}
 """
         
         # Only update if info_text widget exists
@@ -485,8 +510,8 @@ class PracticeSessionUI(ttk.Frame):
         """Starts a new hand using the state machine."""
         print(f"🎮 Starting new hand with state machine")
         
-        # Initialize the state machine properly
-        self.state_machine.start_hand()
+        # Initialize the state machine properly with existing players
+        self.state_machine.start_hand(existing_players=None)
         
         # Wait a moment for state machine to initialize
         self.after(100, self._continue_hand_start)
