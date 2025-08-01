@@ -235,8 +235,9 @@ class PracticeSessionUI(ttk.Frame):
             else:
                 cards_label.config(text="Folded")
 
-            # Highlight current player
-            if i == game_info['action_player'] and player_info['is_active']:
+            # Highlight current player (FIXED: Use correct player index)
+            current_action_player = self.state_machine.get_action_player()
+            if current_action_player and i == self.state_machine.action_player_index and player_info['is_active']:
                 frame.config(bg=THEME["accent_primary"])
             else:
                 frame.config(bg=THEME["secondary_bg"])
@@ -422,6 +423,23 @@ class PracticeSessionUI(ttk.Frame):
             winner_name = winner_info["name"]
             winner_amount = winner_info["amount"]
             self.add_game_message(f"🏆 {winner_name} wins ${winner_amount:.2f}!")
+            
+            # --- NEW: Visual feedback for winner ---
+            # Highlight the winning player's seat
+            for i, frame in enumerate(self.player_seat_frames):
+                if i < len(self.state_machine.game_state.players):
+                    player = self.state_machine.game_state.players[i]
+                    if player.name == winner_name:
+                        frame.config(bg=THEME["accent_secondary"])  # Winner highlight
+                        # Add a temporary winner animation
+                        self.after(2000, lambda f=frame: f.config(bg=THEME["secondary_bg"]))
+                        break
+            
+            # Update pot display to show winner
+            if hasattr(self, 'pot_label'):
+                self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
+                # Reset pot display after animation
+                self.after(3000, lambda: self.pot_label.config(text="Pot: $0.00", fg="yellow"))
         else:
             self.add_game_message("🏁 Hand complete!")
         
