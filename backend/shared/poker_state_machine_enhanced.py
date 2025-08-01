@@ -1019,31 +1019,40 @@ class ImprovedPokerStateMachine:
     # FIX 2 & 3: Correct Raise Logic and All-In Detection
     def execute_action(self, player: Player, action: ActionType, amount: float = 0):
         """Execute a player action with all fixes."""
-        try:
-            # Validate inputs
-            if not player:
-                raise ValueError("Player cannot be None")
-            if not isinstance(action, ActionType):
-                raise ValueError(f"Invalid action type: {action}")
-            if amount < 0:
-                raise ValueError("Amount cannot be negative")
-            
-            # Validate action is valid for current state
-            errors = self.validate_action(player, action, amount)
-            if errors:
-                raise ValueError(f"Invalid action: {'; '.join(errors)}")
-            
-            # --- ENHANCED: Detailed Action Logging ---
-            self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
-            self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
-            self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
-            
-            # Call the state logger here
-            self.log_state_change(player, action, amount)
-            
-        except Exception as e:
-            self._log_action(f"ERROR in execute_action: {e}")
+        # --- NEW: Proper invalid action handling ---
+        # Validate inputs
+        if not player:
+            self._log_action(f"ERROR in execute_action: Player cannot be None")
             return
+        
+        if not isinstance(action, ActionType):
+            self._log_action(f"ERROR in execute_action: Invalid action type: {action}")
+            return
+        
+        if amount < 0:
+            self._log_action(f"ERROR in execute_action: Amount cannot be negative: ${amount}")
+            return
+        
+        # Validate action is valid for current state
+        errors = self.validate_action(player, action, amount)
+        if errors:
+            error_msg = f"Invalid action: {'; '.join(errors)}"
+            self._log_action(f"ERROR in execute_action: {error_msg}")
+            
+            # --- NEW: Re-prompt human player for valid action ---
+            if player.is_human and self.on_action_required:
+                self._log_action(f"🔄 Re-prompting human player for valid action")
+                self.on_action_required(player)
+            return
+        # --- END NEW ---
+        
+        # --- ENHANCED: Detailed Action Logging ---
+        self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
+        self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
+        self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
+        
+        # Call the state logger here
+        self.log_state_change(player, action, amount)
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
