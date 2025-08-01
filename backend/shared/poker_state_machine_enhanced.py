@@ -463,17 +463,43 @@ class ImprovedPokerStateMachine:
         self.transition_to(PokerState.RIVER_BETTING)
 
     def prepare_new_betting_round(self):
-        """Prepare for new betting round."""
+        """
+        Resets bets for the new round and finds the correct first player to act.
+        Post-flop, action starts with the first active player left of the dealer.
+        """
+        self._log_action(f"Preparing new betting round for {self.game_state.street}.")
+        
+        # Reset game state for new round
         self.game_state.current_bet = 0.0
         self.game_state.min_raise = 1.0
         self.reset_round_tracking()
 
-        # Reset current bets (but keep total invested)
-        for player in self.game_state.players:
-            player.current_bet = 0.0
+        # Reset bets and action flags for all players
+        for p in self.game_state.players:
+            p.current_bet = 0
+            p.has_acted = False
 
-        # Set action to first active player after button
-        self.set_action_to_first_active_after_button()
+        # Find the correct first player to act
+        num_players = len(self.game_state.players)
+        
+        # In pre-flop, the player after the Big Blind acts first.
+        if self.game_state.street == 'preflop':
+            start_index = (self.big_blind_position + 1) % num_players
+        # Post-flop, the first active player to the left of the dealer acts first.
+        else:
+            start_index = (self.dealer_position + 1) % num_players
+
+        # Find the first active player starting from the calculated start_index
+        for i in range(num_players):
+            current_index = (start_index + i) % num_players
+            player_at_index = self.game_state.players[current_index]
+            if player_at_index.is_active and not player_at_index.is_all_in:
+                self.action_player_index = current_index
+                self._log_action(f"New round. Action starts with {player_at_index.name} in seat {current_index}.")
+                return
+
+        # If no player can act, something is wrong. Log it.
+        self._log_action("ERROR: Could not find any active player to start the betting round.")
 
     def set_action_to_first_active_after_button(self):
         """Set action to first active player after button."""
