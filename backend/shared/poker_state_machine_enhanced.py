@@ -1644,8 +1644,10 @@ class ImprovedPokerStateMachine:
             errors.append("Amount cannot be negative")
         
         if action == ActionType.CHECK:
-            if self.game_state.current_bet > 0:
-                errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f}")
+            # FIX: Allow CHECK if player already has the current bet amount
+            call_amount = self.game_state.current_bet - player.current_bet
+            if call_amount > 0:
+                errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f} (need to call ${call_amount:.2f})")
         
         elif action == ActionType.CALL:
             call_amount = self.game_state.current_bet - player.current_bet
