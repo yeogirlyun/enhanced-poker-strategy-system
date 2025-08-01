@@ -36,6 +36,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_state_change = self.update_display
+        self.state_machine.on_log_entry = self.add_game_message  # NEW: Connect detailed logging
         self.sfx = SoundManager()
 
         # UI components
