@@ -1302,6 +1302,7 @@ class ImprovedPokerStateMachine:
         self.on_hand_complete = None
         self.on_state_change = None
         self.on_log_entry = None
+        self.on_round_complete = None
         
         # Sound manager
         self.sfx = SoundManager()
