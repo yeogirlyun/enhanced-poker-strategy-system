@@ -152,26 +152,27 @@ class PracticeSessionUI(ttk.Frame):
     # --- UI Update and Action Handling (Corrected) ---
 
     def _submit_human_action(self, action_str):
-        """Submits the human's chosen action and lets the state machine control the game flow."""
+        """Submits the human's chosen action to the state machine."""
         player = self.state_machine.get_action_player()
         if not player or not player.is_human:
-            self.add_game_message("ERROR: Not your turn.")
             return
 
         action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
         action = action_map.get(action_str)
         
+        # --- THIS IS THE CRITICAL BUG FIX ---
         amount = 0
+        # Only get an amount from the slider if the action is a BET or RAISE.
+        # For CHECK, FOLD, and CALL, the amount is handled by the state machine.
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
-        
-        self.add_game_message(f"▶️ You chose to {action_str.upper()}...")
-        
-        # Disable controls while the state machine processes
-        self._show_game_control_buttons()
+        # --- End of Bug Fix ---
 
-        # The state machine will now execute the action, run all bot turns,
-        # and then call prompt_human_action() via its callback when it's our turn again.
+        # (The rest of the method remains the same)
+        sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
+        if sound_to_play:
+            self.sfx.play(sound_to_play)
+
         self.state_machine.execute_action(player, action, amount)
 
     def prompt_human_action(self, player):
