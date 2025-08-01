@@ -67,50 +67,50 @@
   "preflop": {
     "open_rules": {
       "UTG": {
-        "threshold": 29,
+        "threshold": 60,
         "sizing": 3.0
       },
       "MP": {
-        "threshold": 18,
+        "threshold": 55,
         "sizing": 3.0
       },
       "CO": {
-        "threshold": 19,
+        "threshold": 48,
         "sizing": 2.5
       },
       "BTN": {
-        "threshold": 13,
+        "threshold": 40,
         "sizing": 2.5
       },
       "SB": {
-        "threshold": 20,
+        "threshold": 50,
         "sizing": 3.0
       }
     },
     "vs_raise": {
       "UTG": {
-        "value_thresh": 42,
-        "call_range": [28, 41],
+        "value_thresh": 75,
+        "call_thresh": 65,
         "sizing": 3.0
       },
       "MP": {
-        "value_thresh": 40,
-        "call_range": [25, 39],
+        "value_thresh": 72,
+        "call_thresh": 62,
         "sizing": 3.0
       },
       "CO": {
-        "value_thresh": 38,
-        "call_range": [22, 37],
+        "value_thresh": 70,
+        "call_thresh": 60,
         "sizing": 2.5
       },
       "BTN": {
-        "value_thresh": 35,
-        "call_range": [20, 34],
+        "value_thresh": 68,
+        "call_thresh": 55,
         "sizing": 2.5
       },
       "SB": {
-        "value_thresh": 40,
-        "call_range": [25, 39],
+        "value_thresh": 70,
+        "call_thresh": 60,
         "sizing": 3.0
       }
     }
