@@ -999,8 +999,13 @@ class ImprovedPokerStateMachine:
         else:
             call_amount = self.game_state.current_bet - player.current_bet
             if hand_strength > 30 and call_amount < player.stack * 0.5:
-                raise_amount = min(self.game_state.current_bet * 2, player.stack)
-                return ActionType.RAISE, raise_amount
+                # --- FIX: Ensure raise meets minimum requirement ---
+                min_raise_total = self.game_state.current_bet + self.game_state.min_raise
+                raise_amount = max(min_raise_total, min(self.game_state.current_bet * 2, player.stack))
+                if raise_amount <= player.stack:
+                    return ActionType.RAISE, raise_amount
+                else:
+                    return ActionType.FOLD, 0
             elif hand_strength > 15 and call_amount <= player.stack * 0.2:
                 return ActionType.CALL, call_amount
             else:
