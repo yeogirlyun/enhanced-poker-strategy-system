@@ -1214,6 +1214,9 @@ class ImprovedPokerStateMachine:
             self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
             self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
             
+            # Play winner announcement sound
+            self.sfx.play("winner_announce")
+            
             # Only transition if not already in END_HAND state
             if self.current_state != PokerState.END_HAND:
                 self.transition_to(PokerState.END_HAND)
