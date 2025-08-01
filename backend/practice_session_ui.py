@@ -63,7 +63,14 @@ class PracticeSessionUI(ttk.Frame):
         right_panel_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
         info_frame = ttk.LabelFrame(right_panel_frame, text="Game Messages", padding=10)
         info_frame.pack(fill=tk.BOTH, expand=True)
-        self.info_text = tk.Text(info_frame, state=tk.DISABLED, bg=THEME["secondary_bg"], fg=THEME["text"], relief="flat", font=FONTS["small"])
+        self.info_text = tk.Text(
+            info_frame, 
+            state=tk.DISABLED, 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text"], 
+            relief="flat", 
+            font=FONTS["small"]  # Use the default font from your theme
+        )
         self.info_text.pack(fill=tk.BOTH, expand=True)
 
         # Human Action Controls (placed at the bottom)
@@ -393,6 +400,12 @@ class PracticeSessionUI(ttk.Frame):
         for widget in self.human_action_controls.values():
             widget.pack_forget()
         self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
+
+    def update_font_size(self, font_size: int):
+        """Updates the font size for all components in the practice session."""
+        new_font = (THEME["font_family"], font_size)
+        self.info_text.config(font=new_font)
+        # You can add other component font updates here if needed
 
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display."""
