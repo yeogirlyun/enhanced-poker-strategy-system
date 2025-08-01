@@ -660,9 +660,41 @@ class PracticeSessionUI(ttk.Frame):
             self.state_machine.handle_current_player_action()
         # --- END NEW ---
         
+        # --- NEW: Start the game loop in a separate thread ---
+        game_thread = threading.Thread(target=self._run_game_loop, daemon=True)
+        game_thread.start()
+        # --- END NEW ---
+        
         # Continue the game loop after a short delay
         self.after(500, self._continue_game_loop)
         # --- END ENHANCED ---
+
+    def _run_game_loop(self):
+        """Runs the game loop in a separate thread to handle bot actions."""
+        self._log_message(f"🎮 Game loop thread started")
+        
+        while True:
+            # Check if the game has ended
+            if self.state_machine.get_current_state() == PokerState.END_HAND:
+                self._log_message(f"🏁 Game ended, stopping game loop")
+                break
+            
+            # Get the current action player
+            current_player = self.state_machine.get_action_player()
+            if not current_player:
+                self._log_message(f"❌ No action player found, stopping game loop")
+                break
+            
+            # If it's a bot's turn, execute the action
+            if not current_player.is_human:
+                self._log_message(f"🤖 Bot turn: {current_player.name}")
+                self.state_machine.execute_bot_action(current_player)
+                time.sleep(1)  # Add delay for bot actions
+            else:
+                self._log_message(f"👤 Human turn: {current_player.name}")
+                break  # Stop the loop for human turns
+        
+        self._log_message(f"🎮 Game loop thread ended")
 
     def _continue_game_loop(self):
         """Continues the game loop after a human action."""

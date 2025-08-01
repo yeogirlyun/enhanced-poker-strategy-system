@@ -511,12 +511,7 @@ class EnhancedMainGUI:
         player_count_combo.pack(side=tk.LEFT, padx=5)
         ToolTip(player_count_combo, COMMON_TOOLTIPS["player_count"])
 
-        # Start new hand button
-        start_button = ttk.Button(
-            control_frame, text="🎯 Start New Hand", command=self._start_practice_hand
-        )
-        start_button.pack(side=tk.RIGHT, padx=10)
-        ToolTip(start_button, COMMON_TOOLTIPS["start_hand"])
+        # --- REMOVED: Redundant start button (now handled by practice UI) ---
 
         # Game area
         game_frame = ttk.Frame(main_frame)
