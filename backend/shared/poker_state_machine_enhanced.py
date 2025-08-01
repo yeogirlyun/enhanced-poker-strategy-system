@@ -109,12 +109,13 @@ class ImprovedPokerStateMachine:
         PokerState.END_HAND: [PokerState.START_HAND],
     }
 
-    def __init__(self, num_players: int = 6, strategy_data=None):
+    def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
         self.current_state = PokerState.START_HAND
         self.game_state = None
         self.action_player_index = 0
         self.num_players = num_players
         self.strategy_data = strategy_data  # NEW: Strategy integration
+        self.root_tk = root_tk  # NEW: Store reference to root window for delays
 
         # Initialize sound manager
         self.sfx = SoundManager()

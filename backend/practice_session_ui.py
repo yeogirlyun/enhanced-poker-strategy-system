@@ -32,7 +32,7 @@ class PracticeSessionUI(ttk.Frame):
         self.strategy_data = strategy_data
         
         # Initialize State Machine and Sound Manager
-        self.state_machine = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
+        self.state_machine = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data, root_tk=self.winfo_toplevel())
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_state_change = self.update_display
@@ -460,29 +460,53 @@ class PracticeSessionUI(ttk.Frame):
         # The state machine will now automatically call prompt_human_action via its callback
 
     def handle_hand_complete(self, winner_info=None):
-        """Handles the completion of a hand."""
+        """Handles the completion of a hand with enhanced visual feedback."""
         if winner_info:
             winner_name = winner_info["name"]
             winner_amount = winner_info["amount"]
             self.add_game_message(f"🏆 {winner_name} wins ${winner_amount:.2f}!")
             
-            # --- NEW: Visual feedback for winner ---
-            # Highlight the winning player's seat
+            # --- ENHANCED: Visual feedback for winner ---
+            # Find and highlight the winning player's seat
+            winner_seat = None
             for i, player_seat in enumerate(self.player_seats):
                 if i < len(self.state_machine.game_state.players):
                     player = self.state_machine.game_state.players[i]
                     if player.name == winner_name:
                         frame = player_seat["frame"]
                         frame.config(bg=THEME["accent_secondary"])  # Winner highlight
-                        # Add a temporary winner animation
-                        self.after(2000, lambda f=frame: f.config(bg=THEME["secondary_bg"]))
+                        winner_seat = player_seat
                         break
             
-            # Update pot display to show winner
-            if hasattr(self, 'pot_label'):
+            # --- NEW: Animate pot collection ---
+            if hasattr(self, 'pot_label') and winner_seat:
+                # Get winner seat position
+                winner_x = winner_seat["frame"].winfo_x()
+                winner_y = winner_seat["frame"].winfo_y()
+                
+                # Create animated pot collection effect
                 self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
-                # Reset pot display after animation
-                self.after(3000, lambda: self.pot_label.config(text="Pot: $0.00", fg="yellow"))
+                
+                # Flash the winner's seat multiple times
+                def flash_winner(count=0):
+                    if count < 6:  # Flash 3 times (6 state changes)
+                        if count % 2 == 0:
+                            winner_seat["frame"].config(bg=THEME["accent_primary"])
+                        else:
+                            winner_seat["frame"].config(bg=THEME["accent_secondary"])
+                        self.after(300, lambda: flash_winner(count + 1))
+                    else:
+                        # Reset to normal after flashing
+                        winner_seat["frame"].config(bg=THEME["secondary_bg"])
+                        self.pot_label.config(text="Pot: $0.00", fg="yellow")
+                
+                # Start the flashing animation
+                self.after(500, flash_winner)
+            else:
+                # Fallback if no winner seat found
+                if hasattr(self, 'pot_label'):
+                    self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
+                    self.after(3000, lambda: self.pot_label.config(text="Pot: $0.00", fg="yellow"))
         else:
             self.add_game_message("🏁 Hand complete!")
         
