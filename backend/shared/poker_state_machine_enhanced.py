@@ -530,6 +530,12 @@ class ImprovedPokerStateMachine:
 
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
+        # --- NEW: Check if hand has ended ---
+        if self.current_state == PokerState.END_HAND:
+            self._log_action("DEBUG: Hand has ended, no more actions allowed.")
+            return
+        # --- END NEW ---
+        
         if self.action_player_index == -1:
             self._log_action("DEBUG: No action player index, round is likely complete.")
             return
@@ -556,6 +562,12 @@ class ImprovedPokerStateMachine:
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
         """Execute bot action using strategy data."""
+        # --- NEW: Check if hand has ended ---
+        if self.current_state == PokerState.END_HAND:
+            self._log_action("DEBUG: Hand has ended, bot action cancelled.")
+            return
+        # --- END NEW ---
+        
         if self.strategy_data:
             action, amount = self.get_strategy_action(player)
         else:
