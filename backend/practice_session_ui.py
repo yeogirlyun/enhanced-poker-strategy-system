@@ -183,7 +183,18 @@ class PracticeSessionUI(ttk.Frame):
         game_info = self.state_machine.get_game_info()
         if game_info:
             current_bet = game_info.get('current_bet', 0)
-            to_call = current_bet - game_info['players'][0].get('current_bet', 0)
+            
+            # FIX: Find the human player instead of assuming index 0
+            human_player_info = None
+            for player_info in game_info['players']:
+                if player_info.get('is_human', False):
+                    human_player_info = player_info
+                    break
+            
+            if human_player_info:
+                to_call = current_bet - human_player_info.get('current_bet', 0)
+            else:
+                to_call = current_bet  # Fallback
             
             if to_call > 0:
                 # There's a bet to call
