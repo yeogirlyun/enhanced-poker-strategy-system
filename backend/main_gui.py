@@ -1054,16 +1054,27 @@ Ready to track performance...
             self.set_status("Error: Please enter valid numbers for game settings", duration=3000)
 
     def _reset_enhanced_game(self):
-        """Reset the enhanced game."""
+        """Reset the enhanced game and display a welcome guide."""
         if messagebox.askyesno("Reset Game", "Are you sure you want to reset the game?"):
-            # Clear all displays
+            
+            # --- NEW: Welcome and Guide Text ---
+            welcome_guide = """Welcome to the Game Dashboard!
+
+1. Configure your game settings on the left.
+2. Click 'Start New Game' to initialize a session.
+3. Switch to the 'Practice Session' tab to begin playing.
+4. As you play, this dashboard will update with live analysis and statistics.
+"""
+            # --- END NEW ---
+
+            # Clear all displays and show the guide
             for text_widget in [self.enhanced_game_state, self.strategy_analysis, self.game_statistics]:
                 text_widget.config(state=tk.NORMAL)
                 text_widget.delete(1.0, tk.END)
-                text_widget.insert(1.0, "Game reset. Start a new game to begin.")
+                text_widget.insert(1.0, welcome_guide)
                 text_widget.config(state=tk.DISABLED)
             
-            self.set_status("Game reset successfully")
+            self.set_status("Game reset. Ready to start a new game.")
 
     def _start_practice_game(self):
         """Start a new practice game."""
