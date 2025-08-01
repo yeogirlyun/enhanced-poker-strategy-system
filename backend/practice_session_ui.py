@@ -14,9 +14,8 @@ Version 1.0 (2025-07-29) - Initial Version
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 import math
-from typing import Optional
 
 from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from sound_manager import SoundManager
@@ -419,21 +418,16 @@ class PracticeSessionUI(ttk.Frame):
         else:
             self.add_game_message("🏁 Hand complete!")
         
-        # --- FIX: Hide all action buttons and show only start hand button ---
+        # Hide all action buttons
         for widget in self.human_action_controls.values():
             if hasattr(widget, 'pack_forget'):
                 widget.pack_forget()
-        self.human_action_controls['start_hand'].pack(side=tk.LEFT, padx=5)
-        # --- END FIX ---
         
-        # --- NEW: Prompt for new hand after a delay ---
-        self.after(2000, self._prompt_new_hand)
-        # --- END NEW ---
-
-    def _prompt_new_hand(self):
-        """Asks the user to start a new hand."""
-        if messagebox.askyesno("New Hand", "Start a new hand?"):
-            self.start_new_hand()
+        # Add message about starting new hand
+        self.add_game_message("💡 Click 'Start New Hand' to begin a new game!")
+        
+        # Play winner sound
+        self.sfx.play("winner_announce")
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
