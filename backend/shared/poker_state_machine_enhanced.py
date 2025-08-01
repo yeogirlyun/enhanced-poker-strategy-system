@@ -142,6 +142,9 @@ class ImprovedPokerStateMachine:
         self._cache_hits = 0
         self._cache_misses = 0
         self._max_cache_size = 10000
+        
+        # Initialize winner tracking
+        self._last_winner = None
 
     def _get_position_names(self) -> List[str]:
         """Get position names based on number of players."""
@@ -1016,11 +1019,14 @@ class ImprovedPokerStateMachine:
             if len(active_players) == 1:
                 winner = active_players[0]
                 winner.stack += self.game_state.pot
+                pot_amount = self.game_state.pot
                 self.game_state.pot = 0
-                self._log_action(f"{winner.name} wins ${winner.stack:.2f} (all others folded)")
+                self._log_action(f"{winner.name} wins ${pot_amount:.2f} (all others folded)")
                 # Only transition if not already in END_HAND state
                 if self.current_state != PokerState.END_HAND:
                     self.transition_to(PokerState.END_HAND)
+                # Store winner info for UI callback
+                self._last_winner = {"name": winner.name, "amount": pot_amount}
                 return  # End the action here since the hand is over
             # --- END NEW ---
 
@@ -1483,7 +1489,10 @@ class ImprovedPokerStateMachine:
         self.advance_dealer_position()
         
         if self.on_hand_complete:
-            self.on_hand_complete()
+            # Pass winner information to UI if available
+            winner_info = self._last_winner
+            self._last_winner = None  # Reset for next hand
+            self.on_hand_complete(winner_info)
 
     # FIX 6: Better Input Validation
     def validate_action(self, player: Player, action: ActionType, amount: float = 0) -> List[str]:
