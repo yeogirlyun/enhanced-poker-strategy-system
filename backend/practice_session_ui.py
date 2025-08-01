@@ -221,6 +221,11 @@ class PracticeSessionUI(ttk.Frame):
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
         self.add_game_message("🎮 Starting new hand...")
+        
+        # FIX: Clear community cards when starting a new hand
+        for card_label in self.community_card_labels:
+            card_label.config(text="")
+        
         self.state_machine.start_hand()
         # The state machine will automatically determine who acts first
         # and call prompt_human_action if it's the human's turn.
@@ -501,9 +506,10 @@ class PracticeSessionUI(ttk.Frame):
         if hasattr(self, 'pot_label'):
             self.pot_label.config(text="Pot: $0.00", fg="yellow")
         
-        # Clear community cards
-        for card_label in self.community_card_labels:
-            card_label.config(text="")
+        # FIX: Don't clear community cards immediately - let them stay visible during showdown
+        # Community cards will be cleared when the next hand starts
+        # for card_label in self.community_card_labels:
+        #     card_label.config(text="")
         
         # Reset player displays
         for player_seat in self.player_seats:
