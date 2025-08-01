@@ -597,8 +597,14 @@ class ImprovedPokerStateMachine:
                 self.on_action_required(current_player)
         else:
             self._log_action(f"Bot turn: {current_player.name}")
-            # Execute bot action immediately to prevent stalls
-            self.execute_bot_action(current_player)
+            # Add delay for bot actions to make the game more realistic
+            if self.root_tk:
+                self.root_tk.after(1000, lambda: self.execute_bot_action(current_player))
+            else:
+                # Fallback if no root_tk available
+                import time
+                time.sleep(1)
+                self.execute_bot_action(current_player)
 
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
@@ -1454,7 +1460,8 @@ class ImprovedPokerStateMachine:
                     winner.stack += split_amount
                     self._log_action(f"{winner.name} wins ${split_amount:.2f}")
         
-        self.transition_to(PokerState.END_HAND)
+        # Call handle_end_hand to trigger UI callbacks for winner announcement
+        self.handle_end_hand()
 
     def create_side_pots(self) -> List[dict]:
         """Create side pots for all-in scenarios with proper tracking."""
