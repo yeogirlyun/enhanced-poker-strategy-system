@@ -84,16 +84,23 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas = tk.Canvas(self, bg=THEME["primary_bg"], highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Bind canvas resize to redraw table
-        self.canvas.bind("<Configure>", self._on_canvas_resize)
-        
-        # Schedule initial redraw after canvas is properly sized
-        self.after(100, self._calculate_initial_scale_and_redraw)
+        # --- NEW: Bind the resize event ---
+        self.canvas.bind("<Configure>", self._on_resize)
+        # --- END NEW ---
+
         self._create_human_action_controls()
+        self._setup_info_panel()
         
-        # Optionally start a hand automatically after a delay
-        # Uncomment the next line to auto-start hands
-        # self.after(1000, self.start_new_hand)
+        # Initial draw
+        self.after(100, self._on_resize, None)
+
+    def _on_resize(self, event):
+        """Redraws the entire table and its elements when the window is resized."""
+        self.canvas.delete("all")  # Clear the canvas
+        self._draw_table()
+        self._setup_player_seats(self.num_players)
+        self._setup_community_card_area()
+        self._setup_pot_display()
 
     def _calculate_initial_scale_and_redraw(self):
         """Calculate initial scale based on canvas size and redraw the table."""
@@ -119,27 +126,109 @@ class PracticeSessionUI(ttk.Frame):
         self.update_display()
 
     def _draw_table(self):
-        """Draw the poker table with all components."""
-        self.canvas.delete("all")
+        """Draws the main poker table shape based on canvas size."""
+        # --- NEW: Get canvas dimensions dynamically ---
+        width = self.canvas.winfo_width()
+        height = self.canvas.winfo_height()
+        # --- END NEW ---
+
+        # Create a professional-looking poker table
+        self.canvas.create_oval(width*0.05, height*0.05, width*0.95, height*0.9, fill="#013f28", outline=THEME["border"], width=10)
+        self.canvas.create_oval(width*0.06, height*0.06, width*0.94, height*0.89, fill="#015939", outline="#222222", width=2)
         
-        # Draw table background
-        table_width = int(900 * self.table_scale)
-        table_height = int(600 * self.table_scale)
-        table_x = (self.canvas.winfo_width() - table_width) // 2
-        table_y = (self.canvas.winfo_height() - table_height) // 2
+        # --- RE-IMPLEMENTED: Add table felt texture effect ---
+        for i in range(0, int(width * 0.88), 20):
+            for j in range(0, int(height * 0.78), 20):
+                if (i + j) % 40 == 0:
+                    self.canvas.create_oval(width*0.07 + i, height*0.07 + j, width*0.085 + i, height*0.085 + j, fill="#014a2f", outline="")
+
+    def _setup_player_seats(self, num_players):
+        """Creates and positions the player seats around the table dynamically."""
+        # --- NEW: Get canvas dimensions dynamically ---
+        width = self.canvas.winfo_width()
+        height = self.canvas.winfo_height()
+        center_x, center_y = width / 2, height / 2
+        radius_x, radius_y = width * 0.4, height * 0.35
+        # --- END NEW ---
         
-        # Draw table
-        self.canvas.create_oval(
-            table_x, table_y, 
-            table_x + table_width, table_y + table_height,
-            fill=THEME["secondary_bg"], outline=THEME["accent_primary"], width=3
+        self.player_seats = []  # Clear old seat references
+        
+        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        
+        for i in range(num_players):
+            angle = (2 * math.pi / num_players) * i - (math.pi / 2)
+            x = center_x + radius_x * math.cos(angle)
+            y = center_y + radius_y * math.sin(angle)
+            self._create_player_seat(x, y, f"Player {i+1}", positions[i], i)
+
+    def _create_player_seat(self, x, y, name, position, index):
+        """Create a player seat with dynamic positioning."""
+        # Seat frame
+        seat_width = 120
+        seat_height = 80
+        seat_x = x - seat_width // 2
+        seat_y = y - seat_height // 2
+        
+        # Create seat frame
+        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], relief="raised", bd=2)
+        self.canvas.create_window(seat_x, seat_y, window=seat_frame, anchor="nw", width=seat_width, height=seat_height)
+        
+        # Player name
+        name_label = tk.Label(seat_frame, text=f"{name}\n({position})", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
+        name_label.pack(pady=2)
+        
+        # Stack display
+        stack_label = tk.Label(seat_frame, text="$1000.00", bg=THEME["secondary_bg"], fg="green", font=FONTS["small"])
+        stack_label.pack()
+        
+        # Cards display
+        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
+        cards_label.pack()
+        
+        # Store seat info
+        self.player_seats.append({
+            "frame": seat_frame,
+            "name": name_label,
+            "stack": stack_label,
+            "cards": cards_label,
+            "index": index
+        })
+
+    def _setup_community_card_area(self):
+        """Creates labels for the community cards at the center of the canvas."""
+        # --- NEW: Get canvas dimensions dynamically ---
+        center_x = self.canvas.winfo_width() / 2
+        center_y = self.canvas.winfo_height() / 2
+        # --- END NEW ---
+
+        # Community cards frame
+        community_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"])
+        self.canvas.create_window(center_x, center_y, window=community_frame)
+        
+        # Create 5 card slots
+        self.community_card_labels = []
+        for i in range(5):
+            card_label = tk.Label(community_frame, text="", width=3, height=2, 
+                                bg=THEME["secondary_bg"], fg=THEME["text"], 
+                                relief="raised", bd=1, font=FONTS["small"])
+            card_label.pack(side=tk.LEFT, padx=2)
+            self.community_card_labels.append(card_label)
+
+    def _setup_pot_display(self):
+        """Creates the text display for the pot below the community cards."""
+        # --- NEW: Get canvas dimensions dynamically ---
+        center_x = self.canvas.winfo_width() / 2
+        center_y = self.canvas.winfo_height() / 2
+        # --- END NEW ---
+
+        self.pot_label = tk.Label(
+            self.canvas, 
+            text="Pot: $0.00", 
+            bg="#013f28", 
+            fg="yellow", 
+            font=FONTS["title"]
         )
-        
-        # Setup components
-        self._setup_player_seats_scaled(self.num_players)
-        self._setup_community_card_area_scaled()
-        self._setup_pot_display_scaled()
-        self._setup_info_panel_scaled()
+        self.canvas.create_window(center_x, center_y + 130, window=self.pot_label)  # Position below cards
 
     def _setup_player_seats_scaled(self, num_players):
         """Setup player seats around the table with scaling."""
