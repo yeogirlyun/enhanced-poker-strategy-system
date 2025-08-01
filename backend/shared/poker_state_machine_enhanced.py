@@ -354,6 +354,7 @@ class ImprovedPokerStateMachine:
             street="preflop",
             deck=deck,
             min_raise=1.0,
+            big_blind=1.0,  # <-- ADD THIS LINE
         )
 
         # Assign positions correctly
