@@ -712,6 +712,7 @@ class ImprovedPokerStateMachine:
                     # FIX: Check if player already has the current bet amount
                     call_amount = self.game_state.current_bet - player.current_bet
                     print(f"   🤖 Call amount check: ${call_amount}")  # Debug
+                    print(f"   🤖 Player current bet: ${player.current_bet}, table current bet: ${self.game_state.current_bet}")  # Debug
                     if call_amount <= 0:
                         # Player already has the current bet amount, they should CHECK
                         print(f"   🤖 Action: CHECK (call_amount <= 0)")  # Debug
@@ -727,12 +728,17 @@ class ImprovedPokerStateMachine:
                             print(f"   🤖 Action: BET (hand_strength >= threshold, no current bet)")  # Debug
                             return ActionType.BET, min(sizing, player.stack)
                     else:
+                        # FIX: Always check call_amount first, even when hand strength is low
+                        if call_amount <= 0:
+                            print(f"   🤖 Action: CHECK (call_amount <= 0, even with low hand strength)")  # Debug
+                            return ActionType.CHECK, 0
                         # Player should check if in BB and no one raised, otherwise fold
-                        if player.position == "BB" and self.game_state.current_bet == BIG_BLIND_AMOUNT:
+                        elif player.position == "BB" and self.game_state.current_bet == BIG_BLIND_AMOUNT:
                             print(f"   🤖 Action: CHECK (BB with no raise)")  # Debug
                             return ActionType.CHECK, 0
-                        print(f"   🤖 Action: FOLD (hand_strength too low)")  # Debug
-                        return ActionType.FOLD, 0
+                        else:
+                            print(f"   🤖 Action: FOLD (hand_strength too low, call_amount > 0)")  # Debug
+                            return ActionType.FOLD, 0
                 # --- END TIER-BASED LOGIC ---
             else:
                 # Use postflop strategy with advanced pot odds
