@@ -1259,6 +1259,10 @@ class ImprovedPokerStateMachine:
         self.strategy_data = strategy_data
         self.root_tk = root_tk
         
+        # Initialize action log FIRST (before any logging calls)
+        self.action_log = []
+        self.max_log_size = 1000
+        
         # Initialize the enhanced hand evaluator
         self.hand_evaluator = EnhancedHandEvaluator()
         
@@ -1289,22 +1293,18 @@ class ImprovedPokerStateMachine:
         # Hand history
         self.hand_history = []
         
-        # Initialize players
-        self._initialize_players()
-        
-        # Strategy integration
-        if self.strategy_data:
-            self._log_action("Strategy data loaded successfully")
-        
         # Initialize hand evaluator cache
         self._hand_eval_cache = {}
         self._cache_hits = 0
         self._cache_misses = 0
         self._max_cache_size = 1000
         
-        # Initialize action log
-        self.action_log = []
-        self.max_log_size = 1000
+        # Initialize players
+        self._initialize_players()
+        
+        # Strategy integration
+        if self.strategy_data:
+            self._log_action("Strategy data loaded successfully")
 
     def _initialize_players(self):
         """Initialize the player list with default players."""
