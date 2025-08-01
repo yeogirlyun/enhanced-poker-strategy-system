@@ -542,13 +542,9 @@ class PracticeSessionUI(ttk.Frame):
             self._log_message("DEBUG: update_display called but no game_info available.")
             return
 
-        self._log_message("\n--- UI UPDATE ---")
-        self._log_message(f"Action Player Index from State Machine: {game_info['action_player']}")
-        self._log_message(f"Current State: {self.state_machine.get_current_state()}")
-        self._log_message(f"Community Cards: {game_info['board']}")
-        self._log_message(f"Pot: ${game_info['pot']:.2f}, Current Bet: ${game_info['current_bet']:.2f}")
+        # (Existing logging...)
 
-        # Update pot and community cards
+        # Update pot and current bet display
         pot_text = f"Pot: ${game_info['pot']:.2f}"
         if game_info['current_bet'] > 0:
             pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
