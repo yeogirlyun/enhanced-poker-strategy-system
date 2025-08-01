@@ -80,18 +80,6 @@ class PracticeSessionUI(ttk.Frame):
         controls_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=10)
         self._create_human_action_controls(controls_frame)
 
-        # --- NEW: Add a Start New Hand button ---
-        start_button_frame = ttk.Frame(self)
-        start_button_frame.grid(row=1, column=1, sticky="se", padx=10, pady=10)
-        start_button = ttk.Button(
-            start_button_frame,
-            text="🚀 Start New Hand",
-            style="Primary.TButton",
-            command=self.start_new_hand
-        )
-        start_button.pack()
-        # --- END NEW ---
-
         # Bind the resize event
         self.canvas.bind("<Configure>", self._on_resize)
 
@@ -368,10 +356,12 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_var.set(min_bet)
         self._update_bet_size_label()
 
+        # Show the bet/raise button
         if game_info['current_bet'] > 0:
             self.human_action_controls['bet_raise'].config(text="Raise To")
         else:
             self.human_action_controls['bet_raise'].config(text="Bet")
+        self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
 
     def _submit_human_action(self, action_str):
         """Submits the human's chosen action to the state machine."""
