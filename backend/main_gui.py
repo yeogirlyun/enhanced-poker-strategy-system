@@ -1161,6 +1161,83 @@ These settings can be configured in the main strategy panels."""
         """Run the application."""
         self.root.mainloop()
 
+    def _safe_set_image(self, widget, image_path):
+        """
+        Safely set an image on a widget with proper reference management.
+        This prevents TclError: image "pyimageX" doesn't exist errors.
+        """
+        try:
+            from PIL import Image, ImageTk
+            # Load and create the image
+            pil_image = Image.open(image_path)
+            photo_image = ImageTk.PhotoImage(pil_image)
+            
+            # Set the image on the widget
+            widget.configure(image=photo_image)
+            
+            # CRITICAL: Keep a reference to prevent garbage collection
+            widget.image = photo_image
+            
+            return True
+        except Exception as e:
+            print(f"Error loading image {image_path}: {e}")
+            return False
+
+    def _safe_set_card_image(self, widget, card_str):
+        """
+        Safely set a card image on a widget with proper reference management.
+        This prevents TclError: image "pyimageX" doesn't exist errors.
+        """
+        try:
+            from PIL import Image, ImageTk
+            
+            # Create a simple card representation as an image
+            # This is a fallback if actual card images aren't available
+            width, height = 60, 80
+            img = Image.new('RGB', (width, height), color='white')
+            
+            # Add card text
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(img)
+            
+            # Try to use a default font, fallback to basic if not available
+            try:
+                font = ImageFont.truetype("arial.ttf", 16)
+            except:
+                font = ImageFont.load_default()
+            
+            # Draw card text
+            text = self._format_card(card_str) if card_str else "🂠"
+            draw.text((10, 30), text, fill='black', font=font)
+            
+            # Convert to PhotoImage
+            photo_image = ImageTk.PhotoImage(img)
+            
+            # Set the image on the widget
+            widget.configure(image=photo_image)
+            
+            # CRITICAL: Keep a reference to prevent garbage collection
+            widget.image = photo_image
+            
+            return True
+        except Exception as e:
+            print(f"Error creating card image for {card_str}: {e}")
+            return False
+
+    def _format_card(self, card_str: str) -> str:
+        """Formats a card string for display."""
+        if not card_str or card_str == "**":
+            return "🂠"
+        
+        rank = card_str[0]
+        suit = card_str[1]
+        
+        # Convert suit to Unicode symbols
+        suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
+        suit_symbol = suit_symbols.get(suit, suit)
+        
+        return f"{rank}{suit_symbol}"
+
 
 def main():
     """Main entry point."""

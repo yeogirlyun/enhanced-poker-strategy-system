@@ -895,6 +895,46 @@ class PracticeSessionUI(ttk.Frame):
         
         return f"{rank}{suit_symbol}"
 
+    def _safe_set_card_image(self, widget, card_str):
+        """
+        Safely set a card image on a widget with proper reference management.
+        This prevents TclError: image "pyimageX" doesn't exist errors.
+        """
+        try:
+            from PIL import Image, ImageTk
+            
+            # Create a simple card representation as an image
+            width, height = 60, 80
+            img = Image.new('RGB', (width, height), color='white')
+            
+            # Add card text
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(img)
+            
+            # Try to use a default font, fallback to basic if not available
+            try:
+                font = ImageFont.truetype("arial.ttf", 16)
+            except:
+                font = ImageFont.load_default()
+            
+            # Draw card text
+            text = self._format_card(card_str) if card_str else "🂠"
+            draw.text((10, 30), text, fill='black', font=font)
+            
+            # Convert to PhotoImage
+            photo_image = ImageTk.PhotoImage(img)
+            
+            # Set the image on the widget
+            widget.configure(image=photo_image)
+            
+            # CRITICAL: Keep a reference to prevent garbage collection
+            widget.image = photo_image
+            
+            return True
+        except Exception as e:
+            self._log_message(f"Error creating card image for {card_str}: {e}")
+            return False
+
     def run(self):
         """Main run method for the practice session."""
         self.add_game_message("Welcome to Poker Practice Session!\nClick 'Start New Hand' to begin.") 
