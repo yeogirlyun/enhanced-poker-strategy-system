@@ -144,9 +144,18 @@ class PracticeSessionUI(ttk.Frame):
         name_label = tk.Label(seat_frame, text=f"{name}\n{position}", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["small"])
         name_label.pack()
         
-        # Stack amount
-        stack_label = tk.Label(seat_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["small"])
-        stack_label.pack()
+        # --- NEW: Dedicated frame for stack and bet info ---
+        info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
+        info_frame.pack(pady=(2, 0))
+        
+        # Stack amount with better formatting
+        stack_label = tk.Label(info_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["small"])
+        stack_label.pack(side=tk.LEFT, padx=5)
+        
+        # Bet amount (initially empty)
+        bet_label = tk.Label(info_frame, text="", bg=THEME["secondary_bg"], fg="orange", font=FONTS["small"])
+        bet_label.pack(side=tk.LEFT, padx=5)
+        # --- END NEW ---
         
         # --- NEW: Dynamic font size for cards ---
         card_font_size = max(12, int(self.canvas.winfo_height() / 35))
@@ -168,6 +177,7 @@ class PracticeSessionUI(ttk.Frame):
             "frame": seat_frame,
             "name_label": name_label,
             "stack_label": stack_label,
+            "bet_label": bet_label,  # NEW: Add bet label
             "cards_label": cards_label,
         }
         # --- END NEW ---
@@ -229,6 +239,7 @@ class PracticeSessionUI(ttk.Frame):
             frame = player_seat["frame"]
             name_label = player_seat["name_label"]
             stack_label = player_seat["stack_label"]
+            bet_label = player_seat["bet_label"]  # NEW: Get bet label
             cards_label = player_seat["cards_label"]
             
             # Highlight current player
@@ -242,8 +253,15 @@ class PracticeSessionUI(ttk.Frame):
             # Update name and position
             name_label.config(text=f"{player_info['name']} ({player_info['position']})")
             
-            # Update stack and cards
+            # Update stack and bet info
             stack_label.config(text=f"${player_info['stack']:.2f}")
+            
+            # --- NEW: Update bet amount display ---
+            if player_info['current_bet'] > 0:
+                bet_label.config(text=f"Bet: ${player_info['current_bet']:.2f}")
+            else:
+                bet_label.config(text="")
+            # --- END NEW ---
 
             if player_info['is_active']:
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
@@ -461,6 +479,10 @@ class PracticeSessionUI(ttk.Frame):
 
     def handle_hand_complete(self, winner_info=None):
         """Handles the completion of a hand with enhanced visual feedback."""
+        # --- NEW: Call update_display to show the final state ---
+        self.update_display()
+        # --- END NEW ---
+        
         if winner_info:
             winner_name = winner_info["name"]
             winner_amount = winner_info["amount"]
