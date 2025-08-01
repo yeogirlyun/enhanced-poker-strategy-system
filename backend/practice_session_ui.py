@@ -16,6 +16,8 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk
 import math
+import threading
+import time
 
 from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from sound_manager import SoundManager
@@ -659,6 +661,13 @@ class PracticeSessionUI(ttk.Frame):
             # Only advance to next player, don't call handle_current_player_action
             # The state machine will handle the next player's action automatically
             self.state_machine.advance_to_next_player()
+            
+            # --- NEW: Ensure proper synchronization ---
+            # Get the current action player and verify it's correct
+            current_player = self.state_machine.get_action_player()
+            if current_player:
+                self._log_message(f"🎯 Current action player: {current_player.name} (Human: {current_player.is_human})")
+            # --- END NEW ---
         # --- END FIXED ---
         
         # --- NEW: Start the game loop in a separate thread ---
