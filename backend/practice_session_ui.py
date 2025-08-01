@@ -484,6 +484,12 @@ class PracticeSessionUI(ttk.Frame):
         if sound_to_play:
             self.sfx.play(sound_to_play)
 
+        # --- NEW: Animate betting actions ---
+        if action in [ActionType.BET, ActionType.RAISE, ActionType.CALL]:
+            player_index = self.state_machine.game_state.players.index(player)
+            self._animate_bet(player_index)  # Trigger the animation
+        # --- END NEW ---
+
         self.state_machine.execute_action(player, action, amount)
         
         # Hide controls
@@ -556,6 +562,9 @@ class PracticeSessionUI(ttk.Frame):
                 # Create animated pot collection effect
                 self.pot_label.config(text=f"🏆 {winner_name} wins ${winner_amount:.2f}!", fg="gold")
                 
+                # Animate pot collection
+                self._animate_pot_collection(winner_name, winner_x, winner_y)
+                
                 # Flash the winner's seat multiple times
                 def flash_winner(count=0):
                     if count < 6:  # Flash 3 times (6 state changes)
@@ -589,6 +598,74 @@ class PracticeSessionUI(ttk.Frame):
         
         # Play winner sound
         self.sfx.play("winner_announce")
+
+    def _animate_pot_collection(self, winner_name, winner_x, winner_y):
+        """Animates the pot moving to the winner."""
+        # Create a temporary label to represent the pot
+        pot_anim_label = tk.Label(
+            self.canvas, 
+            text="💰", 
+            font=("Arial", 30), 
+            bg=THEME["primary_bg"], 
+            fg="yellow"
+        )
+        
+        # Position at center of table (where pot is)
+        center_x = self.canvas.winfo_width() / 2
+        center_y = self.canvas.winfo_height() / 2 + 130
+        
+        pot_window = self.canvas.create_window(
+            center_x, center_y, 
+            window=pot_anim_label
+        )
+
+        # Animate the movement
+        self._move_widget(
+            pot_window, winner_x, winner_y, 20, 
+            callback=lambda: pot_anim_label.destroy()
+        )
+
+    def _animate_bet(self, player_index):
+        """Animates chips moving from the player to the pot area."""
+        player_frame = self.player_seats[player_index]["frame"]
+        start_x, start_y = player_frame.winfo_x(), player_frame.winfo_y()
+        
+        # Target is near the center of the table
+        target_x = self.canvas.winfo_width() / 2
+        target_y = self.canvas.winfo_height() / 2 + 100
+
+        # Create temporary chip labels for the animation
+        for i in range(3):  # Animate 3 chips
+            chip_label = tk.Label(
+                self.canvas, 
+                text="💰", 
+                font=("Arial", 12), 
+                bg=THEME["primary_bg"]
+            )
+            chip_window = self.canvas.create_window(start_x, start_y, window=chip_label)
+            
+            # Stagger the animation start time for a nice effect
+            self.after(
+                i * 50, 
+                lambda w=chip_window: self._move_widget(
+                    w, target_x, target_y, 15, 
+                    callback=lambda: chip_label.destroy()
+                )
+            )
+
+    def _move_widget(self, widget, target_x, target_y, steps=20, callback=None):
+        """Helper function for smooth animation."""
+        start_x, start_y = self.canvas.coords(widget)
+        dx = (target_x - start_x) / steps
+        dy = (target_y - start_y) / steps
+
+        def step(i):
+            if i < steps:
+                self.canvas.move(widget, dx, dy)
+                self.after(20, lambda: step(i+1))
+            elif callback:
+                callback()
+        step(0)
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
