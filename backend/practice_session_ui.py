@@ -235,16 +235,23 @@ class PracticeSessionUI(ttk.Frame):
         """Animate pot money moving to the winner's stack."""
         print(f"🎬 Starting animation for winner: {winner_info}")  # Debug
         
-        # Find the winner's seat
+        # Handle multiple winners (comma-separated names)
+        winner_names = winner_info['name'].split(', ')
+        print(f"🎯 Winner names: {winner_names}")  # Debug
+        
+        # Find the first winner's seat (or any winner if multiple)
         winner_seat = None
-        for i, seat in enumerate(self.player_seats):
-            if seat and seat.get("name_label"):
-                player_name = seat["name_label"].cget("text").split('\n')[0]
-                print(f"🔍 Checking seat {i}: {player_name} vs {winner_info['name']}")  # Debug
-                if player_name == winner_info['name']:
-                    winner_seat = i
-                    print(f"✅ Found winner at seat {i}")  # Debug
-                    break
+        for winner_name in winner_names:
+            for i, seat in enumerate(self.player_seats):
+                if seat and seat.get("name_label"):
+                    player_name = seat["name_label"].cget("text").split('\n')[0]
+                    print(f"🔍 Checking seat {i}: {player_name} vs {winner_name}")  # Debug
+                    if player_name == winner_name:
+                        winner_seat = i
+                        print(f"✅ Found winner at seat {i}")  # Debug
+                        break
+            if winner_seat is not None:
+                break
         
         if winner_seat is not None:
             print(f"🎯 Animating to seat {winner_seat}")  # Debug

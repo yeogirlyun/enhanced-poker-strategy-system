@@ -1555,7 +1555,10 @@ class ImprovedPokerStateMachine:
         self.advance_dealer_position()
         
         if self.on_hand_complete:
+            print(f"🎯 STATE MACHINE: Calling on_hand_complete with: {winner_info}")  # Debug
             self.on_hand_complete(winner_info)
+        else:
+            print("❌ STATE MACHINE: on_hand_complete callback is None!")  # Debug
 
     # FIX 6: Better Input Validation
     def validate_action(self, player: Player, action: ActionType, amount: float = 0) -> List[str]:
