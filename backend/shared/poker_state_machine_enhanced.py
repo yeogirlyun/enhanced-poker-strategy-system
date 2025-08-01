@@ -719,8 +719,13 @@ class ImprovedPokerStateMachine:
                     
                     print(f"   🤖 Hand strength: {hand_strength}, threshold: {threshold}")  # Debug
                     if hand_strength >= threshold:
-                        print(f"   🤖 Action: BET (hand_strength >= threshold)")  # Debug
-                        return ActionType.BET, min(sizing, player.stack)
+                        # FIX: Use RAISE when there's already a bet, BET only when no bet
+                        if self.game_state.current_bet > 0:
+                            print(f"   🤖 Action: RAISE (hand_strength >= threshold, current bet exists)")  # Debug
+                            return ActionType.RAISE, min(sizing, player.stack)
+                        else:
+                            print(f"   🤖 Action: BET (hand_strength >= threshold, no current bet)")  # Debug
+                            return ActionType.BET, min(sizing, player.stack)
                     else:
                         # Player should check if in BB and no one raised, otherwise fold
                         if player.position == "BB" and self.game_state.current_bet == BIG_BLIND_AMOUNT:
