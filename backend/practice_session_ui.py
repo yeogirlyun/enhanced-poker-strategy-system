@@ -90,10 +90,8 @@ class PracticeSessionUI(ttk.Frame):
 
         self._create_human_action_controls()
         
-        # Initial draw and state machine initialization
+        # Initial draw only - don't initialize state machine automatically
         self.after(100, self._on_resize, None)
-        # Initialize state machine after UI is set up
-        self.after(200, self._initialize_state_machine)
 
     def _on_resize(self, event):
         """Redraws the entire table and its elements when the window is resized."""
@@ -522,15 +520,12 @@ class PracticeSessionUI(ttk.Frame):
         for label in self.community_card_labels:
             label.config(text="")
         
-        # Set default player info
+        # Set default player info - show ready state
         for i, seat in enumerate(self.player_seats):
             if i < len(self.player_stacks):
                 seat['stack'].config(text=f"${self.player_stacks[i]:.2f}")
-                # Show placeholder cards instead of empty strings
-                if i == 0:  # Human player
-                    seat['cards'].config(text="🂠 🂠")
-                else:
-                    seat['cards'].config(text="🂠 🂠" if i < 6 else "")
+                # Show ready state - no cards until hand starts
+                seat['cards'].config(text="Ready" if i == 0 else "")
                 seat['frame'].config(bg=THEME["secondary_bg"])
                 seat['name'].config(fg=THEME["text"])
         
@@ -619,9 +614,9 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.config(state=tk.DISABLED)
 
     def _initialize_state_machine(self):
-        """Initialize the state machine and start the first hand."""
+        """Initialize the state machine without starting the game flow."""
         print(f"🎮 Initializing state machine")
-        self.state_machine.start_hand(existing_players=None)
+        # Don't start the hand automatically - let user click "Start New Hand"
         self.update_display()
         print(f"✅ State machine initialized")
 
@@ -652,9 +647,10 @@ class PracticeSessionUI(ttk.Frame):
             print(f"❌ Game state not properly initialized, retrying...")
             self.after(200, self._continue_hand_start)
 
-    def prompt_human_action(self):
+    def prompt_human_action(self, player=None):
         """Shows the action controls for the human player."""
-        player = self.state_machine.get_action_player()
+        if player is None:
+            player = self.state_machine.get_action_player()
         if not player or not player.is_human:
             print(f"❌ No human player to act or player is not human")
             return
