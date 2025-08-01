@@ -1301,6 +1301,10 @@ class ImprovedPokerStateMachine:
         self._cache_hits = 0
         self._cache_misses = 0
         self._max_cache_size = 1000
+        
+        # Initialize action log
+        self.action_log = []
+        self.max_log_size = 1000
 
     def _initialize_players(self):
         """Initialize the player list with default players."""
