@@ -597,15 +597,8 @@ class ImprovedPokerStateMachine:
                 self.on_action_required(current_player)
         else:
             self._log_action(f"Bot turn: {current_player.name}")
-            # --- NEW: Add a delay for bot actions ---
-            # Schedule the bot's action after 1 second (1000 ms)
-            # We need a reference to the root tkinter window to use 'after'
-            # This should be passed during the state machine's initialization
-            if hasattr(self, 'root_tk'):
-                 self.root_tk.after(1000, lambda p=current_player: self.execute_bot_action(p))
-            else: # Fallback for non-GUI environments
-                self.execute_bot_action(current_player)
-            # --- END NEW ---
+            # Execute bot action immediately to prevent stalls
+            self.execute_bot_action(current_player)
 
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
