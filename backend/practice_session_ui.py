@@ -246,6 +246,8 @@ class PracticeSessionUI(ttk.Frame):
         """
         Handles hand completion by displaying the winner info received from the state machine.
         """
+        print(f"🎯 UI: handle_hand_complete called with: {winner_info}")  # Debug
+        
         self.sfx.play("winner_announce")
         
         if winner_info and winner_info.get("name"):
@@ -254,18 +256,22 @@ class PracticeSessionUI(ttk.Frame):
             winning_hand = winner_info.get("hand", "")
             final_board = winner_info.get("board", [])
 
+            print(f"🎯 UI: Winner: {winner_names}, Amount: ${pot_amount}, Board: {final_board}")  # Debug
+
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards
             for i, card_label in enumerate(self.community_card_labels):
                 if i < len(final_board):
-                    card_label.config(text=self._format_card(final_board[i]))
+                    card_text = self._format_card(final_board[i])
+                    card_label.config(text=card_text)
+                    print(f"🎯 UI: Set card {i} to: {card_text}")  # Debug
                 else:
                     card_label.config(text="")
 
             # Create a more descriptive announcement with proper formatting
             if pot_amount > 0:
                 announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
-                if winning_hand:
+                if winning_hand and winning_hand != "Unknown":
                     announcement += f" ({winning_hand})"
                 
                 # Update pot label with winner info
@@ -306,6 +312,11 @@ class PracticeSessionUI(ttk.Frame):
                         break
             if winner_seat is not None:
                 break
+        
+        # FIX: If we can't find the winner seat, use seat 0 as fallback
+        if winner_seat is None:
+            print(f"⚠️ Could not find winner seat, using seat 0 as fallback")
+            winner_seat = 0
         
         if winner_seat is not None:
             print(f"🎯 Animating to seat {winner_seat}")  # Debug
@@ -735,6 +746,10 @@ class PracticeSessionUI(ttk.Frame):
             bd=2
         )
         action_label.pack(side=tk.TOP, pady=2)
+        
+        # Force the label to be visible
+        action_label.lift()  # Bring to front
+        action_label.update()  # Force update
         
         # Store the action indicator for this player
         self.action_indicators[player_index] = action_label
