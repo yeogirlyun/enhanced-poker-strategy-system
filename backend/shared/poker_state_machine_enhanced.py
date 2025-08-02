@@ -693,7 +693,7 @@ class ImprovedPokerStateMachine:
         
         # --- POSITION-BASED RULES BEFORE HAND STRENGTH RULES ---
         # 1. EARLY RETURN: BB check option (position-based rule)
-        if street == 'preflop' and position == 'BB' and call_amount == 0:
+        if street == 'preflop' and position == 'BB' and call_amount <= self.game_state.big_blind:
             self._log_action(f"   🎯 POSITION RULE: BB has option to check (no raise)")
             return ActionType.CHECK, 0
         
@@ -1261,7 +1261,7 @@ class ImprovedPokerStateMachine:
             self.game_state.pot += actual_call
             
             # Check for all-in
-            if player.stack == 0:
+            if player.stack == 0 or player.is_all_in:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
 
@@ -1283,7 +1283,7 @@ class ImprovedPokerStateMachine:
             self.game_state.current_bet = actual_bet
             
             # Check for all-in
-            if player.stack == 0:
+            if player.stack == 0 or player.is_all_in:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
 
