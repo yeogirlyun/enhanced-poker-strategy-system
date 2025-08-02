@@ -211,16 +211,16 @@ class EnhancedMainGUI:
         else:
             print(f"📁 {modern_file} already exists")
         
-        # Generate gto_strategy_default.json
-        gto_file = "gto_strategy_default.json"
-        if not os.path.exists(gto_file):
-            print(f"📝 Creating {gto_file}...")
-            if default_strategy.save_strategy_to_file(gto_file):
-                print(f"✅ Generated {gto_file}")
+        # Generate aggressive_strategy.json
+        aggressive_file = "aggressive_strategy.json"
+        if not os.path.exists(aggressive_file):
+            print(f"📝 Creating {aggressive_file}...")
+            if default_strategy.save_strategy_to_file(aggressive_file):
+                print(f"✅ Generated {aggressive_file}")
             else:
-                print(f"❌ Failed to generate {gto_file}")
+                print(f"❌ Failed to generate {aggressive_file}")
         else:
-            print(f"📁 {gto_file} already exists")
+            print(f"📁 {aggressive_file} already exists")
         
         print("🎯 Default strategy files generation complete!")
 
