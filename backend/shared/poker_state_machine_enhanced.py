@@ -746,6 +746,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"   🎴 Hand notation: {player_hand_str}")
                 self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
+                # Check if strategy data is available
+                if not self.strategy_data or not self.strategy_data.tiers:
+                    self._log_action(f"   ⚠️ No strategy data available, using basic logic")
+                    return self.get_basic_bot_action(player)
+                
                 # Check if hand is in any tier
                 for tier in self.strategy_data.tiers:
                     if player_hand_str in tier.hands:
@@ -893,23 +898,38 @@ class ImprovedPokerStateMachine:
         return self.get_basic_bot_action(player)
 
     def get_hand_notation(self, cards: List[str]) -> str:
-        """Converts two cards into standard poker notation (e.g., AKs, T9o, 77)."""
+        """Get standardized hand notation (e.g., 'AA', 'AKs', 'KQo')."""
         if len(cards) != 2:
-            return ""
-
-        rank1, suit1 = cards[0][0], cards[0][1]
-        rank2, suit2 = cards[1][0], cards[1][1]
-
-        if rank1 == rank2:
-            return f"{rank1}{rank2}"
+            return "XX"  # Invalid hand
+        
+        # Sort cards by rank (A is highest)
+        rank_order = "23456789TJQKA"
+        card1, card2 = cards[0], cards[1]
+        rank1, suit1 = card1[0], card1[1]
+        rank2, suit2 = card2[0], card2[1]
+        
+        # Get rank indices
+        rank1_idx = rank_order.index(rank1)
+        rank2_idx = rank_order.index(rank2)
+        
+        # Determine if suited
+        suited = suit1 == suit2
+        
+        # Create notation (higher rank first)
+        if rank1_idx >= rank2_idx:
+            high_rank, low_rank = rank1, rank2
         else:
-            suited = "s" if suit1 == suit2 else "o"
-            # Order the ranks correctly (e.g., AKs, not KAs)
-            rank_order = "AKQJT98765432"
-            if rank_order.index(rank1) < rank_order.index(rank2):
-                return f"{rank1}{rank2}{suited}"
-            else:
-                return f"{rank2}{rank1}{suited}"
+            high_rank, low_rank = rank2, rank1
+        
+        # Handle pairs
+        if high_rank == low_rank:
+            return f"{high_rank}{high_rank}"
+        
+        # Handle non-pairs
+        if suited:
+            return f"{high_rank}{low_rank}s"
+        else:
+            return f"{high_rank}{low_rank}o"
 
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using enhanced evaluator."""
@@ -1067,7 +1087,7 @@ class ImprovedPokerStateMachine:
             self.game_state.pot += actual_call
             
             # Check for all-in
-            if player.stack == 0 or player.is_all_in:
+            if player.stack == 0:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
 
@@ -1089,7 +1109,7 @@ class ImprovedPokerStateMachine:
             self.game_state.current_bet = actual_bet
             
             # Check for all-in
-            if player.stack == 0 or player.is_all_in:
+            if player.stack == 0:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
 
@@ -1151,7 +1171,9 @@ class ImprovedPokerStateMachine:
             self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
             self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
             
-            # Play winner announcement sound
+            # Play winner announcement sound AFTER a short delay to ensure fold sound plays first
+            import time
+            time.sleep(0.1)  # Small delay to ensure fold sound plays first
             self.sfx.play("winner_announce")
             
             # Only transition if not already in END_HAND state
@@ -1161,6 +1183,28 @@ class ImprovedPokerStateMachine:
             self._last_winner = {"name": winner.name, "amount": pot_amount}
             self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
             return  # End the action here since the hand is over
+        
+        # Check if round is complete (all active players have acted)
+        if len(active_players) > 1 and len(self.game_state.players_acted) >= len(active_players):
+            self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
+            self._log_action(f"📊 Current state: {self.current_state}")
+            self._log_action(f"🎴 Community cards: {self.game_state.board}")
+            self._log_action(f"💰 Pot size: ${self.game_state.pot:.2f}")
+            
+            # Determine next state based on current street
+            if self.game_state.street == "preflop":
+                self._log_action(f"🔄 Transitioning from preflop to DEAL_FLOP")
+                self.transition_to(PokerState.DEAL_FLOP)
+            elif self.game_state.street == "flop":
+                self._log_action(f"🔄 Transitioning from flop to DEAL_TURN")
+                self.transition_to(PokerState.DEAL_TURN)
+            elif self.game_state.street == "turn":
+                self._log_action(f"🔄 Transitioning from turn to DEAL_RIVER")
+                self.transition_to(PokerState.DEAL_RIVER)
+            elif self.game_state.street == "river":
+                self._log_action(f"🔄 Transitioning from river to SHOWDOWN")
+                self.transition_to(PokerState.SHOWDOWN)
+            return  # End the action here since the round is complete
 
         # Track pot changes for debugging
         if self.game_state.pot != old_pot:
