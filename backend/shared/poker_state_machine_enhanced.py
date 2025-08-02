@@ -1676,7 +1676,22 @@ class ImprovedPokerStateMachine:
             winner_names = ", ".join(sorted(all_winners))
             pot_amount = self.game_state.pot  # Use original pot amount
             
-            winner_info = {"name": winner_names, "amount": pot_amount}
+            # ENHANCED: Include hand and board information for better UI display
+            # Get the winning hand rank for the first winner
+            winning_hand_rank = "Unknown"
+            if all_winners:
+                first_winner_name = list(all_winners)[0]
+                for player in self.game_state.players:
+                    if player.name == first_winner_name and player.is_active:
+                        winning_hand_rank = self.classify_hand(player.cards, self.game_state.board)
+                        break
+            
+            winner_info = {
+                "name": winner_names, 
+                "amount": pot_amount,
+                "board": self.game_state.board.copy(),  # Include final board
+                "hand": winning_hand_rank  # Include actual hand rank
+            }
             self._last_winner = winner_info
             self._log_action(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
         else:
