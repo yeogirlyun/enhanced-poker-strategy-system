@@ -148,6 +148,8 @@ class PokerStateMachineTestSuite:
         if current_player and current_player.position == "BB":
             print(f"  {current_player.name} ({current_player.position}) is acting")
             sm.execute_bot_action(current_player)
+        else:
+            print(f"  ERROR: Expected BB to act, but got {current_player.name if current_player else 'None'}")
         
         # Find BB's action in the log
         bb_action = None
@@ -241,7 +243,7 @@ class PokerStateMachineTestSuite:
         
         # Next player tries invalid raise
         next_player = sm.get_action_player()
-        errors = sm.validate_action(next_player, ActionType.RAISE, 4.0)  # Less than min raise
+        errors = sm.validate_action(next_player, ActionType.RAISE, 4.0)  # Less than min raise (should be 5.0)
         
         self.log_test(
             "Invalid Raise Detection",
@@ -294,9 +296,11 @@ class PokerStateMachineTestSuite:
         sm.start_hand()
         
         # Give a bot AA (premium hand)
+        utg_bot = None
         for player in sm.game_state.players:
             if not player.is_human and player.position == "UTG":
                 player.cards = ["Ah", "As"]  # Pocket aces
+                utg_bot = player
                 break
         
         # Skip to bot's turn by folding human
@@ -306,7 +310,10 @@ class PokerStateMachineTestSuite:
         # Force bot to act
         current_player = sm.get_action_player()
         if current_player and not current_player.is_human:
+            print(f"  Bot {current_player.name} ({current_player.position}) acting with {current_player.cards}")
             sm.execute_bot_action(current_player)
+        else:
+            print(f"  ERROR: Expected bot to act, but got {current_player.name if current_player else 'None'}")
         
         # Check if bot made a strong action with AA
         strong_action = any("RAISE" in action or "BET" in action for action in bot_actions)
@@ -374,11 +381,13 @@ class PokerStateMachineTestSuite:
         # Both players call/check through all streets
         for _ in range(8):  # Max 8 actions to get through all streets
             player = sm.get_action_player()
-            if player:
+            if player and sm.current_state != PokerState.END_HAND:
                 if sm.game_state.current_bet > player.current_bet:
                     sm.execute_action(player, ActionType.CALL)
                 else:
                     sm.execute_action(player, ActionType.CHECK)
+            else:
+                break  # Stop if hand is over
         
         # Check we went through all streets
         expected_sequence = [
