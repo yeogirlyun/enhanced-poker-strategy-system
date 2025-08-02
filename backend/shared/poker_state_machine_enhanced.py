@@ -236,9 +236,10 @@ class ImprovedPokerStateMachine:
             )
 
     def handle_state_entry(self, existing_players: Optional[List[Player]] = None):
-        """Handle specific logic for each state entry."""
-        print(f"🎯 HANDLE_STATE_ENTRY called for state: {self.current_state.value}")  # Debug
-        
+        """
+        The main handler for all state transitions. Executes the appropriate
+        logic based on the current game state.
+        """
         handlers = {
             PokerState.START_HAND: lambda: self.handle_start_hand(existing_players),
             PokerState.PREFLOP_BETTING: self.handle_preflop_betting,
@@ -254,10 +255,7 @@ class ImprovedPokerStateMachine:
         
         handler = handlers.get(self.current_state)
         if handler:
-            print(f"✅ Found handler for {self.current_state.value}, calling it...")  # Debug
             handler()
-        else:
-            print(f"❌ No handler found for state: {self.current_state.value}")  # Debug
 
     # FIX 1: Dynamic Position Tracking
     def advance_dealer_position(self):
@@ -1717,8 +1715,6 @@ class ImprovedPokerStateMachine:
     def validate_action(self, player: Player, action: ActionType, amount: float = 0) -> List[str]:
         """Validate action and return list of errors."""
         errors = []
-        
-        # Add check for current player
         current_player = self.get_action_player()
         if current_player != player:
             errors.append(f"It's not {player.name}'s turn")
@@ -1727,34 +1723,26 @@ class ImprovedPokerStateMachine:
             errors.append("Amount cannot be negative")
         
         if action == ActionType.CHECK:
-            # FIX: Allow CHECK if player already has the current bet amount
-            call_amount = self.game_state.current_bet - player.current_bet
-            if call_amount > 0:
-                errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f} (need to call ${call_amount:.2f})")
+            if self.game_state.current_bet > player.current_bet:
+                errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f}")
         
         elif action == ActionType.CALL:
-            call_amount = self.game_state.current_bet - player.current_bet
-            if call_amount <= 0:
+            if self.game_state.current_bet - player.current_bet <= 0:
                 errors.append("Nothing to call")
-            elif call_amount > player.stack:
-                errors.append(f"Call amount ${call_amount:.2f} exceeds stack ${player.stack:.2f}")
-            # Note: amount parameter is ignored for CALL - it's calculated automatically
         
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
                 errors.append("Cannot bet when there's already a bet - use raise instead")
-            elif amount <= 0:
-                errors.append("Bet amount must be greater than 0")
-            elif amount > player.stack:
+            if amount < self.game_state.min_raise:
+                errors.append(f"Bet amount ${amount:.2f} is less than minimum bet ${self.game_state.min_raise:.2f}")
+            if amount > player.stack:
                 errors.append(f"Bet amount ${amount:.2f} exceeds stack ${player.stack:.2f}")
         
         elif action == ActionType.RAISE:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
-            if amount <= self.game_state.current_bet:
-                errors.append(f"Raise must be more than current bet ${self.game_state.current_bet:.2f}")
-            elif amount < min_raise_total:
-                errors.append(f"Minimum raise is ${min_raise_total:.2f}")
-            elif amount > player.current_bet + player.stack:
+            if amount < min_raise_total:
+                errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
+            if amount > player.current_bet + player.stack:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
         
         return errors
