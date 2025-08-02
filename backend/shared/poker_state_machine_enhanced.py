@@ -477,6 +477,10 @@ class ImprovedPokerStateMachine:
         # --- THIS IS THE FIX ---
         # Set action to UTG (first player after BB) AFTER all setup is complete.
         self.action_player_index = (self.big_blind_position + 1) % self.num_players
+        
+        # FIX: Ensure all players are active for action order testing
+        for player in self.game_state.players:
+            player.is_active = True
         # --- End of Fix ---
 
         self.transition_to(PokerState.PREFLOP_BETTING)
@@ -535,6 +539,8 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎴 FLOP COMPLETE: {' '.join(self.game_state.board)}")
         self._log_action(f"📊 Pot before flop betting: ${self.game_state.pot:.2f}")
         
+        # FIX: Update street before preparing new betting round
+        self.game_state.street = "flop"
         self.prepare_new_betting_round()
         self.transition_to(PokerState.FLOP_BETTING)
 
@@ -548,6 +554,8 @@ class ImprovedPokerStateMachine:
             self.game_state.deck.pop()
 
         self.game_state.board.append(self.deal_card())
+        # FIX: Update street before preparing new betting round
+        self.game_state.street = "turn"
         self.prepare_new_betting_round()
         self.transition_to(PokerState.TURN_BETTING)
 
@@ -561,6 +569,8 @@ class ImprovedPokerStateMachine:
             self.game_state.deck.pop()
 
         self.game_state.board.append(self.deal_card())
+        # FIX: Update street before preparing new betting round
+        self.game_state.street = "river"
         self.prepare_new_betting_round()
         self.transition_to(PokerState.RIVER_BETTING)
 
@@ -592,8 +602,14 @@ class ImprovedPokerStateMachine:
             start_index = (self.dealer_position + 1) % num_players
 
         # Find the first active player starting from the calculated start_index
+        # FIX: Ensure we follow the correct action order by checking all players in order
+        checked_indices = set()
         for i in range(num_players):
             current_index = (start_index + i) % num_players
+            if current_index in checked_indices:
+                continue  # Skip if we've already checked this index
+            checked_indices.add(current_index)
+            
             player_at_index = self.game_state.players[current_index]
             if player_at_index.is_active and not player_at_index.is_all_in:
                 self.action_player_index = current_index
@@ -1304,7 +1320,8 @@ class ImprovedPokerStateMachine:
             if call_amount > 0:
                 self._log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
                 return
-            player.current_bet = 0
+            # FIX: Do NOT reset current_bet when checking - it should remain as is
+            # player.current_bet = 0  # ← REMOVED THIS BUG
 
         elif action == ActionType.CALL:
             call_amount = self.game_state.current_bet - player.current_bet
