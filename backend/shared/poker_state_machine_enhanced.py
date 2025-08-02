@@ -555,34 +555,31 @@ class ImprovedPokerStateMachine:
 
     # FIX 4: Improved Round Completion Logic
     def is_round_complete(self) -> bool:
-        """Check if betting round is complete with all-in handling."""
+        """
+        Checks if the betting round is complete with robust logic.
+        The round is over if all active players who are not all-in have had a turn
+        and have contributed the same amount to the pot in this round.
+        """
         active_players = [p for p in self.game_state.players if p.is_active]
-
         if len(active_players) <= 1:
             return True
 
-        can_act_players = [p for p in active_players if not p.is_all_in]
+        # Identify players who can still make a move
+        players_who_can_act = [p for p in active_players if not p.is_all_in]
+        if not players_who_can_act:
+            return True # Round is over if everyone is all-in
 
-        if not can_act_players:
-            return True
+        # Check if everyone who can act has had their turn
+        all_have_acted = all(p.has_acted_this_round for p in players_who_can_act)
+        
+        # Find the highest bet made by any player still in the hand
+        highest_bet = max(p.current_bet for p in active_players)
 
-        # Check if all players who can act have acted and bets are equal
-        can_act_indices = [i for i, p in enumerate(self.game_state.players) 
-                          if p.is_active and not p.is_all_in]
-
-        all_acted = all(i in self.game_state.players_acted for i in can_act_indices)
-
-        # Special case for preflop: BB gets option to raise
-        if self.game_state.street == "preflop" and self.game_state.current_bet == 1.0:
-            bb_player = self.game_state.players[self.big_blind_position]
-            if (bb_player.is_active and not bb_player.is_all_in and 
-                self.big_blind_position not in self.game_state.players_acted):
-                return False
-
-        target_bet = self.game_state.current_bet
-        bets_equal = all(p.current_bet == target_bet for p in can_act_players)
-
-        return all_acted and bets_equal
+        # Check if all players who can act have matched the highest bet
+        bets_are_equal = all(p.current_bet == highest_bet for p in players_who_can_act)
+        
+        # The round is complete if everyone has acted and all bets are equal
+        return all_have_acted and bets_are_equal
 
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
