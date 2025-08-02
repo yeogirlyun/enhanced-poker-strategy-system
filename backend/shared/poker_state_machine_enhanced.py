@@ -154,6 +154,7 @@ class ImprovedPokerStateMachine:
         self.on_state_change = None
         self.on_log_entry = None
         self.on_round_complete = None
+        self.on_action_executed = None  # NEW: Callback for action animations
         
         # Sound manager
         self.sfx = SoundManager()
@@ -1301,6 +1302,11 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
         self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
         self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
+
+        # NEW: Trigger action animation callback
+        if self.on_action_executed:
+            player_index = self.game_state.players.index(player)
+            self.on_action_executed(player_index, action.value, amount)
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
