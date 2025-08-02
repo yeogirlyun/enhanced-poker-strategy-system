@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Texas Hold'em Poker State Machine - FULLY IMPROVED VERSION
@@ -783,7 +782,7 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
                 # Get hand strength directly from strategy_dict
-                hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {}).get(player_hand_str, 1)
+                hand_strength = self.strategy_data.strategy_dict.get("preflop", {}).get(player_hand_str, 1)
                 self._log_action(f"   💪 Hand strength: {hand_strength}")
                 
                 # If facing a raise (call_amount > 0)
@@ -827,7 +826,7 @@ class ImprovedPokerStateMachine:
             else:  # Postflop logic
                 self._log_action(f"   🎯 POSTFLOP LOGIC: {street}")
                 hand_type = self.classify_hand(player.cards, self.game_state.board)
-                hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("postflop", {}).get(hand_type, 5)
+                hand_strength = self.strategy_data.strategy_dict.get("postflop", {}).get(hand_type, 5)
                 pfa_data = self.strategy_data.strategy_dict.get("postflop", {}).get("pfa", {}).get(street, {}).get(position, {})
                 val_thresh = pfa_data.get("val_thresh", 25)
                 check_thresh = pfa_data.get("check_thresh", 10)
@@ -1139,9 +1138,23 @@ class ImprovedPokerStateMachine:
 
     def _get_rank_value(self, rank: str) -> int:
         """Get numeric value of a rank."""
-        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 
-                      'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        rank_values = {"A": 14, "K": 13, "Q": 12, "J": 11, "T": 10, "9": 9, "8": 8, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2}
         return rank_values.get(rank, 0)
+
+    def calculate_pot_odds(self, call_amount: float) -> float:
+        """Calculates pot odds for a given call amount."""
+        if call_amount <= 0:
+            return 0
+        pot_total = self.game_state.pot + call_amount
+        return pot_total / call_amount
+
+    def should_call_by_pot_odds(self, player: Player, call_amount: float, hand_strength: int) -> bool:
+        """Determines if a call is justified by pot odds and hand strength."""
+        # This is a simplified model. A more advanced model would use equity.
+        # For now, we'll say a call is good if the hand has at least pair-strength.
+        if hand_strength > 15:  # Corresponds to at least a pair
+            return True
+        return False
 
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
         """Basic bot logic as fallback."""
@@ -1412,9 +1425,10 @@ class ImprovedPokerStateMachine:
         elif self.game_state.street == 'river':
             self.transition_to(PokerState.SHOWDOWN)
 
-    def determine_winner(self) -> List[Player]:
+    def determine_winner(self, players_to_evaluate: List[Player] = None) -> List[Player]:
         """Determine winners with proper tie handling using the enhanced evaluator."""
-        active_players = [p for p in self.game_state.players if p.is_active]
+        # If a specific list of players is provided, use it. Otherwise, use all active players.
+        active_players = players_to_evaluate if players_to_evaluate is not None else [p for p in self.game_state.players if p.is_active]
         
         if len(active_players) == 1:
             return active_players
@@ -1485,59 +1499,72 @@ class ImprovedPokerStateMachine:
         """Handle showdown with tie handling and side pots."""
         self._log_action("Showdown")
         self.sfx.play("winner_announce")
-        
-        # --- THIS IS THE CRITICAL BUG FIX ---
-        winners = self.determine_winner()
-        if winners:
-            pot_amount = self.game_state.pot
-            split_amount = pot_amount / len(winners)
-            winner_names = ", ".join([w.name for w in winners])
 
-            # --- THIS IS THE FIX ---
-            # Get the winning hand's description
-            first_winner = winners[0]
-            hand_info = self.classify_hand(first_winner.cards, self.game_state.board)
-            hand_description = hand_info if hand_info else 'a winning hand'
+        side_pots = self.create_side_pots()
+        total_pot_awarded = 0
 
-            for winner in winners:
-                winner.stack += split_amount
+        for i, pot in enumerate(side_pots):
+            pot_amount = pot['amount']
+            eligible_players = pot['eligible_players']
             
-            # Store the final, correct information BEFORE the state is reset
-            self._last_winner = {
-                "name": winner_names, 
-                "amount": pot_amount,
-                "hand": hand_description, # Add hand description
-                "board": self.game_state.board.copy() # Add the final board
-            }
-            self._log_action(f"🎉 Showdown winner(s): {winner_names} with {hand_description}")
+            if not eligible_players: continue
+
+            # Determine winner(s) only from the eligible players for this specific pot
+            winners = self.determine_winner(eligible_players)
+            
+            if winners:
+                split_amount = pot_amount / len(winners)
+                winner_names = ", ".join([w.name for w in winners])
+                pot_name = f"Side Pot {i+1}" if i < len(side_pots) -1 else "Main Pot"
+                
+                self._log_action(f"🏆 {pot_name} ({pot_amount:.2f}) won by {winner_names}")
+
+                for winner in winners:
+                    winner.stack += split_amount
+                
+                total_pot_awarded += pot_amount
+
+        # Final check to ensure all money is awarded
+        if abs(total_pot_awarded - self.game_state.pot) > 0.01:
+             self._log_action(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
+
+        # Reset pot to 0 to prevent double awarding in handle_end_hand
+        self.game_state.pot = 0
+        
         self.transition_to(PokerState.END_HAND)
 
     def create_side_pots(self) -> List[dict]:
         """Create side pots for all-in scenarios with proper tracking."""
-        contributing_players = [p for p in self.game_state.players if p.total_invested > 0]
-        all_in_players = [p for p in contributing_players if p.is_all_in]
-
+        all_in_players = sorted(
+            [p for p in self.game_state.players if p.is_all_in and p.total_invested > 0],
+            key=lambda p: p.total_invested
+        )
+        
         if not all_in_players:
-            return []  # No side pots needed
-
-        # Get all unique investment amounts from players who are all-in
-        all_in_investments = sorted(list(set(p.total_invested for p in all_in_players)))
+            # If no one is all-in, there's just one main pot
+            return [{
+                'amount': self.game_state.pot,
+                'eligible_players': [p for p in self.game_state.players if p.is_active]
+            }]
 
         side_pots = []
         last_investment_level = 0
+        
+        # Create side pots for each all-in player
+        for all_in_player in all_in_players:
+            investment_level = all_in_player.total_invested
+            if investment_level <= last_investment_level:
+                continue
 
-        for investment_level in all_in_investments:
             pot_amount = 0
             eligible_players = []
 
-            # Calculate this side pot's value
-            for p in contributing_players:
-                contribution = max(0, min(p.total_invested, investment_level) - last_investment_level)
-                pot_amount += contribution
-
-            # Determine who is eligible for this pot
-            eligible_players = [p for p in contributing_players if p.is_active and p.total_invested >= investment_level]
-
+            for p in self.game_state.players:
+                if p.total_invested > last_investment_level:
+                    contribution = min(p.total_invested, investment_level) - last_investment_level
+                    pot_amount += contribution
+                    eligible_players.append(p)
+            
             if pot_amount > 0:
                 side_pots.append({
                     'amount': pot_amount,
@@ -1546,12 +1573,17 @@ class ImprovedPokerStateMachine:
             
             last_investment_level = investment_level
 
-        # The main pot is what's left over
-        main_pot_total = self.game_state.pot - sum(p['amount'] for p in side_pots)
-        if main_pot_total > 0:
-             side_pots.append({
-                'amount': main_pot_total,
-                'eligible_players': [p for p in contributing_players if p.is_active and not p.is_all_in]
+        # Create the main pot with the remaining chips
+        main_pot_amount = self.game_state.pot - sum(p['amount'] for p in side_pots)
+        if main_pot_amount > 0:
+            main_pot_players = [p for p in self.game_state.players if p.is_active and not p.is_all_in]
+            # If all remaining players are all-in, they are eligible for the last side pot
+            if not main_pot_players:
+                 main_pot_players = [p for p in self.game_state.players if p.total_invested >= last_investment_level]
+
+            side_pots.append({
+                'amount': main_pot_amount,
+                'eligible_players': main_pot_players
             })
 
         return side_pots
