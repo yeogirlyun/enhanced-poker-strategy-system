@@ -109,7 +109,349 @@ class TestHighlightingFix(unittest.TestCase):
         self.assertEqual(amount, 0, "Amount should be 0")
         
         print(f"✅ Test passed: Action callback triggered for {action} by Player {player_index + 1}")
-    
+
+    def test_all_action_types_animations(self):
+        """Test that all action types (check, call, bet, raise) trigger animations."""
+        # Set up scenario for different action types
+        players = [
+            Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+            Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Qd', 'Jd']),
+            Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=True, cards=['2c', '3c']),
+            Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=True, cards=['4d', '5d']),
+            Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=True, cards=['6h', '7h']),
+            Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=True, cards=['8s', '9s']),
+        ]
+        
+        game_state = GameState(
+            players=players,
+            board=['Ts', 'Tc', '9h', '3c', 'Js'],
+            pot=2.50,
+            current_bet=0.0,  # No current bet for check/bet
+            street="river"
+        )
+        
+        self.state_machine.game_state = game_state
+        self.state_machine.current_state = PokerState.RIVER_BETTING
+        
+        # Capture callback calls
+        callback_calls = []
+        def capture_action(player_index, action, amount):
+            callback_calls.append((player_index, action, amount))
+        
+        self.state_machine.on_action_executed = capture_action
+        
+        # Test CHECK action
+        self.state_machine.action_player_index = 0  # Player 1
+        self.state_machine.execute_action(players[0], ActionType.CHECK, 0)
+        
+        # Test BET action
+        self.state_machine.action_player_index = 1  # Player 2
+        self.state_machine.execute_action(players[1], ActionType.BET, 5.0)
+        
+        # Test CALL action (need a current bet)
+        game_state.current_bet = 3.0
+        self.state_machine.action_player_index = 2  # Player 3
+        self.state_machine.execute_action(players[2], ActionType.CALL, 3.0)
+        
+        # Test RAISE action
+        game_state.current_bet = 3.0
+        self.state_machine.action_player_index = 3  # Player 4
+        self.state_machine.execute_action(players[3], ActionType.RAISE, 8.0)
+        
+        # Verify we have at least our 4 intended callbacks (bot actions may add more)
+        self.assertGreaterEqual(len(callback_calls), 4, "Should have at least 4 action callbacks")
+        
+        # Find our specific actions in the callback list
+        check_action = None
+        bet_action = None
+        call_action = None
+        raise_action = None
+        
+        for player_index, action, amount in callback_calls:
+            if action == "check" and amount == 0:
+                check_action = (player_index, action, amount)
+            elif action == "bet" and amount == 5.0:
+                bet_action = (player_index, action, amount)
+            elif action == "call" and amount == 3.0:
+                call_action = (player_index, action, amount)
+            elif action == "raise" and amount == 8.0:
+                raise_action = (player_index, action, amount)
+        
+        # Verify CHECK action
+        self.assertIsNotNone(check_action, "CHECK action should be found")
+        player_index, action, amount = check_action
+        print(f"✅ CHECK animation test passed: Player {player_index + 1} checked")
+        
+        # Verify BET action
+        self.assertIsNotNone(bet_action, "BET action should be found")
+        player_index, action, amount = bet_action
+        print(f"✅ BET animation test passed: Player {player_index + 1} bet ${amount}")
+        
+        # Verify CALL action
+        self.assertIsNotNone(call_action, "CALL action should be found")
+        player_index, action, amount = call_action
+        print(f"✅ CALL animation test passed: Player {player_index + 1} called ${amount}")
+        
+        # Verify RAISE action
+        self.assertIsNotNone(raise_action, "RAISE action should be found")
+        player_index, action, amount = raise_action
+        print(f"✅ RAISE animation test passed: Player {player_index + 1} raised to ${amount}")
+
+    def test_action_animation_with_different_amounts(self):
+        """Test action animations with various amounts."""
+        players = [
+            Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+            Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Qd', 'Jd']),
+            Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=True, cards=['2c', '3c']),
+            Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=True, cards=['4d', '5d']),
+            Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=True, cards=['6h', '7h']),
+            Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=True, cards=['8s', '9s']),
+        ]
+        
+        game_state = GameState(
+            players=players,
+            board=['Ts', 'Tc', '9h', '3c', 'Js'],
+            pot=2.50,
+            current_bet=0.0,
+            street="river"
+        )
+        
+        self.state_machine.game_state = game_state
+        self.state_machine.current_state = PokerState.RIVER_BETTING
+        
+        # Capture callback calls
+        callback_calls = []
+        def capture_action(player_index, action, amount):
+            callback_calls.append((player_index, action, amount))
+        
+        self.state_machine.on_action_executed = capture_action
+        
+        # Test different bet amounts
+        test_cases = [
+            (0, ActionType.CHECK, 0.0, "check"),
+            (1, ActionType.BET, 1.0, "bet"),
+            (2, ActionType.BET, 10.0, "bet"),
+            (3, ActionType.BET, 25.5, "bet"),
+            (4, ActionType.BET, 50.0, "bet"),
+            (5, ActionType.BET, 100.0, "bet"),
+        ]
+        
+        for player_index, action_type, amount, expected_action in test_cases:
+            self.state_machine.action_player_index = player_index
+            self.state_machine.execute_action(players[player_index], action_type, amount)
+        
+        # Verify we have at least our intended callbacks (bot actions may add more)
+        self.assertGreaterEqual(len(callback_calls), len(test_cases), 
+                               f"Should have at least {len(test_cases)} action callbacks")
+        
+        # Find our specific actions in the callback list
+        found_actions = []
+        for player_index, action, amount in callback_calls:
+            for i, (expected_player, expected_action_type, expected_amount, expected_action_name) in enumerate(test_cases):
+                if (action == expected_action_name and 
+                    abs(amount - expected_amount) < 0.01 and
+                    i not in [found[0] for found in found_actions]):
+                    found_actions.append((i, player_index, action, amount))
+                    break
+        
+        # Verify we found all our intended actions
+        self.assertEqual(len(found_actions), len(test_cases), 
+                        f"Should have found all {len(test_cases)} intended actions")
+        
+        for i, player_index, action, amount in found_actions:
+            expected_action = test_cases[i][3]
+            expected_amount = test_cases[i][2]
+            
+            self.assertEqual(action, expected_action, 
+                           f"Action {i} should be '{expected_action}', got '{action}'")
+            self.assertAlmostEqual(amount, expected_amount, delta=0.01,
+                                 msg=f"Amount {i} should be {expected_amount}, got {amount}")
+            
+            print(f"✅ Action {i+1} test passed: Player {player_index + 1} {action} ${amount}")
+
+    def test_folded_player_action_animation(self):
+        """Test that folded players can still trigger action animations."""
+        players = [
+            Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+            Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=False, cards=['Qd', 'Jd']),  # Folded
+            Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=True, cards=['2c', '3c']),
+            Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=False, cards=['4d', '5d']),  # Folded
+            Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=True, cards=['6h', '7h']),
+            Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=True, cards=['8s', '9s']),
+        ]
+        
+        game_state = GameState(
+            players=players,
+            board=['Ts', 'Tc', '9h', '3c', 'Js'],
+            pot=2.50,
+            current_bet=0.0,
+            street="river"
+        )
+        
+        self.state_machine.game_state = game_state
+        self.state_machine.current_state = PokerState.RIVER_BETTING
+        
+        # Capture callback calls
+        callback_calls = []
+        def capture_action(player_index, action, amount):
+            callback_calls.append((player_index, action, amount))
+        
+        self.state_machine.on_action_executed = capture_action
+        
+        # Test that folded players can still trigger animations
+        folded_players = [1, 3]  # Player 2 and Player 4 are folded
+        
+        for player_index in folded_players:
+            self.state_machine.action_player_index = player_index
+            # Even though they're folded, they should still be able to trigger animations
+            # (This would happen if they somehow got a turn despite being folded)
+            self.state_machine.execute_action(players[player_index], ActionType.FOLD, 0)
+        
+        # Verify we have at least our intended callbacks for folded players (bot actions may add more)
+        self.assertGreaterEqual(len(callback_calls), len(folded_players), 
+                               f"Should have at least {len(folded_players)} callbacks for folded players")
+        
+        # Find our specific folded player actions in the callback list
+        folded_actions = []
+        for player_index, action, amount in callback_calls:
+            if (player_index in folded_players and 
+                action == "fold" and 
+                amount == 0 and
+                player_index not in [found[0] for found in folded_actions]):
+                folded_actions.append((player_index, action, amount))
+        
+        # Verify we found all our intended folded player actions
+        self.assertEqual(len(folded_actions), len(folded_players), 
+                        f"Should have found all {len(folded_players)} folded player actions")
+        
+        for player_index, action, amount in folded_actions:
+            self.assertIn(player_index, folded_players, 
+                         f"Player {player_index + 1} should be a folded player")
+            self.assertEqual(action, "fold", f"Folded player action should be 'fold'")
+            self.assertEqual(amount, 0, f"Folded player amount should be 0")
+            
+            print(f"✅ Folded player animation test passed: Player {player_index + 1} (folded) triggered animation")
+
+    def test_action_animation_edge_cases(self):
+        """Test action animations with edge cases."""
+        players = [
+            Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+            Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Qd', 'Jd']),
+            Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=True, cards=['2c', '3c']),
+            Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=True, cards=['4d', '5d']),
+            Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=True, cards=['6h', '7h']),
+            Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=True, cards=['8s', '9s']),
+        ]
+        
+        game_state = GameState(
+            players=players,
+            board=['Ts', 'Tc', '9h', '3c', 'Js'],
+            pot=2.50,
+            current_bet=0.0,
+            street="river"
+        )
+        
+        self.state_machine.game_state = game_state
+        self.state_machine.current_state = PokerState.RIVER_BETTING
+        
+        # Capture callback calls
+        callback_calls = []
+        def capture_action(player_index, action, amount):
+            callback_calls.append((player_index, action, amount))
+        
+        self.state_machine.on_action_executed = capture_action
+        
+        # Test edge cases
+        edge_cases = [
+            (0, ActionType.CHECK, 0.0, "Zero amount check"),
+            (1, ActionType.BET, 0.01, "Very small bet"),
+            (2, ActionType.BET, 99.99, "Almost all-in bet"),
+            (3, ActionType.BET, 100.0, "Exact stack bet"),
+            (4, ActionType.FOLD, 0.0, "Fold with zero amount"),
+        ]
+        
+        for player_index, action_type, amount, description in edge_cases:
+            self.state_machine.action_player_index = player_index
+            self.state_machine.execute_action(players[player_index], action_type, amount)
+            
+            # Verify the callback was called
+            self.assertGreater(len(callback_calls), 0, f"Callback should be called for {description}")
+            
+            # Find our specific action in the callback list
+            found_action = None
+            for call_player_index, call_action, call_amount in callback_calls:
+                if (call_player_index == player_index and 
+                    call_action == action_type.value and 
+                    abs(call_amount - amount) < 0.01):
+                    found_action = (call_player_index, call_action, call_amount)
+                    break
+            
+            self.assertIsNotNone(found_action, f"Should find action for {description}")
+            self.assertEqual(found_action[0], player_index, f"Player index should match for {description}")
+            self.assertAlmostEqual(found_action[2], amount, delta=0.01, 
+                                 msg=f"Amount should match for {description}")
+            
+            print(f"✅ Edge case test passed: {description} - Player {player_index + 1} {found_action[1]} ${amount}")
+
+    def test_action_animation_performance(self):
+        """Test that action animations don't cause performance issues."""
+        players = [
+            Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+            Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Qd', 'Jd']),
+            Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=True, cards=['2c', '3c']),
+            Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=True, cards=['4d', '5d']),
+            Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=True, cards=['6h', '7h']),
+            Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=True, cards=['8s', '9s']),
+        ]
+        
+        game_state = GameState(
+            players=players,
+            board=['Ts', 'Tc', '9h', '3c', 'Js'],
+            pot=2.50,
+            current_bet=0.0,
+            street="river"
+        )
+        
+        self.state_machine.game_state = game_state
+        self.state_machine.current_state = PokerState.RIVER_BETTING
+        
+        # Capture callback calls
+        callback_calls = []
+        def capture_action(player_index, action, amount):
+            callback_calls.append((player_index, action, amount))
+        
+        self.state_machine.on_action_executed = capture_action
+        
+        # Test rapid successive actions
+        actions = [
+            (0, ActionType.CHECK, 0.0),
+            (1, ActionType.BET, 5.0),
+            (2, ActionType.CALL, 5.0),
+            (3, ActionType.RAISE, 10.0),
+            (4, ActionType.FOLD, 0.0),
+            (5, ActionType.CHECK, 0.0),
+        ]
+        
+        import time
+        start_time = time.time()
+        
+        for player_index, action_type, amount in actions:
+            self.state_machine.action_player_index = player_index
+            self.state_machine.execute_action(players[player_index], action_type, amount)
+        
+        end_time = time.time()
+        execution_time = end_time - start_time
+        
+        # Verify we have at least our intended callbacks (bot actions may add more)
+        self.assertGreaterEqual(len(callback_calls), len(actions), 
+                               f"Should have at least {len(actions)} callbacks for rapid actions")
+        
+        # Verify performance (should complete quickly)
+        self.assertLess(execution_time, 1.0, f"Rapid actions should complete in under 1 second, took {execution_time:.3f}s")
+        
+        print(f"✅ Performance test passed: {len(actions)} rapid actions completed in {execution_time:.3f}s")
+        print(f"✅ All {len(callback_calls)} action animations triggered correctly")
+
     def test_multiple_actions_highlighting(self):
         """Test highlighting through multiple actions."""
         # Set up scenario with multiple players taking actions
