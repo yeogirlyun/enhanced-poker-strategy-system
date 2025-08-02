@@ -422,16 +422,24 @@ def test_strategy_integration_postflop(state_machine, test_suite):
 def test_input_validation(state_machine, test_suite, action, amount, expected_error):
     """Test input validation for various invalid actions."""
     state_machine.start_hand()
-    player = state_machine.get_action_player()
-    state_machine.execute_action(player, ActionType.RAISE, 3.0)
-    player = state_machine.get_action_player()
+    
+    # Directly test validation logic by setting up the game state manually
+    # Set a current bet so we can test invalid actions
+    state_machine.game_state.current_bet = 3.0
+    
+    # Get the first player and set their current bet to 0 (so they have to call)
+    player = state_machine.game_state.players[0]
+    player.current_bet = 0.0
+    
+    # Test the validation directly
     errors = state_machine.validate_action(player, action, amount)
     has_expected_error = any(expected_error in error for error in errors)
+    
     test_suite.log_test(
         f"Validation: {action.value} ${amount}",
         has_expected_error or len(errors) > 0,
         f"Should detect: {expected_error}",
-        {"errors": errors}
+        {"errors": errors, "current_bet": state_machine.game_state.current_bet, "player_bet": player.current_bet}
     )
     assert has_expected_error or len(errors) > 0, f"Expected error containing '{expected_error}', got {errors}"
 

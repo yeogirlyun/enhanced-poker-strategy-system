@@ -1634,36 +1634,42 @@ class ImprovedPokerStateMachine:
         current_player = self.get_action_player()
         if current_player != player:
             errors.append(f"It's not {player.name}'s turn")
-        
+
         if amount < 0:
             errors.append("Amount cannot be negative")
-        
+
+        call_amount = self.game_state.current_bet - player.current_bet
+
         if action == ActionType.CHECK:
-            if self.game_state.current_bet > player.current_bet:
+            # FIX: A player can only check if the amount to call is zero.
+            if call_amount > 0:
                 errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f}")
         
         elif action == ActionType.CALL:
-            call_amount = self.game_state.current_bet - player.current_bet
             if call_amount <= 0:
                 errors.append("Nothing to call")
             elif amount != call_amount and amount != 0:
                 errors.append(f"Call amount must be ${call_amount:.2f}, got ${amount:.2f}")
-        
+
         elif action == ActionType.BET:
+            # FIX: A bet is only valid if there is no current bet.
             if self.game_state.current_bet > 0:
                 errors.append("Cannot bet when there's already a bet - use raise instead")
             if amount < self.game_state.min_raise:
                 errors.append(f"Bet amount ${amount:.2f} is less than minimum bet ${self.game_state.min_raise:.2f}")
             if amount > player.stack:
                 errors.append(f"Bet amount ${amount:.2f} exceeds stack ${player.stack:.2f}")
-        
+
         elif action == ActionType.RAISE:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
-            if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
+            # A player can go all-in for less than a min-raise.
+            is_all_in_raise = (player.current_bet + player.stack) == amount
+
+            if not is_all_in_raise and amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
             if amount > player.current_bet + player.stack:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
-        
+
         return errors
 
     def is_valid_action(self, player: Player, action: ActionType, amount: float = 0) -> bool:
