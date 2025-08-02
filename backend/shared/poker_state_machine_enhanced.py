@@ -660,22 +660,36 @@ class ImprovedPokerStateMachine:
         # Calculate call amount FIRST
         call_amount = self.game_state.current_bet - player.current_bet
         
-        print(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
-        print(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
-        print(f"   Call amount: ${call_amount}")
-        print(f"   Street: {street}")
+        # --- COMPREHENSIVE LOGGING AT EACH DECISION POINT ---
+        self._log_action(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
+        self._log_action(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
+        self._log_action(f"   Call amount: ${call_amount}")
+        self._log_action(f"   Street: {street}")
+        self._log_action(f"   Position: {position}")
         
-        # CRITICAL FIX: Check BB option BEFORE any hand evaluation!
-        # This MUST be the FIRST check to prevent folding with weak hands
+        # --- POSITION-BASED RULES BEFORE HAND STRENGTH RULES ---
+        # 1. EARLY RETURN: BB check option (position-based rule)
         if street == 'preflop' and position == 'BB' and call_amount == 0:
-            print(f"   🤖 BB CHECK: Big blind has option to check")
+            self._log_action(f"   🎯 POSITION RULE: BB has option to check (no raise)")
+            return ActionType.CHECK, 0
+        
+        # 2. EARLY RETURN: SB check option (position-based rule)
+        if street == 'preflop' and position == 'SB' and call_amount == 0:
+            self._log_action(f"   🎯 POSITION RULE: SB has option to check (no raise)")
+            return ActionType.CHECK, 0
+        
+        # 3. EARLY RETURN: Button check option (position-based rule)
+        if street == 'preflop' and position == 'BTN' and call_amount == 0:
+            self._log_action(f"   🎯 POSITION RULE: Button has option to check (no raise)")
             return ActionType.CHECK, 0
         
         try:
             if street == "preflop":
-                # NOW do tier-based evaluation
+                # NOW do tier-based evaluation (hand strength rules)
                 tier_name = None
                 player_hand_str = self.get_hand_notation(player.cards)
+                
+                self._log_action(f"   🎴 Hand notation: {player_hand_str}")
                 
                 # Check if hand is in any tier
                 for tier in self.strategy_data.tiers:
@@ -684,19 +698,24 @@ class ImprovedPokerStateMachine:
                         break
 
                 if not tier_name:
-                    # Hand not in any tier - but still check if we're BB with no raise
+                    self._log_action(f"   ⚠️ Hand not in any tier: {player_hand_str}")
+                    # --- POSITION-BASED RULE: BB protection for weak hands ---
                     if position == 'BB' and self.game_state.current_bet <= 1.0:
-                        print(f"   🤖 BB with weak hand but no raise - checking")
+                        self._log_action(f"   🎯 POSITION RULE: BB with weak hand but no raise - checking")
                         return ActionType.CHECK, 0
+                    self._log_action(f"   ❌ Folding weak hand: {player_hand_str}")
                     return ActionType.FOLD, 0
 
+                self._log_action(f"   📋 Hand in tier: {tier_name}")
+                
                 # Get hand strength for tier-based decisions
                 hand_strength = self.get_preflop_hand_strength(player.cards)
+                self._log_action(f"   💪 Hand strength: {hand_strength}")
                 
                 # If facing a raise (current_bet > big blind)
                 BIG_BLIND_AMOUNT = 1.0
                 if self.game_state.current_bet > BIG_BLIND_AMOUNT:
-                    print(f"   🤖 Logic: Facing a raise")
+                    self._log_action(f"   🎯 LOGIC: Facing a raise")
                     # Get vs_raise rules from strategy
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     
@@ -710,53 +729,69 @@ class ImprovedPokerStateMachine:
                         call_thresh = vs_raise_rules.get("call_thresh", 65)
                         call_range = [call_thresh, value_3bet_thresh - 1]
                     
-                    print(f"   🤖 Hand strength: {hand_strength}, 3bet threshold: {value_3bet_thresh}")
+                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call range: {call_range}")
                     
                     if hand_strength >= value_3bet_thresh:
+                        self._log_action(f"   🚀 3-betting with strong hand")
                         return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
                     elif call_range[0] <= hand_strength <= call_range[1]:
+                        self._log_action(f"   📞 Calling with medium hand")
                         return ActionType.CALL, call_amount
                     else:
-                        # Even with weak hand, BB should check if no real raise
+                        # --- POSITION-BASED RULE: BB protection even with weak hand ---
                         if position == 'BB' and self.game_state.current_bet == BIG_BLIND_AMOUNT:
+                            self._log_action(f"   🎯 POSITION RULE: BB with weak hand but no real raise - checking")
                             return ActionType.CHECK, 0
+                        self._log_action(f"   ❌ Folding weak hand to raise")
                         return ActionType.FOLD, 0
                 
                 else:  # Opening opportunity
-                    print(f"   🤖 Logic: Opening opportunity")
+                    self._log_action(f"   🎯 LOGIC: Opening opportunity")
                     
                     # Use open_rules for opening
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 60)
                     sizing = open_rules.get(position, {}).get("sizing", 3.0)
                     
+                    self._log_action(f"   📊 Opening threshold: {threshold}, sizing: {sizing}")
+                    
                     # Adjust for limpers
                     limpers = len([p for p in self.game_state.players 
                                  if p.current_bet == BIG_BLIND_AMOUNT and p.position != "BB"])
                     if limpers > 0:
                         sizing += limpers
+                        self._log_action(f"   👥 Adjusted sizing for {limpers} limpers: {sizing}")
                     
                     # Check if we need to act
                     if call_amount <= 0:
+                        self._log_action(f"   🎯 No bet to call - can check or bet")
                         # No bet to call - we can check or bet
                         if hand_strength >= threshold:
                             if self.game_state.current_bet > 0:
+                                self._log_action(f"   🚀 Raising with strong hand")
                                 return ActionType.RAISE, min(sizing, player.stack)
                             else:
+                                self._log_action(f"   💰 Betting with strong hand")
                                 return ActionType.BET, min(sizing, player.stack)
                         else:
+                            self._log_action(f"   ✅ Checking with weak hand")
                             return ActionType.CHECK, 0
                     else:
+                        self._log_action(f"   🎯 There's a bet to call: ${call_amount}")
                         # There's a bet to call
                         if hand_strength >= threshold:
+                            self._log_action(f"   📞 Calling with strong hand")
                             return ActionType.CALL, call_amount
                         else:
-                            # Final BB protection
+                            # --- POSITION-BASED RULE: Final BB protection ---
                             if position == 'BB':
+                                self._log_action(f"   🎯 POSITION RULE: BB protection - checking")
                                 return ActionType.CHECK, 0
+                            self._log_action(f"   ❌ Folding weak hand")
                             return ActionType.FOLD, 0
             
             else:  # Postflop logic
+                self._log_action(f"   🎯 POSTFLOP LOGIC: {street}")
                 # Use existing postflop strategy
                 hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
                 postflop = self.strategy_data.strategy_dict.get("postflop", {})
@@ -766,30 +801,40 @@ class ImprovedPokerStateMachine:
                 check_thresh = pfa_data.get("check_thresh", 10)
                 sizing = pfa_data.get("sizing", 0.75)
                 
+                self._log_action(f"   📊 Postflop thresholds - val: {val_thresh}, check: {check_thresh}, sizing: {sizing}")
+                
                 # Check if we need to call
                 if call_amount > 0:
+                    self._log_action(f"   🎯 Facing a bet: ${call_amount}")
                     pot_odds = self.calculate_pot_odds(call_amount)
                     should_call = self.should_call_by_pot_odds(player, call_amount)
                     
                     if should_call:
+                        self._log_action(f"   📞 Calling based on pot odds")
                         return ActionType.CALL, call_amount
                     else:
+                        self._log_action(f"   ❌ Folding based on pot odds")
                         return ActionType.FOLD, 0
                 
                 # No bet to face - decide between check/bet
+                self._log_action(f"   🎯 No bet to face - deciding check/bet")
                 if hand_strength >= val_thresh:
                     bet_amount = min(self.game_state.pot * sizing, player.stack)
+                    self._log_action(f"   💰 Betting with strong hand: ${bet_amount}")
                     return ActionType.BET, bet_amount
                 elif hand_strength >= check_thresh:
+                    self._log_action(f"   ✅ Checking with medium hand")
                     return ActionType.CHECK, 0
                 else:
+                    self._log_action(f"   ✅ Checking weak hands postflop (not folding)")
                     return ActionType.CHECK, 0  # Check weak hands postflop instead of folding
                     
         except (KeyError, AttributeError) as e:
-            print(f"   🤖 Strategy error: {e}, falling back to basic logic")
+            self._log_action(f"   🤖 Strategy error: {e}, falling back to basic logic")
             return self.get_basic_bot_action(player)
         
         # Fallback
+        self._log_action(f"   ⚠️ Using fallback basic logic")
         return self.get_basic_bot_action(player)
 
     def get_hand_notation(self, cards: List[str]) -> str:
