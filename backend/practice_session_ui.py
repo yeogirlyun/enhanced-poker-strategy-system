@@ -180,48 +180,38 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.execute_action(player, action, amount)
 
     def prompt_human_action(self, player):
-        """Shows and configures action controls when it's the human's turn."""
-        self.add_game_message("🎯 YOUR TURN!")
+        """Shows and configures the action controls for the human player."""
+        game_info = self.state_machine.get_game_info()
+        if not game_info:
+            return
+
         self._show_action_buttons()
         
-        # Configure the slider and button text based on game state
-        game_info = self.state_machine.get_game_info()
-        if game_info:
-            current_bet = game_info.get('current_bet', 0)
-            
-            # FIX: Find the human player instead of assuming index 0
-            human_player_info = None
-            for player_info in game_info['players']:
-                if player_info.get('is_human', False):
-                    human_player_info = player_info
-                    break
-            
-            if human_player_info:
-                to_call = current_bet - human_player_info.get('current_bet', 0)
-            else:
-                to_call = current_bet  # Fallback
-            
-            if to_call > 0:
-                # There's a bet to call
-                self.human_action_controls['call'].config(text=f"Call ${to_call:.2f}")
-                self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
-                self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
-                self.human_action_controls['bet_raise'].config(text="Raise")
-                self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
-                
-                # Configure slider for raise
-                min_raise = max(current_bet * 2, 1)
-                self.bet_size_var.set(min_raise)
-                self.bet_slider.config(from_=min_raise, to=100)
-            else:
-                # No bet to call
-                self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
-                self.human_action_controls['bet_raise'].config(text="Bet")
-                self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=5)
-                
-                # Configure slider for bet
-                self.bet_size_var.set(10)
-                self.bet_slider.config(from_=1, to=100)
+        call_amount = game_info['current_bet'] - player.current_bet
+        
+        self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
+        if call_amount > 0:
+            self.human_action_controls['check'].pack_forget()
+            self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
+            self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
+            self.human_action_controls['bet_raise'].config(text="Raise To")
+        else:
+            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
+            self.human_action_controls['call'].pack_forget()
+            self.human_action_controls['bet_raise'].config(text="Bet")
+        
+        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
+
+        # Correctly configure the bet/raise slider
+        min_bet_or_raise = self.state_machine.game_state.min_raise
+        if game_info['current_bet'] > 0: # Facing a bet, so it's a raise
+             min_bet_or_raise = game_info['current_bet'] + self.state_machine.game_state.min_raise
+
+        max_bet = player.stack + player.current_bet
+        
+        self.bet_slider.config(from_=min_bet_or_raise, to=max_bet)
+        self.bet_size_var.set(min_bet_or_raise)
+        self._update_bet_size_label()
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
