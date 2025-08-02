@@ -372,21 +372,18 @@ class ImprovedPokerStateMachine:
             return
 
         # --- THIS IS THE CRITICAL BUG FIX ---
-        # Post blinds by adjusting stack and pot, but NOT current_bet.
-        # current_bet is for the betting round, which hasn't started yet.
+        # Post blinds by adjusting stack and pot, and set current_bet for the betting round
         sb_player.stack -= sb_amount
         sb_player.total_invested = sb_amount
+        sb_player.current_bet = sb_amount
 
         bb_player.stack -= bb_amount
         bb_player.total_invested = bb_amount
+        bb_player.current_bet = bb_amount
 
         self.game_state.pot = sb_amount + bb_amount
         self.game_state.current_bet = bb_amount # The amount to call is the BB
         self.game_state.min_raise = bb_amount
-        
-        # REMOVE these incorrect lines:
-        # sb_player.current_bet = sb_amount 
-        # bb_player.current_bet = bb_amount
         # --- End of Bug Fix ---
 
         # Deal hole cards
