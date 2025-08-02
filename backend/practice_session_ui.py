@@ -703,7 +703,7 @@ class PracticeSessionUI(ttk.Frame):
     
     def _animate_player_action(self, player_index: int, action: str, amount: float = 0):
         """Animate a player's action with visual feedback that persists until next player acts."""
-        if not self.player_seats[player_index]:
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
             
         player_seat = self.player_seats[player_index]
