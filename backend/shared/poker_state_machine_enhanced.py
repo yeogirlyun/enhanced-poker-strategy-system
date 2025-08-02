@@ -1730,7 +1730,8 @@ class ImprovedPokerStateMachine:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             if amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
-            if amount > player.current_bet + player.stack:
+            # Allow all-in raises even if they exceed the exact amount
+            if amount > player.current_bet + player.stack and player.stack > 0:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
         
         return errors
