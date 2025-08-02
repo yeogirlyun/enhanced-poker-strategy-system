@@ -25,6 +25,7 @@ class PracticeSessionUI(ttk.Frame):
     
     def __init__(self, parent, strategy_data, **kwargs):
         super().__init__(parent, **kwargs)
+        
         self.strategy_data = strategy_data
         
         self.state_machine = ImprovedPokerStateMachine(
@@ -44,6 +45,11 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls = {}
         self.num_players = 6
         
+        # NEW: Track action indicators for each player
+        self.action_indicators = {}  # player_index -> action_label
+        self.last_action_player = None  # Track who last acted
+        
+        # Setup UI
         self._setup_ui()
 
     def _setup_ui(self):
@@ -571,6 +577,13 @@ class PracticeSessionUI(ttk.Frame):
         # for card_label in self.community_card_labels:
         #     card_label.config(text="")
         
+        # NEW: Clear all action indicators for new hand
+        for player_index, action_label in self.action_indicators.items():
+            if action_label and action_label.winfo_exists():
+                action_label.destroy()
+        self.action_indicators.clear()
+        self.last_action_player = None
+        
         # Reset player displays
         for player_seat in self.player_seats:
             if player_seat:
@@ -619,6 +632,17 @@ class PracticeSessionUI(ttk.Frame):
                 card_label.config(text="")
         # --- End of Bug Fix ---
 
+        # NEW: Clear action indicators when a new player acts
+        current_action_player = game_info['action_player']
+        if (self.last_action_player is not None and 
+            self.last_action_player != current_action_player and
+            self.last_action_player in self.action_indicators):
+            # Clear the previous player's action indicator
+            old_label = self.action_indicators[self.last_action_player]
+            if old_label and old_label.winfo_exists():
+                old_label.destroy()
+                del self.action_indicators[self.last_action_player]
+        
         # Update player info
         for i, player_seat in enumerate(self.player_seats):
             if not player_seat:
@@ -678,7 +702,7 @@ class PracticeSessionUI(ttk.Frame):
             self._submit_human_action("bet")
     
     def _animate_player_action(self, player_index: int, action: str, amount: float = 0):
-        """Animate a player's action with visual feedback."""
+        """Animate a player's action with visual feedback that persists until next player acts."""
         if not self.player_seats[player_index]:
             return
             
@@ -689,12 +713,18 @@ class PracticeSessionUI(ttk.Frame):
         if not frame or not name_label:
             return
             
+        # Clear any existing action indicator for this player
+        if player_index in self.action_indicators:
+            old_label = self.action_indicators[player_index]
+            if old_label and old_label.winfo_exists():
+                old_label.destroy()
+        
         # Create action indicator
         action_text = action.upper()
         if amount > 0:
             action_text += f" ${amount:.2f}"
             
-        # Create temporary action label
+        # Create persistent action label (doesn't fade out)
         action_label = tk.Label(
             frame,
             text=action_text,
@@ -706,18 +736,9 @@ class PracticeSessionUI(ttk.Frame):
         )
         action_label.pack(side=tk.TOP, pady=2)
         
-        # Animate the action indicator
-        def fade_action(step=0):
-            if step <= 10:  # 10 steps for fade out
-                alpha = int(255 * (1 - step / 10))
-                color = f"#{alpha:02x}ff{alpha:02x}"  # Fade to transparent
-                action_label.config(bg=color)
-                self.after(100, lambda: fade_action(step + 1))
-            else:
-                action_label.destroy()
-                
-        # Start animation
-        fade_action()
+        # Store the action indicator for this player
+        self.action_indicators[player_index] = action_label
+        self.last_action_player = player_index
         
         # Also update the player's display immediately
         if action.upper() == "FOLD":
