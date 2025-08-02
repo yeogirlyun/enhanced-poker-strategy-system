@@ -357,6 +357,15 @@ class ImprovedPokerStateMachine:
 
         # Assign positions correctly
         self.assign_positions()
+        
+        # --- POSITION VALIDATION ---
+        # Validate that all players have valid positions
+        valid_positions = ["UTG", "UTG+1", "MP", "CO", "BTN", "SB", "BB"]
+        for player in self.game_state.players:
+            if player.position not in valid_positions:
+                self._log_action(f"ERROR: Invalid position '{player.position}' for {player.name}")
+                player.position = "Unknown"  # Fallback position
+        # --- END POSITION VALIDATION ---
 
         # Post blinds with proper tracking
         sb_player = self.game_state.players[self.small_blind_position]
@@ -616,17 +625,19 @@ class ImprovedPokerStateMachine:
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
         """Execute bot action using strategy data."""
-        # --- NEW: Check if hand has ended ---
         if self.current_state == PokerState.END_HAND:
             self._log_action("DEBUG: Hand has ended, bot action cancelled.")
             return
-        # --- END NEW ---
+        
+        # Add position check
+        self._log_action(f"🤖 Bot {player.name} ({player.position}) is taking action")
         
         if self.strategy_data:
             action, amount = self.get_strategy_action(player)
         else:
             action, amount = self.get_basic_bot_action(player)
         
+        self._log_action(f"🤖 Bot {player.name} decided: {action.value} ${amount}")
         self.execute_action(player, action, amount)
 
     def get_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
