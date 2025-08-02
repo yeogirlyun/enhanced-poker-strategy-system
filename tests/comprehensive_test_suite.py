@@ -29,7 +29,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))), 'backend'))
 
 from shared.poker_state_machine_enhanced import (
-    ImprovedPokerStateMachine, ActionType, PokerState
+    ImprovedPokerStateMachine, ActionType, PokerState, Player, GameState
 )
 from gui_models import StrategyData, HandStrengthTier
 
@@ -440,6 +440,224 @@ def test_bb_behavior_enhanced(state_machine, test_suite):
             f"BB should fold/call/raise with {hand} when facing raise, not {action}",
             {"action": action.value, "cards": hand}
         )
+
+
+def test_bb_fold_when_facing_bet(state_machine, test_suite):
+    """Test that BB can fold when facing a bet (not just blinds)."""
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Find BB player
+    bb_player = None
+    for player in players:
+        if player.position == "BB":
+            bb_player = player
+            break
+    
+    # Set BB as the current action player
+    state_machine.action_player_index = players.index(bb_player)
+    
+    # Simulate a scenario where someone has bet (not just blinds)
+    # Set up the game state to simulate a bet
+    state_machine.game_state.current_bet = 2.0  # Someone has bet $2
+    bb_player.current_bet = 1.0  # BB has already bet $1 (blind)
+    call_amount = state_machine.game_state.current_bet - bb_player.current_bet
+    
+    # BB should be able to fold when facing a bet
+    errors = state_machine.validate_action(bb_player, ActionType.FOLD, 0)
+    test_suite.log_test(
+        "BB Fold When Facing Bet",
+        len(errors) == 0,
+        f"BB should be able to fold when facing ${call_amount} bet (current_bet: ${state_machine.game_state.current_bet}, bb_bet: ${bb_player.current_bet})",
+        {"errors": errors, "current_bet": state_machine.game_state.current_bet, "bb_bet": bb_player.current_bet, "call_amount": call_amount}
+    )
+    assert len(errors) == 0, f"BB should be able to fold when facing a bet, got errors: {errors}"
+    
+    # Also test that BB can call when facing a bet
+    errors = state_machine.validate_action(bb_player, ActionType.CALL, call_amount)
+    test_suite.log_test(
+        "BB Call When Facing Bet",
+        len(errors) == 0,
+        f"BB should be able to call ${call_amount} when facing a bet",
+        {"errors": errors, "call_amount": call_amount}
+    )
+    assert len(errors) == 0, f"BB should be able to call when facing a bet, got errors: {errors}"
+
+def test_action_order_preflop(state_machine, test_suite):
+    """Test that preflop action starts with UTG (first player after BB)."""
+    # Manually set up game state without triggering automatic betting
+    players = []
+    for i in range(6):
+        is_human = i == 0
+        player = Player(
+            name=f"Player {i+1}",
+            stack=100.0,
+            position="",
+            is_human=is_human,
+            is_active=True,
+            cards=[],
+            current_bet=0.0,
+            has_acted_this_round=False,
+            is_all_in=False,
+            total_invested=0.0,
+        )
+        players.append(player)
+
+    # Create game state manually
+    state_machine.game_state = GameState(
+        players=players,
+        board=[],
+        pot=0.0,
+        current_bet=0.0,
+        street="preflop",
+        deck=[],
+        min_raise=1.0,
+        big_blind=1.0,
+    )
+
+    # Set dealer position and assign positions
+    state_machine.dealer_position = 0
+    state_machine.assign_positions()
+    state_machine.update_blind_positions()
+    
+    # Find BB position
+    bb_player = None
+    bb_index = -1
+    for i, player in enumerate(state_machine.game_state.players):
+        if player.position == "BB":
+            bb_player = player
+            bb_index = i
+            break
+    
+    # UTG should be the first player after BB
+    utg_index = (bb_index + 1) % 6
+    utg_player = state_machine.game_state.players[utg_index]
+    
+    # Set up preflop betting
+    state_machine.game_state.street = "preflop"
+    state_machine.prepare_new_betting_round()
+    
+    # Action should start with UTG
+    first_to_act = state_machine.get_action_player()
+    test_suite.log_test(
+        "Preflop Action Order - UTG First",
+        first_to_act == utg_player,
+        f"Preflop action should start with UTG ({utg_player.name}), got {first_to_act.name}",
+        {"expected": utg_player.name, "actual": first_to_act.name}
+    )
+
+def test_action_order_postflop(state_machine, test_suite):
+    """Test that postflop action starts with first active player left of dealer."""
+    # Manually set up game state without triggering automatic betting
+    players = []
+    for i in range(6):
+        is_human = i == 0
+        player = Player(
+            name=f"Player {i+1}",
+            stack=100.0,
+            position="",
+            is_human=is_human,
+            is_active=True,
+            cards=[],
+            current_bet=0.0,
+            has_acted_this_round=False,
+            is_all_in=False,
+            total_invested=0.0,
+        )
+        players.append(player)
+
+    # Create game state manually
+    state_machine.game_state = GameState(
+        players=players,
+        board=[],
+        pot=0.0,
+        current_bet=0.0,
+        street="flop",
+        deck=[],
+        min_raise=1.0,
+        big_blind=1.0,
+    )
+
+    # Set dealer position and assign positions
+    state_machine.dealer_position = 0
+    state_machine.assign_positions()
+    state_machine.update_blind_positions()
+    
+    # First active player left of dealer should be SB
+    dealer_index = state_machine.dealer_position
+    sb_index = (dealer_index + 1) % 6
+    sb_player = state_machine.game_state.players[sb_index]
+    
+    # Set up postflop betting
+    state_machine.game_state.street = "flop"
+    state_machine.prepare_new_betting_round()
+    
+    # Action should start with first active player left of dealer (SB)
+    first_to_act = state_machine.get_action_player()
+    test_suite.log_test(
+        "Postflop Action Order - SB First",
+        first_to_act == sb_player,
+        f"Postflop action should start with SB ({sb_player.name}), got {first_to_act.name}",
+        {"expected": sb_player.name, "actual": first_to_act.name}
+    )
+
+def test_action_order_with_folded_players(state_machine, test_suite):
+    """Test action order when some players have folded."""
+    # Manually set up game state without triggering automatic betting
+    players = []
+    for i in range(6):
+        is_human = i == 0
+        player = Player(
+            name=f"Player {i+1}",
+            stack=100.0,
+            position="",
+            is_human=is_human,
+            is_active=True,
+            cards=[],
+            current_bet=0.0,
+            has_acted_this_round=False,
+            is_all_in=False,
+            total_invested=0.0,
+        )
+        players.append(player)
+
+    # Create game state manually
+    state_machine.game_state = GameState(
+        players=players,
+        board=[],
+        pot=0.0,
+        current_bet=0.0,
+        street="flop",
+        deck=[],
+        min_raise=1.0,
+        big_blind=1.0,
+    )
+
+    # Set dealer position and assign positions
+    state_machine.dealer_position = 0
+    state_machine.assign_positions()
+    state_machine.update_blind_positions()
+    
+    # Fold some players
+    players[1].is_active = False  # SB folds
+    players[3].is_active = False  # UTG folds
+    
+    # Set up postflop betting
+    state_machine.game_state.street = "flop"
+    state_machine.prepare_new_betting_round()
+    
+    # Action should start with first active player left of dealer
+    # Since SB (index 1) is folded, it should be BB (index 2)
+    first_to_act = state_machine.get_action_player()
+    expected_player = players[2]  # BB
+    
+    test_suite.log_test(
+        "Action Order with Folded Players",
+        first_to_act == expected_player,
+        f"Postflop action with folded players should start with {expected_player.name} "
+        f"({expected_player.position}), got {first_to_act.name} ({first_to_act.position})",
+        {"expected": expected_player.name, "actual": first_to_act.name}
+    )
 
 def test_raise_logic(state_machine, test_suite):
     """Test minimum raise calculation and invalid raise detection."""
