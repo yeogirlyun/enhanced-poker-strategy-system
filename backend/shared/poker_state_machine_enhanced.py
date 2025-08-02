@@ -621,8 +621,12 @@ class ImprovedPokerStateMachine:
 
     def _handle_betting_round(self, next_state: PokerState):
         """Generic betting round handler."""
+        active_players = [p for p in self.game_state.players if p.is_active]
+        if len(active_players) <= 1:
+            self.transition_to(PokerState.END_HAND)
+            return
+
         if self.is_round_complete():
-            # FIX: Call handle_round_complete() instead of direct transition
             self.handle_round_complete()
         else:
             self.handle_current_player_action()
@@ -664,17 +668,16 @@ class ImprovedPokerStateMachine:
 
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
-        # --- NEW: Check if hand has ended ---
         if self.current_state == PokerState.END_HAND:
-            self._log_action("DEBUG: Hand has ended, no more actions allowed.")
-            return
-        # --- END NEW ---
-        
-        if self.action_player_index == -1:
-            self._log_action("DEBUG: No action player index, round is likely complete.")
             return
 
-        current_player = self.game_state.players[self.action_player_index]
+        current_player = self.get_action_player()
+        if not current_player:
+            # This can happen if all remaining players are all-in
+            if self.is_round_complete():
+                self.handle_round_complete()
+            return
+
         self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
 
         if current_player.is_human:
@@ -683,13 +686,11 @@ class ImprovedPokerStateMachine:
                 self.on_action_required(current_player)
         else:
             self._log_action(f"Bot turn: {current_player.name}")
-            # Add delay for bot actions to make the game more realistic
+            # FIX: Make bot actions synchronous when not running in a GUI
+            # This allows the test suite to work correctly.
             if self.root_tk:
                 self.root_tk.after(1000, lambda: self.execute_bot_action(current_player))
             else:
-                # Fallback if no root_tk available
-                import time
-                time.sleep(1)
                 self.execute_bot_action(current_player)
 
     # FIX 5: Strategy Integration for Bots
@@ -1380,48 +1381,36 @@ class ImprovedPokerStateMachine:
                 not current_player.is_all_in and
                 (self.action_player_index not in self.game_state.players_acted or
                  current_player.current_bet < self.game_state.current_bet)):
-                # --- NEW: Call the state change callback to update UI ---
-                if self.on_state_change:
-                    self.on_state_change()
+                # FIX: This callback was incorrect. A turn change is not a state change.
+                # The UI should check get_game_info() to see who the action_player is.
+                # if self.on_state_change:
+                #     self.on_state_change() 
                 return
             
             attempts += 1
         
         # No one can act - round is complete
         self.action_player_index = -1
-        # --- NEW: Call the state change callback even when round is complete ---
-        if self.on_state_change:
-            self.on_state_change()
 
     def handle_round_complete(self):
         """
         Handles the completion of a betting round by advancing to the next street
-        (flop, turn, river) or proceeding to showdown.
+        or proceeding to showdown.
         """
         self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
-        self._log_action(f"📊 Current state: {self.current_state}")
-        self._log_action(f"🎴 Community cards: {self.game_state.board}")
-        self._log_action(f"💰 Pot size: ${self.game_state.pot:.2f}")
         
         if self.on_round_complete:
             self.on_round_complete()
 
-        # --- THIS IS THE CRITICAL BUG FIX ---
+        # Determine the next state based on the current street
         if self.game_state.street == 'preflop':
-            self._log_action("🔄 Transitioning from preflop to DEAL_FLOP")
             self.transition_to(PokerState.DEAL_FLOP)
         elif self.game_state.street == 'flop':
-            self._log_action("🔄 Transitioning from flop to DEAL_TURN")
             self.transition_to(PokerState.DEAL_TURN)
         elif self.game_state.street == 'turn':
-            self._log_action("🔄 Transitioning from turn to DEAL_RIVER")
             self.transition_to(PokerState.DEAL_RIVER)
         elif self.game_state.street == 'river':
-            self._log_action("🔄 Transitioning from river to SHOWDOWN")
             self.transition_to(PokerState.SHOWDOWN)
-        else:
-            self._log_action(f"❌ ERROR: Unknown street '{self.game_state.street}'")
-        # --- End of Bug Fix ---
 
     def determine_winner(self) -> List[Player]:
         """Determine winners with proper tie handling using the enhanced evaluator."""
