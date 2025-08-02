@@ -735,7 +735,7 @@ def main():
         # --- NEW: Interactive Strategy Selection ---
         print(Colors.colorize("\n🎯 Strategy Selection:", Colors.BRIGHT_CYAN))
         print(Colors.colorize("1. My Strategy (modern_strategy.json)", Colors.CYAN))
-        print(Colors.colorize("2. GTO Strategy (gto_strategy_default.json)", Colors.CYAN))
+        print(Colors.colorize("2. Aggressive Strategy (aggressive_strategy.json)", Colors.CYAN))
         
         while True:
             strategy_choice = input(
@@ -744,7 +744,7 @@ def main():
             
             if strategy_choice == '2':
                 print(Colors.colorize("🤖 Bots will use the GTO Modern Strategy.", Colors.YELLOW))
-                strategy_file_to_load = "gto_strategy_default.json"
+                strategy_file_to_load = "aggressive_strategy.json"
                 break
             elif strategy_choice == '1':
                 print(Colors.colorize("🤖 Bots will use your custom strategy (modern_strategy.json).", Colors.YELLOW))
