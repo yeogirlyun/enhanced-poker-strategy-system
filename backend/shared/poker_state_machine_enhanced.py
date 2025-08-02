@@ -653,6 +653,10 @@ class ImprovedPokerStateMachine:
             for p in players_who_can_act
         )
         
+        # Special case: If BB is the only active player and hasn't acted yet, round is not complete
+        if len(active_players) == 1 and active_players[0].position == "BB" and not active_players[0].has_acted_this_round:
+            return False
+        
         # The round is complete if everyone has acted and all bets are equal
         return all_have_acted and bets_are_equal
 
@@ -738,10 +742,38 @@ class ImprovedPokerStateMachine:
         
         try:
             if street == "preflop":
-                # BB check logic for no raise
-                if position == "BB" and call_amount <= self.game_state.big_blind:
+                # BB check logic for no raise - BB has already paid the big blind
+                if position == "BB" and call_amount == 0:
                     self._log_action(f"BB with no raise, checking")
                     return ActionType.CHECK, 0
+                
+                # BB facing a raise - special handling
+                if position == "BB" and call_amount > 0:
+                    player_hand_str = self.get_hand_notation(player.cards)
+                    self._log_action(f"   🎴 Hand notation: {player_hand_str}")
+                    self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
+                    
+                    # Get hand strength directly from strategy_dict
+                    hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {}).get(player_hand_str, 1)
+                    self._log_action(f"   💪 Hand strength: {hand_strength}")
+                    
+                    # BB vs raise rules
+                    vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get("BB", {})
+                    value_3bet_thresh = vs_raise_rules.get("value_thresh", 75)
+                    call_thresh = vs_raise_rules.get("call_thresh", 60)  # BB is more likely to call
+                    
+                    self._log_action(f"   🎯 BB LOGIC: Facing a raise")
+                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
+                    
+                    if hand_strength >= value_3bet_thresh:
+                        self._log_action(f"   🚀 BB 3-betting with strong hand")
+                        return ActionType.RAISE, min(self.game_state.current_bet * 3.0, player.stack)
+                    elif hand_strength >= call_thresh:
+                        self._log_action(f"   📞 BB calling with medium hand")
+                        return ActionType.CALL, call_amount
+                    else:
+                        self._log_action(f"   ❌ BB folding to raise")
+                        return ActionType.FOLD, 0
                 
                 player_hand_str = self.get_hand_notation(player.cards)
                 self._log_action(f"   🎴 Hand notation: {player_hand_str}")
