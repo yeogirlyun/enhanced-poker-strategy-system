@@ -375,21 +375,20 @@ class ImprovedPokerStateMachine:
         # Post blinds by adjusting stack and pot, and set current_bet for the betting round
         sb_player.stack -= sb_amount
         sb_player.total_invested = sb_amount
-        sb_player.current_bet = sb_amount
 
         bb_player.stack -= bb_amount
         bb_player.total_invested = bb_amount
-        bb_player.current_bet = bb_amount
 
         # --- THIS IS THE CRITICAL BUG FIX ---
-        # REMOVE this line to prevent double-counting the blinds
-        # self.game_state.pot = sb_amount + bb_amount 
-        
-        # The pot will now be calculated dynamically from player investments
-        self.game_state.pot = sum(p.total_invested for p in self.game_state.players)
-        # --- End of Bug Fix ---
+        # Set the player's current_bet to what they posted. This is the key.
+        sb_player.current_bet = sb_amount
+        bb_player.current_bet = bb_amount
 
-        self.game_state.current_bet = bb_amount # The amount to call is the BB
+        # The pot is the sum of investments, and the amount to call is the big blind.
+        self.game_state.pot = sb_player.total_invested + bb_player.total_invested
+        self.game_state.current_bet = bb_amount
+        # --- End of Bug Fix ---
+        
         self.game_state.min_raise = bb_amount
 
         # Deal hole cards
