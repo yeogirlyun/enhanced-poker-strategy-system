@@ -385,6 +385,8 @@ class ImprovedPokerStateMachine:
                 player.has_acted_this_round = False
                 player.is_all_in = False
                 player.total_invested = 0
+                player.partial_call_amount = None
+                player.full_call_amount = None
         else:
             # Create players if they don't exist
             players = []
@@ -1609,14 +1611,8 @@ class ImprovedPokerStateMachine:
             self.game_state.board = []
             self.game_state.street = "preflop"
             
-            # Reset all player bets and status
-            for player in self.game_state.players:
-                player.cards = []
-                player.current_bet = 0
-                player.total_invested = 0
-                player.has_acted_this_round = False
-                player.is_all_in = False
-                player.is_active = True  # Reactivate all players for new hand
+            # DO NOT reset player states here - that should happen in handle_start_hand
+            # This preserves the player state (including is_all_in) until the hand is properly concluded
         
         # Advance dealer position for next hand
         self.advance_dealer_position()
