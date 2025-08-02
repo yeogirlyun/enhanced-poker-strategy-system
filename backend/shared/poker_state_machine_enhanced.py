@@ -629,15 +629,27 @@ class ImprovedPokerStateMachine:
             self._log_action("DEBUG: Hand has ended, bot action cancelled.")
             return
         
-        # Add position check
+        # --- ENHANCED DEBUG LOGGING ---
         self._log_action(f"🤖 Bot {player.name} ({player.position}) is taking action")
+        self._log_action(f"   📊 Player state: Stack=${player.stack:.2f}, Bet=${player.current_bet:.2f}")
+        self._log_action(f"   🎴 Cards: {player.cards}")
+        self._log_action(f"   🃏 Board: {self.game_state.board}")
+        self._log_action(f"   💰 Pot: ${self.game_state.pot:.2f}, Current bet: ${self.game_state.current_bet:.2f}")
+        self._log_action(f"   🎯 Street: {self.game_state.street}")
         
+        # Log strategy data availability
         if self.strategy_data:
+            self._log_action(f"   📋 Using strategy data: {type(self.strategy_data).__name__}")
             action, amount = self.get_strategy_action(player)
         else:
+            self._log_action(f"   ⚠️ No strategy data available, using basic logic")
             action, amount = self.get_basic_bot_action(player)
         
-        self._log_action(f"🤖 Bot {player.name} decided: {action.value} ${amount}")
+        # Log the decision with detailed context
+        self._log_action(f"🤖 Bot {player.name} decided: {action.value} ${amount:.2f}")
+        self._log_action(f"   ✅ Executing action: {action.value} ${amount:.2f}")
+        # --- END ENHANCED DEBUG LOGGING ---
+        
         self.execute_action(player, action, amount)
 
     def get_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
