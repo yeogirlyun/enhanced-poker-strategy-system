@@ -1,26 +1,89 @@
 #!/usr/bin/env python3
 """
-Comprehensive Test Suite for Improved Poker State Machine
+Comprehensive Test Suite for Improved Poker State Machine (Upgraded)
 
-Tests all critical fixes:
-1. BB folding bug (BB should check with weak hands when no raise)
+Tests all critical fixes and additional edge cases:
+1. BB folding bug fix (BB checks with weak hands when no raise)
 2. Dynamic position tracking
 3. Correct raise logic
-4. All-in state tracking
-5. Strategy integration
+4. All-in state tracking and side pots
+5. Strategy integration (preflop and postflop)
 6. Input validation
+7. State transitions
+8. Showdown and winner determination
+9. Hand evaluation cache
+10. Multi-player interactions
+11. Sound integration
+12. Hand history logging
 """
 
 import sys
 import os
+import time
+import pytest
 from typing import List, Dict, Any
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
 # Add backend directory to path
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend'))
 
-from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
-from gui_models import StrategyData
+from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState, Player, GameState
+from gui_models import StrategyData, HandStrengthTier
+
+# Mock dependencies
+class MockSoundManager:
+    def __init__(self):
+        self.sounds = {"player_fold": True, "card_fold": True, "player_check": True, "player_call": True,
+                       "player_bet": True, "player_raise": True, "winner_announce": True, "card_deal": True}
+        self.last_played = None
+
+    def play(self, sound_name):
+        self.last_played = sound_name
+
+class MockHandEvaluator:
+    def __init__(self):
+        self.preflop_strengths = {"AA": 85, "KK": 82, "QQ": 80, "JJ": 77, "AKs": 67, "AKo": 65,
+                                 "AQs": 66, "AQo": 64, "72o": 1}
+        self.postflop_strengths = {"top_pair": 30, "flush": 80, "set": 60, "high_card": 5}
+
+    def get_preflop_hand_strength(self, cards):
+        hand_str = self._get_hand_notation(cards)
+        return self.preflop_strengths.get(hand_str, 1)
+
+    def evaluate_hand(self, cards, board):
+        hand_type = "high_card"  # Simplified for testing
+        if len(board) >= 3 and cards[0][0] == board[0][0]:
+            hand_type = "top_pair"
+        elif len(board) >= 3 and all(card[1] == board[0][1] for card in cards + board[:3]):
+            hand_type = "flush"
+        elif len(board) >= 3 and cards[0][0] == cards[1][0]:
+            hand_type = "set"
+        return {"strength_score": self.postflop_strengths.get(hand_type, 5), "hand_rank": hand_type,
+                "hand_description": hand_type.replace("_", " ").title(), "rank_values": []}
+
+    def _compare_hands(self, hand1, hand2):
+        rank_values = {"high_card": 1, "top_pair": 3, "set": 6, "flush": 8}
+        rank1, values1 = hand1
+        rank2, values2 = hand2
+        if rank_values.get(rank1, 0) > rank_values.get(rank2, 0):
+            return 1
+        elif rank_values.get(rank1, 0) < rank_values.get(rank2, 0):
+            return -1
+        return 0
+
+    def _get_hand_notation(self, cards):
+        if len(cards) != 2:
+            return ""
+        rank1, suit1 = cards[0][0], cards[0][1]
+        rank2, suit2 = cards[1][0], cards[1][1]
+        if rank1 == rank2:
+            return f"{rank1}{rank2}"
+        suited = "s" if suit1 == suit2 else "o"
+        rank_order = "AKQJT98765432"
+        if rank_order.index(rank1) < rank_order.index(rank2):
+            return f"{rank1}{rank2}{suited}"
+        return f"{rank2}{rank1}{suited}"
 
 # Test result tracking
 @dataclass
@@ -30,27 +93,18 @@ class TestResult:
     message: str
     details: Dict[str, Any] = None
 
-
 class PokerStateMachineTestSuite:
     def __init__(self):
         self.results: List[TestResult] = []
         self.strategy_data = self._create_test_strategy()
-        
+
     def _create_test_strategy(self) -> StrategyData:
         """Create a test strategy with minimal hands to test BB folding."""
         strategy = StrategyData()
-        # Only include premium hands in tiers
-        # This ensures weak hands like 72o are NOT in any tier
         strategy.strategy_dict = {
             "hand_strength_tables": {
-                "preflop": {
-                    "AA": 85, "KK": 82, "QQ": 80, "JJ": 77,
-                    "AKs": 67, "AKo": 65, "AQs": 66, "AQo": 64
-                },
-                "postflop": {
-                    "high_card": 5, "pair": 15, "two_pair": 45,
-                    "set": 60, "straight": 70, "flush": 80
-                }
+                "preflop": {"AA": 85, "KK": 82, "QQ": 80, "JJ": 77, "AKs": 67, "AKo": 65, "AQs": 66, "AQo": 64},
+                "postflop": {"high_card": 5, "pair": 15, "top_pair": 30, "set": 60, "flush": 80}
             },
             "preflop": {
                 "open_rules": {
@@ -58,409 +112,420 @@ class PokerStateMachineTestSuite:
                     "MP": {"threshold": 55, "sizing": 3.0},
                     "CO": {"threshold": 48, "sizing": 2.5},
                     "BTN": {"threshold": 40, "sizing": 2.5},
-                    "SB": {"threshold": 50, "sizing": 3.0}
+                    "SB": {"threshold": 50, "sizing": 3.0},
+                    "BB": {"threshold": 50, "sizing": 3.0}
                 },
                 "vs_raise": {
                     "UTG": {"value_thresh": 75, "call_thresh": 65, "sizing": 3.0},
                     "MP": {"value_thresh": 72, "call_thresh": 62, "sizing": 3.0},
                     "CO": {"value_thresh": 70, "call_thresh": 60, "sizing": 2.5},
                     "BTN": {"value_thresh": 68, "call_thresh": 55, "sizing": 2.5},
-                    "SB": {"value_thresh": 70, "call_thresh": 60, "sizing": 3.0}
+                    "SB": {"value_thresh": 70, "call_thresh": 60, "sizing": 3.0},
+                    "BB": {"value_thresh": 70, "call_thresh": 60, "sizing": 3.0}
                 }
             },
             "postflop": {
                 "pfa": {
                     "flop": {
-                        "UTG": {"val_thresh": 35, "check_thresh": 15, "sizing": 0.75}
+                        "UTG": {"val_thresh": 35, "check_thresh": 15, "sizing": 0.75},
+                        "MP": {"val_thresh": 30, "check_thresh": 15, "sizing": 0.75},
+                        "CO": {"val_thresh": 25, "check_thresh": 10, "sizing": 0.75},
+                        "BTN": {"val_thresh": 20, "check_thresh": 10, "sizing": 0.75},
+                        "SB": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.75},
+                        "BB": {"val_thresh": 25, "check_thresh": 15, "sizing": 0.75}
                     }
                 }
             }
         }
-        
-        # Create tiers with only premium hands
-        from gui_models import HandStrengthTier
         strategy.tiers = [
             HandStrengthTier("Premium", 60, 100, "#ff0000", {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo"})
         ]
-        
         return strategy
-    
+
     def log_test(self, name: str, passed: bool, message: str, details: Dict = None):
         """Log a test result."""
         self.results.append(TestResult(name, passed, message, details))
-        status = "✅ PASS" if passed else "❌ FAIL"
-        print(f"{status}: {name}")
-        if not passed:
-            print(f"    Message: {message}")
-            if details:
-                for key, value in details.items():
-                    print(f"    {key}: {value}")
-        print()
-    
-    def test_bb_folding_bug_fix(self):
-        """Test the critical BB folding bug fix."""
-        print("\n" + "="*60)
-        print("TEST 1: BB FOLDING BUG FIX")
-        print("="*60)
-        
-        # Create a state machine with test strategy
-        sm = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
-        
-        # Track actions
-        actions_taken = []
-        
-        def track_action(message):
-            if "decided:" in message:
-                actions_taken.append(message)
-        
-        sm.on_log_entry = track_action
-        
-        # Start a hand
-        sm.start_hand()
-        
-        # Give BB a weak hand that's NOT in any tier (72o)
-        bb_player = None
-        for player in sm.game_state.players:
-            if player.position == "BB":
-                bb_player = player
-                # Force a weak hand
-                player.cards = ["7h", "2c"]  # 72 offsuit - worst hand in poker
-                break
-        
-        if not bb_player:
-            self.log_test("BB Position Found", False, "Could not find BB player")
-            return
-        
-        # Simulate everyone folding to BB
-        print(f"Simulating all players folding to BB who has {bb_player.cards}")
-        
-        # Execute folds for all players except BB
-        for i in range(5):  # 5 players need to fold
-            current_player = sm.get_action_player()
-            if current_player and current_player.position != "BB":
-                print(f"  {current_player.name} ({current_player.position}) folds")
-                sm.execute_action(current_player, ActionType.FOLD)
-        
-        # Now it should be BB's turn
-        current_player = sm.get_action_player()
-        
-        # Force BB to act by calling execute_bot_action directly
-        if current_player and current_player.position == "BB":
-            print(f"  {current_player.name} ({current_player.position}) is acting")
-            sm.execute_bot_action(current_player)
-        else:
-            print(f"  ERROR: Expected BB to act, but got {current_player.name if current_player else 'None'}")
-        
-        # Find BB's action in the log
-        bb_action = None
-        for action in actions_taken:
-            if "BB" in action or "Player 3" in action:
-                bb_action = action
-                break
-        
-        # Check results
-        if bb_action and "CHECK" in bb_action:
-            self.log_test(
-                "BB Checks with Weak Hand",
-                True,
-                f"BB correctly checked with {bb_player.cards} when everyone folded",
-                {"bb_action": bb_action, "bb_cards": bb_player.cards}
-            )
-        elif bb_action and "FOLD" in bb_action:
-            self.log_test(
-                "BB Checks with Weak Hand",
-                False,
-                f"BUG STILL EXISTS: BB folded with {bb_player.cards} instead of checking!",
-                {"bb_action": bb_action, "bb_cards": bb_player.cards}
-            )
-        else:
-            self.log_test(
-                "BB Checks with Weak Hand",
-                False,
-                "Could not determine BB's action",
-                {"actions": actions_taken}
-            )
-    
-    def test_position_tracking(self):
-        """Test dynamic position tracking for different table sizes."""
-        print("\n" + "="*60)
-        print("TEST 2: DYNAMIC POSITION TRACKING")
-        print("="*60)
-        
-        table_sizes = [2, 3, 6, 9]
-        
-        for size in table_sizes:
-            sm = ImprovedPokerStateMachine(num_players=size)
-            sm.start_hand()
-            
-            positions = [p.position for p in sm.game_state.players]
-            
-            # Check that we have the right positions
-            if size == 2:
-                expected = ["BTN/SB", "BB"]
-            elif size == 3:
-                expected = ["BTN", "SB", "BB"]
-            elif size == 6:
-                expected = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
-            elif size == 9:
-                expected = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "MP+1", "CO", "LJ"]
-            
-            # Positions might be rotated, so check they're all present
-            all_present = all(pos in positions for pos in expected)
-            
-            self.log_test(
-                f"Position Tracking ({size} players)",
-                all_present,
-                f"Positions: {positions}",
-                {"expected": expected, "actual": positions}
-            )
-    
-    def test_raise_logic(self):
-        """Test correct raise logic and minimum raise tracking."""
-        print("\n" + "="*60)
-        print("TEST 3: RAISE LOGIC")
-        print("="*60)
-        
-        sm = ImprovedPokerStateMachine(num_players=6)
-        sm.start_hand()
-        
-        # Get first player after BB (UTG)
-        utg_player = sm.get_action_player()
-        
-        # UTG raises to 3 BB
-        sm.execute_action(utg_player, ActionType.RAISE, 3.0)
-        
-        # Check min raise is correct
-        expected_min_raise = 2.0  # UTG raised by 2 (from 1 to 3)
-        actual_min_raise = sm.game_state.min_raise
-        
-        self.log_test(
-            "Minimum Raise Calculation",
-            actual_min_raise == expected_min_raise,
-            f"Min raise after 3BB raise",
-            {"expected": expected_min_raise, "actual": actual_min_raise}
-        )
-        
-        # Next player tries invalid raise
-        next_player = sm.get_action_player()
-        errors = sm.validate_action(next_player, ActionType.RAISE, 4.0)  # Less than min raise (should be 5.0)
-        
-        self.log_test(
-            "Invalid Raise Detection",
-            len(errors) > 0,
-            "Raise to 4.0 when min is 5.0 should fail",
-            {"errors": errors}
-        )
-    
-    def test_all_in_tracking(self):
-        """Test all-in state tracking."""
-        print("\n" + "="*60)
-        print("TEST 4: ALL-IN TRACKING")
-        print("="*60)
-        
-        sm = ImprovedPokerStateMachine(num_players=6)
-        sm.start_hand()
-        
-        # Give a player a small stack
-        player = sm.get_action_player()
-        player.stack = 5.0  # Only 5 BB
-        
-        # Player goes all-in
-        sm.execute_action(player, ActionType.RAISE, 10.0)  # More than stack
-        
-        self.log_test(
-            "All-In State",
-            player.is_all_in,
-            "Player should be marked all-in",
-            {"stack": player.stack, "all_in": player.is_all_in}
-        )
-    
-    def test_strategy_integration(self):
-        """Test bot strategy integration."""
-        print("\n" + "="*60)
-        print("TEST 5: STRATEGY INTEGRATION")
-        print("="*60)
-        
-        sm = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
-        
-        # Track bot decisions
-        bot_actions = []
-        
-        def track_bot_action(message):
-            if "Bot" in message and "decided:" in message:
-                bot_actions.append(message)
-        
-        sm.on_log_entry = track_bot_action
-        
-        # Start hand and let bots play
-        sm.start_hand()
-        
-        # Give a bot AA (premium hand)
-        utg_bot = None
-        for player in sm.game_state.players:
-            if not player.is_human and player.position == "UTG":
-                player.cards = ["Ah", "As"]  # Pocket aces
-                utg_bot = player
-                break
-        
-        # Skip to bot's turn by folding human
-        if sm.get_action_player().is_human:
-            sm.execute_action(sm.get_action_player(), ActionType.FOLD)
-        
-        # Force bot to act
-        current_player = sm.get_action_player()
-        if current_player and not current_player.is_human:
-            print(f"  Bot {current_player.name} ({current_player.position}) acting with {current_player.cards}")
-            sm.execute_bot_action(current_player)
-        else:
-            print(f"  ERROR: Expected bot to act, but got {current_player.name if current_player else 'None'}")
-        
-        # Check if bot made a strong action with AA
-        strong_action = any("RAISE" in action or "BET" in action for action in bot_actions)
-        
-        self.log_test(
-            "Bot Strategy Decision",
-            strong_action,
-            "Bot should raise/bet with AA",
-            {"bot_actions": bot_actions}
-        )
-    
-    def test_input_validation(self):
-        """Test input validation."""
-        print("\n" + "="*60)
-        print("TEST 6: INPUT VALIDATION")
-        print("="*60)
-        
-        sm = ImprovedPokerStateMachine(num_players=6)
-        sm.start_hand()
-        
-        player = sm.get_action_player()
-        
-        # Test various invalid actions
-        tests = [
-            ("Negative Amount", ActionType.BET, -10, "Amount cannot be negative"),
-            ("Check with Bet", ActionType.CHECK, 0, "Cannot check when bet"),
-            ("Bet over Raise", ActionType.BET, 5, "Cannot bet when there's already a bet"),
-        ]
-        
-        # First make a bet so we can test invalid actions
-        sm.execute_action(player, ActionType.RAISE, 3.0)
-        player = sm.get_action_player()
-        
-        for test_name, action, amount, expected_error in tests:
-            # Use the current action player for validation
-            current_player = sm.get_action_player()
-            if current_player:
-                errors = sm.validate_action(current_player, action, amount)
-                has_expected_error = any(expected_error in error for error in errors)
-            else:
-                errors = []
-                has_expected_error = False
-            
-            self.log_test(
-                f"Validation: {test_name}",
-                has_expected_error or len(errors) > 0,
-                f"Should detect: {expected_error}",
-                {"errors": errors}
-            )
-    
-    def test_state_transitions(self):
-        """Test proper state transitions."""
-        print("\n" + "="*60)
-        print("TEST 7: STATE TRANSITIONS")
-        print("="*60)
-        
-        sm = ImprovedPokerStateMachine(num_players=2)  # Heads up for quick test
-        
-        # Track state transitions
-        states = []
-        
-        def track_state(new_state=None):
-            if new_state:
-                states.append(new_state.value if hasattr(new_state, 'value') else str(new_state))
-        
-        sm.on_state_change = track_state
-        
-        # Start hand
-        sm.start_hand()
-        
-        # Both players call/check through all streets
-        for _ in range(8):  # Max 8 actions to get through all streets
-            player = sm.get_action_player()
-            if player and sm.current_state != PokerState.END_HAND:
-                if sm.game_state.current_bet > player.current_bet:
-                    sm.execute_action(player, ActionType.CALL)
-                else:
-                    sm.execute_action(player, ActionType.CHECK)
-            else:
-                break  # Stop if hand is over
-        
-        # Check we went through all streets
-        expected_sequence = [
-            "preflop_betting", "deal_flop", "flop_betting", 
-            "deal_turn", "turn_betting", "deal_river", 
-            "river_betting", "showdown", "end_hand"
-        ]
-        
-        all_present = all(state in states for state in expected_sequence)
-        
-        self.log_test(
-            "State Transitions",
-            all_present,
-            "All states should be visited",
-            {"states": states}
-        )
-    
-    def run_all_tests(self):
-        """Run all tests and generate report."""
-        print("\n" + "="*60)
-        print("POKER STATE MACHINE TEST SUITE")
-        print("="*60)
-        
-        # Run all test methods
-        self.test_bb_folding_bug_fix()
-        self.test_position_tracking()
-        self.test_raise_logic()
-        self.test_all_in_tracking()
-        self.test_strategy_integration()
-        self.test_input_validation()
-        self.test_state_transitions()
-        
-        # Generate summary
-        print("\n" + "="*60)
-        print("TEST SUMMARY")
-        print("="*60)
-        
-        passed = sum(1 for r in self.results if r.passed)
-        total = len(self.results)
-        
-        print(f"Tests Passed: {passed}/{total}")
-        print(f"Success Rate: {(passed/total)*100:.1f}%")
-        
-        if passed < total:
-            print("\nFailed Tests:")
-            for result in self.results:
-                if not result.passed:
-                    print(f"  - {result.name}: {result.message}")
-        
-        return passed == total
 
+@pytest.fixture
+def test_suite():
+    """Fixture to create a test suite instance."""
+    suite = PokerStateMachineTestSuite()
+    # Mock hand evaluator
+    ImprovedPokerStateMachine.hand_evaluator = MockHandEvaluator()
+    return suite
+
+@pytest.fixture
+def state_machine(test_suite):
+    """Fixture to create a state machine with mocked dependencies."""
+    sm = ImprovedPokerStateMachine(num_players=6, strategy_data=test_suite.strategy_data)
+    sm.sfx = MockSoundManager()
+    return sm
+
+@pytest.mark.parametrize("num_players,expected_positions", [
+    (2, ["BTN/SB", "BB"]),
+    (3, ["BTN", "SB", "BB"]),
+    (6, ["BTN", "SB", "BB", "UTG", "MP", "CO"]),
+    (9, ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "MP+1", "CO", "LJ"])
+])
+def test_position_tracking(test_suite, num_players, expected_positions):
+    """Test dynamic position tracking for different table sizes."""
+    sm = ImprovedPokerStateMachine(num_players=num_players)
+    sm.start_hand()
+    positions = [p.position for p in sm.game_state.players]
+    all_present = all(pos in positions for pos in expected_positions)
+    test_suite.log_test(
+        f"Position Tracking ({num_players} players)",
+        all_present,
+        f"Positions: {positions}",
+        {"expected": expected_positions, "actual": positions}
+    )
+    assert all_present, f"Expected {expected_positions}, got {positions}"
+
+def test_bb_folding_bug_fix(state_machine, test_suite):
+    """Test BB checks with weak hand when no raise is made."""
+    state_machine.start_hand()
+    actions_taken = []
+    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
+    bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
+    bb_player.cards = ["7h", "2c"]  # Weak hand
+    for i in range(5):
+        current_player = state_machine.get_action_player()
+        if current_player and current_player.position != "BB":
+            state_machine.execute_action(current_player, ActionType.FOLD)
+    current_player = state_machine.get_action_player()
+    if current_player and current_player.position == "BB":
+        state_machine.execute_bot_action(current_player)
+    bb_action = next((a for a in actions_taken if "BB" in a), None)
+    test_suite.log_test(
+        "BB Checks with Weak Hand",
+        bb_action and "CHECK" in bb_action,
+        f"BB should check with {bb_player.cards} when no raise",
+        {"bb_action": bb_action, "bb_cards": bb_player.cards}
+    )
+    assert bb_action and "CHECK" in bb_action, f"BB folded instead of checking: {bb_action}"
+
+def test_bb_facing_raise(state_machine, test_suite):
+    """Test BB folds to a raise with a weak hand."""
+    state_machine.start_hand()
+    actions_taken = []
+    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
+    bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
+    bb_player.cards = ["7h", "2c"]  # Weak hand
+    utg_player = next(p for p in state_machine.game_state.players if p.position == "UTG")
+    state_machine.execute_action(utg_player, ActionType.RAISE, 3.0)
+    for i in range(4):  # Fold all but BB
+        current_player = state_machine.get_action_player()
+        if current_player and current_player.position not in ["BB", "UTG"]:
+            state_machine.execute_action(current_player, ActionType.FOLD)
+    current_player = state_machine.get_action_player()
+    if current_player and current_player.position == "BB":
+        state_machine.execute_bot_action(current_player)
+    bb_action = next((a for a in actions_taken if "BB" in a and "decided:" in a), None)
+    test_suite.log_test(
+        "BB Folds to Raise with Weak Hand",
+        bb_action and "FOLD" in bb_action,
+        f"BB should fold {bb_player.cards} to a raise",
+        {"bb_action": bb_action, "bb_cards": bb_player.cards}
+    )
+    assert bb_action and "FOLD" in bb_action, f"BB did not fold to raise: {bb_action}"
+
+def test_raise_logic(state_machine, test_suite):
+    """Test minimum raise calculation and invalid raise detection."""
+    state_machine.start_hand()
+    utg_player = state_machine.get_action_player()
+    state_machine.execute_action(utg_player, ActionType.RAISE, 3.0)
+    expected_min_raise = 2.0  # Raise by 2 (from 1 to 3)
+    actual_min_raise = state_machine.game_state.min_raise
+    test_suite.log_test(
+        "Minimum Raise Calculation",
+        actual_min_raise == expected_min_raise,
+        f"Min raise after 3BB raise",
+        {"expected": expected_min_raise, "actual": actual_min_raise}
+    )
+    assert actual_min_raise == expected_min_raise, f"Expected min raise {expected_min_raise}, got {actual_min_raise}"
+    next_player = state_machine.get_action_player()
+    errors = state_machine.validate_action(next_player, ActionType.RAISE, 4.0)  # Less than min raise (5.0)
+    test_suite.log_test(
+        "Invalid Raise Detection",
+        len(errors) > 0,
+        "Raise to 4.0 when min is 5.0 should fail",
+        {"errors": errors}
+    )
+    assert len(errors) > 0, f"Invalid raise not detected: {errors}"
+
+def test_all_in_tracking(state_machine, test_suite):
+    """Test all-in state tracking and partial calls."""
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    player.stack = 5.0  # Small stack
+    state_machine.game_state.current_bet = 10.0
+    state_machine.execute_action(player, ActionType.CALL)
+    test_suite.log_test(
+        "All-In Partial Call",
+        player.is_all_in and player.partial_call_amount == 5.0 and player.full_call_amount == 10.0,
+        "Player should be all-in with partial call",
+        {"stack": player.stack, "all_in": player.is_all_in, "partial_call": player.partial_call_amount}
+    )
+    assert player.is_all_in, "Player should be all-in"
+    assert player.partial_call_amount == 5.0, f"Expected partial call 5.0, got {player.partial_call_amount}"
+
+def test_side_pots(state_machine, test_suite):
+    """Test side pot creation for all-in scenarios."""
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    players[0].stack = 10.0
+    players[0].is_all_in = True
+    players[0].total_invested = 10.0
+    players[1].stack = 50.0
+    players[1].is_all_in = True
+    players[1].total_invested = 50.0
+    players[2].total_invested = 50.0
+    state_machine.game_state.pot = 110.0
+    side_pots = state_machine.create_side_pots()
+    test_suite.log_test(
+        "Side Pot Creation",
+        len(side_pots) == 2 and side_pots[0]["amount"] == 30.0 and side_pots[1]["amount"] == 80.0,
+        "Should create two side pots: $30 (3 players), $80 (2 players)",
+        {"side_pots": [{"amount": p["amount"], "eligible": [e.name for e in p["eligible_players"]]} for p in side_pots]}
+    )
+    assert len(side_pots) == 2, f"Expected 2 side pots, got {len(side_pots)}"
+    assert side_pots[0]["amount"] == 30.0, f"Expected first pot 30.0, got {side_pots[0]['amount']}"
+    assert side_pots[1]["amount"] == 80.0, f"Expected second pot 80.0, got {side_pots[1]['amount']}"
+
+def test_strategy_integration_preflop(state_machine, test_suite):
+    """Test bot strategy integration for preflop with strong hand."""
+    state_machine.start_hand()
+    actions_taken = []
+    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
+    utg_bot = next(p for p in state_machine.game_state.players if p.position == "UTG")
+    utg_bot.cards = ["Ah", "As"]  # Pocket aces
+    if state_machine.get_action_player().is_human:
+        state_machine.execute_action(state_machine.get_action_player(), ActionType.FOLD)
+    current_player = state_machine.get_action_player()
+    if current_player and not current_player.is_human:
+        state_machine.execute_bot_action(current_player)
+    strong_action = any("RAISE" in action or "BET" in action for action in actions_taken if "UTG" in action)
+    test_suite.log_test(
+        "Bot Preflop Strategy Decision",
+        strong_action,
+        "Bot should raise/bet with AA",
+        {"bot_actions": actions_taken}
+    )
+    assert strong_action, f"Bot did not raise/bet with AA: {actions_taken}"
+
+def test_strategy_integration_postflop(state_machine, test_suite):
+    """Test bot strategy integration for postflop with top pair."""
+    state_machine.start_hand()
+    state_machine.game_state.street = "flop"
+    state_machine.game_state.board = ["Ah", "Kh", "Qh"]  # Flush-heavy board
+    player = next(p for p in state_machine.game_state.players if p.position == "UTG")
+    player.cards = ["As", "Ks"]  # Top pair
+    action, amount = state_machine.get_strategy_action(player)
+    test_suite.log_test(
+        "Postflop Bet with Top Pair",
+        action == ActionType.BET and amount > 0,
+        "Should bet with top pair on flop",
+        {"action": action.value, "amount": amount}
+    )
+    assert action == ActionType.BET, f"Expected BET, got {action.value}"
+    assert amount > 0, f"Expected positive bet amount, got {amount}"
+
+@pytest.mark.parametrize("action,amount,expected_error", [
+    (ActionType.BET, -10, "Amount cannot be negative"),
+    (ActionType.CHECK, 0, "Cannot check when bet"),
+    (ActionType.BET, 5, "Cannot bet when there's already a bet"),
+    (ActionType.CALL, 10, "Call amount must be"),
+])
+def test_input_validation(state_machine, test_suite, action, amount, expected_error):
+    """Test input validation for various invalid actions."""
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    state_machine.execute_action(player, ActionType.RAISE, 3.0)
+    player = state_machine.get_action_player()
+    errors = state_machine.validate_action(player, action, amount)
+    has_expected_error = any(expected_error in error for error in errors)
+    test_suite.log_test(
+        f"Validation: {action.value} ${amount}",
+        has_expected_error or len(errors) > 0,
+        f"Should detect: {expected_error}",
+        {"errors": errors}
+    )
+    assert has_expected_error or len(errors) > 0, f"Expected error containing '{expected_error}', got {errors}"
+
+def test_invalid_cards(state_machine, test_suite):
+    """Test handling of invalid card inputs."""
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    player.cards = ["XX", "YY"]
+    with pytest.raises(ValueError, match="Invalid card"):
+        state_machine.deal_card()  # Simulate dealing invalid card
+    action, amount = state_machine.get_strategy_action(player)
+    test_suite.log_test(
+        "Invalid Card Handling",
+        action == ActionType.FOLD,
+        "Should fold with invalid cards",
+        {"cards": player.cards, "action": action.value}
+    )
+    assert action == ActionType.FOLD, f"Expected FOLD, got {action.value}"
+
+def test_state_transitions(state_machine, test_suite):
+    """Test proper state transitions in heads-up scenario."""
+    sm = ImprovedPokerStateMachine(num_players=2)
+    sm.sfx = MockSoundManager()
+    states = []
+    sm.on_state_change = lambda new_state: states.append(new_state.value if hasattr(new_state, 'value') else str(new_state))
+    sm.start_hand()
+    for _ in range(8):
+        player = sm.get_action_player()
+        if player and sm.current_state != PokerState.END_HAND:
+            if sm.game_state.current_bet > player.current_bet:
+                sm.execute_action(player, ActionType.CALL)
+            else:
+                sm.execute_action(player, ActionType.CHECK)
+        else:
+            break
+    expected_sequence = ["preflop_betting", "deal_flop", "flop_betting", "deal_turn", 
+                         "turn_betting", "deal_river", "river_betting", "showdown", "end_hand"]
+    all_present = all(state in states for state in expected_sequence)
+    test_suite.log_test(
+        "State Transitions",
+        all_present,
+        "All states should be visited",
+        {"states": states}
+    )
+    assert all_present, f"Expected states {expected_sequence}, got {states}"
+
+def test_showdown_split_pot(state_machine, test_suite):
+    """Test split pot in showdown with identical hands."""
+    sm = ImprovedPokerStateMachine(num_players=2)
+    sm.sfx = MockSoundManager()
+    sm.hand_evaluator = MockHandEvaluator()
+    sm.start_hand()
+    sm.game_state.street = "river"
+    sm.game_state.board = ["Ah", "Kh", "Qh", "Jh", "Th"]  # Royal flush board
+    sm.game_state.players[0].cards = ["As", "Kd"]
+    sm.game_state.players[1].cards = ["Ac", "Kc"]
+    sm.game_state.pot = 20.0
+    winners = sm.determine_winner()
+    sm.handle_showdown()
+    test_suite.log_test(
+        "Split Pot in Showdown",
+        len(winners) == 2 and all(p.stack == 110.0 for p in winners),
+        "Both players should win with identical hands",
+        {"winners": [p.name for p in winners], "stacks": [p.stack for p in winners]}
+    )
+    assert len(winners) == 2, f"Expected 2 winners, got {len(winners)}"
+    assert all(p.stack == 110.0 for p in winners), f"Expected stacks 110.0, got {[p.stack for p in winners]}"
+
+def test_hand_eval_cache(state_machine, test_suite):
+    """Test hand evaluation cache functionality."""
+    state_machine.start_hand()
+    state_machine.game_state.board = ["Ah", "Kh", "Qh"]
+    player = state_machine.get_action_player()
+    player.cards = ["As", "Ks"]
+    state_machine.get_postflop_hand_strength(player.cards, state_machine.game_state.board)
+    cache_hits_before = state_machine._cache_hits
+    state_machine.get_postflop_hand_strength(player.cards, state_machine.game_state.board)
+    test_suite.log_test(
+        "Hand Evaluation Cache",
+        state_machine._cache_hits > cache_hits_before,
+        "Cache should register a hit for repeated evaluation",
+        {"cache_hits": state_machine._cache_hits, "cache_misses": state_machine._cache_misses}
+    )
+    assert state_machine._cache_hits > cache_hits_before, "Cache hit not registered"
+
+def test_multi_player_pot(state_machine, test_suite):
+    """Test multi-player pot with raises, calls, and folds."""
+    state_machine.start_hand()
+    actions_taken = []
+    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
+    players = state_machine.game_state.players
+    state_machine.execute_action(players[0], ActionType.RAISE, 3.0)
+    state_machine.execute_action(players[1], ActionType.CALL, 3.0)
+    state_machine.execute_action(players[2], ActionType.FOLD, 0.0)
+    state_machine.execute_action(players[3], ActionType.CALL, 3.0)
+    test_suite.log_test(
+        "Multi-Player Pot",
+        state_machine.game_state.pot == 9.5,  # SB (0.5) + BB (1.0) + 3 + 3 + 2
+        "Pot should reflect contributions from multiple players",
+        {"pot": state_machine.game_state.pot, "actions": actions_taken}
+    )
+    assert state_machine.game_state.pot == 9.5, f"Expected pot 9.5, got {state_machine.game_state.pot}"
+
+def test_sound_integration(state_machine, test_suite):
+    """Test sound integration for actions."""
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    state_machine.execute_action(player, ActionType.FOLD)
+    test_suite.log_test(
+        "Sound on Fold",
+        state_machine.sfx.last_played in ["player_fold", "card_fold"],
+        "Should play fold sound",
+        {"last_sound": state_machine.sfx.last_played}
+    )
+    assert state_machine.sfx.last_played in ["player_fold", "card_fold"], f"Expected fold sound, got {state_machine.sfx.last_played}"
+
+def test_hand_history_logging(state_machine, test_suite):
+    """Test structured hand history logging."""
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    state_machine.execute_action(player, ActionType.RAISE, 3.0)
+    test_suite.log_test(
+        "Hand History Logging",
+        len(state_machine.hand_history) > 0 and state_machine.hand_history[-1].action == ActionType.RAISE,
+        "Should log raise action in hand history",
+        {"last_log": vars(state_machine.hand_history[-1])}
+    )
+    assert len(state_machine.hand_history) > 0, "Hand history empty"
+    assert state_machine.hand_history[-1].action == ActionType.RAISE, f"Expected RAISE, got {state_machine.hand_history[-1].action}"
+
+def test_performance(state_machine, test_suite):
+    """Test performance of action execution."""
+    state_machine.start_hand()
+    start_time = time.time()
+    for _ in range(100):
+        player = state_machine.get_action_player()
+        if player:
+            state_machine.execute_action(player, ActionType.FOLD)
+    duration = time.time() - start_time
+    test_suite.log_test(
+        "Action Performance",
+        duration < 1.0,
+        "100 actions should take less than 1 second",
+        {"duration": duration}
+    )
+    assert duration < 1.0, f"100 actions took {duration} seconds"
+
+def test_no_active_players(state_machine, test_suite):
+    """Test behavior when no active players remain."""
+    state_machine.start_hand()
+    for player in state_machine.game_state.players:
+        state_machine.execute_action(player, ActionType.FOLD)
+    test_suite.log_test(
+        "No Active Players",
+        state_machine.current_state == PokerState.END_HAND,
+        "Should transition to END_HAND when all players fold",
+        {"state": state_machine.current_state.value}
+    )
+    assert state_machine.current_state == PokerState.END_HAND, f"Expected END_HAND, got {state_machine.current_state.value}"
+
+def test_invalid_state_transition(state_machine, test_suite):
+    """Test invalid state transition handling."""
+    state_machine.start_hand()
+    with pytest.raises(ValueError, match="Invalid state transition"):
+        state_machine.transition_to(PokerState.SHOWDOWN)
+    test_suite.log_test(
+        "Invalid State Transition",
+        True,
+        "Should raise ValueError for invalid transition",
+        {"current_state": state_machine.current_state.value}
+    )
 
 def main():
-    """Run the test suite."""
+    """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")
-    print("This will test all critical fixes, especially the BB folding bug.")
-    
-    test_suite = PokerStateMachineTestSuite()
-    all_passed = test_suite.run_all_tests()
-    
-    if all_passed:
-        print("\n✅ ALL TESTS PASSED! The poker state machine is working correctly.")
-    else:
-        print("\n❌ SOME TESTS FAILED! Please review the failures above.")
-    
-    return 0 if all_passed else 1
-
+    pytest.main([__file__, "-v"])
+    print("\nTest suite completed.")
 
 if __name__ == "__main__":
     sys.exit(main()) 
