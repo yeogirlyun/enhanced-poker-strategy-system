@@ -36,6 +36,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_state_change = self.update_display
         self.state_machine.on_log_entry = self.add_game_message
+        self.state_machine.on_action_executed = self._animate_player_action  # NEW: Connect action animations
         
         self.sfx = SoundManager()
         self.player_seats = []
@@ -629,8 +630,9 @@ class PracticeSessionUI(ttk.Frame):
             stack_label = player_seat["stack_label"]
             cards_label = player_seat["cards_label"]
             
-            # Highlight current player
-            if i == game_info['action_player'] and player_info['is_active']:
+            # FIXED: Highlight based on action_player index, not is_active status
+            # Players should be highlighted when it's their turn, even if they fold
+            if i == game_info['action_player']:
                 frame.config(bg=THEME["accent_primary"])
             else:
                 frame.config(bg=THEME["secondary_bg"])
@@ -674,6 +676,65 @@ class PracticeSessionUI(ttk.Frame):
             self._submit_human_action("raise")
         else:
             self._submit_human_action("bet")
+    
+    def _animate_player_action(self, player_index: int, action: str, amount: float = 0):
+        """Animate a player's action with visual feedback."""
+        if not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        frame = player_seat.get("frame")
+        name_label = player_seat.get("name_label")
+        
+        if not frame or not name_label:
+            return
+            
+        # Create action indicator
+        action_text = action.upper()
+        if amount > 0:
+            action_text += f" ${amount:.2f}"
+            
+        # Create temporary action label
+        action_label = tk.Label(
+            frame,
+            text=action_text,
+            bg=THEME["accent_secondary"],
+            fg="white",
+            font=("Arial", 10, "bold"),
+            relief="raised",
+            bd=2
+        )
+        action_label.pack(side=tk.TOP, pady=2)
+        
+        # Animate the action indicator
+        def fade_action(step=0):
+            if step <= 10:  # 10 steps for fade out
+                alpha = int(255 * (1 - step / 10))
+                color = f"#{alpha:02x}ff{alpha:02x}"  # Fade to transparent
+                action_label.config(bg=color)
+                self.after(100, lambda: fade_action(step + 1))
+            else:
+                action_label.destroy()
+                
+        # Start animation
+        fade_action()
+        
+        # Also update the player's display immediately
+        if action.upper() == "FOLD":
+            # Show "Folded" status immediately
+            cards_label = player_seat.get("cards_label")
+            if cards_label:
+                cards_label.config(text="Folded", fg="red")
+        elif action.upper() == "CHECK":
+            # Show check mark
+            cards_label = player_seat.get("cards_label")
+            if cards_label:
+                cards_label.config(text="✓ Check", fg="green")
+        elif action.upper() in ["CALL", "BET", "RAISE"]:
+            # Show bet amount
+            cards_label = player_seat.get("cards_label")
+            if cards_label:
+                cards_label.config(text=f"${amount:.2f}", fg="blue")
     
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display."""
