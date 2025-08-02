@@ -556,15 +556,8 @@ class ImprovedPokerStateMachine:
         """Check if betting round is complete with all-in handling."""
         active_players = [p for p in self.game_state.players if p.is_active]
 
-        # --- NEW: For practice sessions, always deal community cards ---
-        # Only end the hand immediately if we're in a later street (flop, turn, river)
-        # This ensures we always see the flop for practice purposes
-        if len(active_players) <= 1 and self.game_state.street == "preflop":
-            self._log_action("🎯 PRACTICE MODE: Only one player active, but continuing to flop for practice")
-            return False  # Don't end the hand, continue to flop
-        elif len(active_players) <= 1:
-            return True  # End hand in later streets if only one player remains
-        # --- END NEW ---
+        if len(active_players) <= 1:
+            return True
 
         can_act_players = [p for p in active_players if not p.is_all_in]
 
@@ -714,6 +707,12 @@ class ImprovedPokerStateMachine:
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 60)
                     sizing = open_rules.get(position, {}).get("sizing", 3.0)
+                    
+                    # --- THIS IS THE CRITICAL BUG FIX ---
+                    # If player is BB and there was no raise, they have the option to check.
+                    if player.position == "BB" and self.game_state.current_bet == self.game_state.big_blind:
+                        return ActionType.CHECK, 0
+                    # --- End of Bug Fix ---
                     
                     # --- NEW: ADJUST FOR LIMPERS ---
                     limpers = len([p for p in self.game_state.players 
