@@ -381,10 +381,16 @@ class ImprovedPokerStateMachine:
         bb_player.total_invested = bb_amount
         bb_player.current_bet = bb_amount
 
-        self.game_state.pot = sb_amount + bb_amount
+        # --- THIS IS THE CRITICAL BUG FIX ---
+        # REMOVE this line to prevent double-counting the blinds
+        # self.game_state.pot = sb_amount + bb_amount 
+        
+        # The pot will now be calculated dynamically from player investments
+        self.game_state.pot = sum(p.total_invested for p in self.game_state.players)
+        # --- End of Bug Fix ---
+
         self.game_state.current_bet = bb_amount # The amount to call is the BB
         self.game_state.min_raise = bb_amount
-        # --- End of Bug Fix ---
 
         # Deal hole cards
         self.deal_hole_cards()
