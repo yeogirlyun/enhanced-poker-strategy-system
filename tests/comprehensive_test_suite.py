@@ -467,15 +467,25 @@ def test_state_transitions(state_machine, test_suite):
     states = []
     sm.on_state_change = lambda new_state=None: states.append(new_state.value if new_state else "None")
     sm.start_hand()
-    for _ in range(8):
-        player = sm.get_action_player()
-        if player and sm.current_state != PokerState.END_HAND:
-            if sm.game_state.current_bet > player.current_bet:
-                sm.execute_action(player, ActionType.CALL)
+    
+    # Disable automatic bot execution for this test
+    original_handle_current_player_action = sm.handle_current_player_action
+    sm.handle_current_player_action = lambda: None
+    
+    try:
+        for i in range(12):  # Increased loop count to ensure we complete all rounds
+            player = sm.get_action_player()
+            if player and sm.current_state != PokerState.END_HAND:
+                if sm.game_state.current_bet > player.current_bet:
+                    sm.execute_action(player, ActionType.CALL)
+                else:
+                    sm.execute_action(player, ActionType.CHECK)
             else:
-                sm.execute_action(player, ActionType.CHECK)
-        else:
-            break
+                break
+    finally:
+        # Restore original method
+        sm.handle_current_player_action = original_handle_current_player_action
+    
     expected_sequence = ["preflop_betting", "deal_flop", "flop_betting", "deal_turn", 
                          "turn_betting", "deal_river", "river_betting", "showdown", "end_hand"]
     all_present = all(state in states for state in expected_sequence)
