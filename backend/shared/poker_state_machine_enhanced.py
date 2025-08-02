@@ -359,10 +359,10 @@ class ImprovedPokerStateMachine:
         self.assign_positions()
         
         # --- POSITION VALIDATION ---
-        # Validate that all players have valid positions
-        valid_positions = ["UTG", "UTG+1", "MP", "CO", "BTN", "SB", "BB"]
-        for player in self.game_state.players:
-            if player.position not in valid_positions:
+        # Validate that all players have valid positions using dynamic position names
+        valid_positions = self._get_position_names()
+        for i, player in enumerate(self.game_state.players):
+            if player.position not in valid_positions and not player.position.startswith("P"):
                 self._log_action(f"ERROR: Invalid position '{player.position}' for {player.name}")
                 player.position = "Unknown"  # Fallback position
         # --- END POSITION VALIDATION ---
@@ -667,20 +667,15 @@ class ImprovedPokerStateMachine:
         self._log_action(f"   Street: {street}")
         self._log_action(f"   Position: {position}")
         
+        # --- HANDLE UNKNOWN POSITION ---
+        if position == "Unknown" or position not in ["UTG", "MP", "CO", "BTN", "SB", "BB"]:
+            self._log_action(f"   ⚠️ Unknown position '{position}', using default logic")
+            return self.get_basic_bot_action(player)
+        
         # --- POSITION-BASED RULES BEFORE HAND STRENGTH RULES ---
         # 1. EARLY RETURN: BB check option (position-based rule)
         if street == 'preflop' and position == 'BB' and call_amount == 0:
             self._log_action(f"   🎯 POSITION RULE: BB has option to check (no raise)")
-            return ActionType.CHECK, 0
-        
-        # 2. EARLY RETURN: SB check option (position-based rule)
-        if street == 'preflop' and position == 'SB' and call_amount == 0:
-            self._log_action(f"   🎯 POSITION RULE: SB has option to check (no raise)")
-            return ActionType.CHECK, 0
-        
-        # 3. EARLY RETURN: Button check option (position-based rule)
-        if street == 'preflop' and position == 'BTN' and call_amount == 0:
-            self._log_action(f"   🎯 POSITION RULE: Button has option to check (no raise)")
             return ActionType.CHECK, 0
         
         try:
@@ -690,6 +685,7 @@ class ImprovedPokerStateMachine:
                 player_hand_str = self.get_hand_notation(player.cards)
                 
                 self._log_action(f"   🎴 Hand notation: {player_hand_str}")
+                self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
                 # Check if hand is in any tier
                 for tier in self.strategy_data.tiers:
