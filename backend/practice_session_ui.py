@@ -749,9 +749,11 @@ class PracticeSessionUI(ttk.Frame):
         )
         action_label.pack(side=tk.TOP, pady=2)
         
-        # Force the label to be visible
+        # Force the label to be visible and properly configured
         action_label.lift()  # Bring to front
         action_label.update()  # Force update
+        action_label.config(state="normal")  # Ensure it's enabled
+        frame.update()  # Update the parent frame
         
         # Store the action indicator for this player
         self.action_indicators[player_index] = action_label
