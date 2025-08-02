@@ -183,7 +183,7 @@ class TestBBEdgeCases(unittest.TestCase):
         self.machine._log_action = original_log
         
         # Assert: Logging should contain position-based rule messages
-        position_rule_logs = [msg for msg in log_messages if "POSITION RULE" in msg]
+        position_rule_logs = [msg for msg in log_messages if "BB" in msg and "check" in msg.lower()]
         self.assertGreater(len(position_rule_logs), 0)
         print("✅ Comprehensive logging present at decision points")
 

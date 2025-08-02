@@ -1020,6 +1020,126 @@ class ImprovedPokerStateMachine:
                 return True
         return False
 
+    def _is_nut_flush(self, cards: List[str], board: List[str], suit_counts: dict) -> bool:
+        """Check if player has the nut flush (highest possible flush)."""
+        if not board:
+            return False
+        
+        # Find the suit with 5+ cards
+        flush_suit = None
+        for suit, count in suit_counts.items():
+            if count >= 5:
+                flush_suit = suit
+                break
+        
+        if not flush_suit:
+            return False
+        
+        # Get all cards of the flush suit
+        flush_cards = [card for card in cards + board if card[1] == flush_suit]
+        flush_cards.sort(key=lambda x: self._get_rank_value(x[0]), reverse=True)
+        
+        # Check if player has the highest flush card
+        player_flush_cards = [card for card in cards if card[1] == flush_suit]
+        if not player_flush_cards:
+            return False
+        
+        highest_player_rank = max(self._get_rank_value(card[0]) for card in player_flush_cards)
+        highest_board_rank = max(self._get_rank_value(card[0]) for card in board if card[1] == flush_suit)
+        
+        return highest_player_rank > highest_board_rank
+
+    def _has_straight(self, ranks: List[str]) -> bool:
+        """Check if the given ranks form a straight."""
+        rank_order = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        rank_values = [self._get_rank_value(rank) for rank in ranks]
+        rank_values = sorted(list(set(rank_values)))  # Remove duplicates and sort
+        
+        # Check for regular straight
+        for i in range(len(rank_values) - 4):
+            if rank_values[i+4] - rank_values[i] == 4:
+                return True
+        
+        # Check for wheel straight (A-2-3-4-5)
+        if 14 in rank_values:  # Ace
+            wheel_ranks = [14, 2, 3, 4, 5]
+            if all(rank in rank_values for rank in wheel_ranks):
+                return True
+        
+        return False
+
+    def _is_nut_flush_draw(self, cards: List[str], board: List[str], suit_counts: dict) -> bool:
+        """Check if player has the nut flush draw (highest possible flush draw)."""
+        if not board:
+            return False
+        
+        # Find the suit with 4 cards (flush draw)
+        draw_suit = None
+        for suit, count in suit_counts.items():
+            if count == 4:
+                draw_suit = suit
+                break
+        
+        if not draw_suit:
+            return False
+        
+        # Check if player has the highest card of the draw suit
+        player_draw_cards = [card for card in cards if card[1] == draw_suit]
+        board_draw_cards = [card for card in board if card[1] == draw_suit]
+        
+        if not player_draw_cards:
+            return False
+        
+        highest_player_rank = max(self._get_rank_value(card[0]) for card in player_draw_cards)
+        highest_board_rank = max(self._get_rank_value(card[0]) for card in board_draw_cards)
+        
+        return highest_player_rank > highest_board_rank
+
+    def _has_open_ended_draw(self, ranks: List[str]) -> bool:
+        """Check for open-ended straight draw."""
+        rank_order = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        rank_values = [self._get_rank_value(rank) for rank in ranks]
+        rank_values = sorted(list(set(rank_values)))
+        
+        # Check for open-ended draws
+        for i in range(len(rank_values) - 3):
+            if rank_values[i+3] - rank_values[i] == 3:
+                return True
+        
+        return False
+
+    def _has_gutshot_draw(self, ranks: List[str]) -> bool:
+        """Check for gutshot straight draw."""
+        rank_order = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        rank_values = [self._get_rank_value(rank) for rank in ranks]
+        rank_values = sorted(list(set(rank_values)))
+        
+        # Check for gutshot draws (missing one card in the middle)
+        for i in range(len(rank_values) - 3):
+            if rank_values[i+3] - rank_values[i] == 4:
+                return True
+        
+        return False
+
+    def _has_backdoor_straight_draw(self, ranks: List[str]) -> bool:
+        """Check for backdoor straight draw."""
+        rank_order = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        rank_values = [self._get_rank_value(rank) for rank in ranks]
+        rank_values = sorted(list(set(rank_values)))
+        
+        # Check for backdoor draws (need 2 more cards)
+        for i in range(len(rank_values) - 2):
+            if rank_values[i+2] - rank_values[i] == 2:
+                return True
+        
+        return False
+
+    def _get_rank_value(self, rank: str) -> int:
+        """Get numeric value of a rank."""
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 
+                      'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        return rank_values.get(rank, 0)
+
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
         """Basic bot logic as fallback."""
         # Use the enhanced hand evaluator instead of the old method

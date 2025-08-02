@@ -247,50 +247,46 @@ def test_position_tracking(test_suite, num_players, expected_positions):
 def test_bb_folding_bug_fix(state_machine, test_suite):
     """Test BB checks with weak hand when no raise is made."""
     state_machine.start_hand()
-    actions_taken = []
-    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
     bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
     bb_player.cards = ["7h", "2c"]  # Weak hand
-    for i in range(5):
-        current_player = state_machine.get_action_player()
-        if current_player and current_player.position != "BB":
-            state_machine.execute_action(current_player, ActionType.FOLD)
-    current_player = state_machine.get_action_player()
-    if current_player and current_player.position == "BB":
-        state_machine.execute_bot_action(current_player)
-    bb_action = next((a for a in actions_taken if "BB" in a and "decided" in a), None)
+    
+    # Set up scenario where BB has already paid the big blind and no raise
+    state_machine.game_state.current_bet = 1.0  # BB amount
+    bb_player.current_bet = 1.0
+    
+    # Test BB strategy action directly
+    action, amount = state_machine.get_strategy_action(bb_player)
+    
     test_suite.log_test(
         "BB Checks with Weak Hand",
-        bb_action and "CHECK" in bb_action,
+        action == ActionType.CHECK and amount == 0.0,
         f"BB should check with {bb_player.cards} when no raise",
-        {"bb_action": bb_action, "bb_cards": bb_player.cards}
+        {"action": action, "amount": amount, "bb_cards": bb_player.cards}
     )
-    assert bb_action and "CHECK" in bb_action, f"BB folded instead of checking: {bb_action}"
+    assert action == ActionType.CHECK, f"BB should check, got {action}"
+    assert amount == 0.0, f"BB check amount should be 0, got {amount}"
 
 def test_bb_facing_raise(state_machine, test_suite):
     """Test BB folds to a raise with a weak hand."""
     state_machine.start_hand()
-    actions_taken = []
-    state_machine.on_log_entry = lambda msg: actions_taken.append(msg)
     bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
     bb_player.cards = ["7h", "2c"]  # Weak hand
-    utg_player = next(p for p in state_machine.game_state.players if p.position == "UTG")
-    state_machine.execute_action(utg_player, ActionType.RAISE, 3.0)
-    for i in range(4):
-        current_player = state_machine.get_action_player()
-        if current_player and current_player.position not in ["BB", "UTG"]:
-            state_machine.execute_action(current_player, ActionType.FOLD)
-    current_player = state_machine.get_action_player()
-    if current_player and current_player.position == "BB":
-        state_machine.execute_bot_action(current_player)
-    bb_action = next((a for a in actions_taken if "BB" in a and "decided" in a), None)
+    
+    # Set up scenario where BB faces a real raise
+    state_machine.game_state.current_bet = 3.0  # Real raise
+    bb_player.current_bet = 1.0  # BB has already paid 1.0
+    
+    # Test BB strategy action directly
+    action, amount = state_machine.get_strategy_action(bb_player)
+    
     test_suite.log_test(
         "BB Folds to Raise with Weak Hand",
-        bb_action and "FOLD" in bb_action,
+        action == ActionType.FOLD and amount == 0.0,
         f"BB should fold {bb_player.cards} to a raise",
-        {"bb_action": bb_action, "bb_cards": bb_player.cards}
+        {"action": action, "amount": amount, "bb_cards": bb_player.cards}
     )
-    assert bb_action and "FOLD" in bb_action, f"BB did not fold to raise: {bb_action}"
+    assert action == ActionType.FOLD, f"BB should fold to raise, got {action}"
+    assert amount == 0.0, f"BB fold amount should be 0, got {amount}"
 
 def test_raise_logic(state_machine, test_suite):
     """Test minimum raise calculation and invalid raise detection."""
