@@ -734,6 +734,8 @@ class PracticeSessionUI(ttk.Frame):
         action_text = action.upper()
         if amount > 0:
             action_text += f" ${amount:.2f}"
+        elif action.upper() == "CHECK":
+            action_text = "CHECK"  # Keep it simple for check
             
         # Create persistent action label (doesn't fade out)
         action_label = tk.Label(
@@ -762,10 +764,10 @@ class PracticeSessionUI(ttk.Frame):
             if cards_label:
                 cards_label.config(text="Folded", fg="red")
         elif action.upper() == "CHECK":
-            # Show check mark
+            # Show check text
             cards_label = player_seat.get("cards_label")
             if cards_label:
-                cards_label.config(text="✓ Check", fg="green")
+                cards_label.config(text="Check", fg="green")
         elif action.upper() in ["CALL", "BET", "RAISE"]:
             # Show bet amount
             cards_label = player_seat.get("cards_label")
