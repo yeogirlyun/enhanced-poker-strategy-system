@@ -1534,76 +1534,22 @@ class ImprovedPokerStateMachine:
         self._log_action("Showdown")
         self.sfx.play("winner_announce")
         
-        # FIX: Save pot amount before distribution
-        original_pot = self.game_state.pot
-        print(f"🎯 SHOWDOWN: Original pot amount: ${original_pot}")  # Debug
-        
-        # Create side pots if needed
-        side_pots = self.create_side_pots()
-        
-        if side_pots:
-            # Handle side pots
-            for pot_info in side_pots:
-                eligible_players = pot_info['eligible_players']
-                pot_amount = pot_info['amount']
-                
-                if len(eligible_players) == 1:
-                    winner = eligible_players[0]
-                    winner.stack += pot_amount
-                    self._log_action(f"{winner.name} wins side pot ${pot_amount:.2f}")
-                else:
-                    # Determine winners for this pot
-                    pot_winners = self.determine_winner()
-                    pot_winners = [w for w in pot_winners if w in eligible_players]
-                    
-                    if pot_winners:
-                        split_amount = pot_amount / len(pot_winners)
-                        for winner in pot_winners:
-                            winner.stack += split_amount
-                            self._log_action(f"{winner.name} wins ${split_amount:.2f} from side pot")
-        else:
-            # No side pots, normal showdown
-            winners = self.determine_winner()
-            if winners:
-                split_amount = self.game_state.pot / len(winners)
-                for winner in winners:
-                    winner.stack += split_amount
-                    self._log_action(f"{winner.name} wins ${split_amount:.2f}")
-        
-        # FIX: Don't call handle_end_hand from showdown to prevent double distribution
-        # Instead, handle UI callbacks directly here
-        winner_names = ", ".join([w.name for w in winners]) if winners else "No winner"
-        winner_info = {"name": winner_names, "amount": original_pot}
-        self._last_winner = winner_info
-        self._log_action(f"🏆 Winner(s): {winner_names} win ${original_pot:.2f}")
-        
-        # Reset game state for next hand
-        if self.game_state:
-            self.game_state.pot = 0
-            self.game_state.current_bet = 0
-            self.game_state.min_raise = 1.0
-            self.game_state.players_acted.clear()
-            self.game_state.round_complete = False
-            self.game_state.board = []
-            self.game_state.street = "preflop"
+        # --- THIS IS THE CRITICAL BUG FIX ---
+        winners = self.determine_winner()
+        if winners:
+            pot_amount = self.game_state.pot
+            split_amount = pot_amount / len(winners)
+            winner_names = ", ".join([w.name for w in winners])
+
+            for winner in winners:
+                winner.stack += split_amount
             
-            # Reset all player bets and status
-            for player in self.game_state.players:
-                player.cards = []
-                player.current_bet = 0
-                player.total_invested = 0
-                player.has_acted_this_round = False
-                player.is_all_in = False
-                player.is_active = True  # Reactivate all players for new hand
+            # Store the final, correct information BEFORE the state is reset
+            self._last_winner = {"name": winner_names, "amount": pot_amount}
+            self._log_action(f"🏆 Showdown winner(s): {winner_names} win ${pot_amount:.2f}")
+        # --- End of Bug Fix ---
         
-        # Advance dealer position for next hand
-        self.advance_dealer_position()
-        
-        if self.on_hand_complete:
-            print(f"🎯 SHOWDOWN: Calling on_hand_complete with: {winner_info}")  # Debug
-            self.on_hand_complete(winner_info)
-        else:
-            print("❌ SHOWDOWN: on_hand_complete callback is None!")  # Debug
+        self.transition_to(PokerState.END_HAND)
 
     def create_side_pots(self) -> List[dict]:
         """Create side pots for all-in scenarios with proper tracking."""

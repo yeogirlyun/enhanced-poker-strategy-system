@@ -231,6 +231,7 @@ class PracticeSessionUI(ttk.Frame):
         """
         self.sfx.play("winner_announce")
         
+        # This method now correctly and simply uses the winner_info passed by the state machine
         if winner_info and winner_info.get("name"):
             winner_names = winner_info["name"]
             pot_amount = winner_info["amount"]
@@ -239,11 +240,9 @@ class PracticeSessionUI(ttk.Frame):
             self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
             self.add_game_message(f"🏆 {winner_names} wins ${pot_amount:.2f}!")
 
-            # (Optional animation logic can be added here)
         else:
             self.add_game_message("🏁 Hand complete!")
 
-        # Show the "Start New Hand" button after a delay
         self.after(3000, self._show_game_control_buttons)
 
     def _animate_pot_to_winner(self, winner_info):
