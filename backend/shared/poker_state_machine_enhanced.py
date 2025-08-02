@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Texas Hold'em Poker State Machine - FULLY IMPROVED VERSION
@@ -111,7 +112,7 @@ class ImprovedPokerStateMachine:
         PokerState.RIVER_BETTING: [PokerState.SHOWDOWN, PokerState.END_HAND],
         PokerState.SHOWDOWN: [PokerState.END_HAND],
         PokerState.END_HAND: [PokerState.START_HAND],
-    } 
+    }
 
     def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
         """Initialize the state machine with enhanced hand evaluator."""
@@ -227,6 +228,7 @@ class ImprovedPokerStateMachine:
                 "current_bet": p.current_bet,
                 "is_active": p.is_active,
                 "is_all_in": p.is_all_in,
+                "is_human": p.is_human,
                 "cards": p.cards if p.is_human else []  # Only log human cards for privacy/realism
             }
             for p in self.game_state.players
@@ -244,9 +246,6 @@ class ImprovedPokerStateMachine:
         )
         
         self.hand_history.append(log_entry)
-        # Limit hand history size to prevent memory issues
-        if len(self.hand_history) > self.max_log_size:
-            self.hand_history = self.hand_history[-self.max_log_size:]
         # Also print a simple debug message to the console
         self._log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")
 
@@ -263,7 +262,7 @@ class ImprovedPokerStateMachine:
         
         # NEW: Call the UI callback for detailed logging
         if self.on_log_entry:
-            self.on_log_entry(message) 
+            self.on_log_entry(message)
 
     def transition_to(self, new_state: PokerState):
         """Transition to a new state with validation."""
@@ -363,7 +362,7 @@ class ImprovedPokerStateMachine:
         if len(card) != 2 or card[0] not in valid_ranks or card[1] not in valid_suits:
             self._log_action(f"Invalid card dealt: {card}")
             raise ValueError(f"Invalid card: {card}")
-        return card 
+        return card
 
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
@@ -382,10 +381,10 @@ class ImprovedPokerStateMachine:
                 # Reset hand-specific attributes
                 player.is_active = True
                 player.cards = []
-                player.current_bet = 0.0
+                player.current_bet = 0
                 player.has_acted_this_round = False
                 player.is_all_in = False
-                player.total_invested = 0.0
+                player.total_invested = 0
         else:
             # Create players if they don't exist
             players = []
@@ -564,7 +563,7 @@ class ImprovedPokerStateMachine:
         # Reset bets and action flags for all players
         for p in self.game_state.players:
             p.current_bet = 0
-            p.has_acted_this_round = False # Changed from p.has_acted to p.has_acted_this_round
+            p.has_acted_this_round = False
 
         # Find the correct first player to act
         num_players = len(self.game_state.players)
@@ -624,7 +623,7 @@ class ImprovedPokerStateMachine:
             # FIX: Call handle_round_complete() instead of direct transition
             self.handle_round_complete()
         else:
-            self.handle_current_player_action() 
+            self.handle_current_player_action()
 
     # FIX 4: Improved Round Completion Logic
     def is_round_complete(self) -> bool:
@@ -635,13 +634,11 @@ class ImprovedPokerStateMachine:
         """
         active_players = [p for p in self.game_state.players if p.is_active]
         if len(active_players) <= 1:
-            self._log_action("Round complete: Only one or no active players")
             return True
 
         # Identify players who can still make a move
         players_who_can_act = [p for p in active_players if not p.is_all_in]
         if not players_who_can_act:
-            self._log_action("Round complete: All players all-in")
             return True # Round is over if everyone is all-in
 
         # Check if everyone who can act has had their turn
@@ -657,8 +654,6 @@ class ImprovedPokerStateMachine:
         )
         
         # The round is complete if everyone has acted and all bets are equal
-        if all_have_acted and bets_are_equal:
-            self._log_action("Round complete: All players acted and bets equal")
         return all_have_acted and bets_are_equal
 
     def handle_current_player_action(self):
@@ -670,21 +665,10 @@ class ImprovedPokerStateMachine:
         # --- END NEW ---
         
         if self.action_player_index == -1:
-            self._log_action("DEBUG: No action player index, checking round completion.")
-            if len([p for p in self.game_state.players if p.is_active]) <= 1:
-                self.transition_to(PokerState.END_HAND)
-            else:
-                self.handle_round_complete()
+            self._log_action("DEBUG: No action player index, round is likely complete.")
             return
 
         current_player = self.game_state.players[self.action_player_index]
-        
-        if current_player.is_all_in:
-            self._log_action(f"Skipping all-in player {current_player.name}")
-            self.advance_to_next_player()
-            self.handle_current_player_action()
-            return
-            
         self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
 
         if current_player.is_human:
@@ -736,14 +720,18 @@ class ImprovedPokerStateMachine:
         """Get bot action using strategy data with proper hand strength calculation."""
         street = self.game_state.street
         position = player.position
+        
+        # Calculate call amount FIRST
         call_amount = self.game_state.current_bet - player.current_bet
         
+        # --- COMPREHENSIVE LOGGING AT EACH DECISION POINT ---
         self._log_action(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
         self._log_action(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
         self._log_action(f"   Call amount: ${call_amount}")
         self._log_action(f"   Street: {street}")
         self._log_action(f"   Position: {position}")
         
+        # --- HANDLE UNKNOWN POSITION ---
         if position == "Unknown" or position not in ["UTG", "MP", "CO", "BTN", "SB", "BB"]:
             self._log_action(f"   ⚠️ Unknown position '{position}', using default logic")
             return self.get_basic_bot_action(player)
@@ -759,12 +747,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"   🎴 Hand notation: {player_hand_str}")
                 self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
-                # Check hand strength directly from strategy_dict
-                hand_strength = self.strategy_data.strategy_dict.get("preflop", {}).get(player_hand_str, 1)
+                # Get hand strength directly from strategy_dict
+                hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {}).get(player_hand_str, 1)
                 self._log_action(f"   💪 Hand strength: {hand_strength}")
                 
-                # If facing a raise (current_bet > big blind)
-                BIG_BLIND_AMOUNT = self.game_state.big_blind
+                # If facing a raise (call_amount > 0)
                 if call_amount > 0:
                     self._log_action(f"   🎯 LOGIC: Facing a raise")
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
@@ -784,14 +771,14 @@ class ImprovedPokerStateMachine:
                         self._log_action(f"   ❌ Folding to raise")
                         return ActionType.FOLD, 0
                 else:
-                    open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {}).get(position, {})
-                    threshold = open_rules.get("threshold", 60)
-                    sizing = open_rules.get("sizing", 3.0)
+                    open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
+                    threshold = open_rules.get(position, {}).get("threshold", 60)
+                    sizing = open_rules.get(position, {}).get("sizing", 3.0)
                     
                     self._log_action(f"   📊 Opening threshold: {threshold}, sizing: {sizing}")
                     
                     limpers = len([p for p in self.game_state.players 
-                                  if p.current_bet == BIG_BLIND_AMOUNT and p.position != "BB"])
+                                  if p.current_bet == self.game_state.big_blind and p.position != "BB"])
                     if limpers > 0:
                         sizing += limpers
                         self._log_action(f"   👥 Adjusted sizing for {limpers} limpers: {sizing}")
@@ -805,7 +792,7 @@ class ImprovedPokerStateMachine:
             else:  # Postflop logic
                 self._log_action(f"   🎯 POSTFLOP LOGIC: {street}")
                 hand_type = self.classify_hand(player.cards, self.game_state.board)
-                hand_strength = self.strategy_data.strategy_dict.get("postflop", {}).get(hand_type, 5)
+                hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("postflop", {}).get(hand_type, 5)
                 pfa_data = self.strategy_data.strategy_dict.get("postflop", {}).get("pfa", {}).get(street, {}).get(position, {})
                 val_thresh = pfa_data.get("val_thresh", 25)
                 check_thresh = pfa_data.get("check_thresh", 10)
@@ -835,38 +822,23 @@ class ImprovedPokerStateMachine:
             return self.get_basic_bot_action(player)
 
     def get_hand_notation(self, cards: List[str]) -> str:
-        """Get standardized hand notation (e.g., 'AA', 'AKs', 'KQo')."""
+        """Converts two cards into standard poker notation (e.g., AKs, T9o, 77)."""
         if len(cards) != 2:
-            return "XX"  # Invalid hand
-        
-        # Sort cards by rank (A is highest)
-        rank_order = "23456789TJQKA"
-        card1, card2 = cards[0], cards[1]
-        rank1, suit1 = card1[0], card1[1]
-        rank2, suit2 = card2[0], card2[1]
-        
-        # Get rank indices
-        rank1_idx = rank_order.index(rank1)
-        rank2_idx = rank_order.index(rank2)
-        
-        # Determine if suited
-        suited = suit1 == suit2
-        
-        # Create notation (higher rank first)
-        if rank1_idx >= rank2_idx:
-            high_rank, low_rank = rank1, rank2
+            return ""
+
+        rank1, suit1 = cards[0][0], cards[0][1]
+        rank2, suit2 = cards[1][0], cards[1][1]
+
+        if rank1 == rank2:
+            return f"{rank1}{rank2}"
         else:
-            high_rank, low_rank = rank2, rank1
-        
-        # Handle pairs
-        if high_rank == low_rank:
-            return f"{high_rank}{high_rank}"
-        
-        # Handle non-pairs
-        if suited:
-            return f"{high_rank}{low_rank}s"
-        else:
-            return f"{high_rank}{low_rank}o"
+            suited = "s" if suit1 == suit2 else "o"
+            # Order the ranks correctly (e.g., AKs, not KAs)
+            rank_order = "AKQJT98765432"
+            if rank_order.index(rank1) < rank_order.index(rank2):
+                return f"{rank1}{rank2}{suited}"
+            else:
+                return f"{rank2}{rank1}{suited}"
 
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using enhanced evaluator."""
@@ -897,16 +869,124 @@ class ImprovedPokerStateMachine:
             self._hand_eval_cache.pop(next(iter(self._hand_eval_cache)))
         return strength
 
-    def calculate_pot_odds(self, call_amount: float) -> float:
-        """Calculate pot odds for a given call amount."""
-        return call_amount / (self.game_state.pot + call_amount)
+    def classify_hand(self, cards: List[str], board: List[str]) -> str:
+        """Classify hand type for postflop strategy with all variants."""
+        all_cards = cards + board
+        rank_counts = {}
+        suit_counts = {}
+        for card in all_cards:
+            rank, suit = card[0], card[1]
+            rank_counts[rank] = rank_counts.get(rank, 0) + 1
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        rank_values = sorted(rank_counts.values(), reverse=True)
+        
+        # Check pocket pair for set vs trips
+        has_pocket_pair = len(cards) == 2 and cards[0][0] == cards[1][0]
+        
+        # Hand classifications from strongest to weakest
+        if 4 in rank_values:
+            return "quads"
+        
+        elif 3 in rank_values and 2 in rank_values:
+            return "full_house"
+        
+        elif max(suit_counts.values()) >= 5:
+            if self._is_nut_flush(cards, board, suit_counts):
+                return "nut_flush"
+            return "flush"
+        
+        elif self._has_straight(list(rank_counts.keys())):
+            return "straight"
+        
+        elif 3 in rank_values:
+            if has_pocket_pair:
+                pocket_rank = cards[0][0]
+                if rank_counts.get(pocket_rank, 0) == 3:
+                    return "set"
+            return "trips"
+        
+        elif rank_values.count(2) >= 2:
+            return "two_pair"
+        
+        elif 2 in rank_values:
+            # Detailed pair classification
+            pair_rank = None
+            for rank, count in rank_counts.items():
+                if count == 2:
+                    pair_rank = rank
+                    break
+            
+            if not board:  # Preflop
+                return "pair"
+            
+            # Check pair strength relative to board
+            board_ranks = [card[0] for card in board]
+            rank_order = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, 
+                         '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, 
+                         '4': 4, '3': 3, '2': 2}
+            
+            board_values = sorted([rank_order.get(r, 0) for r in board_ranks], reverse=True)
+            pair_value = rank_order.get(pair_rank, 0)
+            
+            if has_pocket_pair and pair_value > max(board_values, default=0):
+                return "over_pair"
+            
+            max_board = max(board_values, default=0)
+            
+            if pair_value == max_board:
+                # Top pair - check kicker strength
+                kicker_ranks = [card[0] for card in cards if card[0] != pair_rank]
+                if kicker_ranks:
+                    kicker_value = max(rank_order.get(r, 0) for r in kicker_ranks)
+                    if kicker_value >= 10:  # T or higher
+                        return "top_pair_good_kicker"
+                    else:
+                        return "top_pair_bad_kicker"
+                return "top_pair"
+            elif len(board_values) > 1 and pair_value == board_values[1]:
+                return "second_pair"
+            else:
+                return "bottom_pair"
+        
+        # Check for draws
+        elif max(suit_counts.values()) == 4:
+            if self._is_nut_flush_draw(cards, board, suit_counts):
+                return "nut_flush_draw"
+            return "flush_draw"
+        
+        elif self._has_open_ended_draw(list(rank_counts.keys())):
+            if max(suit_counts.values()) == 4:
+                return "combo_draw"
+            return "open_ended_draw"
+        
+        elif self._has_gutshot_draw(list(rank_counts.keys())):
+            return "gutshot_draw"
+        
+        elif max(suit_counts.values()) == 3:
+            if self._has_backdoor_flush(cards, board, suit_counts):
+                return "backdoor_flush"
+        
+        elif self._has_backdoor_straight_draw(list(rank_counts.keys())):
+            return "backdoor_straight"
+        
+        elif 2 in rank_values and (max(suit_counts.values()) == 4 or self._has_open_ended_draw(list(rank_counts.keys()))):
+            return "pair_plus_draw"
+        
+        elif 3 in rank_values and has_pocket_pair and (max(suit_counts.values()) == 4 or self._has_open_ended_draw(list(rank_counts.keys()))):
+            return "set_plus_draw"
+        
+        else:
+            return "high_card"
 
-    def should_call_by_pot_odds(self, player: Player, call_amount: float, hand_strength: float = None) -> bool:
-        """Determine if player should call based on pot odds."""
-        if hand_strength is None:
-            hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
-        pot_odds = self.calculate_pot_odds(call_amount)
-        return hand_strength / 100 > pot_odds
+    def _has_backdoor_flush(self, cards: List[str], board: List[str], suit_counts: dict) -> bool:
+        """Check for backdoor flush draw (3 to a suit, one from player)."""
+        player_suits = [card[1] for card in cards]
+        board_suits = [card[1] for card in board]
+        for suit in suit_counts:
+            if suit_counts[suit] == 3 and suit in player_suits and board_suits.count(suit) == 2:
+                return True
+        return False
 
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
         """Basic bot logic as fallback."""
@@ -932,7 +1012,7 @@ class ImprovedPokerStateMachine:
             elif hand_strength > 15 and call_amount <= player.stack * 0.2:
                 return ActionType.CALL, call_amount
             else:
-                return ActionType.FOLD, 0 
+                return ActionType.FOLD, 0
 
     # FIX 2 & 3: Correct Raise Logic and All-In Detection
     def execute_action(self, player: Player, action: ActionType, amount: float = 0):
@@ -975,10 +1055,11 @@ class ImprovedPokerStateMachine:
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
+            # Use authentic fold sound if available, otherwise generated
             if "player_fold" in self.sfx.sounds:
-                self.sfx.play("player_fold")
+                self.sfx.play("player_fold")  # Authentic fold sound
             else:
-                self.sfx.play("card_fold")
+                self.sfx.play("card_fold")    # Generated fallback
             player.is_active = False
             
             # --- THIS IS THE CRITICAL BUG FIX ---
@@ -999,10 +1080,11 @@ class ImprovedPokerStateMachine:
             player.current_bet = 0
 
         elif action == ActionType.CALL:
+            # Use authentic chip sound for calls
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")
+                self.sfx.play("chip_bet")     # Authentic chip sound
             else:
-                self.sfx.play("player_call")
+                self.sfx.play("player_call")  # Generated fallback
             call_amount = self.game_state.current_bet - player.current_bet
             actual_call = min(call_amount, player.stack)
             
@@ -1016,7 +1098,6 @@ class ImprovedPokerStateMachine:
             else:
                 player.partial_call_amount = None
                 player.full_call_amount = None
-                player.is_all_in = player.stack == actual_call
             
             player.stack -= actual_call
             player.current_bet += actual_call
@@ -1024,14 +1105,16 @@ class ImprovedPokerStateMachine:
             self.game_state.pot += actual_call
             
             # Check for all-in
-            if player.is_all_in:
+            if player.stack == 0:
+                player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.BET:
+            # Use authentic chip sound for betting
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")
+                self.sfx.play("chip_bet")     # Authentic chip sound
             else:
-                self.sfx.play("player_bet")
+                self.sfx.play("player_bet")   # Generated fallback
             if self.game_state.current_bet > 0:
                 self._log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
                 return
@@ -1049,10 +1132,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
+            # Use authentic chip sound for raising (more chips = louder/more dramatic)
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")
+                self.sfx.play("chip_bet")     # Authentic chip sound
             else:
-                self.sfx.play("player_raise")
+                self.sfx.play("player_raise") # Generated fallback
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
                 self._log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
@@ -1105,9 +1189,7 @@ class ImprovedPokerStateMachine:
             self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
             self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
             
-            # Play winner announcement sound AFTER a short delay to ensure fold sound plays first
-            import time
-            time.sleep(0.1)  # Small delay to ensure fold sound plays first
+            # Play winner announcement sound
             self.sfx.play("winner_announce")
             
             # Only transition if not already in END_HAND state
@@ -1117,28 +1199,6 @@ class ImprovedPokerStateMachine:
             self._last_winner = {"name": winner.name, "amount": pot_amount}
             self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
             return  # End the action here since the hand is over
-        
-        # Check if round is complete (all active players have acted)
-        if len(active_players) > 1 and len(self.game_state.players_acted) >= len(active_players):
-            self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
-            self._log_action(f"📊 Current state: {self.current_state}")
-            self._log_action(f"🎴 Community cards: {self.game_state.board}")
-            self._log_action(f"💰 Pot size: ${self.game_state.pot:.2f}")
-            
-            # Determine next state based on current street
-            if self.game_state.street == "preflop":
-                self._log_action(f"🔄 Transitioning from preflop to DEAL_FLOP")
-                self.transition_to(PokerState.DEAL_FLOP)
-            elif self.game_state.street == "flop":
-                self._log_action(f"🔄 Transitioning from flop to DEAL_TURN")
-                self.transition_to(PokerState.DEAL_TURN)
-            elif self.game_state.street == "turn":
-                self._log_action(f"🔄 Transitioning from turn to DEAL_RIVER")
-                self.transition_to(PokerState.DEAL_RIVER)
-            elif self.game_state.street == "river":
-                self._log_action(f"🔄 Transitioning from river to SHOWDOWN")
-                self.transition_to(PokerState.SHOWDOWN)
-            return  # End the action here since the round is complete
 
         # Track pot changes for debugging
         if self.game_state.pot != old_pot:
@@ -1207,7 +1267,7 @@ class ImprovedPokerStateMachine:
             self.transition_to(PokerState.SHOWDOWN)
         else:
             self._log_action(f"❌ ERROR: Unknown street '{self.game_state.street}'")
-        # --- End of Bug Fix --- 
+        # --- End of Bug Fix ---
 
     def determine_winner(self) -> List[Player]:
         """Determine winners with proper tie handling using the enhanced evaluator."""
@@ -1289,7 +1349,7 @@ class ImprovedPokerStateMachine:
             pot_amount = self.game_state.pot
             split_amount = pot_amount / len(winners)
             winner_names = ", ".join([w.name for w in winners])
-            
+
             # --- THIS IS THE FIX ---
             # Get the winning hand's description
             first_winner = winners[0]
@@ -1308,70 +1368,6 @@ class ImprovedPokerStateMachine:
             }
             self._log_action(f"🎉 Showdown winner(s): {winner_names} with {hand_description}")
         self.transition_to(PokerState.END_HAND)
-
-    def classify_hand(self, cards: List[str], board: List[str]) -> str:
-        """Classify hand type for postflop strategy with all variants."""
-        all_cards = cards + board
-        rank_counts = {}
-        suit_counts = {}
-        
-        for card in all_cards:
-            rank, suit = card[0], card[1]
-            rank_counts[rank] = rank_counts.get(rank, 0) + 1
-            suit_counts[suit] = suit_counts.get(suit, 0) + 1
-        
-        rank_values = sorted(rank_counts.values(), reverse=True)
-        
-        # Check pocket pair for set vs trips
-        has_pocket_pair = len(cards) == 2 and cards[0][0] == cards[1][0]
-        
-        # Hand classifications from strongest to weakest
-        if 4 in rank_values:
-            return "quads"
-        
-        elif 3 in rank_values and 2 in rank_values:
-            return "full_house"
-        
-        elif max(suit_counts.values()) >= 5:
-            return "flush"
-        
-        elif self._has_straight(list(rank_counts.keys())):
-            return "straight"
-        
-        elif 3 in rank_values:
-            if has_pocket_pair:
-                pocket_rank = cards[0][0]
-                if rank_counts.get(pocket_rank, 0) == 3:
-                    return "set"
-            return "trips"
-        
-        elif rank_values.count(2) >= 2:
-            return "two_pair"
-        
-        elif 2 in rank_values:
-            return "pair"
-        
-        else:
-            return "high_card"
-
-    def _has_straight(self, ranks: List[str]) -> bool:
-        """Check for straight."""
-        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10, 
-                      '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, 
-                      '4': 4, '3': 3, '2': 2}
-        values = sorted(set(rank_values[r] for r in ranks if r in rank_values))
-        if len(values) < 5:
-            return False
-        
-        for i in range(len(values) - 4):
-            if values[i+4] - values[i] == 4:
-                return True
-        
-        # Check for wheel straight (A-2-3-4-5)
-        if {14, 2, 3, 4, 5}.issubset(values):
-            return True
-        
-        return False
 
     def create_side_pots(self) -> List[dict]:
         """Create side pots for all-in scenarios with proper tracking."""
@@ -1394,8 +1390,6 @@ class ImprovedPokerStateMachine:
             # Calculate this side pot's value
             for p in contributing_players:
                 contribution = max(0, min(p.total_invested, investment_level) - last_investment_level)
-                if p.is_all_in and p.partial_call_amount is not None:
-                    contribution = min(contribution, p.partial_call_amount)
                 pot_amount += contribution
 
             # Determine who is eligible for this pot
@@ -1417,7 +1411,6 @@ class ImprovedPokerStateMachine:
                 'eligible_players': [p for p in contributing_players if p.is_active and not p.is_all_in]
             })
 
-        self._log_action(f"Side pots created: {[{k: v if k != 'eligible_players' else [p.name for p in v] for k, v in pot.items()} for pot in side_pots]}")
         return side_pots
 
     def handle_end_hand(self):
@@ -1516,7 +1509,7 @@ class ImprovedPokerStateMachine:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
-            if amount > player.current_bet + player.stack and player.stack > 0:
+            if amount > player.current_bet + player.stack:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
         
         return errors
@@ -1582,4 +1575,4 @@ print("  2. Correct raise logic")
 print("  3. All-in state tracking") 
 print("  4. Improved round completion")
 print("  5. Strategy integration for bots")
-print("  6. Better input validation") 
+print("  6. Better input validation")
