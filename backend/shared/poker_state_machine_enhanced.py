@@ -635,11 +635,13 @@ class ImprovedPokerStateMachine:
         """
         active_players = [p for p in self.game_state.players if p.is_active]
         if len(active_players) <= 1:
+            self._log_action("Round complete: Only one or no active players")
             return True
 
         # Identify players who can still make a move
         players_who_can_act = [p for p in active_players if not p.is_all_in]
         if not players_who_can_act:
+            self._log_action("Round complete: All players all-in")
             return True # Round is over if everyone is all-in
 
         # Check if everyone who can act has had their turn
@@ -655,6 +657,8 @@ class ImprovedPokerStateMachine:
         )
         
         # The round is complete if everyone has acted and all bets are equal
+        if all_have_acted and bets_are_equal:
+            self._log_action("Round complete: All players acted and bets equal")
         return all_have_acted and bets_are_equal
 
     def handle_current_player_action(self):
@@ -666,10 +670,21 @@ class ImprovedPokerStateMachine:
         # --- END NEW ---
         
         if self.action_player_index == -1:
-            self._log_action("DEBUG: No action player index, round is likely complete.")
+            self._log_action("DEBUG: No action player index, checking round completion.")
+            if len([p for p in self.game_state.players if p.is_active]) <= 1:
+                self.transition_to(PokerState.END_HAND)
+            else:
+                self.handle_round_complete()
             return
 
         current_player = self.game_state.players[self.action_player_index]
+        
+        if current_player.is_all_in:
+            self._log_action(f"Skipping all-in player {current_player.name}")
+            self.advance_to_next_player()
+            self.handle_current_player_action()
+            return
+            
         self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
 
         if current_player.is_human:
@@ -721,163 +736,91 @@ class ImprovedPokerStateMachine:
         """Get bot action using strategy data with proper hand strength calculation."""
         street = self.game_state.street
         position = player.position
-        
-        # Calculate call amount FIRST
         call_amount = self.game_state.current_bet - player.current_bet
         
-        # --- COMPREHENSIVE LOGGING AT EACH DECISION POINT ---
         self._log_action(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
         self._log_action(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
         self._log_action(f"   Call amount: ${call_amount}")
         self._log_action(f"   Street: {street}")
         self._log_action(f"   Position: {position}")
         
-        # --- HANDLE UNKNOWN POSITION ---
         if position == "Unknown" or position not in ["UTG", "MP", "CO", "BTN", "SB", "BB"]:
             self._log_action(f"   ⚠️ Unknown position '{position}', using default logic")
             return self.get_basic_bot_action(player)
         
         try:
             if street == "preflop":
-                # NOW do tier-based evaluation (hand strength rules)
-                tier_name = None
-                player_hand_str = self.get_hand_notation(player.cards)
+                # BB check logic for no raise
+                if position == "BB" and call_amount <= self.game_state.big_blind:
+                    self._log_action(f"BB with no raise, checking")
+                    return ActionType.CHECK, 0
                 
+                player_hand_str = self.get_hand_notation(player.cards)
                 self._log_action(f"   🎴 Hand notation: {player_hand_str}")
                 self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
-                # Check if strategy data is available
-                if not self.strategy_data or not self.strategy_data.tiers:
-                    self._log_action(f"   ⚠️ No strategy data available, using basic logic")
-                    return self.get_basic_bot_action(player)
-                
-                # Check if hand is in any tier
-                for tier in self.strategy_data.tiers:
-                    if player_hand_str in tier.hands:
-                        tier_name = tier.name
-                        break
-
-                if not tier_name:
-                    self._log_action(f"   ⚠️ Hand not in any tier: {player_hand_str}")
-                    # --- POSITION-BASED RULE: BB protection for weak hands ---
-                    if position == 'BB' and call_amount <= self.game_state.big_blind:
-                        self._log_action(f"   🎯 POSITION RULE: BB with weak hand but no raise - checking")
-                        return ActionType.CHECK, 0
-                    self._log_action(f"   ❌ Folding weak hand: {player_hand_str}")
-                    return ActionType.FOLD, 0
-
-                self._log_action(f"   📋 Hand in tier: {tier_name}")
-                
-                # Get hand strength for tier-based decisions
-                hand_strength = self.get_preflop_hand_strength(player.cards)
+                # Check hand strength directly from strategy_dict
+                hand_strength = self.strategy_data.strategy_dict.get("preflop", {}).get(player_hand_str, 1)
                 self._log_action(f"   💪 Hand strength: {hand_strength}")
                 
                 # If facing a raise (current_bet > big blind)
-                BIG_BLIND_AMOUNT = 1.0
-                if self.game_state.current_bet > BIG_BLIND_AMOUNT:
+                BIG_BLIND_AMOUNT = self.game_state.big_blind
+                if call_amount > 0:
                     self._log_action(f"   🎯 LOGIC: Facing a raise")
-                    # Get vs_raise rules from strategy
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
-                    
-                    # 3-betting logic with backward compatibility
                     value_3bet_thresh = vs_raise_rules.get("value_thresh", 75)
+                    call_thresh = vs_raise_rules.get("call_thresh", 65)
                     sizing = vs_raise_rules.get("sizing", 3.0)
                     
-                    # Handle both call_range (new) and call_thresh (old) formats
-                    call_range = vs_raise_rules.get("call_range", None)
-                    if call_range is None:
-                        call_thresh = vs_raise_rules.get("call_thresh", 65)
-                        call_range = [call_thresh, value_3bet_thresh - 1]
-                    
-                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call range: {call_range}")
+                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
                     
                     if hand_strength >= value_3bet_thresh:
                         self._log_action(f"   🚀 3-betting with strong hand")
                         return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
-                    elif call_range[0] <= hand_strength <= call_range[1]:
+                    elif hand_strength >= call_thresh:
                         self._log_action(f"   📞 Calling with medium hand")
                         return ActionType.CALL, call_amount
                     else:
-                        # --- POSITION-BASED RULE: BB protection even with weak hand ---
-                        if position == 'BB' and self.game_state.current_bet == BIG_BLIND_AMOUNT:
-                            self._log_action(f"   🎯 POSITION RULE: BB with weak hand but no real raise - checking")
-                            return ActionType.CHECK, 0
-                        self._log_action(f"   ❌ Folding weak hand to raise")
+                        self._log_action(f"   ❌ Folding to raise")
                         return ActionType.FOLD, 0
-                
-                else:  # Opening opportunity
-                    self._log_action(f"   🎯 LOGIC: Opening opportunity")
-                    
-                    # Use open_rules for opening
-                    open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
-                    threshold = open_rules.get(position, {}).get("threshold", 60)
-                    sizing = open_rules.get(position, {}).get("sizing", 3.0)
+                else:
+                    open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {}).get(position, {})
+                    threshold = open_rules.get("threshold", 60)
+                    sizing = open_rules.get("sizing", 3.0)
                     
                     self._log_action(f"   📊 Opening threshold: {threshold}, sizing: {sizing}")
                     
-                    # Adjust for limpers
                     limpers = len([p for p in self.game_state.players 
-                                 if p.current_bet == BIG_BLIND_AMOUNT and p.position != "BB"])
+                                  if p.current_bet == BIG_BLIND_AMOUNT and p.position != "BB"])
                     if limpers > 0:
                         sizing += limpers
                         self._log_action(f"   👥 Adjusted sizing for {limpers} limpers: {sizing}")
                     
-                    # Check if we need to act
-                    if call_amount <= 0:
-                        self._log_action(f"   🎯 No bet to call - can check or bet")
-                        # No bet to call - we can check or bet
-                        if hand_strength >= threshold:
-                            if self.game_state.current_bet > 0:
-                                self._log_action(f"   🚀 Raising with strong hand")
-                                return ActionType.RAISE, min(sizing, player.stack)
-                            else:
-                                self._log_action(f"   💰 Betting with strong hand")
-                                return ActionType.BET, min(sizing, player.stack)
-                        else:
-                            self._log_action(f"   ✅ Checking with weak hand")
-                            return ActionType.CHECK, 0
-                    else:
-                        self._log_action(f"   🎯 There's a bet to call: ${call_amount}")
-                        # There's a bet to call
-                        if hand_strength >= threshold:
-                            self._log_action(f"   📞 Calling with strong hand")
-                            return ActionType.CALL, call_amount
-                        else:
-                            # --- POSITION-BASED RULE: Final BB protection ---
-                            if position == 'BB':
-                                self._log_action(f"   🎯 POSITION RULE: BB protection - checking")
-                                return ActionType.CHECK, 0
-                            self._log_action(f"   ❌ Folding weak hand")
-                            return ActionType.FOLD, 0
-            
+                    if hand_strength >= threshold:
+                        action = ActionType.RAISE if self.game_state.current_bet > 0 else ActionType.BET
+                        self._log_action(f"   🚀 {action.value} with strong hand")
+                        return action, min(sizing, player.stack)
+                    self._log_action(f"   ✅ Checking with weak hand")
+                    return ActionType.CHECK, 0
             else:  # Postflop logic
                 self._log_action(f"   🎯 POSTFLOP LOGIC: {street}")
-                # Use existing postflop strategy
-                hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
-                postflop = self.strategy_data.strategy_dict.get("postflop", {})
-                pfa_data = postflop.get("pfa", {}).get(street, {}).get(position, {})
-                
+                hand_type = self.classify_hand(player.cards, self.game_state.board)
+                hand_strength = self.strategy_data.strategy_dict.get("postflop", {}).get(hand_type, 5)
+                pfa_data = self.strategy_data.strategy_dict.get("postflop", {}).get("pfa", {}).get(street, {}).get(position, {})
                 val_thresh = pfa_data.get("val_thresh", 25)
                 check_thresh = pfa_data.get("check_thresh", 10)
                 sizing = pfa_data.get("sizing", 0.75)
                 
-                self._log_action(f"   📊 Postflop thresholds - val: {val_thresh}, check: {check_thresh}, sizing: {sizing}")
+                self._log_action(f"   📊 Postflop hand: {hand_type}, strength: {hand_strength}, val: {val_thresh}, check: {check_thresh}")
                 
-                # Check if we need to call
                 if call_amount > 0:
-                    self._log_action(f"   🎯 Facing a bet: ${call_amount}")
                     pot_odds = self.calculate_pot_odds(call_amount)
-                    should_call = self.should_call_by_pot_odds(player, call_amount)
-                    
-                    if should_call:
+                    if self.should_call_by_pot_odds(player, call_amount, hand_strength):
                         self._log_action(f"   📞 Calling based on pot odds")
                         return ActionType.CALL, call_amount
-                    else:
-                        self._log_action(f"   ❌ Folding based on pot odds")
-                        return ActionType.FOLD, 0
+                    self._log_action(f"   ❌ Folding based on pot odds")
+                    return ActionType.FOLD, 0
                 
-                # No bet to face - decide between check/bet
-                self._log_action(f"   🎯 No bet to face - deciding check/bet")
                 if hand_strength >= val_thresh:
                     bet_amount = min(self.game_state.pot * sizing, player.stack)
                     self._log_action(f"   💰 Betting with strong hand: ${bet_amount}")
@@ -885,17 +828,11 @@ class ImprovedPokerStateMachine:
                 elif hand_strength >= check_thresh:
                     self._log_action(f"   ✅ Checking with medium hand")
                     return ActionType.CHECK, 0
-                else:
-                    self._log_action(f"   ✅ Checking weak hands postflop (not folding)")
-                    return ActionType.CHECK, 0  # Check weak hands postflop instead of folding
-                    
+                self._log_action(f"   ✅ Checking weak hands postflop")
+                return ActionType.CHECK, 0
         except (KeyError, AttributeError) as e:
             self._log_action(f"   🤖 Strategy error: {e}, falling back to basic logic")
             return self.get_basic_bot_action(player)
-        
-        # Fallback
-        self._log_action(f"   ⚠️ Using fallback basic logic")
-        return self.get_basic_bot_action(player)
 
     def get_hand_notation(self, cards: List[str]) -> str:
         """Get standardized hand notation (e.g., 'AA', 'AKs', 'KQo')."""
@@ -961,14 +898,15 @@ class ImprovedPokerStateMachine:
         return strength
 
     def calculate_pot_odds(self, call_amount: float) -> float:
-        """Calculate pot odds for calling decisions."""
+        """Calculate pot odds for a given call amount."""
         return call_amount / (self.game_state.pot + call_amount)
 
-    def should_call_by_pot_odds(self, player: Player, call_amount: float) -> bool:
+    def should_call_by_pot_odds(self, player: Player, call_amount: float, hand_strength: float = None) -> bool:
         """Determine if player should call based on pot odds."""
+        if hand_strength is None:
+            hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
         pot_odds = self.calculate_pot_odds(call_amount)
-        hand_strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
-        return hand_strength / 100 > pot_odds  # Simplified: call if hand strength exceeds pot odds
+        return hand_strength / 100 > pot_odds
 
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
         """Basic bot logic as fallback."""
@@ -1037,11 +975,10 @@ class ImprovedPokerStateMachine:
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
-            # Use authentic fold sound if available, otherwise generated
             if "player_fold" in self.sfx.sounds:
-                self.sfx.play("player_fold")  # Authentic fold sound
+                self.sfx.play("player_fold")
             else:
-                self.sfx.play("card_fold")    # Generated fallback
+                self.sfx.play("card_fold")
             player.is_active = False
             
             # --- THIS IS THE CRITICAL BUG FIX ---
@@ -1062,11 +999,10 @@ class ImprovedPokerStateMachine:
             player.current_bet = 0
 
         elif action == ActionType.CALL:
-            # Use authentic chip sound for calls
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")     # Authentic chip sound
+                self.sfx.play("chip_bet")
             else:
-                self.sfx.play("player_call")  # Generated fallback
+                self.sfx.play("player_call")
             call_amount = self.game_state.current_bet - player.current_bet
             actual_call = min(call_amount, player.stack)
             
@@ -1080,6 +1016,7 @@ class ImprovedPokerStateMachine:
             else:
                 player.partial_call_amount = None
                 player.full_call_amount = None
+                player.is_all_in = player.stack == actual_call
             
             player.stack -= actual_call
             player.current_bet += actual_call
@@ -1087,16 +1024,14 @@ class ImprovedPokerStateMachine:
             self.game_state.pot += actual_call
             
             # Check for all-in
-            if player.stack == 0:
-                player.is_all_in = True
+            if player.is_all_in:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.BET:
-            # Use authentic chip sound for betting
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")     # Authentic chip sound
+                self.sfx.play("chip_bet")
             else:
-                self.sfx.play("player_bet")   # Generated fallback
+                self.sfx.play("player_bet")
             if self.game_state.current_bet > 0:
                 self._log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
                 return
@@ -1114,11 +1049,10 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
-            # Use authentic chip sound for raising (more chips = louder/more dramatic)
             if "chip_bet" in self.sfx.sounds:
-                self.sfx.play("chip_bet")     # Authentic chip sound
+                self.sfx.play("chip_bet")
             else:
-                self.sfx.play("player_raise") # Generated fallback
+                self.sfx.play("player_raise")
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
                 self._log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
@@ -1483,6 +1417,7 @@ class ImprovedPokerStateMachine:
                 'eligible_players': [p for p in contributing_players if p.is_active and not p.is_all_in]
             })
 
+        self._log_action(f"Side pots created: {[{k: v if k != 'eligible_players' else [p.name for p in v] for k, v in pot.items()} for pot in side_pots]}")
         return side_pots
 
     def handle_end_hand(self):
