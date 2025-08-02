@@ -1064,6 +1064,249 @@ def test_game_info(state_machine, test_suite):
     assert game_info.get("state") == "preflop_betting", f"Expected preflop_betting, got {game_info.get('state')}"
     assert len(game_info.get("players", [])) == 6, f"Expected 6 players, got {len(game_info.get('players', []))}"
 
+def test_winner_amount_calculation(state_machine, test_suite):
+    """Test that winner amount equals pot amount."""
+    # Set up a simple scenario: 2 players, $2.50 pot
+    players = [
+        Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+        Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Qd', 'Jd']),
+        Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=False, cards=['2c', '3c']),
+        Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=False, cards=['4d', '5d']),
+        Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=False, cards=['6h', '7h']),
+        Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=False, cards=['8s', '9s']),
+    ]
+    
+    # Set up game state with $2.50 pot
+    game_state = GameState(
+        players=players,
+        board=['Ts', 'Tc', '9h', '3c', 'Js'],  # Same board as image
+        pot=2.50,
+        current_bet=0.0,
+        street="river"
+    )
+    
+    state_machine.game_state = game_state
+    state_machine.current_state = PokerState.SHOWDOWN
+    
+    # Capture winner info
+    winner_info_captured = None
+    def capture_winner_info(info):
+        nonlocal winner_info_captured
+        winner_info_captured = info
+    
+    state_machine.on_hand_complete = capture_winner_info
+    
+    # Trigger hand completion
+    state_machine.handle_end_hand()
+    
+    # Verify winner info
+    test_suite.log_test(
+        "Winner Info Captured",
+        winner_info_captured is not None,
+        "Winner info should be captured",
+        {"winner_info": winner_info_captured}
+    )
+    assert winner_info_captured is not None, "Winner info should be captured"
+    
+    test_suite.log_test(
+        "Winner Info Has Name",
+        "name" in winner_info_captured,
+        "Winner info should have name",
+        {"winner_info": winner_info_captured}
+    )
+    assert "name" in winner_info_captured, "Winner info should have name"
+    
+    test_suite.log_test(
+        "Winner Info Has Amount",
+        "amount" in winner_info_captured,
+        "Winner info should have amount",
+        {"winner_info": winner_info_captured}
+    )
+    assert "amount" in winner_info_captured, "Winner info should have amount"
+    
+    # CRITICAL: Winner amount should equal pot amount
+    expected_amount = 2.50
+    actual_amount = winner_info_captured["amount"]
+    
+    test_suite.log_test(
+        "Winner Amount Equals Pot",
+        actual_amount == expected_amount,
+        f"Winner amount should be ${expected_amount}, got ${actual_amount}",
+        {"expected": expected_amount, "actual": actual_amount, "winner": winner_info_captured["name"]}
+    )
+    assert actual_amount == expected_amount, f"Winner amount should be ${expected_amount}, got ${actual_amount}"
+    
+    # Verify player stacks were updated correctly
+    player1 = next(p for p in players if p.name == "Player 1")
+    player2 = next(p for p in players if p.name == "Player 2")
+    
+    # One player should have won the pot
+    if "Player 1" in winner_info_captured["name"]:
+        expected_stack = 100.0 + expected_amount
+        test_suite.log_test(
+            "Player 1 Stack Updated",
+            player1.stack == expected_stack,
+            f"Player 1 should have ${expected_stack}, got ${player1.stack}",
+            {"expected": expected_stack, "actual": player1.stack}
+        )
+        assert player1.stack == expected_stack, f"Player 1 should have ${expected_stack}, got ${player1.stack}"
+    elif "Player 2" in winner_info_captured["name"]:
+        expected_stack = 100.0 + expected_amount
+        test_suite.log_test(
+            "Player 2 Stack Updated",
+            player2.stack == expected_stack,
+            f"Player 2 should have ${expected_stack}, got ${player2.stack}",
+            {"expected": expected_stack, "actual": player2.stack}
+        )
+        assert player2.stack == expected_stack, f"Player 2 should have ${expected_stack}, got ${player2.stack}"
+
+def test_winner_announcement_format(state_machine, test_suite):
+    """Test that winner announcement has correct format."""
+    # Set up scenario with known winner
+    players = [
+        Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+        Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=False, cards=['Qd', 'Jd']),
+        Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=False, cards=['2c', '3c']),
+        Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=False, cards=['4d', '5d']),
+        Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=False, cards=['6h', '7h']),
+        Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=False, cards=['8s', '9s']),
+    ]
+    
+    game_state = GameState(
+        players=players,
+        board=['Ts', 'Tc', '9h', '3c', 'Js'],
+        pot=5.00,
+        current_bet=0.0,
+        street="river"
+    )
+    
+    state_machine.game_state = game_state
+    state_machine.current_state = PokerState.SHOWDOWN
+    
+    # Capture logs
+    original_log = state_machine._log_action
+    captured_logs = []
+    
+    def capture_log(message):
+        captured_logs.append(message)
+        original_log(message)
+    
+    state_machine._log_action = capture_log
+    
+    # Trigger hand completion
+    state_machine.handle_end_hand()
+    
+    # Check for proper winner announcement
+    winner_logs = [log for log in captured_logs if "🏆 Winner" in log]
+    
+    test_suite.log_test(
+        "Winner Announcement Logged",
+        len(winner_logs) > 0,
+        "Should have winner announcement log",
+        {"winner_logs": winner_logs}
+    )
+    assert len(winner_logs) > 0, "Should have winner announcement log"
+    
+    winner_log = winner_logs[0]
+    
+    # Should contain winner name and amount
+    test_suite.log_test(
+        "Winner Log Contains Name",
+        "Player" in winner_log,
+        "Should mention winner name",
+        {"winner_log": winner_log}
+    )
+    assert "Player" in winner_log, "Should mention winner name"
+    
+    test_suite.log_test(
+        "Winner Log Contains Amount",
+        "win $5.00" in winner_log,
+        "Should mention correct amount",
+        {"winner_log": winner_log}
+    )
+    assert "win $5.00" in winner_log, "Should mention correct amount"
+
+def test_multiple_winners_split_pot(state_machine, test_suite):
+    """Test that multiple winners split the pot correctly."""
+    # Set up scenario with tied hands
+    players = [
+        Player(name="Player 1", stack=100.0, position="BTN", is_human=True, is_active=True, cards=['Ah', 'Kh']),
+        Player(name="Player 2", stack=100.0, position="SB", is_human=False, is_active=True, cards=['Ad', 'Kd']),
+        Player(name="Player 3", stack=100.0, position="BB", is_human=False, is_active=False, cards=['2c', '3c']),
+        Player(name="Player 4", stack=100.0, position="UTG", is_human=False, is_active=False, cards=['4d', '5d']),
+        Player(name="Player 5", stack=100.0, position="MP", is_human=False, is_active=False, cards=['6h', '7h']),
+        Player(name="Player 6", stack=100.0, position="CO", is_human=False, is_active=False, cards=['8s', '9s']),
+    ]
+    
+    game_state = GameState(
+        players=players,
+        board=['Ts', 'Tc', '9h', '3c', 'Js'],
+        pot=6.00,
+        current_bet=0.0,
+        street="river"
+    )
+    
+    state_machine.game_state = game_state
+    state_machine.current_state = PokerState.SHOWDOWN
+    
+    # Capture winner info
+    winner_info_captured = None
+    def capture_winner_info(info):
+        nonlocal winner_info_captured
+        winner_info_captured = info
+    
+    state_machine.on_hand_complete = capture_winner_info
+    
+    # Trigger hand completion
+    state_machine.handle_end_hand()
+    
+    # Verify split pot
+    test_suite.log_test(
+        "Winner Info Captured for Split",
+        winner_info_captured is not None,
+        "Winner info should be captured",
+        {"winner_info": winner_info_captured}
+    )
+    assert winner_info_captured is not None, "Winner info should be captured"
+    
+    test_suite.log_test(
+        "Both Players Are Winners",
+        "Player 1" in winner_info_captured["name"] and "Player 2" in winner_info_captured["name"],
+        "Player 1 and Player 2 should be winners",
+        {"winner_info": winner_info_captured}
+    )
+    assert "Player 1" in winner_info_captured["name"], "Player 1 should be winner"
+    assert "Player 2" in winner_info_captured["name"], "Player 2 should be winner"
+    
+    test_suite.log_test(
+        "Full Pot Amount Awarded",
+        winner_info_captured["amount"] == 6.00,
+        "Should award full pot amount",
+        {"expected": 6.00, "actual": winner_info_captured["amount"]}
+    )
+    assert winner_info_captured["amount"] == 6.00, "Should award full pot amount"
+    
+    # Verify both players got half the pot
+    player1 = next(p for p in players if p.name == "Player 1")
+    player2 = next(p for p in players if p.name == "Player 2")
+    
+    expected_split = 3.00
+    test_suite.log_test(
+        "Player 1 Got Half Pot",
+        player1.stack == 100.0 + expected_split,
+        f"Player 1 should have ${100.0 + expected_split}",
+        {"expected": 100.0 + expected_split, "actual": player1.stack}
+    )
+    assert player1.stack == 100.0 + expected_split, f"Player 1 should have ${100.0 + expected_split}"
+    
+    test_suite.log_test(
+        "Player 2 Got Half Pot",
+        player2.stack == 100.0 + expected_split,
+        f"Player 2 should have ${100.0 + expected_split}",
+        {"expected": 100.0 + expected_split, "actual": player2.stack}
+    )
+    assert player2.stack == 100.0 + expected_split, f"Player 2 should have ${100.0 + expected_split}"
+
 def main():
     """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")

@@ -1565,37 +1565,8 @@ class ImprovedPokerStateMachine:
         if len(active_players) > 1:
             self.sfx.play("winner_announce")
 
-        side_pots = self.create_side_pots()
-        total_pot_awarded = 0
-
-        for i, pot in enumerate(side_pots):
-            pot_amount = pot['amount']
-            eligible_players = pot['eligible_players']
-            
-            if not eligible_players: continue
-
-            # Determine winner(s) only from the eligible players for this specific pot
-            winners = self.determine_winner(eligible_players)
-            
-            if winners:
-                split_amount = pot_amount / len(winners)
-                winner_names = ", ".join([w.name for w in winners])
-                pot_name = f"Side Pot {i+1}" if i < len(side_pots) -1 else "Main Pot"
-                
-                self._log_action(f"🏆 {pot_name} ({pot_amount:.2f}) won by {winner_names}")
-
-                for winner in winners:
-                    winner.stack += split_amount
-                
-                total_pot_awarded += pot_amount
-
-        # Final check to ensure all money is awarded
-        if abs(total_pot_awarded - self.game_state.pot) > 0.01:
-             self._log_action(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
-
-        # Reset pot to 0 to prevent double awarding in handle_end_hand
-        self.game_state.pot = 0
-        
+        # FIX: Don't award pot here - let handle_end_hand do it
+        # This prevents double-awarding the pot
         self.transition_to(PokerState.END_HAND)
 
     def create_side_pots(self) -> List[dict]:
@@ -1664,22 +1635,42 @@ class ImprovedPokerStateMachine:
         
         self._log_action("Hand complete")
 
-        # Determine winner(s) whether from a showdown or everyone folding
-        winners = self.determine_winner()
-        
-        if winners:
-            winner_names = ", ".join([p.name for p in winners])
-            split_amount = self.game_state.pot / len(winners)
+        # FIX: Handle side pots for all-in scenarios
+        side_pots = self.create_side_pots()
+        total_pot_awarded = 0
+        all_winners = set()
+
+        for i, pot in enumerate(side_pots):
+            pot_amount = pot['amount']
+            eligible_players = pot['eligible_players']
             
-            # FIX: Save pot amount BEFORE resetting it
-            pot_amount = self.game_state.pot
-            print(f"✅ DEBUG: Awarding ${pot_amount} to {len(winners)} winners")  # Debug
+            if not eligible_players: continue
+
+            # Determine winner(s) only from the eligible players for this specific pot
+            winners = self.determine_winner(eligible_players)
             
-            for winner in winners:
-                winner.stack += split_amount
-                self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
+            if winners:
+                split_amount = pot_amount / len(winners)
+                winner_names = ", ".join([w.name for w in winners])
+                pot_name = f"Side Pot {i+1}" if i < len(side_pots) -1 else "Main Pot"
+                
+                self._log_action(f"🏆 {pot_name} ({pot_amount:.2f}) won by {winner_names}")
+
+                for winner in winners:
+                    winner.stack += split_amount
+                    all_winners.add(winner.name)
+                
+                total_pot_awarded += pot_amount
+
+        # Final check to ensure all money is awarded
+        if abs(total_pot_awarded - self.game_state.pot) > 0.01:
+             self._log_action(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
+
+        if all_winners:
+            winner_names = ", ".join(sorted(all_winners))
+            pot_amount = self.game_state.pot  # Use original pot amount
             
-            winner_info = {"name": winner_names, "amount": pot_amount}  # Use saved amount
+            winner_info = {"name": winner_names, "amount": pot_amount}
             self._last_winner = winner_info
             self._log_action(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
         else:
