@@ -496,7 +496,8 @@ class ImprovedPokerStateMachine:
         
         # Reset game state for new round
         self.game_state.current_bet = 0.0
-        self.game_state.min_raise = 1.0
+        # Preserve minimum raise from previous round (don't reset to 1.0)
+        # self.game_state.min_raise = 1.0  # REMOVED: This was causing the bug
         self.reset_round_tracking()
 
         # Reset bets and action flags for all players
@@ -1730,7 +1731,7 @@ class ImprovedPokerStateMachine:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             if amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
-            # Allow all-in raises even if they exceed the exact amount
+            # Allow all-in raises - only check if player has any chips left
             if amount > player.current_bet + player.stack and player.stack > 0:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
         

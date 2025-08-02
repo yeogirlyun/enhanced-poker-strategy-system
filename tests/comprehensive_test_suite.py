@@ -348,8 +348,14 @@ class PokerStateMachineTestSuite:
         player = sm.get_action_player()
         
         for test_name, action, amount, expected_error in tests:
-            errors = sm.validate_action(player, action, amount)
-            has_expected_error = any(expected_error in error for error in errors)
+            # Use the current action player for validation
+            current_player = sm.get_action_player()
+            if current_player:
+                errors = sm.validate_action(current_player, action, amount)
+                has_expected_error = any(expected_error in error for error in errors)
+            else:
+                errors = []
+                has_expected_error = False
             
             self.log_test(
                 f"Validation: {test_name}",
