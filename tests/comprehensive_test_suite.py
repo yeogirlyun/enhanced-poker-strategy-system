@@ -288,6 +288,159 @@ def test_bb_facing_raise(state_machine, test_suite):
     assert action == ActionType.FOLD, f"BB should fold to raise, got {action}"
     assert amount == 0.0, f"BB fold amount should be 0, got {amount}"
 
+def test_bb_fold_validation_prevention(state_machine, test_suite):
+    """Test that validation prevents BB from folding when there's no risk."""
+    state_machine.start_hand()
+    bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
+    
+    # Set BB as the current action player
+    state_machine.action_player_index = state_machine.game_state.players.index(bb_player)
+    
+    # Ensure no raise has been made (current_bet should be big blind amount)
+    state_machine.game_state.current_bet = state_machine.game_state.big_blind
+    
+    # Try to execute a fold action for BB when there's no risk
+    errors = state_machine.validate_action(bb_player, ActionType.FOLD, 0)
+    
+    # The validation should catch this invalid action
+    test_suite.log_test(
+        "BB Fold Validation Prevention - No Risk",
+        len(errors) > 0,
+        f"Validation should prevent BB from folding when no raise. Errors: {errors}",
+        {"errors": errors, "expected_error_count": "> 0"}
+    )
+    
+    # Check that the error message is appropriate
+    error_messages = [error.lower() for error in errors]
+    bb_fold_error_found = any("bb" in msg or "big blind" in msg or "fold" in msg 
+                              for msg in error_messages)
+    
+    test_suite.log_test(
+        "BB Fold Error Message - No Risk",
+        bb_fold_error_found,
+        f"Error should mention BB folding issue: {errors}",
+        {"errors": errors, "error_messages": error_messages}
+    )
+    
+    # Test that BB CAN fold when there IS a raise
+    state_machine.game_state.current_bet = 3.0  # A raise has been made
+    errors_with_raise = state_machine.validate_action(bb_player, ActionType.FOLD, 0)
+    
+    test_suite.log_test(
+        "BB Fold Validation - With Raise",
+        len(errors_with_raise) == 0,
+        f"BB should be able to fold when facing a raise. Errors: {errors_with_raise}",
+        {"errors": errors_with_raise, "expected_error_count": "0"}
+    )
+
+def test_bb_action_consistency(state_machine, test_suite):
+    """Test that BB actions are consistent and appropriate for the situation."""
+    state_machine.start_hand()
+    bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
+    
+    # Set BB as the current action player
+    state_machine.action_player_index = state_machine.game_state.players.index(bb_player)
+    
+    # Test BB behavior when there's no risk (no raise)
+    state_machine.game_state.current_bet = state_machine.game_state.big_blind
+    bb_player.cards = ["2c", "7d"]  # Weak hand
+    actions_no_risk = []
+    
+    for _ in range(5):
+        action, amount = state_machine.get_basic_bot_action(bb_player)
+        actions_no_risk.append(action)
+    
+    # BB should not fold when there's no risk
+    test_suite.log_test(
+        "BB Action Consistency - No Risk, No Folds",
+        ActionType.FOLD not in actions_no_risk,
+        f"BB should not fold when no raise. Actions: {[a.value for a in actions_no_risk]}",
+        {"actions": [a.value for a in actions_no_risk], "fold_count": actions_no_risk.count(ActionType.FOLD)}
+    )
+    
+    # Test BB behavior when facing a raise
+    state_machine.game_state.current_bet = 3.0  # A raise has been made
+    actions_with_raise = []
+    
+    for _ in range(5):
+        action, amount = state_machine.get_basic_bot_action(bb_player)
+        actions_with_raise.append(action)
+    
+    # BB can fold when facing a raise with weak hands
+    test_suite.log_test(
+        "BB Action Consistency - With Raise, Can Fold",
+        ActionType.FOLD in actions_with_raise,
+        f"BB should be able to fold when facing a raise. Actions: {[a.value for a in actions_with_raise]}",
+        {"actions": [a.value for a in actions_with_raise], "fold_count": actions_with_raise.count(ActionType.FOLD)}
+    )
+    
+    # All actions should be valid
+    valid_actions = [ActionType.CALL, ActionType.CHECK, ActionType.RAISE, ActionType.FOLD]
+    all_actions = actions_no_risk + actions_with_raise
+    invalid_actions = [a for a in all_actions if a not in valid_actions]
+    
+    test_suite.log_test(
+        "BB Action Consistency - Valid Actions",
+        len(invalid_actions) == 0,
+        f"All BB actions should be valid. Invalid actions: {[a.value for a in invalid_actions]}",
+        {"actions": [a.value for a in all_actions], "invalid_actions": [a.value for a in invalid_actions]}
+    )
+
+def test_bb_behavior_enhanced(state_machine, test_suite):
+    """Enhanced test that BB behaves correctly based on the situation."""
+    state_machine.start_hand()
+    bb_player = next(p for p in state_machine.game_state.players if p.position == "BB")
+    
+    # Set BB as the current action player
+    state_machine.action_player_index = state_machine.game_state.players.index(bb_player)
+    
+    # Test with various weak hands when there's no risk
+    weak_hands = [
+        ["2c", "3d"],  # 23o - very weak
+        ["7c", "2d"],  # 72o - weak
+        ["9c", "4d"],  # 94o - weak
+        ["Tc", "2d"],  # T2o - weak
+    ]
+    
+    # Test when there's no risk (no raise)
+    state_machine.game_state.current_bet = state_machine.game_state.big_blind
+    
+    for hand in weak_hands:
+        bb_player.cards = hand
+        action, amount = state_machine.get_basic_bot_action(bb_player)
+        
+        # BB should not fold when there's no risk, even with weak hands
+        test_suite.log_test(
+            f"BB No Risk - {hand}",
+            action != ActionType.FOLD,
+            f"BB folded with {hand} when no raise - should not happen!",
+            {"action": action.value, "cards": hand}
+        )
+        
+        # Should check or bet
+        valid_actions = [ActionType.CALL, ActionType.CHECK, ActionType.RAISE]
+        test_suite.log_test(
+            f"BB Valid Action No Risk - {hand}",
+            action in valid_actions,
+            f"BB should check/bet with {hand} when no raise, not {action}",
+            {"action": action.value, "cards": hand, "valid_actions": [a.value for a in valid_actions]}
+        )
+    
+    # Test when facing a raise
+    state_machine.game_state.current_bet = 3.0  # A raise has been made
+    
+    for hand in weak_hands:
+        bb_player.cards = hand
+        action, amount = state_machine.get_basic_bot_action(bb_player)
+        
+        # BB can fold when facing a raise with weak hands
+        test_suite.log_test(
+            f"BB With Raise - {hand}",
+            action in [ActionType.FOLD, ActionType.CALL, ActionType.RAISE],
+            f"BB should fold/call/raise with {hand} when facing raise, not {action}",
+            {"action": action.value, "cards": hand}
+        )
+
 def test_raise_logic(state_machine, test_suite):
     """Test minimum raise calculation and invalid raise detection."""
     state_machine.start_hand()

@@ -189,6 +189,23 @@ class PracticeSessionUI(ttk.Frame):
         
         call_amount = game_info['current_bet'] - player.current_bet
         
+        # --- FIXED: Disable fold button for BB only when there's no risk ---
+        if player.position == "BB":
+            # BB should not fold when there's no risk (no raise has been made)
+            if game_info['current_bet'] <= self.state_machine.game_state.big_blind:
+                self.human_action_controls['fold'].config(state='disabled')
+                self.human_action_controls['fold'].config(text="Fold (BB)")
+                self.add_game_message("⚠️ Big Blind cannot fold when no raise has been made")
+            else:
+                # BB can fold when facing a raise
+                self.human_action_controls['fold'].config(state='normal')
+                self.human_action_controls['fold'].config(text="Fold")
+        else:
+            # Enable fold button for non-BB players
+            self.human_action_controls['fold'].config(state='normal')
+            self.human_action_controls['fold'].config(text="Fold")
+        # --- End of BB fold prevention ---
+        
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
         if call_amount > 0:
             self.human_action_controls['check'].pack_forget()

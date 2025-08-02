@@ -1190,6 +1190,33 @@ class ImprovedPokerStateMachine:
         hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
         hand_strength = hand_info['strength_score']  # Use the strength score from the dict
         
+        # --- FIXED: BB should not fold when there's no risk (no raise) ---
+        if player.position == "BB":
+            # BB should not fold when there's no risk (no raise has been made)
+            if self.game_state.current_bet <= self.game_state.big_blind:
+                # No raise has been made, BB should check or bet
+                if hand_strength > 20:
+                    return ActionType.BET, min(3.0, player.stack)
+                else:
+                    return ActionType.CHECK, 0
+            else:
+                # There's a raise, BB can fold if hand is weak
+                call_amount = self.game_state.current_bet - player.current_bet
+                if hand_strength > 30 and call_amount < player.stack * 0.5:
+                    # BB can raise with strong hands
+                    min_raise_total = self.game_state.current_bet + self.game_state.min_raise
+                    raise_amount = max(min_raise_total, min(self.game_state.current_bet * 2, player.stack))
+                    if raise_amount <= player.stack:
+                        return ActionType.RAISE, raise_amount
+                    else:
+                        return ActionType.CALL, call_amount
+                elif hand_strength > 15 and call_amount <= player.stack * 0.2:
+                    return ActionType.CALL, call_amount
+                else:
+                    return ActionType.FOLD, 0  # BB can fold to a raise with weak hands
+        # --- End of BB folding fix ---
+        
+        # Regular bot logic for non-BB players
         if self.game_state.current_bet == 0:
             if hand_strength > 20:
                 return ActionType.BET, min(3.0, player.stack)
@@ -1677,6 +1704,13 @@ class ImprovedPokerStateMachine:
             errors.append("Amount cannot be negative")
 
         call_amount = self.game_state.current_bet - player.current_bet
+
+        # --- FIXED: BB should not fold when there's no risk (no raise) ---
+        if action == ActionType.FOLD and player.position == "BB":
+            # BB should not fold when there's no risk (no raise has been made)
+            if self.game_state.current_bet <= self.game_state.big_blind:
+                errors.append(f"Big Blind ({player.name}) cannot fold when no raise has been made")
+        # --- End of BB folding fix ---
 
         if action == ActionType.CHECK:
             # FIX: A player can only check if the amount to call is zero.
