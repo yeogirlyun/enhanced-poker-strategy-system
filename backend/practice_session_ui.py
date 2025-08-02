@@ -247,7 +247,7 @@ class PracticeSessionUI(ttk.Frame):
             winning_hand = winner_info.get("hand", "")
             final_board = winner_info.get("board", [])
 
-            # --- THIS IS THE FIX ---
+            # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards
             for i, card_label in enumerate(self.community_card_labels):
                 if i < len(final_board):
@@ -255,17 +255,27 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     card_label.config(text="")
 
-            # Create a more descriptive announcement
-            announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}"
-            if winning_hand:
-                announcement += f" with {winning_hand}"
-            
-            self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
-            self.add_game_message(announcement)
-            # --- End of Fix ---
+            # Create a more descriptive announcement with proper formatting
+            if pot_amount > 0:
+                announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
+                if winning_hand:
+                    announcement += f" ({winning_hand})"
+                
+                # Update pot label with winner info
+                self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
+                self.add_game_message(announcement)
+                
+                # Start pot animation to winner
+                self._animate_pot_to_winner(winner_info)
+            else:
+                # Handle edge case where pot is $0 (shouldn't happen with our fix)
+                self.add_game_message("🏁 Hand complete - no pot to award")
+                self.pot_label.config(text="Hand Complete", fg=THEME["text_primary"])
         else:
             self.add_game_message("🏁 Hand complete!")
+            self.pot_label.config(text="Hand Complete", fg=THEME["text_primary"])
 
+        # Show game controls after a delay
         self.after(3000, self._show_game_control_buttons)
 
     def _animate_pot_to_winner(self, winner_info):
@@ -310,39 +320,67 @@ class PracticeSessionUI(ttk.Frame):
             winner_x, winner_y = seat_positions[winner_seat]
             print(f"📍 From ({pot_x:.0f}, {pot_y:.0f}) to ({winner_x:.0f}, {winner_y:.0f})")  # Debug
             
-            # Create animated money object
+            # Create enhanced animated money object with glow effect
             money_obj = self.canvas.create_text(
                 pot_x, pot_y, 
                 text=f"${winner_info['amount']:.2f}", 
-                fill="gold", 
-                font=("Arial", 16, "bold"),
+                fill="#FFD700",  # Bright gold
+                font=("Arial", 18, "bold"),
                 tags="money_animation"
             )
-            print(f"💰 Created money object: ${winner_info['amount']:.2f}")  # Debug
             
-            # Animate the money moving to the winner
+            # Add glow effect
+            glow_obj = self.canvas.create_text(
+                pot_x, pot_y, 
+                text=f"${winner_info['amount']:.2f}", 
+                fill="#FFA500",  # Orange glow
+                font=("Arial", 20, "bold"),
+                tags="money_animation_glow"
+            )
+            
+            print(f"💰 Created enhanced money animation: ${winner_info['amount']:.2f}")  # Debug
+            
+            # Enhanced animation with multiple effects
             def animate_money(step=0):
-                if step <= 20:  # 20 steps for smooth animation
-                    progress = step / 20
-                    # Easing function for smooth movement
-                    ease = 1 - (1 - progress) ** 3
+                if step <= 30:  # 30 steps for smoother animation
+                    progress = step / 30
+                    # Enhanced easing function
+                    ease = 1 - (1 - progress) ** 2
                     
                     current_x = pot_x + (winner_x - pot_x) * ease
                     current_y = pot_y + (winner_y - pot_y) * ease
                     
+                    # Update both objects
                     self.canvas.coords(money_obj, current_x, current_y)
+                    self.canvas.coords(glow_obj, current_x, current_y)
                     
-                    # Make the text fade out as it approaches the winner
-                    if progress > 0.7:
-                        alpha = int(255 * (1 - (progress - 0.7) / 0.3))
-                        color = f"#{alpha:02x}ff{alpha:02x}"  # Gold color with alpha
+                    # Scale effect - money gets bigger as it moves
+                    scale = 1.0 + (progress * 0.5)
+                    font_size = int(18 * scale)
+                    glow_font_size = int(20 * scale)
+                    
+                    self.canvas.itemconfig(money_obj, font=("Arial", font_size, "bold"))
+                    self.canvas.itemconfig(glow_obj, font=("Arial", glow_font_size, "bold"))
+                    
+                    # Color transition effect
+                    if progress > 0.5:
+                        # Transition from gold to green (success color)
+                        green_intensity = int(255 * (progress - 0.5) * 2)
+                        color = f"#00{green_intensity:02x}00"  # Green with increasing intensity
                         self.canvas.itemconfig(money_obj, fill=color)
                     
-                    self.canvas.after(50, lambda: animate_money(step + 1))
+                    # Fade out glow as it approaches
+                    if progress > 0.7:
+                        alpha = int(255 * (1 - (progress - 0.7) / 0.3))
+                        glow_color = f"#{alpha:02x}ff{alpha:02x}"
+                        self.canvas.itemconfig(glow_obj, fill=glow_color)
+                    
+                    self.canvas.after(40, lambda: animate_money(step + 1))  # Faster animation
                 else:
-                    # Remove the animated object
+                    # Remove the animated objects
                     self.canvas.delete(money_obj)
-                    print("🎬 Animation complete")  # Debug
+                    self.canvas.delete(glow_obj)
+                    print("🎬 Enhanced animation complete")  # Debug
                     # Update the winner's stack display
                     self.update_display()
             
