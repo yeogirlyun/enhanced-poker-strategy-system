@@ -1810,6 +1810,30 @@ class ImprovedPokerStateMachine:
             "action_player": self.action_player_index,
         }
     
+    def get_valid_actions_for_player(self, player: Player) -> dict:
+        """Get valid actions and amounts for a player. UI should use this instead of duplicating logic."""
+        if not self.game_state:
+            return {}
+        
+        call_amount = self.game_state.current_bet - player.current_bet
+        min_bet = self.game_state.min_raise
+        min_raise_total = self.game_state.current_bet + self.game_state.min_raise
+        max_bet = player.stack + player.current_bet
+        
+        return {
+            "fold": self.is_valid_action(player, ActionType.FOLD, 0),
+            "check": self.is_valid_action(player, ActionType.CHECK, 0),
+            "call": self.is_valid_action(player, ActionType.CALL, call_amount),
+            "bet": self.is_valid_action(player, ActionType.BET, min_bet),
+            "raise": self.is_valid_action(player, ActionType.RAISE, min_raise_total),
+            "call_amount": call_amount,
+            "min_bet": min_bet,
+            "min_raise": min_raise_total,
+            "max_bet": max_bet,
+            "current_bet": self.game_state.current_bet,
+            "player_current_bet": player.current_bet,
+        }
+    
     def get_hand_history(self) -> List[HandHistoryLog]:
         """Returns the structured log for the current hand."""
         return self.hand_history

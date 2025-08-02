@@ -187,27 +187,20 @@ class PracticeSessionUI(ttk.Frame):
 
         self._show_action_buttons()
         
-        call_amount = game_info['current_bet'] - player.current_bet
+        # --- FIXED: Use state machine's valid actions instead of duplicating logic ---
+        valid_actions = self.state_machine.get_valid_actions_for_player(player)
         
-        # --- FIXED: Disable fold button for BB only when there's no risk ---
-        if player.position == "BB":
-            # BB should not fold when there's no risk (no additional bet beyond blinds)
-            # Check if BB needs to call additional money beyond their blind
-            bb_call_amount = game_info['current_bet'] - player.current_bet
-            if bb_call_amount <= 0:
-                # BB doesn't need to call anything (no raise beyond blinds)
-                self.human_action_controls['fold'].config(state='disabled')
-                self.human_action_controls['fold'].config(text="Fold (BB)")
-                self.add_game_message("⚠️ Big Blind cannot fold when no raise has been made")
-            else:
-                # BB needs to call additional money (facing a bet)
-                self.human_action_controls['fold'].config(state='normal')
-                self.human_action_controls['fold'].config(text="Fold")
-        else:
-            # Enable fold button for non-BB players
+        # Configure fold button based on state machine's validation
+        if valid_actions.get('fold', False):
             self.human_action_controls['fold'].config(state='normal')
             self.human_action_controls['fold'].config(text="Fold")
-        # --- End of BB fold prevention ---
+        else:
+            self.human_action_controls['fold'].config(state='disabled')
+            self.human_action_controls['fold'].config(text="Fold (Invalid)")
+        
+        # Get call amount from state machine
+        call_amount = valid_actions.get('call_amount', 0)
+        # --- End of proper separation of concerns ---
         
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
         if call_amount > 0:
@@ -222,12 +215,9 @@ class PracticeSessionUI(ttk.Frame):
         
         self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
 
-        # Correctly configure the bet/raise slider
-        min_bet_or_raise = self.state_machine.game_state.min_raise
-        if game_info['current_bet'] > 0: # Facing a bet, so it's a raise
-             min_bet_or_raise = game_info['current_bet'] + self.state_machine.game_state.min_raise
-
-        max_bet = player.stack + player.current_bet
+        # Use state machine's values for bet/raise slider
+        min_bet_or_raise = valid_actions.get('min_raise', self.state_machine.game_state.min_raise)
+        max_bet = valid_actions.get('max_bet', player.stack + player.current_bet)
         
         self.bet_slider.config(from_=min_bet_or_raise, to=max_bet)
         self.bet_size_var.set(min_bet_or_raise)
