@@ -265,8 +265,13 @@ class PracticeSessionUI(ttk.Frame):
                     card_text = self._format_card(final_board[i])
                     card_label.config(text=card_text)
                     print(f"🎯 UI: Set card {i} to: {card_text}")  # Debug
+                    # Force the card label to update
+                    card_label.update()
                 else:
                     card_label.config(text="")
+            
+            # Force the canvas to refresh
+            self.canvas.update()
 
             # Create a more descriptive announcement with proper formatting
             if pot_amount > 0:
@@ -276,6 +281,7 @@ class PracticeSessionUI(ttk.Frame):
                 
                 # Update pot label with winner info
                 self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
+                self.pot_label.update()  # Force pot label update
                 self.add_game_message(announcement)
                 
                 # Start pot animation to winner
@@ -754,6 +760,10 @@ class PracticeSessionUI(ttk.Frame):
         action_label.update()  # Force update
         action_label.config(state="normal")  # Ensure it's enabled
         frame.update()  # Update the parent frame
+        
+        # Force a complete UI refresh
+        self.canvas.update()
+        self.update()
         
         # Store the action indicator for this player
         self.action_indicators[player_index] = action_label
