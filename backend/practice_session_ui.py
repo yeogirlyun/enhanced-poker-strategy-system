@@ -231,15 +231,28 @@ class PracticeSessionUI(ttk.Frame):
         """
         self.sfx.play("winner_announce")
         
-        # This method now correctly and simply uses the winner_info passed by the state machine
         if winner_info and winner_info.get("name"):
             winner_names = winner_info["name"]
             pot_amount = winner_info["amount"]
-            
-            # Update the pot label to announce the winner
-            self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
-            self.add_game_message(f"🏆 {winner_names} wins ${pot_amount:.2f}!")
+            winning_hand = winner_info.get("hand", "")
+            final_board = winner_info.get("board", [])
 
+            # --- THIS IS THE FIX ---
+            # Display the final community cards
+            for i, card_label in enumerate(self.community_card_labels):
+                if i < len(final_board):
+                    card_label.config(text=self._format_card(final_board[i]))
+                else:
+                    card_label.config(text="")
+
+            # Create a more descriptive announcement
+            announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}"
+            if winning_hand:
+                announcement += f" with {winning_hand}"
+            
+            self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
+            self.add_game_message(announcement)
+            # --- End of Fix ---
         else:
             self.add_game_message("🏁 Hand complete!")
 

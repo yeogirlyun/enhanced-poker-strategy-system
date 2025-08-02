@@ -388,8 +388,10 @@ class ImprovedPokerStateMachine:
         # Deal hole cards
         self.deal_hole_cards()
 
-        # Set action to UTG (first player after BB)
+        # --- THIS IS THE FIX ---
+        # Set action to UTG (first player after BB) AFTER all setup is complete.
         self.action_player_index = (self.big_blind_position + 1) % self.num_players
+        # --- End of Fix ---
 
         self.transition_to(PokerState.PREFLOP_BETTING)
 
@@ -1544,13 +1546,24 @@ class ImprovedPokerStateMachine:
             split_amount = pot_amount / len(winners)
             winner_names = ", ".join([w.name for w in winners])
 
+            # --- THIS IS THE FIX ---
+            # Get the winning hand's description
+            first_winner = winners[0]
+            hand_info = self.classify_hand(first_winner.cards, self.game_state.board)
+            hand_description = hand_info if hand_info else 'a winning hand'
+
             for winner in winners:
                 winner.stack += split_amount
             
             # Store the final, correct information BEFORE the state is reset
-            self._last_winner = {"name": winner_names, "amount": pot_amount}
-            self._log_action(f"🏆 Showdown winner(s): {winner_names} win ${pot_amount:.2f}")
-        # --- End of Bug Fix ---
+            self._last_winner = {
+                "name": winner_names, 
+                "amount": pot_amount,
+                "hand": hand_description, # Add hand description
+                "board": self.game_state.board.copy() # Add the final board
+            }
+            self._log_action(f"🏆 Showdown winner(s): {winner_names} with {hand_description}")
+            # --- End of Fix ---
         
         self.transition_to(PokerState.END_HAND)
 
