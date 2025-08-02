@@ -199,6 +199,9 @@ class ImprovedPokerStateMachine:
         )
         
         self.hand_history.append(log_entry)
+        # Limit hand history size to prevent memory issues
+        if len(self.hand_history) > self.max_log_size:
+            self.hand_history = self.hand_history[-self.max_log_size:]
         # Also print a simple debug message to the console
         self._log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")
 
@@ -220,6 +223,14 @@ class ImprovedPokerStateMachine:
     def transition_to(self, new_state: PokerState):
         """Transition to a new state with validation."""
         if new_state in self.STATE_TRANSITIONS[self.current_state]:
+            # Validate game state before transitions
+            active_players = [p for p in self.game_state.players if p.is_active]
+            if not active_players and new_state != PokerState.END_HAND:
+                self._log_action("No active players, forcing transition to END_HAND")
+                self.current_state = PokerState.END_HAND
+                self.handle_state_entry()
+                return
+            
             old_state = self.current_state
             print(f"🔄 STATE: {old_state.value} → {new_state.value}")  # Debug
             print(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")  # Debug
@@ -301,7 +312,14 @@ class ImprovedPokerStateMachine:
         """Deal a single card from the deck."""
         if not self.game_state.deck:
             raise ValueError("No cards left in deck!")
-        return self.game_state.deck.pop()
+        card = self.game_state.deck.pop()
+        # Validate card format
+        valid_ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+        valid_suits = ["h", "d", "c", "s"]
+        if len(card) != 2 or card[0] not in valid_ranks or card[1] not in valid_suits:
+            self._log_action(f"Invalid card dealt: {card}")
+            raise ValueError(f"Invalid card: {card}")
+        return card
 
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
@@ -496,8 +514,8 @@ class ImprovedPokerStateMachine:
         
         # Reset game state for new round
         self.game_state.current_bet = 0.0
-        # Preserve minimum raise from previous round (don't reset to 1.0)
-        # self.game_state.min_raise = 1.0  # REMOVED: This was causing the bug
+        # Reset min_raise to big blind for new betting rounds
+        self.game_state.min_raise = self.game_state.big_blind
         self.reset_round_tracking()
 
         # Reset bets and action flags for all players
@@ -1716,8 +1734,11 @@ class ImprovedPokerStateMachine:
                 errors.append(f"Cannot check when bet is ${self.game_state.current_bet:.2f}")
         
         elif action == ActionType.CALL:
-            if self.game_state.current_bet - player.current_bet <= 0:
+            call_amount = self.game_state.current_bet - player.current_bet
+            if call_amount <= 0:
                 errors.append("Nothing to call")
+            elif amount != call_amount and amount != 0:
+                errors.append(f"Call amount must be ${call_amount:.2f}, got ${amount:.2f}")
         
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
@@ -1729,9 +1750,8 @@ class ImprovedPokerStateMachine:
         
         elif action == ActionType.RAISE:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
-            if amount < min_raise_total:
+            if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
-            # Allow all-in raises - only check if player has any chips left
             if amount > player.current_bet + player.stack and player.stack > 0:
                 errors.append(f"Raise amount ${amount:.2f} exceeds available chips")
         
