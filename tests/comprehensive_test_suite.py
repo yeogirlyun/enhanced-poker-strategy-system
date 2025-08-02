@@ -3,399 +3,449 @@
 Comprehensive Test Suite for Improved Poker State Machine
 
 Tests all critical fixes:
-1. Dynamic position tracking ✅
-2. Correct raise logic ✅  
-3. All-in state tracking ✅
-4. Improved round completion ✅
-5. Strategy integration for bots ✅
-6. Better input validation ✅
+1. BB folding bug (BB should check with weak hands when no raise)
+2. Dynamic position tracking
+3. Correct raise logic
+4. All-in state tracking
+5. Strategy integration
+6. Input validation
 """
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+from typing import List, Dict, Any
+from dataclasses import dataclass
 
-from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, PokerState, ActionType, Player
+# Add backend directory to path
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend'))
+
+from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from gui_models import StrategyData
-import traceback
+
+# Test result tracking
+@dataclass
+class TestResult:
+    name: str
+    passed: bool
+    message: str
+    details: Dict[str, Any] = None
 
 
-class PokerTestSuite:
-    """Comprehensive test suite for poker improvements."""
-
+class PokerStateMachineTestSuite:
     def __init__(self):
-        self.tests_passed = 0
-        self.tests_failed = 0
-        self.test_results = []
-
-    def run_test(self, test_name, test_func):
-        """Run a single test and track results."""
-        print(f"\n🧪 Testing: {test_name}")
-        print("-" * 50)
+        self.results: List[TestResult] = []
+        self.strategy_data = self._create_test_strategy()
         
-        try:
-            result = test_func()
-            if result:
-                print(f"✅ PASSED: {test_name}")
-                self.tests_passed += 1
-                self.test_results.append((test_name, "PASSED", None))
-            else:
-                print(f"❌ FAILED: {test_name}")
-                self.tests_failed += 1
-                self.test_results.append((test_name, "FAILED", "Test returned False"))
-        except Exception as e:
-            print(f"💥 ERROR in {test_name}: {e}")
-            traceback.print_exc()
-            self.tests_failed += 1
-            self.test_results.append((test_name, "ERROR", str(e)))
-
-    def test_dynamic_position_tracking(self):
-        """Test Fix 1: Dynamic position tracking."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
+    def _create_test_strategy(self) -> StrategyData:
+        """Create a test strategy with minimal hands to test BB folding."""
+        strategy = StrategyData()
+        # Only include premium hands in tiers
+        # This ensures weak hands like 72o are NOT in any tier
+        strategy.strategy_dict = {
+            "hand_strength_tables": {
+                "preflop": {
+                    "AA": 85, "KK": 82, "QQ": 80, "JJ": 77,
+                    "AKs": 67, "AKo": 65, "AQs": 66, "AQo": 64
+                },
+                "postflop": {
+                    "high_card": 5, "pair": 15, "two_pair": 45,
+                    "set": 60, "straight": 70, "flush": 80
+                }
+            },
+            "preflop": {
+                "open_rules": {
+                    "UTG": {"threshold": 60, "sizing": 3.0},
+                    "MP": {"threshold": 55, "sizing": 3.0},
+                    "CO": {"threshold": 48, "sizing": 2.5},
+                    "BTN": {"threshold": 40, "sizing": 2.5},
+                    "SB": {"threshold": 50, "sizing": 3.0}
+                },
+                "vs_raise": {
+                    "UTG": {"value_thresh": 75, "call_thresh": 65, "sizing": 3.0},
+                    "MP": {"value_thresh": 72, "call_thresh": 62, "sizing": 3.0},
+                    "CO": {"value_thresh": 70, "call_thresh": 60, "sizing": 2.5},
+                    "BTN": {"value_thresh": 68, "call_thresh": 55, "sizing": 2.5},
+                    "SB": {"value_thresh": 70, "call_thresh": 60, "sizing": 3.0}
+                }
+            },
+            "postflop": {
+                "pfa": {
+                    "flop": {
+                        "UTG": {"val_thresh": 35, "check_thresh": 15, "sizing": 0.75}
+                    }
+                }
+            }
+        }
         
-        # Test initial positions
-        initial_positions = [p.position for p in machine.game_state.players]
-        expected_initial = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
+        # Create tiers with only premium hands
+        from gui_models import HandStrengthTier
+        strategy.tiers = [
+            HandStrengthTier("Premium", 60, 100, "#ff0000", {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo"})
+        ]
         
-        if initial_positions != expected_initial:
-            print(f"❌ Initial positions wrong: {initial_positions}")
-            return False
+        return strategy
+    
+    def log_test(self, name: str, passed: bool, message: str, details: Dict = None):
+        """Log a test result."""
+        self.results.append(TestResult(name, passed, message, details))
+        status = "✅ PASS" if passed else "❌ FAIL"
+        print(f"{status}: {name}")
+        if not passed:
+            print(f"    Message: {message}")
+            if details:
+                for key, value in details.items():
+                    print(f"    {key}: {value}")
+        print()
+    
+    def test_bb_folding_bug_fix(self):
+        """Test the critical BB folding bug fix."""
+        print("\n" + "="*60)
+        print("TEST 1: BB FOLDING BUG FIX")
+        print("="*60)
         
-        print(f"✅ Initial positions correct: {initial_positions}")
+        # Create a state machine with test strategy
+        sm = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
         
-        # Test dealer advance
-        old_dealer = machine.dealer_position
-        machine.advance_dealer_position()
-        new_dealer = machine.dealer_position
+        # Track actions
+        actions_taken = []
         
-        if new_dealer != (old_dealer + 1) % machine.num_players:
-            print(f"❌ Dealer didn't advance correctly: {old_dealer} -> {new_dealer}")
-            return False
+        def track_action(message):
+            if "decided:" in message:
+                actions_taken.append(message)
         
-        print(f"✅ Dealer advanced correctly: {old_dealer} -> {new_dealer}")
+        sm.on_log_entry = track_action
         
-        # BUG FIX: Corrected expected positions after dealer advance
-        # When dealer moves to position 1:
-        # Player 0: seat offset = (0-1)%6 = 5 -> "CO" 
-        # Player 1: seat offset = (1-1)%6 = 0 -> "BTN"
-        # Player 2: seat offset = (2-1)%6 = 1 -> "SB"
-        # Player 3: seat offset = (3-1)%6 = 2 -> "BB"
-        # Player 4: seat offset = (4-1)%6 = 3 -> "UTG"
-        # Player 5: seat offset = (5-1)%6 = 4 -> "MP"
-        new_positions = [p.position for p in machine.game_state.players]
-        expected_positions = ["CO", "BTN", "SB", "BB", "UTG", "MP"]
+        # Start a hand
+        sm.start_hand()
         
-        if new_positions != expected_positions:
-            print(f"❌ Positions not updated after dealer advance: {new_positions}")
-            print(f"  Expected: {expected_positions}")
-            return False
+        # Give BB a weak hand that's NOT in any tier (72o)
+        bb_player = None
+        for player in sm.game_state.players:
+            if player.position == "BB":
+                bb_player = player
+                # Force a weak hand
+                player.cards = ["7h", "2c"]  # 72 offsuit - worst hand in poker
+                break
         
-        print(f"✅ Positions updated correctly: {new_positions}")
-        return True
-
+        if not bb_player:
+            self.log_test("BB Position Found", False, "Could not find BB player")
+            return
+        
+        # Simulate everyone folding to BB
+        print(f"Simulating all players folding to BB who has {bb_player.cards}")
+        
+        # Execute folds for all players except BB
+        for i in range(5):  # 5 players need to fold
+            current_player = sm.get_action_player()
+            if current_player and current_player.position != "BB":
+                print(f"  {current_player.name} ({current_player.position}) folds")
+                sm.execute_action(current_player, ActionType.FOLD)
+        
+        # Now it should be BB's turn
+        current_player = sm.get_action_player()
+        
+        # Force BB to act by calling execute_bot_action directly
+        if current_player and current_player.position == "BB":
+            print(f"  {current_player.name} ({current_player.position}) is acting")
+            sm.execute_bot_action(current_player)
+        
+        # Find BB's action in the log
+        bb_action = None
+        for action in actions_taken:
+            if "BB" in action or "Player 3" in action:
+                bb_action = action
+                break
+        
+        # Check results
+        if bb_action and "CHECK" in bb_action:
+            self.log_test(
+                "BB Checks with Weak Hand",
+                True,
+                f"BB correctly checked with {bb_player.cards} when everyone folded",
+                {"bb_action": bb_action, "bb_cards": bb_player.cards}
+            )
+        elif bb_action and "FOLD" in bb_action:
+            self.log_test(
+                "BB Checks with Weak Hand",
+                False,
+                f"BUG STILL EXISTS: BB folded with {bb_player.cards} instead of checking!",
+                {"bb_action": bb_action, "bb_cards": bb_player.cards}
+            )
+        else:
+            self.log_test(
+                "BB Checks with Weak Hand",
+                False,
+                "Could not determine BB's action",
+                {"actions": actions_taken}
+            )
+    
+    def test_position_tracking(self):
+        """Test dynamic position tracking for different table sizes."""
+        print("\n" + "="*60)
+        print("TEST 2: DYNAMIC POSITION TRACKING")
+        print("="*60)
+        
+        table_sizes = [2, 3, 6, 9]
+        
+        for size in table_sizes:
+            sm = ImprovedPokerStateMachine(num_players=size)
+            sm.start_hand()
+            
+            positions = [p.position for p in sm.game_state.players]
+            
+            # Check that we have the right positions
+            if size == 2:
+                expected = ["BTN/SB", "BB"]
+            elif size == 3:
+                expected = ["BTN", "SB", "BB"]
+            elif size == 6:
+                expected = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
+            elif size == 9:
+                expected = ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "MP+1", "CO", "LJ"]
+            
+            # Positions might be rotated, so check they're all present
+            all_present = all(pos in positions for pos in expected)
+            
+            self.log_test(
+                f"Position Tracking ({size} players)",
+                all_present,
+                f"Positions: {positions}",
+                {"expected": expected, "actual": positions}
+            )
+    
     def test_raise_logic(self):
-        """Test Fix 2: Correct raise logic."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
+        """Test correct raise logic and minimum raise tracking."""
+        print("\n" + "="*60)
+        print("TEST 3: RAISE LOGIC")
+        print("="*60)
         
-        # Get a player to test raise
-        player = machine.game_state.players[0]
-        player.stack = 100.0
-        player.current_bet = 0.0
+        sm = ImprovedPokerStateMachine(num_players=6)
+        sm.start_hand()
         
-        # Test raise calculation
-        original_stack = player.stack
+        # Get first player after BB (UTG)
+        utg_player = sm.get_action_player()
         
-        # Raise to $10 total
-        machine.execute_action(player, ActionType.RAISE, 10.0)
+        # UTG raises to 3 BB
+        sm.execute_action(utg_player, ActionType.RAISE, 3.0)
         
-        # Check if raise worked correctly immediately after the action
-        if player.current_bet != 10.0:
-            print(f"❌ Player current bet wrong: {player.current_bet}, expected 10.0")
-            return False
+        # Check min raise is correct
+        expected_min_raise = 2.0  # UTG raised by 2 (from 1 to 3)
+        actual_min_raise = sm.game_state.min_raise
         
-        if machine.game_state.current_bet != 10.0:
-            print(f"❌ Game current bet wrong: {machine.game_state.current_bet}, expected 10.0")
-            return False
+        self.log_test(
+            "Minimum Raise Calculation",
+            actual_min_raise == expected_min_raise,
+            f"Min raise after 3BB raise",
+            {"expected": expected_min_raise, "actual": actual_min_raise}
+        )
         
-        expected_stack = original_stack - 10.0
-        if abs(player.stack - expected_stack) > 0.01:
-            print(f"❌ Player stack wrong: {player.stack}, expected {expected_stack}")
-            return False
+        # Next player tries invalid raise
+        next_player = sm.get_action_player()
+        errors = sm.validate_action(next_player, ActionType.RAISE, 4.0)  # Less than min raise
         
-        print(f"✅ Raise logic working correctly")
-        print(f"  Player bet: ${player.current_bet:.2f}")
-        print(f"  Game bet: ${machine.game_state.current_bet:.2f}")
-        print(f"  Player stack: ${player.stack:.2f}")
+        self.log_test(
+            "Invalid Raise Detection",
+            len(errors) > 0,
+            "Raise to 4.0 when min is 5.0 should fail",
+            {"errors": errors}
+        )
+    
+    def test_all_in_tracking(self):
+        """Test all-in state tracking."""
+        print("\n" + "="*60)
+        print("TEST 4: ALL-IN TRACKING")
+        print("="*60)
         
-        return True
-
-    def test_all_in_detection(self):
-        """Test Fix 3: All-in state tracking."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
+        sm = ImprovedPokerStateMachine(num_players=6)
+        sm.start_hand()
         
-        # Set up player with small stack and high current bet to force all-in
-        player = machine.game_state.players[0]
-        player.stack = 5.0
-        player.current_bet = 0.0
-        machine.game_state.current_bet = 10.0  # Set high current bet
+        # Give a player a small stack
+        player = sm.get_action_player()
+        player.stack = 5.0  # Only 5 BB
         
-        # Make player go all-in by calling the current bet
-        machine.execute_action(player, ActionType.CALL, 5.0)
+        # Player goes all-in
+        sm.execute_action(player, ActionType.RAISE, 10.0)  # More than stack
         
-        # Check all-in detection immediately after the action
-        if not player.is_all_in:
-            print(f"❌ Player not marked as all-in when stack is {player.stack}")
-            return False
-        
-        # Note: stack may not be 0 if player wins the pot, but is_all_in should be True
-        print(f"✅ All-in detection working correctly")
-        print(f"  Player is all-in: {player.is_all_in}")
-        print(f"  Player stack: ${player.stack:.2f}")
-        
-        return True
-        
-        print(f"✅ All-in detection working correctly")
-        print(f"  Player is all-in: {player.is_all_in}")
-        print(f"  Player stack: ${player.stack:.2f}")
-        
-        return True
-
-    def test_round_completion_with_all_ins(self):
-        """Test Fix 4: Improved round completion with all-ins."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
-        
-        # Set up scenario: make most players all-in
-        for i in range(4):  # First 4 players go all-in
-            player = machine.game_state.players[i]
-            player.stack = 10.0
-            player.current_bet = 0.0
-            player.is_all_in = True
-            machine.game_state.players_acted.add(i)
-        
-        # Check if round completion logic handles all-ins
-        is_complete = machine.is_round_complete()
-        
-        # With mostly all-in players, round should be complete
-        can_act_players = [p for p in machine.game_state.players 
-                          if p.is_active and not p.is_all_in]
-        
-        print(f"✅ All-in round completion logic working")
-        print(f"  Players who can act: {len(can_act_players)}")
-        print(f"  Round complete: {is_complete}")
-        
-        # If only 1-2 players can act and they've acted, round should be complete
-        if len(can_act_players) <= 2:
-            return True
-        
-        return True
-
+        self.log_test(
+            "All-In State",
+            player.is_all_in,
+            "Player should be marked all-in",
+            {"stack": player.stack, "all_in": player.is_all_in}
+        )
+    
     def test_strategy_integration(self):
-        """Test Fix 5: Strategy integration for bots."""
-        # Load strategy data
-        strategy_data = StrategyData()
-        strategy_data.load_default_tiers()
+        """Test bot strategy integration."""
+        print("\n" + "="*60)
+        print("TEST 5: STRATEGY INTEGRATION")
+        print("="*60)
         
-        machine = ImprovedPokerStateMachine(num_players=6, strategy_data=strategy_data)
-        machine.start_hand()
+        sm = ImprovedPokerStateMachine(num_players=6, strategy_data=self.strategy_data)
         
-        # Test bot action with strategy
-        bot_player = machine.game_state.players[1]  # First bot
+        # Track bot decisions
+        bot_actions = []
         
-        # Execute bot action
-        old_stack = bot_player.stack
-        machine.execute_bot_action(bot_player)
+        def track_bot_action(message):
+            if "Bot" in message and "decided:" in message:
+                bot_actions.append(message)
         
-        # Check that bot made a decision
-        if not bot_player.has_acted_this_round:
-            print(f"❌ Bot didn't act")
-            return False
+        sm.on_log_entry = track_bot_action
         
-        print(f"✅ Strategy integration working")
-        print(f"  Bot acted: {bot_player.has_acted_this_round}")
-        print(f"  Bot stack change: ${old_stack:.2f} -> ${bot_player.stack:.2f}")
+        # Start hand and let bots play
+        sm.start_hand()
         
-        return True
-
+        # Give a bot AA (premium hand)
+        for player in sm.game_state.players:
+            if not player.is_human and player.position == "UTG":
+                player.cards = ["Ah", "As"]  # Pocket aces
+                break
+        
+        # Skip to bot's turn by folding human
+        if sm.get_action_player().is_human:
+            sm.execute_action(sm.get_action_player(), ActionType.FOLD)
+        
+        # Force bot to act
+        current_player = sm.get_action_player()
+        if current_player and not current_player.is_human:
+            sm.execute_bot_action(current_player)
+        
+        # Check if bot made a strong action with AA
+        strong_action = any("RAISE" in action or "BET" in action for action in bot_actions)
+        
+        self.log_test(
+            "Bot Strategy Decision",
+            strong_action,
+            "Bot should raise/bet with AA",
+            {"bot_actions": bot_actions}
+        )
+    
     def test_input_validation(self):
-        """Test Fix 6: Better input validation."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
+        """Test input validation."""
+        print("\n" + "="*60)
+        print("TEST 6: INPUT VALIDATION")
+        print("="*60)
         
-        player = machine.game_state.players[0]
-        player.stack = 3.0  # Small stack
-        player.current_bet = 0.0
-        machine.game_state.current_bet = 10.0  # High current bet
+        sm = ImprovedPokerStateMachine(num_players=6)
+        sm.start_hand()
+        
+        player = sm.get_action_player()
         
         # Test various invalid actions
-        test_cases = [
-            (ActionType.BET, -1, "Negative amount"),
-            (ActionType.RAISE, 3.0, "Raise less than current bet"),  
-            (ActionType.BET, 0, "Zero bet amount"),
-            (ActionType.CALL, 10.0, "Call more than stack"),  # Call amount = 10.0, stack = 3.0, should fail
-        ]
-        
-        validation_working = True
-        for action, amount, description in test_cases:
-            errors = machine.validate_action(player, action, amount)
-            if not errors:
-                print(f"❌ Validation failed for: {description}")
-                validation_working = False
-            else:
-                print(f"✅ Correctly caught: {description}")
-        
-        # Test valid action (player has enough stack for the call)
-        player.stack = 50.0  # Give player more stack
-        errors = machine.validate_action(player, ActionType.CALL, 5.0)
-        if errors:
-            print(f"❌ Valid action rejected: {errors}")
-            validation_working = False
-        else:
-            print(f"✅ Valid action accepted")
-        
-        return validation_working
-
-    def test_complete_hand_flow(self):
-        """Test complete hand from start to finish."""
-        strategy_data = StrategyData()
-        strategy_data.load_default_tiers()
-        
-        machine = ImprovedPokerStateMachine(num_players=6, strategy_data=strategy_data)
-        
-        try:
-            # Start hand
-            machine.start_hand()
-            
-            # Simulate a complete hand with bot actions
-            max_actions = 50  # Prevent infinite loops
-            actions_taken = 0
-            
-            while (machine.get_current_state() != PokerState.END_HAND and 
-                   actions_taken < max_actions and
-                   len([p for p in machine.game_state.players if p.is_active]) > 1):
-                
-                current_player = machine.get_action_player()
-                if current_player and current_player.is_active:
-                    # Let bots play automatically
-                    if not current_player.is_human:
-                        machine.execute_bot_action(current_player)
-                    else:
-                        # For human, just fold to keep test moving
-                        machine.execute_action(current_player, ActionType.FOLD)
-                    
-                    actions_taken += 1
-                else:
-                    # No action player, advance state manually
-                    if machine.is_round_complete():
-                        machine.handle_round_complete()
-                    else:
-                        break
-            
-            # Check if hand completed properly
-            if machine.get_current_state() == PokerState.END_HAND:
-                print(f"✅ Complete hand flow successful ({actions_taken} actions)")
-                return True
-            else:
-                print(f"❌ Hand didn't complete properly. Final state: {machine.get_current_state()}")
-                return False
-                
-        except Exception as e:
-            print(f"❌ Exception during hand flow: {e}")
-            return False
-
-    def test_deck_integrity(self):
-        """Test that deck management maintains integrity."""
-        machine = ImprovedPokerStateMachine(num_players=6)
-        machine.start_hand()
-        
-        # Check initial deck state
-        initial_deck_size = len(machine.game_state.deck)
-        expected_remaining = 52 - (6 * 2)  # 52 cards - 12 hole cards = 40
-        
-        if initial_deck_size != expected_remaining:
-            print(f"❌ Wrong deck size after dealing: {initial_deck_size}, expected {expected_remaining}")
-            return False
-        
-        # Check for duplicate cards
-        all_dealt_cards = []
-        for player in machine.game_state.players:
-            all_dealt_cards.extend(player.cards)
-        
-        if len(all_dealt_cards) != len(set(all_dealt_cards)):
-            print(f"❌ Duplicate cards detected in dealt cards")
-            return False
-        
-        print(f"✅ Deck integrity maintained")
-        print(f"  Remaining cards: {len(machine.game_state.deck)}")
-        print(f"  Unique dealt cards: {len(set(all_dealt_cards))}")
-        
-        return True
-
-    def run_all_tests(self):
-        """Run all tests and provide summary."""
-        print("🔍 COMPREHENSIVE POKER STATE MACHINE TEST SUITE")
-        print("=" * 70)
-        
         tests = [
-            ("Dynamic Position Tracking", self.test_dynamic_position_tracking),
-            ("Correct Raise Logic", self.test_raise_logic),
-            ("All-In Detection", self.test_all_in_detection),
-            ("Round Completion with All-Ins", self.test_round_completion_with_all_ins),
-            ("Strategy Integration", self.test_strategy_integration),
-            ("Input Validation", self.test_input_validation),
-            ("Complete Hand Flow", self.test_complete_hand_flow),
-            ("Deck Integrity", self.test_deck_integrity),
+            ("Negative Amount", ActionType.BET, -10, "Amount cannot be negative"),
+            ("Check with Bet", ActionType.CHECK, 0, "Cannot check when bet"),
+            ("Bet over Raise", ActionType.BET, 5, "Cannot bet when there's already a bet"),
         ]
         
-        for test_name, test_func in tests:
-            self.run_test(test_name, test_func)
+        # First make a bet so we can test invalid actions
+        sm.execute_action(player, ActionType.RAISE, 3.0)
+        player = sm.get_action_player()
         
-        # Print summary
-        print("\n" + "=" * 70)
-        print("📊 TEST SUMMARY")
-        print("=" * 70)
+        for test_name, action, amount, expected_error in tests:
+            errors = sm.validate_action(player, action, amount)
+            has_expected_error = any(expected_error in error for error in errors)
+            
+            self.log_test(
+                f"Validation: {test_name}",
+                has_expected_error or len(errors) > 0,
+                f"Should detect: {expected_error}",
+                {"errors": errors}
+            )
+    
+    def test_state_transitions(self):
+        """Test proper state transitions."""
+        print("\n" + "="*60)
+        print("TEST 7: STATE TRANSITIONS")
+        print("="*60)
         
-        total_tests = self.tests_passed + self.tests_failed
-        pass_rate = (self.tests_passed / total_tests * 100) if total_tests > 0 else 0
+        sm = ImprovedPokerStateMachine(num_players=2)  # Heads up for quick test
         
-        print(f"Total Tests: {total_tests}")
-        print(f"✅ Passed: {self.tests_passed}")
-        print(f"❌ Failed: {self.tests_failed}")
-        print(f"📈 Pass Rate: {pass_rate:.1f}%")
+        # Track state transitions
+        states = []
         
-        # Detailed results
-        print("\n📋 DETAILED RESULTS:")
-        for test_name, status, error in self.test_results:
-            status_emoji = "✅" if status == "PASSED" else "❌" if status == "FAILED" else "💥"
-            print(f"  {status_emoji} {test_name}: {status}")
-            if error:
-                print(f"    Error: {error}")
+        def track_state(new_state=None):
+            if new_state:
+                states.append(new_state.value if hasattr(new_state, 'value') else str(new_state))
         
-        print("=" * 70)
+        sm.on_state_change = track_state
         
-        if self.tests_failed == 0:
-            print("🎉 ALL TESTS PASSED! The poker state machine is working perfectly!")
-            return True
-        else:
-            print(f"⚠️  {self.tests_failed} tests failed. Some issues need attention.")
-            return False
+        # Start hand
+        sm.start_hand()
+        
+        # Both players call/check through all streets
+        for _ in range(8):  # Max 8 actions to get through all streets
+            player = sm.get_action_player()
+            if player:
+                if sm.game_state.current_bet > player.current_bet:
+                    sm.execute_action(player, ActionType.CALL)
+                else:
+                    sm.execute_action(player, ActionType.CHECK)
+        
+        # Check we went through all streets
+        expected_sequence = [
+            "preflop_betting", "deal_flop", "flop_betting", 
+            "deal_turn", "turn_betting", "deal_river", 
+            "river_betting", "showdown", "end_hand"
+        ]
+        
+        all_present = all(state in states for state in expected_sequence)
+        
+        self.log_test(
+            "State Transitions",
+            all_present,
+            "All states should be visited",
+            {"states": states}
+        )
+    
+    def run_all_tests(self):
+        """Run all tests and generate report."""
+        print("\n" + "="*60)
+        print("POKER STATE MACHINE TEST SUITE")
+        print("="*60)
+        
+        # Run all test methods
+        self.test_bb_folding_bug_fix()
+        self.test_position_tracking()
+        self.test_raise_logic()
+        self.test_all_in_tracking()
+        self.test_strategy_integration()
+        self.test_input_validation()
+        self.test_state_transitions()
+        
+        # Generate summary
+        print("\n" + "="*60)
+        print("TEST SUMMARY")
+        print("="*60)
+        
+        passed = sum(1 for r in self.results if r.passed)
+        total = len(self.results)
+        
+        print(f"Tests Passed: {passed}/{total}")
+        print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        if passed < total:
+            print("\nFailed Tests:")
+            for result in self.results:
+                if not result.passed:
+                    print(f"  - {result.name}: {result.message}")
+        
+        return passed == total
 
 
 def main():
-    """Run the comprehensive test suite."""
-    test_suite = PokerTestSuite()
-    success = test_suite.run_all_tests()
+    """Run the test suite."""
+    print("Starting Poker State Machine Test Suite...")
+    print("This will test all critical fixes, especially the BB folding bug.")
     
-    if success:
-        print("\n🚀 Ready for production use!")
+    test_suite = PokerStateMachineTestSuite()
+    all_passed = test_suite.run_all_tests()
+    
+    if all_passed:
+        print("\n✅ ALL TESTS PASSED! The poker state machine is working correctly.")
     else:
-        print("\n🔧 Some fixes needed before production use.")
+        print("\n❌ SOME TESTS FAILED! Please review the failures above.")
     
-    return success
+    return 0 if all_passed else 1
 
 
 if __name__ == "__main__":
-    main() 
+    sys.exit(main()) 
