@@ -371,24 +371,18 @@ class ImprovedPokerStateMachine:
             self.transition_to(PokerState.END_HAND)
             return
 
-        # --- THIS IS THE CRITICAL BUG FIX ---
-        # Post blinds by adjusting stack and pot, and set current_bet for the betting round
+        # Post blinds
         sb_player.stack -= sb_amount
         sb_player.total_invested = sb_amount
+        sb_player.current_bet = sb_amount
 
         bb_player.stack -= bb_amount
         bb_player.total_invested = bb_amount
-
-        # --- THIS IS THE CRITICAL BUG FIX ---
-        # Set the player's current_bet to what they posted. This is the key.
-        sb_player.current_bet = sb_amount
         bb_player.current_bet = bb_amount
 
-        # The pot is the sum of investments, and the amount to call is the big blind.
+        # Set game state
         self.game_state.pot = sb_player.total_invested + bb_player.total_invested
         self.game_state.current_bet = bb_amount
-        # --- End of Bug Fix ---
-        
         self.game_state.min_raise = bb_amount
 
         # Deal hole cards
@@ -1179,7 +1173,12 @@ class ImprovedPokerStateMachine:
             else:
                 self.sfx.play("card_fold")    # Generated fallback
             player.is_active = False
-            player.current_bet = 0
+            
+            # --- THIS IS THE CRITICAL BUG FIX ---
+            # DO NOT reset the player's current bet when they fold.
+            # Their bet from this round is still part of the pot calculation for other players.
+            # REMOVE this line: player.current_bet = 0
+            # --- End of Bug Fix ---
 
         elif action == ActionType.CHECK:
             self.sfx.play("player_check")
