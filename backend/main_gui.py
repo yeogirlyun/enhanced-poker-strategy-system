@@ -57,12 +57,6 @@ class EnhancedMainGUI:
         # Try to load modern_strategy.json by default
         if os.path.exists("modern_strategy.json"):
             self.strategy_data.load_strategy_from_file("modern_strategy.json")
-        else:
-            # Generate default strategy files if they don't exist
-            self._generate_default_strategy_files()
-            # Load the generated modern strategy
-            self.strategy_data.load_strategy_from_file("modern_strategy.json")
-
         # --- NEW: Status Bar Variable ---
         self.status_bar_text = tk.StringVar()
 
@@ -174,19 +168,11 @@ class EnhancedMainGUI:
             if self.strategy_data.load_strategy_from_file(filename):
                 self._refresh_all_panels()
                 self.set_status(f"Loaded strategy from {os.path.basename(filename)}")
-            else:
-                self.set_status("Failed to load strategy file.", duration=3000)
-
     def _save_strategy(self):
         """Save the current strategy."""
         if self.strategy_data.current_strategy_file:
             if self.strategy_data.save_strategy_to_file(self.strategy_data.current_strategy_file):
                 self.set_status(f"Saved strategy to {os.path.basename(self.strategy_data.current_strategy_file)}")
-            else:
-                self.set_status("Failed to save strategy.", duration=3000)
-        else:
-            self._save_strategy_as()
-
     def _save_strategy_as(self):
         """Save the current strategy with a new name."""
         filename = filedialog.asksaveasfilename(
@@ -197,9 +183,6 @@ class EnhancedMainGUI:
         if filename:
             if self.strategy_data.save_strategy_to_file(filename):
                 self.set_status(f"Saved strategy to {os.path.basename(filename)}")
-            else:
-                self.set_status("Failed to save strategy.", duration=3000)
-
     def _generate_default_strategy_files(self):
         """Generate default strategy files if they don't exist."""
         
@@ -269,9 +252,6 @@ class EnhancedMainGUI:
                 # Show just the filename, not the full path
                 filename = os.path.basename(self.strategy_data.current_strategy_file)
                 self.strategy_file_label.config(text=filename)
-            else:
-                self.strategy_file_label.config(text="Default Strategy")
-
     def _create_widgets(self):
         """Create the main widgets."""
         # Configure grid weights
@@ -677,9 +657,6 @@ class EnhancedMainGUI:
             win_rate = result.get("win_rate", 0)
             improvement = result.get("improvement", 0)
             self.set_status(f"Optimization complete! Win rate: {win_rate:.1f}% (+{improvement:.1f}%)")
-        else:
-            self.set_status("Optimization completed.")
-
     def _update_overview(self):
         """Update the strategy overview."""
         if hasattr(self, "overview_text"):
@@ -825,9 +802,6 @@ class EnhancedMainGUI:
         if selected_tiers:
             tier_names = [tier.name for tier in selected_tiers]
             self.set_status(f"Selected tiers: {', '.join(tier_names)}")
-        else:
-            self.set_status("No tiers selected.")
-        
         if hasattr(self, "hand_grid"):
             self.hand_grid.highlight_tiers(selected_tiers)
 
@@ -1099,42 +1073,27 @@ Ready to track performance...
         if hasattr(self, 'practice_ui'):
             self.practice_ui.start_new_hand()
             self.set_status("🎯 New poker hand started!")
-        else:
-            self.set_status("Error: Practice session not initialized", duration=3000)
-
     def _reset_practice_game(self):
         """Reset the practice game."""
         if hasattr(self, 'practice_ui'):
             # Reset the practice session
             self.practice_ui.__init__(self.practice_ui.master, self.strategy_data)
             self.set_status("🔄 Practice game reset successfully")
-        else:
-            self.set_status("Error: Practice session not initialized", duration=3000)
-
     def _increase_table_size(self):
         """Increase the table size."""
         if hasattr(self, 'practice_ui'):
             self.practice_ui.increase_table_size()
             self.set_status("🔍 Table size increased")
-        else:
-            self.set_status("Error: Practice session not initialized", duration=3000)
-
     def _decrease_table_size(self):
         """Decrease the table size."""
         if hasattr(self, 'practice_ui'):
             self.practice_ui.decrease_table_size()
             self.set_status("🔍 Table size decreased")
-        else:
-            self.set_status("Error: Practice session not initialized", duration=3000)
-
     def _change_table_felt(self, felt_color):
         """Change the table felt color."""
         if hasattr(self, 'practice_ui'):
             self.practice_ui.change_table_felt(felt_color)
             self.set_status(f"🎨 Table felt changed to {felt_color.replace('_', ' ').title()}")
-        else:
-            self.set_status("Error: Practice session not initialized", duration=3000)
-
     def _show_game_settings(self):
         """Show advanced game settings dialog."""
         settings_text = """Advanced Game Settings
@@ -1252,5 +1211,3 @@ if __name__ == "__main__":
     # To profile the application, run: python main_gui.py --profile
     if "--profile" in sys.argv:
         cProfile.run("main()", "output.pstats")
-    else:
-        main() 
