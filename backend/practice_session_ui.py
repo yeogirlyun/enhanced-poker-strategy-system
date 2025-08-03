@@ -140,8 +140,8 @@ class PlayerPod(tk.Frame):
         self.stack_frame = tk.Frame(self, bg="#1a1a1a")
         self.stack_frame.pack()
         
-        # Canvas for drawing chip graphics
-        self.chip_canvas = tk.Canvas(self.stack_frame, width=30, height=30, bg="#1a1a1a", highlightthickness=0)
+        # Canvas for drawing chip graphics - make it larger for better visibility
+        self.chip_canvas = tk.Canvas(self.stack_frame, width=40, height=35, bg="#1a1a1a", highlightthickness=0)
         self.chip_canvas.pack(side="left", padx=5)
         
         # Label for the stack text
@@ -160,6 +160,8 @@ class PlayerPod(tk.Frame):
         colors = ["#d35400", "#2980b9", "#27ae60"] # Orange, Blue, Green chips
         if stack <= 0: return
         
+        print(f"🎰 Drawing chips for stack: ${stack:.2f}")
+        
         # Improved logic: Default 3 chips, then 5, then 7 for larger stacks
         if stack < 50:
             num_chips = 3  # Default minimum
@@ -168,22 +170,22 @@ class PlayerPod(tk.Frame):
         else:
             num_chips = 7  # Large stacks
         
-        # Make chips larger and more visible
-        chip_width = 8
-        chip_height = 10
-        start_x = 5
+        # Make chips larger and more visible for the bigger canvas
+        chip_width = 12
+        chip_height = 14
+        start_x = 8
         
         for i in range(num_chips):
             # Draw chips from the bottom up to create a 3D effect
-            y_offset = 28 - i * 2  # Reduced spacing for more compact stack
-            x_offset = start_x + (i * 1)  # Slight horizontal offset for 3D effect
+            y_offset = 32 - i * 3  # Better spacing for the larger canvas
+            x_offset = start_x + (i * 2)  # More horizontal offset for better 3D effect
             
             # Draw the main chip
             self.chip_canvas.create_oval(x_offset, y_offset, x_offset + chip_width, y_offset - chip_height, 
                                        fill=colors[i % 3], outline="black", width=1)
             
             # Add a highlight to make chips look more 3D
-            self.chip_canvas.create_oval(x_offset + 1, y_offset - 2, x_offset + chip_width - 1, y_offset - chip_height + 2, 
+            self.chip_canvas.create_oval(x_offset + 2, y_offset - 3, x_offset + chip_width - 2, y_offset - chip_height + 3, 
                                        fill="", outline="white", width=1)
 
 class PracticeSessionUI(ttk.Frame):
