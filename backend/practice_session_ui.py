@@ -160,17 +160,30 @@ class PlayerPod(tk.Frame):
         colors = ["#d35400", "#2980b9", "#27ae60"] # Orange, Blue, Green chips
         if stack <= 0: return
         
-        # Simple logic to make the chip stack grow with the player's stack
-        num_chips = min(6, int(stack / 200) + 1) 
+        # Improved logic: Default 3 chips, then 5, then 7 for larger stacks
+        if stack < 50:
+            num_chips = 3  # Default minimum
+        elif stack < 200:
+            num_chips = 5  # Medium stacks
+        else:
+            num_chips = 7  # Large stacks
+        
+        # Make chips larger and more visible
+        chip_width = 8
+        chip_height = 10
+        start_x = 5
         
         for i in range(num_chips):
             # Draw chips from the bottom up to create a 3D effect
-            y_offset = 25 - i * 3
-            # Make chips larger and more visible
-            self.chip_canvas.create_oval(3, y_offset, 27, y_offset - 6, 
+            y_offset = 28 - i * 2  # Reduced spacing for more compact stack
+            x_offset = start_x + (i * 1)  # Slight horizontal offset for 3D effect
+            
+            # Draw the main chip
+            self.chip_canvas.create_oval(x_offset, y_offset, x_offset + chip_width, y_offset - chip_height, 
                                        fill=colors[i % 3], outline="black", width=1)
+            
             # Add a highlight to make chips look more 3D
-            self.chip_canvas.create_oval(5, y_offset-2, 25, y_offset - 4, 
+            self.chip_canvas.create_oval(x_offset + 1, y_offset - 2, x_offset + chip_width - 1, y_offset - chip_height + 2, 
                                        fill="", outline="white", width=1)
 
 class PracticeSessionUI(ttk.Frame):
@@ -1439,8 +1452,11 @@ class PracticeSessionUI(ttk.Frame):
 
             # Update player card display with proper card styling
             if player_info['is_active']:
-                # Show cards for human players (always visible) or during showdown (all active players)
-                if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
+                # Show cards for human players (always visible) or during showdown/end_hand (all active players)
+                current_state = self.state_machine.get_current_state()
+                is_showdown_or_end = current_state in [PokerState.SHOWDOWN, "end_hand"]
+                
+                if player_info['is_human'] or is_showdown_or_end:
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
                     if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
@@ -1453,8 +1469,8 @@ class PracticeSessionUI(ttk.Frame):
                         # Debug output for human player
                         if player_info['is_human']:
                             print(f"🎯 UI: Human player cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
-                        elif self.state_machine.get_current_state() == PokerState.SHOWDOWN:
-                            print(f"🎯 UI: Showdown - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
+                        elif is_showdown_or_end:
+                            print(f"🎯 UI: Showdown/End Hand - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
