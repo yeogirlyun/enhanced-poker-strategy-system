@@ -1080,8 +1080,17 @@ def test_winner_determination(state_machine, test_suite):
     state_machine.start_hand()
     state_machine.game_state.street = "river"
     state_machine.game_state.board = ["Ah", "Kh", "Qh", "Jh", "Th"]
-    state_machine.game_state.players[0].cards = ["As", "Ks"]  # Flush
-    state_machine.game_state.players[1].cards = ["Ad", "Kd"]  # Flush (tie)
+    
+    # Set up only 2 active players with royal flush cards
+    state_machine.game_state.players[0].cards = ["As", "Ks"]  # Royal Flush
+    state_machine.game_state.players[0].is_active = True
+    state_machine.game_state.players[1].cards = ["Ad", "Kd"]  # Royal Flush (tie)
+    state_machine.game_state.players[1].is_active = True
+    
+    # Deactivate other players to avoid them being included in winner determination
+    for i in range(2, len(state_machine.game_state.players)):
+        state_machine.game_state.players[i].is_active = False
+    
     state_machine.game_state.pot = 20.0
     winners = state_machine.determine_winner()
     test_suite.log_test(
