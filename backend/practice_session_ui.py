@@ -42,10 +42,7 @@ class CardWidget(tk.Canvas):
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
             print(f"🎴 Drawing card back for card_str='{card_str}', is_folded={is_folded}")
-            self._draw_card_back()
-            if is_folded:
-                # Add a semi-transparent overlay to show it's folded
-                self.create_rectangle(0, 0, self.width, self.height, fill="black", stipple="gray50", outline="")
+            self._draw_card_back(is_folded=is_folded)
             # Force update to ensure the drawing is applied
             self.update()
             return
@@ -62,39 +59,52 @@ class CardWidget(tk.Canvas):
         # Force update to ensure the drawing is applied
         self.update()
 
-    def _draw_card_back(self):
+    def _draw_card_back(self, is_folded=False):
         """Draws a professional-looking checkerboard pattern for the card back."""
         # Clear any existing content
         self.delete("all")
         
-        # Define colors for a more visible and professional card back
-        dark_red = "#8B0000"  # Darker red for better contrast
-        light_red = "#DC143C"  # Crimson red for alternating squares
-        border_color = "#2F2F2F"  # Dark border
-        
-        # Set the background color
-        self.config(bg=dark_red)
-        
-        # Draw the border first
-        self.create_rectangle(2, 2, self.width-2, self.height-2, 
-                            fill=dark_red, outline=border_color, width=2)
-        
-        # Draw the checkerboard pattern with larger squares for better visibility
-        square_size = 8
-        for y in range(4, self.height-4, square_size):
-            for x in range(4, self.width-4, square_size):
-                # Create alternating pattern
-                color = light_red if (x // square_size + y // square_size) % 2 == 0 else dark_red
-                self.create_rectangle(x, y, x + square_size, y + square_size, 
-                                   fill=color, outline="")
-        
-        # Add a subtle center design element
-        center_x, center_y = self.width // 2, self.height // 2
-        self.create_oval(center_x-8, center_y-8, center_x+8, center_y+8, 
-                        fill=light_red, outline=border_color, width=1)
-        
-        # Debug: Print to confirm card back is being drawn
-        print(f"🎴 Card back drawn: {self.width}x{self.height} canvas")
+        if is_folded:
+            # Draw folded card back - dark gray with no border
+            dark_gray = "#404040"  # Dark gray for folded cards
+            self.config(bg=dark_gray)
+            
+            # Draw a simple dark gray card with no border
+            self.create_rectangle(0, 0, self.width, self.height, 
+                                fill=dark_gray, outline="")
+            
+            # Debug: Print to confirm folded card back is being drawn
+            print(f"🎴 Folded card back drawn: {self.width}x{self.height} canvas")
+        else:
+            # Draw normal card back - red checkerboard pattern
+            # Define colors for a more visible and professional card back
+            dark_red = "#8B0000"  # Darker red for better contrast
+            light_red = "#DC143C"  # Crimson red for alternating squares
+            border_color = "#2F2F2F"  # Dark border
+            
+            # Set the background color
+            self.config(bg=dark_red)
+            
+            # Draw the border first
+            self.create_rectangle(2, 2, self.width-2, self.height-2, 
+                                fill=dark_red, outline=border_color, width=2)
+            
+            # Draw the checkerboard pattern with larger squares for better visibility
+            square_size = 8
+            for y in range(4, self.height-4, square_size):
+                for x in range(4, self.width-4, square_size):
+                    # Create alternating pattern
+                    color = light_red if (x // square_size + y // square_size) % 2 == 0 else dark_red
+                    self.create_rectangle(x, y, x + square_size, y + square_size, 
+                                       fill=color, outline="")
+            
+            # Add a subtle center design element
+            center_x, center_y = self.width // 2, self.height // 2
+            self.create_oval(center_x-8, center_y-8, center_x+8, center_y+8, 
+                            fill=light_red, outline=border_color, width=1)
+            
+            # Debug: Print to confirm card back is being drawn
+            print(f"🎴 Card back drawn: {self.width}x{self.height} canvas")
 
     def set_folded(self):
         """Shows the card as folded (empty)."""
@@ -1454,18 +1464,14 @@ class PracticeSessionUI(ttk.Frame):
                         card_widgets[0].set_card("")  # This should show card back
                         card_widgets[1].set_card("")  # This should show card back
             else: # Player has folded
-                # Get the stored card widgets and folded label
+                # Get the stored card widgets
                 card_widgets = player_seat.get("card_widgets", [])
-                folded_label = player_seat.get("folded_label")
                 
                 if len(card_widgets) >= 2:
-                    # Hide the cards and show the folded label above
-                    card_widgets[0].set_folded()
-                    card_widgets[1].set_folded()
-                    
-                    # Show the folded label above the cards
-                    if folded_label:
-                        folded_label.pack(pady=1)
+                    # Show folded card backs (dark gray, no border)
+                    print(f"🎴 Setting folded card backs for player {i+1}")
+                    card_widgets[0].set_card("", is_folded=True)  # Dark gray card back
+                    card_widgets[1].set_card("", is_folded=True)  # Dark gray card back
         
         # Update last action details - preserve winning announcement until new hand
         if hasattr(self, 'last_action_label'):
