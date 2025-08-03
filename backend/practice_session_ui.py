@@ -1450,9 +1450,9 @@ class PracticeSessionUI(ttk.Frame):
                 # Get the stored card labels
                 card_labels = player_seat.get("card_labels", [])
                 if len(card_labels) >= 2:
-                    # Show "Folded" on cards - dark grey background
-                    card_labels[0].config(text="Fold", fg="red", bg="#696969", relief="flat", bd=0)
-                    card_labels[1].config(text="ed", fg="red", bg="#696969", relief="flat", bd=0)
+                    # Show "Folded" as a single word - dark grey background
+                    card_labels[0].config(text="Folded", fg="red", bg="#696969", relief="flat", bd=0)
+                    card_labels[1].config(text="", fg="red", bg="#696969", relief="flat", bd=0)
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
