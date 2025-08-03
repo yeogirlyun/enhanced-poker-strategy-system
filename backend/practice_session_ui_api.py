@@ -241,32 +241,17 @@ class PracticeSessionUI(ttk.Frame):
         )
         self.bet_size_slider.pack(fill=tk.X)
         
-        # Game control buttons
-        game_control_frame = ttk.Frame(parent_frame)
-        game_control_frame.pack(side=tk.RIGHT, padx=10)
-        
-        self.start_button = ttk.Button(
-            game_control_frame, 
-            text="🚀 Start New Hand", 
-            command=self.start_new_hand
-        )
-        self.start_button.pack(side=tk.LEFT, padx=5)
-        
-        self.reset_button = ttk.Button(
-            game_control_frame, 
-            text="🔄 Reset Game", 
-            command=self._reset_game
-        )
-        self.reset_button.pack(side=tk.LEFT, padx=5)
+        # Game control buttons - REMOVED DUPLICATE BUTTONS
+        # These buttons are now only in the main practice_session_ui.py
+        # to avoid duplication
 
     def _update_bet_size_label(self, event=None):
         """Updates the bet size label."""
         self.bet_size_label.config(text=f"Bet Size: ${self.bet_size_var.get():.2f}")
 
     def _show_game_control_buttons(self):
-        """Shows the game control buttons."""
-        self.start_button.pack(side=tk.LEFT, padx=5)
-        self.reset_button.pack(side=tk.LEFT, padx=5)
+        """Shows the game control buttons - REMOVED (duplicate functionality)."""
+        pass
 
     def _show_action_buttons(self):
         """Shows the action buttons."""
