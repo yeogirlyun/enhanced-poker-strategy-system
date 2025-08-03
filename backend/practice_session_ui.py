@@ -132,6 +132,61 @@ class PracticeSessionUI(ttk.Frame):
         
         # Initialize layout management system
         self.layout_manager = LayoutManager()
+        
+        # Initialize table felt colors
+        self.table_felt_colors = {
+            "classic_green": {
+                "outer": "#013f28",
+                "inner": "#015939", 
+                "pattern": "#014a2f",
+                "community_bg": "#015939"
+            },
+            "royal_blue": {
+                "outer": "#1a365d",
+                "inner": "#2d5aa0",
+                "pattern": "#1e4a8a",
+                "community_bg": "#2d5aa0"
+            },
+            "burgundy_red": {
+                "outer": "#4a1a1a",
+                "inner": "#8b2d2d",
+                "pattern": "#6b1e1e",
+                "community_bg": "#8b2d2d"
+            },
+            "deep_purple": {
+                "outer": "#2d1a4a",
+                "inner": "#5a2d8b",
+                "pattern": "#4a1e6b",
+                "community_bg": "#5a2d8b"
+            },
+            "golden_brown": {
+                "outer": "#4a3a1a",
+                "inner": "#8b6b2d",
+                "pattern": "#6b4a1e",
+                "community_bg": "#8b6b2d"
+            },
+            "ocean_blue": {
+                "outer": "#1a4a4a",
+                "inner": "#2d8b8b",
+                "pattern": "#1e6b6b",
+                "community_bg": "#2d8b8b"
+            },
+            "forest_green": {
+                "outer": "#1a4a1a",
+                "inner": "#2d8b2d",
+                "pattern": "#1e6b1e",
+                "community_bg": "#2d8b2d"
+            },
+            "midnight_black": {
+                "outer": "#1a1a1a",
+                "inner": "#2d2d2d",
+                "pattern": "#1e1e1e",
+                "community_bg": "#2d2d2d"
+            }
+        }
+        
+        # Set default felt color
+        self.current_felt_color = "classic_green"
     
     class LayoutManager:
         """Manages dynamic positioning to prevent overlays and ensure visibility."""
@@ -243,61 +298,6 @@ class PracticeSessionUI(ttk.Frame):
                 'community_position': self.calculate_community_card_position(width, height),
                 'pot_position': self.calculate_pot_position(width, height)
             }
-        
-        # Initialize table felt colors
-        self.table_felt_colors = {
-            "classic_green": {
-                "outer": "#013f28",
-                "inner": "#015939", 
-                "pattern": "#014a2f",
-                "community_bg": "#015939"
-            },
-            "royal_blue": {
-                "outer": "#1a365d",
-                "inner": "#2d5aa0",
-                "pattern": "#1e4a8a",
-                "community_bg": "#2d5aa0"
-            },
-            "burgundy_red": {
-                "outer": "#4a1a1a",
-                "inner": "#8b2d2d",
-                "pattern": "#6b1e1e",
-                "community_bg": "#8b2d2d"
-            },
-            "deep_purple": {
-                "outer": "#2d1a4a",
-                "inner": "#5a2d8b",
-                "pattern": "#4a1e6b",
-                "community_bg": "#5a2d8b"
-            },
-            "golden_brown": {
-                "outer": "#4a3a1a",
-                "inner": "#8b6b2d",
-                "pattern": "#6b4a1e",
-                "community_bg": "#8b6b2d"
-            },
-            "ocean_blue": {
-                "outer": "#1a4a4a",
-                "inner": "#2d8b8b",
-                "pattern": "#1e6b6b",
-                "community_bg": "#2d8b8b"
-            },
-            "forest_green": {
-                "outer": "#1a4a1a",
-                "inner": "#2d8b2d",
-                "pattern": "#1e6b1e",
-                "community_bg": "#2d8b2d"
-            },
-            "midnight_black": {
-                "outer": "#1a1a1a",
-                "inner": "#2d2d2d",
-                "pattern": "#1e1e1e",
-                "community_bg": "#2d2d2d"
-            }
-        }
-        
-        # Set default felt color
-        self.current_felt_color = "classic_green"
     
     # --- All _draw methods remain the same ---
     def _on_resize(self, event=None):
@@ -540,10 +540,8 @@ class PracticeSessionUI(ttk.Frame):
         if action in [ActionType.BET, ActionType.RAISE]:
             amount = self.bet_size_var.get()
 
-        # Play sound
-        sound_to_play = {"fold": "card_fold", "check": "player_check", "call": "player_call", "bet": "player_bet", "raise": "player_raise"}.get(action_str)
-        if sound_to_play:
-            self.sfx.play(sound_to_play)
+        # Play industry-standard sound for the action
+        self.sfx.play_action_sound(action_str, amount)
 
         # Hide the controls immediately. The state machine will show them again when it's our turn.
         self._show_game_control_buttons()
