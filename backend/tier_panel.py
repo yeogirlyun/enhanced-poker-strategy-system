@@ -189,8 +189,6 @@ class TierPanel:
                 if index < len(self.strategy_data.tiers):
                     self.selected_tiers.append(self.strategy_data.tiers[index])
         
-        for tier in self.selected_tiers:
-        
         # Update counts
         self._update_counts()
         
@@ -576,7 +574,6 @@ class TierPanel:
         # Add hand to the correct tier
         if target_tier:
             target_tier.hands.add(hand)  # Use add() for sets
-        else:
         
         # Update tier list display
         self._update_tier_list()

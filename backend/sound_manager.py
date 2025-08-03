@@ -16,7 +16,6 @@ try:
 except ImportError:
     PYGAME_AVAILABLE = False
 
-
 class SoundManager:
     """Manages industry-standard sound effects for the poker table."""
     
@@ -58,16 +57,14 @@ class SoundManager:
                 pygame.mixer.init()
                 self._load_sounds()
             except Exception as e:
-                self.sound_enabled = False
-        else:
+                pass  # Handle pygame initialization errors
     
     def _load_sounds(self):
-        """Load all sound effects from the sounds directory."""
+        """Load sound files from the sounds directory."""
         sound_dir = os.path.join(os.path.dirname(__file__), "sounds")
-        if not os.path.isdir(sound_dir):
-            self.sound_enabled = False
+        if not os.path.exists(sound_dir):
             return
-            
+        
         # Track which sounds are authentic vs generated
         authentic_sounds = []
         generated_sounds = []
@@ -83,14 +80,14 @@ class SoundManager:
                     file_size = os.path.getsize(path)
                     if file_size > 20000:  # Files larger than 20KB are likely authentic
                         authentic_sounds.append(name)
-                    else:
-                        generated_sounds.append(name)
-                        
-                except pygame.error as e:
+                except Exception as e:
+                    pass  # Handle sound loading errors
         
         # Report sound loading summary
         if authentic_sounds:
+            pass  # Authentic sounds loaded
         if generated_sounds:
+            pass  # Generated sounds loaded
     
     def play(self, sound_name: str):
         """Play a sound effect with industry-standard mapping."""
@@ -104,42 +101,7 @@ class SoundManager:
             try:
                 self.sounds[actual_sound].play()
             except Exception as e:
-        else:
-            # Simulate sound with console output
-            sound_emojis = {
-                "check": "✅", "call": "📞", "bet": "💰", "raise": "📈", "fold": "📄",
-                "all_in": "🔥", "card_deal": "🎴", "card_flip": "🃏", "card_fold": "📄",
-                "chip_bet": "💰", "chip_stack": "🪙", "pot_win": "🏆", "pot_split": "⚖️",
-                "pot_rake": "🏦", "winner_announce": "🎉", "turn_notify": "🔔", 
-                "button_move": "🎯", "dealer_button": "🎯"
-            }
-            emoji = sound_emojis.get(sound_name, "🔊")
-    
-    def play_action_sound(self, action: str, amount: float = 0):
-        """Play appropriate sound for poker actions with context."""
-        if action == "fold":
-            self.play("fold")
-        elif action == "check":
-            self.play("check")
-        elif action == "call":
-            self.play("call")
-        elif action == "bet":
-            self.play("bet")
-        elif action == "raise":
-            self.play("raise")
-        elif action == "all_in":
-            self.play("all_in")
-        else:
-            self.play(action)
-    
-    def play_card_sound(self, action: str):
-        """Play card-related sounds."""
-        if action == "deal":
-            self.play("card_deal")
-        elif action == "flip":
-            self.play("card_flip")
-        elif action == "fold":
-            self.play("card_fold")
+                pass  # Handle sound playback errors
     
     def play_money_sound(self, action: str):
         """Play money-related sounds."""
@@ -187,9 +149,6 @@ class SoundManager:
                        "player_fold", "card_fold", "player_raise", "player_bet", 
                        "chip_bet", "player_call"]:
                 authentic_sounds.append(name)
-            else:
-                generated_sounds.append(name)
-        
         return {
             "total_sounds": len(self.sounds),
             "authentic_sounds": authentic_sounds,

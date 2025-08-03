@@ -294,8 +294,6 @@ class HandGridWidget:
 
     def highlight_tiers(self, selected_tiers: List):
         """Updates tier selection and triggers grid redraw."""
-        for tier in selected_tiers:
-
         # Store current grid size to maintain it during highlighting
         current_grid_size = self._grid_state["grid_size"]
 
@@ -326,9 +324,6 @@ class HandGridWidget:
             # Clear all other selections and select only this hand
             self._grid_state["selected_hands"].clear()
             self._grid_state["selected_hands"].add(hand)
-
-            f"DEBUG: Hand '{hand}' {'selected' if hand in self._grid_state['selected_hands'] else 'deselected'}"
-        )
 
         # Update state and trigger redraw
         self._update_grid_state(
