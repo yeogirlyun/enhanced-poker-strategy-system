@@ -28,6 +28,41 @@ class PracticeSessionUI(ttk.Frame):
         
         self.strategy_data = strategy_data
         
+        # Initialize missing attributes
+        self.current_felt_color = "classic_green"  # Add missing attribute
+        self.table_felt_colors = {
+            "classic_green": {
+                "outer": "#0B6623", 
+                "inner": "#228B22", 
+                "pattern": "#32CD32",
+                "community_bg": "#228B22"
+            },
+            "dark_green": {
+                "outer": "#006400", 
+                "inner": "#228B22", 
+                "pattern": "#32CD32",
+                "community_bg": "#228B22"
+            },
+            "blue": {
+                "outer": "#000080", 
+                "inner": "#4169E1", 
+                "pattern": "#87CEEB",
+                "community_bg": "#4169E1"
+            },
+            "red": {
+                "outer": "#8B0000", 
+                "inner": "#DC143C", 
+                "pattern": "#FF6B6B",
+                "community_bg": "#DC143C"
+            },
+            "purple": {
+                "outer": "#4B0082", 
+                "inner": "#9370DB", 
+                "pattern": "#DDA0DD",
+                "community_bg": "#9370DB"
+            }
+        }  # Add missing attribute
+        
         self.state_machine = ImprovedPokerStateMachine(
             num_players=6, 
             strategy_data=self.strategy_data, 
@@ -237,12 +272,13 @@ class PracticeSessionUI(ttk.Frame):
             return positions
         
         def calculate_stack_positions(self, width, height, num_players):
-            """Calculate stack graphics positions with proper spacing."""
+            """Calculate stack graphics positions with proper spacing from player seats."""
             center_x, center_y = width / 2, height / 2
             
-            # Stack graphics positioned between player seats and community cards
-            stack_radius_x = width * 0.38
-            stack_radius_y = height * 0.31
+            # Stack graphics positioned much closer to table center to avoid overlapping with player seats
+            # This ensures clear visibility of hole cards in player seat areas
+            stack_radius_x = width * 0.25  # Reduced from 0.38 to move stacks closer to center
+            stack_radius_y = height * 0.20  # Reduced from 0.31 to move stacks closer to center
             
             positions = []
             for i in range(num_players):
@@ -493,47 +529,80 @@ class PracticeSessionUI(ttk.Frame):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         center_x, center_y = self.layout_manager.calculate_pot_position(width, height)
         
-        # Create pot graphics frame with unique styling
-        pot_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=3, relief="raised")
+        # Create a more realistic pot design using canvas shapes instead of rectangular frame
+        pot_radius_x = 60
+        pot_radius_y = 40
         
-        # Pot title label
+        # Draw the pot as an oval with gradient-like effect
+        pot_outer = self.canvas.create_oval(
+            center_x - pot_radius_x, center_y - pot_radius_y,
+            center_x + pot_radius_x, center_y + pot_radius_y,
+            fill="#8B4513",  # Saddle brown for pot color
+            outline="#654321",
+            width=3
+        )
+        
+        # Inner pot highlight
+        pot_inner = self.canvas.create_oval(
+            center_x - pot_radius_x + 5, center_y - pot_radius_y + 5,
+            center_x + pot_radius_x - 5, center_y + pot_radius_y - 5,
+            fill="#A0522D",  # Sienna for inner highlight
+            outline="",
+            width=0
+        )
+        
+        # Pot title label positioned above the pot
         pot_title_label = tk.Label(
-            pot_frame,
+            self.canvas,
             text="🏆 POT",
             bg=THEME["secondary_bg"],
             fg="gold",
-            font=("Arial", 12, "bold")
+            font=("Arial", 10, "bold")
         )
-        pot_title_label.pack(pady=(5, 2))
+        pot_title_window = self.canvas.create_window(
+            center_x, center_y - pot_radius_y - 25,
+            window=pot_title_label,
+            anchor="center"
+        )
         
-        # Pot amount label
-        pot_font_size = max(14, int(self.canvas.winfo_height() / 30))
+        # Pot amount label positioned inside the pot
+        pot_font_size = max(12, int(self.canvas.winfo_height() / 35))
         pot_font = (THEME["font_family"], pot_font_size, "bold")
         self.pot_label = tk.Label(
-            pot_frame,
+            self.canvas,
             text="$0.00",
-            bg=THEME["secondary_bg"],
-            fg="yellow",
+            bg="#A0522D",  # Match inner pot color
+            fg="white",
             font=pot_font
         )
-        self.pot_label.pack(pady=2)
+        self.pot_label_window = self.canvas.create_window(
+            center_x, center_y,
+            window=self.pot_label,
+            anchor="center"
+        )
         
-        # Pot chips visualization (unique from player stacks)
+        # Pot chips visualization positioned below the pot
         self.pot_chips_label = tk.Label(
-            pot_frame,
+            self.canvas,
             text="🟠🟠🟠",  # Orange chips for pot (different from player chips)
             bg=THEME["secondary_bg"],
             fg="orange",
             font=FONTS["small"]
         )
-        self.pot_chips_label.pack(pady=(2, 5))
-        
-        # Create window for pot graphics
-        self.pot_window = self.canvas.create_window(
-            center_x, center_y + 130, 
-            window=pot_frame, 
+        self.pot_chips_window = self.canvas.create_window(
+            center_x, center_y + pot_radius_y + 20,
+            window=self.pot_chips_label,
             anchor="center"
         )
+        
+        # Store pot graphics references for updates
+        self.pot_graphics = {
+            "outer": pot_outer,
+            "inner": pot_inner,
+            "title_window": pot_title_window,
+            "amount_window": self.pot_label_window,
+            "chips_window": self.pot_chips_window
+        }
     
     # --- UI Update and Action Handling (Corrected) ---
 
@@ -565,14 +634,19 @@ class PracticeSessionUI(ttk.Frame):
 
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player."""
+        print(f"🎯 UI: prompt_human_action called for {player.name}")  # Debug
+        
         game_info = self.state_machine.get_game_info()
         if not game_info:
+            print(f"❌ UI: No game_info available")  # Debug
             return
 
+        print(f"🎯 UI: Showing action buttons")  # Debug
         self._show_action_buttons()
         
         # --- FIXED: Use state machine's valid actions instead of duplicating logic ---
         valid_actions = self.state_machine.get_valid_actions_for_player(player)
+        print(f"🎯 UI: Valid actions: {valid_actions}")  # Debug
         
         # Configure fold button based on state machine's validation
         if valid_actions.get('fold', False):
@@ -584,6 +658,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Get call amount from state machine
         call_amount = valid_actions.get('call_amount', 0)
+        print(f"🎯 UI: Call amount: ${call_amount:.2f}")  # Debug
         # --- End of proper separation of concerns ---
         
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
@@ -606,19 +681,26 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_slider.config(from_=min_bet_or_raise, to=max_bet)
         self.bet_size_var.set(min_bet_or_raise)
         self._update_bet_size_label()
+        
+        print(f"🎯 UI: Action buttons configured and should be visible")  # Debug
 
     def start_new_hand(self):
         """Starts a new hand using the state machine."""
+        print(f"🎯 UI: start_new_hand called")  # Debug
         self.add_game_message("🎮 Starting new hand...")
         
         # FIX: Clear community cards when starting a new hand
         for card_label in self.community_card_labels:
             card_label.config(text="")
         
+        print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
+        print(f"🎯 UI: state_machine.start_hand() completed")  # Debug
+        
         # The state machine will automatically determine who acts first
         # and call prompt_human_action if it's the human's turn.
         self.update_session_info()
+        print(f"🎯 UI: start_new_hand completed")  # Debug
 
     def handle_hand_complete(self, winner_info=None):
         """
@@ -689,7 +771,7 @@ class PracticeSessionUI(ttk.Frame):
             for i, seat in enumerate(self.player_seats):
                 if seat and seat.get("name_label"):
                     player_name = seat["name_label"].cget("text").split('\n')[0]
-                    print(f"🔍 Checking seat {i}: {player_name} vs {winner_name}")  # Debug
+                    print(f"�� Checking seat {i}: {player_name} vs {winner_name}")  # Debug
                     if player_name == winner_name:
                         winner_seat = i
                         print(f"✅ Found winner at seat {i}")  # Debug
@@ -1060,14 +1142,18 @@ class PracticeSessionUI(ttk.Frame):
 
     def _show_game_control_buttons(self):
         """Shows only the game control buttons (Start/Reset)."""
+        print(f"🎯 UI: _show_game_control_buttons called")  # Debug
+        
         # Hide all action buttons
         for widget in self.human_action_controls.values():
             if hasattr(widget, 'pack_forget'):
                 widget.pack_forget()
+        print(f"🎯 UI: All action buttons hidden")  # Debug
         
         # Show game control buttons
         self.start_button.pack(side=tk.LEFT, padx=5)
         self.reset_button.pack(side=tk.LEFT, padx=5)
+        print(f"🎯 UI: Game control buttons shown")  # Debug
         
         # Hide bet sizing controls
         if hasattr(self, 'bet_slider'):
@@ -1076,20 +1162,29 @@ class PracticeSessionUI(ttk.Frame):
             self.bet_size_label.pack_forget()
         if hasattr(self, 'sizing_frame'):
             self.sizing_frame.pack_forget()
+        print(f"🎯 UI: Bet sizing controls hidden")  # Debug
 
     def _show_action_buttons(self):
         """Shows the action buttons and hides game control buttons."""
+        print(f"🎯 UI: _show_action_buttons called")  # Debug
+        
         # Hide game control buttons
         self.start_button.pack_forget()
         self.reset_button.pack_forget()
+        print(f"🎯 UI: Game control buttons hidden")  # Debug
         
         # Show bet sizing controls
         if hasattr(self, 'bet_slider'):
             self.bet_slider.pack(fill=tk.X)
+            print(f"🎯 UI: Bet slider shown")  # Debug
         if hasattr(self, 'bet_size_label'):
             self.bet_size_label.pack()
+            print(f"🎯 UI: Bet size label shown")  # Debug
         if hasattr(self, 'sizing_frame'):
             self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+            print(f"🎯 UI: Sizing frame shown")  # Debug
+        
+        print(f"🎯 UI: Action buttons should now be visible")  # Debug
 
     def _reset_game(self):
         """Resets the game state and UI."""
@@ -1211,8 +1306,11 @@ class PracticeSessionUI(ttk.Frame):
             player_info = game_info['players'][i]
             frame = player_seat["frame"]
             name_label = player_seat["name_label"]
-            stack_label = player_seat["stack_label"]
             cards_label = player_seat["cards_label"]
+            
+            # Get stack label from stack_graphics if it exists
+            stack_graphics = player_seat.get("stack_graphics", {})
+            stack_amount_label = stack_graphics.get("amount_label")
             
             # FIXED: Highlight based on action_player index, not is_active status
             # Players should be highlighted when it's their turn, even if they fold
@@ -1225,7 +1323,8 @@ class PracticeSessionUI(ttk.Frame):
             name_label.config(text=f"{player_info['name']} ({player_info['position']})")
             
             # Update stack and bet info
-            stack_label.config(text=f"${player_info['stack']:.2f}")
+            if stack_amount_label:
+                stack_amount_label.config(text=f"${player_info['stack']:.2f}")
 
             # Update the prominent bet display on the table
             bet_label_widget = player_seat.get("bet_label_widget")
