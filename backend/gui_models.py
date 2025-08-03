@@ -167,7 +167,6 @@ class StrategyData:
         """Loads strategy data from a JSON file."""
         try:
             if not os.path.exists(filename):
-                print(f"ERROR: Strategy file '{filename}' not found")
                 return False
 
             with open(filename, "r") as f:
@@ -178,7 +177,6 @@ class StrategyData:
             self.current_strategy_file = filename
             return True
         except Exception as e:
-            print(f"ERROR: Failed to load strategy from '{filename}': {e}")
             return False
 
     def _create_tiers_from_strategy(self, strategy_data: Dict[str, Any]):
@@ -218,7 +216,6 @@ class StrategyData:
             self.current_strategy_file = filename
             return True
         except Exception as e:
-            print(f"ERROR: Failed to save strategy to '{filename}': {e}")
             return False
 
     def _create_strategy_from_tiers(self) -> Dict[str, Any]:
@@ -502,7 +499,6 @@ class FileOperations:
             with open(filename, "r") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading strategy: {e}")
             return None
 
     @staticmethod
@@ -513,5 +509,4 @@ class FileOperations:
                 json.dump(strategy, f, indent=2)
             return True
         except Exception as e:
-            print(f"Error saving strategy: {e}")
             return False

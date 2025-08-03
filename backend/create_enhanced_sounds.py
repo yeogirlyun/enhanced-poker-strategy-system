@@ -112,11 +112,7 @@ def create_enhanced_sounds():
         samples = generator_func(freq, duration)
         filename = os.path.join(sounds_dir, f"{sound_name}.wav")
         save_wav(filename, samples)
-        print(f"🎵 Created: {filename} ({freq}Hz, {duration}s)")
     
-    print(f"\n🎉 Enhanced poker sound system created!")
-    print(f"📁 Sounds saved in: {os.path.abspath(sounds_dir)}")
-    print(f"🎮 Ready for immersive poker experience!")
 
 if __name__ == "__main__":
     create_enhanced_sounds() 

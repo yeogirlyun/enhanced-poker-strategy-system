@@ -20,7 +20,6 @@ try:
     TREYS_AVAILABLE = True
 except ImportError:
     TREYS_AVAILABLE = False
-    print("Warning: Treys not available, using basic hand evaluation")
 
 
 class PokerState(Enum):
@@ -162,7 +161,6 @@ class ReliablePokerStateMachine:
         if self._log_enabled:
             timestamp = time.strftime("[%H:%M:%S]")
             log_entry = f"{timestamp} {message}"
-            print(log_entry)
             if self.on_log_entry:
                 self.on_log_entry(log_entry)
     

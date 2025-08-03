@@ -176,27 +176,16 @@ class ImprovedCLIPokerGame:
             self._clear_screen()
 
         # Header
-        print("\n" + Colors.colorize("═" * 80, Colors.BRIGHT_BLUE))
-        print(Colors.colorize(f"🎮 TEXAS HOLD'EM - HAND #{self.hand_number + 1}", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("═" * 80, Colors.BRIGHT_BLUE))
 
         # Game state info
         state_display = game_info['state'].upper().replace('_', ' ')
-        print(f"\n📍 {Colors.colorize(state_display, Colors.YELLOW)}")
-        print(f"💰 POT: {Colors.colorize(f'${game_info["pot"]:.2f}', Colors.BRIGHT_GREEN)}")
         
         if game_info['current_bet'] > 0:
-            print(f"📊 CURRENT BET: {Colors.colorize(f'${game_info["current_bet"]:.2f}', Colors.BRIGHT_YELLOW)}")
-            print(f"📈 MIN RAISE: {Colors.colorize(f'${game_info["min_raise"]:.2f}', Colors.YELLOW)}")
         
         # Board display
         if game_info['board']:
-            print(f"\n🃏 BOARD: {self._format_cards_enhanced(game_info['board'])}")
 
         # Players table
-        print("\n" + Colors.colorize("─" * 80, Colors.BLUE))
-        print(Colors.colorize("PLAYERS:", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("─" * 80, Colors.BLUE))
         
         current_player_idx = game_info['action_player']
         for i, player_info in enumerate(game_info['players']):
@@ -232,14 +221,12 @@ class ImprovedCLIPokerGame:
         
         player_line += turn_indicator
         
-        print(player_line)
 
         # Show human player's cards
         if index == 0 and player_info['is_active']:
             cards = player_info['cards']
             if cards and cards != ["**", "**"]:
                 formatted_cards = self._format_cards_enhanced(cards)
-                print(f"  🂠 Your cards: {formatted_cards}")
 
     def _display_hand_strength_analysis(self):
         """Display detailed hand strength analysis for human player."""
@@ -247,9 +234,6 @@ class ImprovedCLIPokerGame:
         if not player.is_active or not player.cards:
             return
 
-        print("\n" + Colors.colorize("─" * 80, Colors.BLUE))
-        print(Colors.colorize("HAND ANALYSIS:", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("─" * 80, Colors.BLUE))
 
         # Get hand classification
         board = self.state_machine.game_state.board
@@ -266,11 +250,9 @@ class ImprovedCLIPokerGame:
         # Display hand type
         if hand_type != "preflop":
             emoji, description = self.hand_indicator.get_hand_description(hand_type)
-            print(f"🎯 Hand Type: {emoji} {Colors.colorize(description, Colors.BRIGHT_YELLOW)}")
         
         # Display strength meter
         meter = self.hand_indicator.get_strength_meter(strength_percent)
-        print(f"💪 Strength: {meter} {Colors.colorize(f'{strength_percent:.0f}%', Colors.BRIGHT_WHITE)}")
         
         # Calculate and display equity
         if board:
@@ -280,7 +262,6 @@ class ImprovedCLIPokerGame:
             equity_percent = equity * 100
             
             equity_color = Colors.GREEN if equity_percent >= 50 else Colors.YELLOW if equity_percent >= 30 else Colors.RED
-            print(f"📊 Win Probability: {Colors.colorize(f'{equity_percent:.1f}%', equity_color)}")
         
         # Action recommendation
         pot_odds = 0
@@ -292,7 +273,6 @@ class ImprovedCLIPokerGame:
         recommendation = self.hand_indicator.get_action_recommendation(
             strength_percent, pot_odds, player.position
         )
-        print(f"\n{recommendation}")
 
     def _format_cards_enhanced(self, cards):
         """Enhanced card formatting with colors and suits."""
@@ -338,15 +318,12 @@ class ImprovedCLIPokerGame:
         pot = game_info['pot']
         
         if action == "fold":
-            print(f"  {Colors.colorize('fold', Colors.RED)} - Give up hand")
         
         elif action == "check":
-            print(f"  {Colors.colorize('check', Colors.CYAN)} - Pass action (no bet)")
         
         elif action == "call":
             call_amount = current_bet - player.current_bet
             if call_amount >= player.stack:
-                print(f"  {Colors.colorize('call', Colors.BRIGHT_YELLOW)} - Go ALL-IN (${player.stack:.2f})")
             else:
                 pot_odds = (pot + call_amount) / call_amount if call_amount > 0 else 0
                 
@@ -361,31 +338,24 @@ class ImprovedCLIPokerGame:
                 
                 profit_indicator = Colors.colorize("✅", Colors.GREEN) if profitable else Colors.colorize("❌", Colors.RED)
                 
-                print(f"  {Colors.colorize('call', Colors.YELLOW)} - Match bet (${call_amount:.2f}) - Pot odds: {pot_odds:.1f}:1 {profit_indicator}")
         
         elif action == "bet":
-            print(f"  {Colors.colorize('bet', Colors.GREEN)} - Make first bet (max ${player.stack:.2f})")
         
         elif action == "raise":
             min_raise_total = current_bet + min_raise
             max_raise = player.current_bet + player.stack
-            print(f"  {Colors.colorize('raise', Colors.BRIGHT_GREEN)} - Increase bet (min ${min_raise_total:.2f}, max ${max_raise:.2f})")
         
         elif action == "allin":
-            print(f"  {Colors.colorize('allin', Colors.BRIGHT_MAGENTA)} - Go ALL-IN with ${player.stack:.2f} 🚀")
 
     def _get_human_action(self, player):
         """Get human action with enhanced UI."""
-        print(f"\n{Colors.colorize('🎯 YOUR TURN', Colors.BRIGHT_MAGENTA)} ({player.name})")
         
         valid_actions = self._get_valid_actions()
-        print(Colors.colorize("💡 Available actions:", Colors.CYAN))
         
         for action in valid_actions:
             self._display_action_help_enhanced(action, player)
         
         # Add shortcuts hint
-        print(f"\n{Colors.colorize('Shortcuts:', Colors.CYAN)} f=fold, c=call/check, b=bet, r=raise, a=all-in")
         
         while True:
             try:
@@ -404,7 +374,6 @@ class ImprovedCLIPokerGame:
                     action_input = shortcuts[action_input]
                 
                 if action_input not in valid_actions:
-                    print(Colors.colorize(f"❌ Invalid action. Valid: {', '.join(valid_actions)}", Colors.RED))
                     continue
                 
                 action_type = self._parse_action(action_input)
@@ -425,28 +394,23 @@ class ImprovedCLIPokerGame:
                 # Validate action
                 errors = self.state_machine.validate_action(player, action_type, amount)
                 if errors:
-                    print(Colors.colorize("❌ Action validation errors:", Colors.RED))
                     for error in errors: 
-                        print(Colors.colorize(f"  • {error}", Colors.RED))
                     continue
                 
                 # Special handling for all-in calls
                 if action_input == "call":
                     call_amount = self.state_machine.game_state.current_bet - player.current_bet
                     if call_amount >= player.stack:
-                        print(Colors.colorize(f"🔥 You're going ALL-IN with ${player.stack:.2f}!", Colors.BRIGHT_YELLOW))
                         confirm = input(Colors.colorize("Confirm all-in call? (y/n): ", Colors.YELLOW)).lower().strip()
                         if confirm != 'y':
                             continue
                 
-                print(Colors.colorize(f"✅ Executing: {action_input.upper()} ${amount:.2f}", Colors.GREEN))
                 self.state_machine.execute_action(player, action_type, amount)
                 break
                 
             except KeyboardInterrupt: 
                 raise
             except Exception as e: 
-                print(Colors.colorize(f"❌ Error: {e}", Colors.RED))
 
     def _get_valid_actions(self):
         """Get valid actions for current player."""
@@ -509,57 +473,46 @@ class ImprovedCLIPokerGame:
             try:
                 amount_input = input(prompt).strip()
                 if not amount_input:
-                    print(Colors.colorize("❌ Amount cannot be empty", Colors.RED))
                     retry_count += 1
                     continue
                 
                 amount = float(amount_input)
                 
                 if amount <= 0:
-                    print(Colors.colorize("❌ Amount must be positive", Colors.RED))
                     retry_count += 1
                     continue
                 
                 if amount > player.stack:
-                    print(Colors.colorize(f"❌ Amount ${amount:.2f} exceeds stack ${player.stack:.2f}", Colors.RED))
                     retry_count += 1
                     continue
                 
                 if action_type == "raise":
                     if amount <= current_bet:
-                        print(Colors.colorize(f"❌ Raise must be more than current bet ${current_bet:.2f}", Colors.RED))
                         retry_count += 1
                         continue
                     min_raise_total = current_bet + min_raise
                     if amount < min_raise_total:
-                        print(Colors.colorize(f"❌ Minimum raise is ${min_raise_total:.2f}", Colors.RED))
                         retry_count += 1
                         continue
                 
                 return amount
                 
             except ValueError:
-                print(Colors.colorize("❌ Please enter a valid number", Colors.RED))
                 retry_count += 1
             except KeyboardInterrupt:
                 return None
         
-        print(Colors.colorize(f"⚠️  Too many invalid attempts. Canceling {action_type} action.", Colors.YELLOW))
         return None
 
     def _handle_hand_complete(self):
         """Handle when hand is complete."""
-        print("\n" + Colors.colorize("=" * 80, Colors.BRIGHT_GREEN))
-        print(Colors.colorize("🏁 HAND COMPLETE!", Colors.BRIGHT_GREEN))
         self._display_final_state()
         self._display_hand_summary()
-        print(Colors.colorize("=" * 80, Colors.BRIGHT_GREEN))
         self.hand_number += 1
 
     def _handle_round_complete(self):
         """Handle when round is complete."""
         state = self.state_machine.get_current_state().value.upper()
-        print(f"\n{Colors.colorize(f'--- ✅ ROUND COMPLETE: {state} ---', Colors.GREEN)}")
 
     def _handle_state_change(self, new_state):
         """Handle state changes."""
@@ -570,7 +523,6 @@ class ImprovedCLIPokerGame:
         """Display board when new cards are dealt."""
         board = self.state_machine.game_state.board
         if board:
-            print(f"\n🃏 BOARD: {self._format_cards_enhanced(board)}")
 
     def _display_final_state(self):
         """Display final state with showdown information."""
@@ -578,15 +530,9 @@ class ImprovedCLIPokerGame:
         if not game_info:
             return
         
-        print("\n" + Colors.colorize("=" * 80, Colors.BRIGHT_BLUE))
-        print(Colors.colorize("🏁 FINAL STATE", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("=" * 80, Colors.BRIGHT_BLUE))
         
-        print(f"💰 FINAL POT: {Colors.colorize(f'${game_info["pot"]:.2f}', Colors.BRIGHT_GREEN)}")
         if game_info['board']:
-            print(f"🃏 BOARD: {self._format_cards_enhanced(game_info['board'])}")
         
-        print(f"\n{Colors.colorize('📋 ACTIVE PLAYERS:', Colors.CYAN)}")
         for i, player_info in enumerate(game_info['players']):
             if player_info['is_active']:
                 actual_player = next(p for p in self.state_machine.game_state.players 
@@ -594,8 +540,6 @@ class ImprovedCLIPokerGame:
                 cards = actual_player.cards
                 
                 status_emoji = "🔥" if player_info['is_all_in'] else "👤"
-                print(f"  {status_emoji} {player_info['name']}: {self._format_cards_enhanced(cards)}")
-                print(f"     Stack: ${player_info['stack']:.2f} | Total Invested: ${player_info['total_invested']:.2f}")
 
     def _display_hand_summary(self):
         """Display hand summary with profit/loss."""
@@ -603,8 +547,6 @@ class ImprovedCLIPokerGame:
         if not game_info:
             return
         
-        print(f"\n{Colors.colorize('📊 HAND SUMMARY:', Colors.CYAN)}")
-        print(Colors.colorize("-" * 50, Colors.BLUE))
         
         for player_info in game_info['players']:
             if player_info['total_invested'] > 0:
@@ -619,19 +561,14 @@ class ImprovedCLIPokerGame:
                     result_display = Colors.colorize(f"${result:.2f}", Colors.YELLOW)
                     emoji = "➖"
                 
-                print(f"  {emoji} {player_info['name']}: {result_display} (invested ${player_info['total_invested']:.2f})")
 
     def start_hand(self):
         """Start a new hand."""
-        print(f"\n{Colors.colorize(f'🎮 STARTING HAND #{self.hand_number + 1}', Colors.BRIGHT_CYAN)}")
-        print(Colors.colorize("=" * 80, Colors.BLUE))
 
         dealer_name = self.state_machine.game_state.players[self.state_machine.dealer_position].name if self.state_machine.game_state else "TBD"
-        print(f"🔘 Dealer: {Colors.colorize(dealer_name, Colors.YELLOW)}")
 
         self.state_machine.start_hand()
 
-        print(f"\n🃏 {Colors.colorize('Cards dealt! Players have received their hole cards.', Colors.GREEN)}")
         self._display_game_state_enhanced()
 
         self.state_machine.handle_current_player_action()
@@ -640,17 +577,11 @@ class ImprovedCLIPokerGame:
         """Run the enhanced poker game."""
         self._clear_screen()
         
-        print(Colors.colorize("🎰 ENHANCED CLI POKER GAME", Colors.BRIGHT_MAGENTA))
-        print(Colors.colorize("=" * 80, Colors.MAGENTA))
         
         strategy_name = "Default"
         if self.strategy_data and hasattr(self.strategy_data, 'current_strategy_file'):
             strategy_name = self.strategy_data.current_strategy_file or "Default"
         
-        print(f"📋 Strategy: {Colors.colorize(strategy_name, Colors.CYAN)}")
-        print(f"👥 Players: {Colors.colorize('6 (1 human + 5 bots)', Colors.CYAN)}")
-        print(f"🎯 Hands to play: {Colors.colorize(str(num_hands), Colors.CYAN)}")
-        print(Colors.colorize("=" * 80, Colors.MAGENTA))
 
         for i in range(num_hands):
             try:
@@ -660,12 +591,9 @@ class ImprovedCLIPokerGame:
                     input(f"\n{Colors.colorize('🔄 Press Enter to start next hand...', Colors.YELLOW)}")
                     self._clear_screen()
             except KeyboardInterrupt:
-                print(f"\n\n{Colors.colorize('👋 Game interrupted by user', Colors.YELLOW)}")
                 break
 
-        print(f"\n{Colors.colorize('🎉 GAME COMPLETE!', Colors.BRIGHT_GREEN)}")
         self._display_game_summary()
-        print(Colors.colorize("=" * 80, Colors.GREEN))
 
     def _display_game_summary(self):
         """Display final game summary."""
@@ -673,14 +601,10 @@ class ImprovedCLIPokerGame:
         if not game_info:
             return
         
-        print("\n" + Colors.colorize("=" * 80, Colors.BRIGHT_BLUE))
-        print(Colors.colorize("🏆 GAME SUMMARY", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("=" * 80, Colors.BRIGHT_BLUE))
         
         players_with_stacks = [(p['name'], p['stack']) for p in game_info['players']]
         players_with_stacks.sort(key=lambda x: x[1], reverse=True)
         
-        print(Colors.colorize("📈 FINAL STANDINGS:", Colors.CYAN))
         for i, (name, stack) in enumerate(players_with_stacks):
             profit = stack - 100.0
             
@@ -707,7 +631,6 @@ class ImprovedCLIPokerGame:
                 profit_display = Colors.colorize(f"${profit:.2f}", Colors.YELLOW)
                 profit_emoji = "➖"
             
-            print(f"  {rank_emoji} {Colors.colorize(name, color)}: ${stack:.2f} ({profit_emoji} {profit_display})")
 
 
 def main():
@@ -727,15 +650,11 @@ def main():
     )
     args = parser.parse_args()
 
-    print(Colors.colorize("🚀 Loading Enhanced Poker Game...", Colors.BRIGHT_CYAN))
     
     strategy_data = StrategyData()
     
     if args.interactive:
         # --- NEW: Interactive Strategy Selection ---
-        print(Colors.colorize("\n🎯 Strategy Selection:", Colors.BRIGHT_CYAN))
-        print(Colors.colorize("1. My Strategy (modern_strategy.json)", Colors.CYAN))
-        print(Colors.colorize("2. Aggressive Strategy (aggressive_strategy.json)", Colors.CYAN))
         
         while True:
             strategy_choice = input(
@@ -743,27 +662,20 @@ def main():
             ).strip()
             
             if strategy_choice == '2':
-                print(Colors.colorize("🤖 Bots will use the GTO Modern Strategy.", Colors.YELLOW))
                 strategy_file_to_load = "aggressive_strategy.json"
                 break
             elif strategy_choice == '1':
-                print(Colors.colorize("🤖 Bots will use your custom strategy (modern_strategy.json).", Colors.YELLOW))
                 strategy_file_to_load = "modern_strategy.json"
                 break
             else:
-                print(Colors.colorize("❌ Please enter 1 or 2", Colors.RED))
     else:
         strategy_file_to_load = args.strategy
-        print(Colors.colorize(f"🤖 Bots will use strategy from: {strategy_file_to_load}", Colors.YELLOW))
 
     try:
         if strategy_data.load_strategy_from_file(strategy_file_to_load):
-            print(Colors.colorize("✅ Strategy loaded successfully", Colors.GREEN))
         else:
-            print(Colors.colorize(f"⚠️  Could not load {strategy_file_to_load}. Using default tiers.", Colors.YELLOW))
             strategy_data.load_default_tiers()
     except Exception as e:
-        print(Colors.colorize(f"⚠️  Strategy loading error: {e}", Colors.YELLOW))
         strategy_data.load_default_tiers()
     # --- FIX ENDS HERE ---
 
@@ -781,16 +693,12 @@ def main():
                     num_hands = int(num_hands)
                 if num_hands > 0:
                     break
-                print(Colors.colorize("❌ Number of hands must be positive", Colors.RED))
             except ValueError:
-                print(Colors.colorize("❌ Please enter a valid number", Colors.RED))
 
         game.run_game(num_hands=num_hands)
         
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.colorize('👋 Game interrupted by user', Colors.YELLOW)}")
     except Exception as e:
-        print(Colors.colorize(f"\n❌ Game error: {e}", Colors.RED))
         import traceback
         traceback.print_exc()
 

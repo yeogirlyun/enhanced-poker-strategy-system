@@ -100,7 +100,6 @@ class StrategyPDFExporter:
             return True
             
         except Exception as e:
-            print(f"ERROR: Failed to create PDF report: {e}")
             return False
     
     def _create_title_page(self) -> List[Paragraph]:

@@ -41,7 +41,6 @@ class TierPanel:
         self.on_tier_select = on_tier_select
         self.selected_tiers: List[HandStrengthTier] = []
         
-        print(f"DEBUG: TierPanel initialized")
         
         self._setup_ui()
         self._update_tier_list()
@@ -159,7 +158,6 @@ class TierPanel:
             # ttk widgets don't support direct font configuration
             pass
         
-        print(f"DEBUG: Tier panel font size updated to {font_size}")
 
     def _update_tier_list(self):
         """Updates the tier listbox with current tiers."""
@@ -180,7 +178,6 @@ class TierPanel:
         
         self.selected_count_label.configure(text=f"Selected Cards: {len(selected_hands)}")
         
-        print(f"DEBUG: Updated counts - Total: {total_hands}, Selected: {len(selected_hands)}")
 
     def _on_listbox_select(self, event):
         """Handles tier listbox selection changes."""
@@ -192,9 +189,7 @@ class TierPanel:
                 if index < len(self.strategy_data.tiers):
                     self.selected_tiers.append(self.strategy_data.tiers[index])
         
-        print(f"DEBUG: Tier selection changed - {len(self.selected_tiers)} tiers selected")
         for tier in self.selected_tiers:
-            print(f"  DEBUG: Selected tier '{tier.name}' with {len(tier.hands)} hands: {tier.hands}")
         
         # Update counts
         self._update_counts()
@@ -276,7 +271,6 @@ class TierPanel:
             if self.on_tier_change:
                 self.on_tier_change()
             
-            print(f"DEBUG: Added new tier '{new_tier.name}' with {len(new_tier.hands)} hands (HS {new_tier.min_hs}-{new_tier.max_hs})")
 
     def _remove_tier(self):
         """Removes the selected tier."""
@@ -375,7 +369,6 @@ class TierPanel:
             if self.on_tier_change:
                 self.on_tier_change()
             
-            print(f"DEBUG: Updated tier '{tier_to_edit.name}' with {len(tier_to_edit.hands)} hands (HS {tier_to_edit.min_hs}-{tier_to_edit.max_hs})")
 
     def _has_overlapping_ranges(self, new_tier: HandStrengthTier) -> bool:
         """Check if the new tier's HS range overlaps with existing tiers."""
@@ -483,13 +476,11 @@ class TierPanel:
     def _update_tier_hands_based_on_hs_range(self, tier: HandStrengthTier):
         """Updates tier hands based on HS range, auto-detecting if needed."""
         if not self.strategy_data.strategy_dict:
-            print("DEBUG: No strategy dictionary available for hand management")
             return
         
         # Get all available hands and their HS scores
         hand_strength_table = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
         if not hand_strength_table:
-            print("DEBUG: No hand strength table available")
             return
         
         # Find hands that belong to this HS range
@@ -501,8 +492,6 @@ class TierPanel:
         # Update tier hands
         tier.hands = sorted(matching_hands)
         
-        print(f"DEBUG: Auto-detected {len(tier.hands)} hands for tier '{tier.name}' (HS {tier.min_hs}-{tier.max_hs})")
-        print(f"DEBUG: Hands: {tier.hands}")
 
     def get_selected_tiers(self) -> List[HandStrengthTier]:
         """Returns the currently selected tiers."""
@@ -576,7 +565,6 @@ class TierPanel:
         for tier in self.strategy_data.tiers:
             if hand in tier.hands:
                 tier.hands.remove(hand)
-                print(f"DEBUG: Removed {hand} from tier '{tier.name}'")
         
         # Find the correct tier for the new HS score
         target_tier = None
@@ -588,9 +576,7 @@ class TierPanel:
         # Add hand to the correct tier
         if target_tier:
             target_tier.hands.add(hand)  # Use add() for sets
-            print(f"DEBUG: Moved {hand} (HS: {new_hs}) to tier '{target_tier.name}' (HS {target_tier.min_hs}-{target_tier.max_hs})")
         else:
-            print(f"DEBUG: No tier found for {hand} with HS {new_hs}")
         
         # Update tier list display
         self._update_tier_list()

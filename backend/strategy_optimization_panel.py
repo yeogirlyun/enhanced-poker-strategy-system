@@ -27,7 +27,6 @@ class StrategyOptimizationPanel:
         self.on_optimization_complete = on_optimization_complete
         self.current_font_size = 12
 
-        print("DEBUG: StrategyOptimizationPanel initialized")
 
         self._setup_ui()
 

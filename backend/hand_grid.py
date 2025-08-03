@@ -57,7 +57,6 @@ class HandGridWidget:
             "needs_redraw": True,
         }
 
-        print(f"DEBUG: HandGridWidget initialized with centralized rendering system")
 
         self._setup_ui()
         self._render_grid()  # Initial render
@@ -109,7 +108,6 @@ class HandGridWidget:
         if not self._grid_state["needs_redraw"]:
             return  # Skip if no changes needed
         
-        print(f"DEBUG: _render_grid called - optimized rendering")
         
         # Check if we need to completely rebuild or just update existing widgets
         if not self.hand_widgets:
@@ -122,7 +120,6 @@ class HandGridWidget:
     
     def _render_grid_full(self):
         """Completely rebuilds the grid (first time or major changes)."""
-        print(f"DEBUG: Performing full grid rebuild")
         
         # Clear all existing widgets
         for widget in self.hand_frame.winfo_children():
@@ -198,7 +195,6 @@ class HandGridWidget:
     
     def _update_existing_widgets(self):
         """Updates existing widgets without rebuilding the entire grid."""
-        print(f"DEBUG: Performing partial widget updates")
         
         for hand, widget in self.hand_widgets.items():
             # Get current appearance
@@ -294,14 +290,11 @@ class HandGridWidget:
         """Updates the grid state and triggers a redraw."""
         self._grid_state.update(kwargs)
         self._grid_state["needs_redraw"] = True
-        print(f"DEBUG: Grid state updated: {self._grid_state}")
         self._render_grid()
 
     def highlight_tiers(self, selected_tiers: List):
         """Updates tier selection and triggers grid redraw."""
-        print(f"DEBUG: highlight_tiers called with {len(selected_tiers)} tiers")
         for tier in selected_tiers:
-            print(f"  DEBUG: Tier '{tier.name}' with hands: {tier.hands}")
 
         # Store current grid size to maintain it during highlighting
         current_grid_size = self._grid_state["grid_size"]
@@ -318,7 +311,6 @@ class HandGridWidget:
 
     def update_hand_colors(self):
         """Updates hand colors and triggers grid redraw."""
-        print(f"DEBUG: update_hand_colors called")
         # This method now just triggers a redraw
         self._render_grid()
 
@@ -335,7 +327,6 @@ class HandGridWidget:
             self._grid_state["selected_hands"].clear()
             self._grid_state["selected_hands"].add(hand)
 
-        print(
             f"DEBUG: Hand '{hand}' {'selected' if hand in self._grid_state['selected_hands'] else 'deselected'}"
         )
 
@@ -467,14 +458,12 @@ class HandGridWidget:
 
     def force_clear_highlights(self):
         """Force clear all highlights and reset state."""
-        print(f"DEBUG: force_clear_highlights called")
         self._update_grid_state(selected_tiers=[], selected_hands=set())
         self._current_tier_selection = None
         self._tier_highlighting_active = False
 
     def clear_all_highlights(self):
         """Clear all highlights and return to default state."""
-        print(f"DEBUG: clear_all_highlights called")
         self._update_grid_state(selected_tiers=[], selected_hands=set())
         self._current_tier_selection = None
         self._tier_highlighting_active = False

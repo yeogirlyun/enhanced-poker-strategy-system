@@ -36,7 +36,6 @@ class DecisionTablePanel:
         self.current_street = "flop"  # Default street
         self.current_font_size = 12  # Default, will be set by update_font_size
 
-        print(f"DEBUG: DecisionTablePanel initialized")
 
         self._setup_ui()
         self._load_current_table()
@@ -210,7 +209,6 @@ class DecisionTablePanel:
                             pos
                         ].set(str(value))
         except Exception as e:
-            print(f"ERROR: Failed to load decision table: {e}")
             # Set default values
             defaults = {"val_thresh": "35", "check_thresh": "15", "sizing": "0.75"}
             for action_type in ["pfa", "caller"]:
@@ -226,7 +224,6 @@ class DecisionTablePanel:
         tab_id = self.street_notebook.index(current_tab)
         streets = ["flop", "turn", "river"]
         self.current_street = streets[tab_id]
-        print(f"DEBUG: Street changed to '{self.current_street}'")
         self._load_current_table()
 
     def _save_changes(self):
@@ -258,7 +255,6 @@ class DecisionTablePanel:
             if self.on_table_change:
                 self.on_table_change()
         except Exception as e:
-            print(f"ERROR: Failed to save decision table: {e}")
 
     def _reset_to_default(self):
         """Resets the current table to default values."""

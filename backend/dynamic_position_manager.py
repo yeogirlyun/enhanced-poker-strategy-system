@@ -181,14 +181,6 @@ if __name__ == "__main__":
     # Test with 6-max table
     pos_manager = DynamicPositionManager(6)
     
-    print("=== 6-Max Table Position Test ===")
-    print(f"Initial positions: {pos_manager.get_all_positions()}")
-    print(f"Dealer seat: {pos_manager.dealer_seat}")
-    print(f"Blind positions: {pos_manager.get_blind_positions()}")
-    print(f"Preflop action order: {pos_manager.get_action_order('preflop')}")
     
     # Move dealer button
     pos_manager.move_dealer_button()
-    print(f"\nAfter moving dealer:")
-    print(f"Positions: {pos_manager.get_all_positions()}")
-    print(f"Dealer seat: {pos_manager.dealer_seat}") 

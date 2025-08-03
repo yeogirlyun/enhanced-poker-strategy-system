@@ -15,7 +15,6 @@ try:
     PYGAME_AVAILABLE = True
 except ImportError:
     PYGAME_AVAILABLE = False
-    print("⚠️  Pygame not available. Sound effects will be simulated.")
 
 
 class SoundManager:
@@ -59,16 +58,13 @@ class SoundManager:
                 pygame.mixer.init()
                 self._load_sounds()
             except Exception as e:
-                print(f"⚠️  Sound initialization failed: {e}")
                 self.sound_enabled = False
         else:
-            print("🔊 Using simulated sound effects")
     
     def _load_sounds(self):
         """Load all sound effects from the sounds directory."""
         sound_dir = os.path.join(os.path.dirname(__file__), "sounds")
         if not os.path.isdir(sound_dir):
-            print(f"⚠️  'sounds' directory not found at {sound_dir}. Using simulated sounds.")
             self.sound_enabled = False
             return
             
@@ -87,19 +83,14 @@ class SoundManager:
                     file_size = os.path.getsize(path)
                     if file_size > 20000:  # Files larger than 20KB are likely authentic
                         authentic_sounds.append(name)
-                        print(f"🎵 Loaded AUTHENTIC sound: {name} ({file_size/1024:.1f}KB)")
                     else:
                         generated_sounds.append(name)
-                        print(f"✅ Loaded generated sound: {name}")
                         
                 except pygame.error as e:
-                    print(f"⚠️  Could not load sound '{filename}': {e}")
         
         # Report sound loading summary
         if authentic_sounds:
-            print(f"🎧 Authentic sounds loaded: {', '.join(authentic_sounds)}")
         if generated_sounds:
-            print(f"🎵 Generated sounds loaded: {len(generated_sounds)}")
     
     def play(self, sound_name: str):
         """Play a sound effect with industry-standard mapping."""
@@ -112,9 +103,7 @@ class SoundManager:
         if actual_sound in self.sounds and PYGAME_AVAILABLE:
             try:
                 self.sounds[actual_sound].play()
-                print(f"🔊 Playing: {sound_name} -> {actual_sound}")
             except Exception as e:
-                print(f"⚠️  Error playing sound '{sound_name}': {e}")
         else:
             # Simulate sound with console output
             sound_emojis = {
@@ -125,7 +114,6 @@ class SoundManager:
                 "button_move": "🎯", "dealer_button": "🎯"
             }
             emoji = sound_emojis.get(sound_name, "🔊")
-            print(f"{emoji} Sound (Simulated): {sound_name}")
     
     def play_action_sound(self, action: str, amount: float = 0):
         """Play appropriate sound for poker actions with context."""
@@ -169,12 +157,10 @@ class SoundManager:
     def enable_sound(self):
         """Enable sound effects."""
         self.sound_enabled = True
-        print("🔊 Sound effects enabled")
     
     def disable_sound(self):
         """Disable sound effects."""
         self.sound_enabled = False
-        print("🔇 Sound effects disabled")
     
     def get_available_sounds(self) -> list:
         """Get list of available sound names."""
@@ -189,7 +175,6 @@ class SoundManager:
         if PYGAME_AVAILABLE and self.sounds:
             for sound in self.sounds.values():
                 sound.set_volume(max(0.0, min(1.0, volume)))
-            print(f"🔊 Volume set to {volume:.2f}")
     
     def get_sound_quality_report(self) -> dict:
         """Get a report on sound quality and availability."""
