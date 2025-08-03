@@ -286,6 +286,11 @@ class ImprovedPokerStateMachine:
     def start_session(self):
         """Start a new poker session."""
         self.session_state = self._initialize_session_state()
+        # Reset hand history and any other per-session state
+        self.hand_history = []
+        self.current_state = PokerState.START_HAND
+        self.action_player_index = 0
+        self.dealer_position = 0
         self._log_session_event("Session started")
         self._log_session_event(f"Players: {self.num_players}")
         self._log_session_event(f"Big Blind: ${self.session_state.session_metadata.big_blind_amount}")
@@ -308,21 +313,25 @@ class ImprovedPokerStateMachine:
         """Get comprehensive session information."""
         if not self.session_state:
             return {}
-        
         metadata = self.session_state.session_metadata
         duration = (metadata.end_time or time.time()) - metadata.start_time
-        
+        # Get human win/loss stats if present
+        human_wins = getattr(self.session_state, 'human_wins', 0)
+        human_losses = getattr(self.session_state, 'human_losses', 0)
         return {
             "session_id": metadata.session_id,
             "start_time": datetime.fromtimestamp(metadata.start_time).isoformat(),
             "end_time": datetime.fromtimestamp(metadata.end_time).isoformat() if metadata.end_time else None,
-            "duration_seconds": duration,
+            "session_duration": duration,
             "total_hands": metadata.total_hands,
             "total_players": metadata.total_players,
             "big_blind_amount": metadata.big_blind_amount,
             "initial_stacks": metadata.initial_stacks,
             "final_stacks": metadata.final_stacks,
-            "session_notes": metadata.session_notes
+            "session_notes": metadata.session_notes,
+            "hands_played": len(self.session_state.hands_played),
+            "human_wins": human_wins,
+            "human_losses": human_losses,
         }
 
     def export_session(self, filepath: str) -> bool:
@@ -2152,7 +2161,9 @@ class ImprovedPokerStateMachine:
         """Get comprehensive game information."""
         if not self.game_state:
             return {}
-        
+        action_player = self.get_action_player()
+        valid_actions = self.get_valid_actions_for_player(action_player) if action_player else {}
+        session_info = self.get_session_info()
         return {
             "state": self.current_state.value,
             "pot": self.game_state.pot,
@@ -2174,6 +2185,8 @@ class ImprovedPokerStateMachine:
                 for p in self.game_state.players
             ],
             "action_player": self.action_player_index,
+            "valid_actions": valid_actions,
+            "session_info": session_info,
         }
     
     def get_valid_actions_for_player(self, player: Player) -> dict:
