@@ -1130,6 +1130,11 @@ class ImprovedPokerStateMachine:
         
         self._log_action(f"📊 Hand: {hand_notation}, Strength: {hand_strength}")
         
+        # Special handling for BB when no raise has been made
+        if player.position == "BB" and call_amount == 0:
+            self._log_action(f"🎯 BB with no raise, checking")
+            return ActionType.CHECK, 0
+        
         if call_amount > 0:  # Facing a raise
             strategy = self.strategy_integration.get_strategy_for_position(
                 player.position, "preflop", "vs_raise"
@@ -2147,7 +2152,8 @@ class ImprovedPokerStateMachine:
 
         # Reset game state for next hand
         if self.game_state:
-            self.game_state.pot = 0
+            # DO NOT reset pot here - preserve it until new hand starts
+            # self.game_state.pot = 0  # COMMENTED OUT: Don't reset pot yet
             self.game_state.current_bet = 0
             self.game_state.min_raise = 1.0
             self.game_state.players_acted.clear()
