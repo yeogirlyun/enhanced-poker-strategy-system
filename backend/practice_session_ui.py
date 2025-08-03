@@ -155,16 +155,19 @@ class PlayerPod(tk.Frame):
     def _draw_chips(self, stack):
         """Draws a graphical stack of chips based on the stack amount."""
         self.chip_canvas.delete("all")
-        colors = ["#d35400", "#2980b9", "#27ae60"] # Orange, Blue, Green chips
-        if stack <= 0: return
+        colors = ["#d35400", "#2980b9", "#27ae60"]  # Orange, Blue, Green chips
         
-
+        if stack <= 0:
+            return
         
         # Improved logic: Default 3 chips, then 5, then 7 for larger stacks
         if stack < 50:
             num_chips = 3  # Default minimum
         elif stack < 200:
             num_chips = 5  # Medium stacks
+        else:
+            num_chips = 7  # Large stacks
+        
         # Make chips larger and more visible for the bigger canvas
         chip_width = 12
         chip_height = 14
@@ -225,7 +228,7 @@ class PracticeSessionUI(ttk.Frame):
         # Initialize other attributes
         self.num_players = 6
         self.player_seats = [None] * self.num_players
-        self.community_card_labels = []
+        self.community_card_widgets = []
         self.pot_label = None
         self.pot_label_window = None
         self.pot_graphics = {}
@@ -1638,7 +1641,7 @@ class PracticeSessionUI(ttk.Frame):
                         chips_label.config(font=small_font)
         
         # Update community card labels
-        for card_widget in self.community_card_labels:
+        for card_widget in self.community_card_widgets:
             if card_widget and hasattr(card_widget, 'configure'):
                 # CardWidget doesn't need font updates as it handles its own styling
                 pass
