@@ -202,11 +202,9 @@ class EnhancedMainGUI:
 
     def _generate_default_strategy_files(self):
         """Generate default strategy files if they don't exist."""
-        print("🔧 Generating default strategy files...")
         
         # Get the current working directory
         current_dir = os.getcwd()
-        print(f"📁 Current directory: {current_dir}")
         
         # Create StrategyData instance with default tiers
         default_strategy = StrategyData()
@@ -215,26 +213,17 @@ class EnhancedMainGUI:
         # Generate modern_strategy.json
         modern_file = "modern_strategy.json"
         if not os.path.exists(modern_file):
-            print(f"📝 Creating {modern_file}...")
             if default_strategy.save_strategy_to_file(modern_file):
-                print(f"✅ Generated {modern_file}")
             else:
-                print(f"❌ Failed to generate {modern_file}")
         else:
-            print(f"📁 {modern_file} already exists")
         
         # Generate aggressive_strategy.json
         aggressive_file = "aggressive_strategy.json"
         if not os.path.exists(aggressive_file):
-            print(f"📝 Creating {aggressive_file}...")
             if default_strategy.save_strategy_to_file(aggressive_file):
-                print(f"✅ Generated {aggressive_file}")
             else:
-                print(f"❌ Failed to generate {aggressive_file}")
         else:
-            print(f"📁 {aggressive_file} already exists")
         
-        print("🎯 Default strategy files generation complete!")
 
     def _generate_default_strategy(self):
         """Generate a default strategy."""
@@ -1200,7 +1189,6 @@ These settings can be configured in the main strategy panels."""
             
             return True
         except Exception as e:
-            print(f"Error loading image {image_path}: {e}")
             return False
 
     def _safe_set_card_image(self, widget, card_str):
@@ -1241,7 +1229,6 @@ These settings can be configured in the main strategy panels."""
             
             return True
         except Exception as e:
-            print(f"Error creating card image for {card_str}: {e}")
             return False
 
     def _format_card(self, card_str: str) -> str:

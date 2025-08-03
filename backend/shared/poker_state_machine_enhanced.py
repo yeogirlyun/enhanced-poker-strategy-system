@@ -265,7 +265,6 @@ class ImprovedPokerStateMachine:
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"[SESSION {timestamp}] {event}"
         self.session_state.session_log.append(log_entry)
-        print(log_entry)
 
     def _capture_player_state(self, player: Player) -> Dict[str, Any]:
         """Capture complete player state for session tracking."""
@@ -587,7 +586,6 @@ class ImprovedPokerStateMachine:
         if len(self.action_log) > self.max_log_size:
             self.action_log = self.action_log[-self.max_log_size:]
         
-        print(log_entry)
         
         # NEW: Call the UI callback for detailed logging
         if self.on_log_entry:

@@ -182,7 +182,6 @@ class EnhancedStrategyIntegration:
                     if street in postflop[action_type]:
                         self.available_positions.update(postflop[action_type][street].keys())
         
-        print(f"Available strategy positions: {sorted(self.available_positions)}")
     
     def get_strategy_for_position(self, actual_position: str, street: str, 
                                   action_context: str = "open") -> Dict:
@@ -201,7 +200,6 @@ class EnhancedStrategyIntegration:
         )
         
         if not mapped_position:
-            print(f"WARNING: No mapping found for {actual_position}, using defaults")
             return self._get_default_strategy(street, action_context)
         
         # Retrieve strategy

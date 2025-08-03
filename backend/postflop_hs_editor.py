@@ -27,7 +27,6 @@ class PostflopHSEditor:
         self.on_change = on_change
         self.current_font_size = 12
 
-        print(f"DEBUG: PostflopHSEditor initialized")
 
         self._setup_ui()
         self._load_current_values()

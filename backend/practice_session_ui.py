@@ -864,7 +864,6 @@ class PracticeSessionUI(ttk.Frame):
             for i, seat in enumerate(self.player_seats):
                 if seat and seat.get("name_label"):
                     player_name = seat["name_label"].cget("text").split('\n')[0]
-                    print(f"�� Checking seat {i}: {player_name} vs {winner_name}")  # Debug
                     if player_name == winner_name:
                         winner_seat = i
     
@@ -983,9 +982,7 @@ class PracticeSessionUI(ttk.Frame):
                                     chip_symbols = self._get_chip_symbols(new_amount)
                                     chips_label.config(text=chip_symbols)
                                     
-                                    print(f"💰 Updated winner stack: ${current_amount:.2f} + ${winner_info['amount']:.2f} = ${new_amount:.2f}")
                                 except ValueError:
-                                    print(f"⚠️ Could not parse current stack amount: {current_text}")
                     
                     # Update the display
                     self.update_display()
@@ -993,8 +990,6 @@ class PracticeSessionUI(ttk.Frame):
             # Start the animation
             animate_money()
         else:
-            print(f"❌ Could not find winner seat for: {winner_info['name']}")  # Debug
-            print(f"🔍 Available seats: {[seat.get('name_label').cget('text').split('\n')[0] if seat and seat.get('name_label') else 'None' for seat in self.player_seats]}")  # Debug
     
     def add_game_message(self, message):
         """Add a message to the action messages area."""
@@ -1274,20 +1269,18 @@ class PracticeSessionUI(ttk.Frame):
         # Hide game control buttons
         self.start_button.pack_forget()
         self.reset_button.pack_forget()
-        print(f"🎯 UI: Game control buttons hidden")  # Debug
+
         
         # Show bet sizing controls
         if hasattr(self, 'bet_slider'):
             self.bet_slider.pack(fill=tk.X)
-            print(f"🎯 UI: Bet slider shown")  # Debug
+
         if hasattr(self, 'bet_size_label'):
             self.bet_size_label.pack()
-            print(f"🎯 UI: Bet size label shown")  # Debug
+
         if hasattr(self, 'sizing_frame'):
             self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
-            print(f"🎯 UI: Sizing frame shown")  # Debug
-        
-        print(f"🎯 UI: Action buttons should now be visible")  # Debug
+
 
     def _reset_game(self):
         """Resets the game state and UI."""
@@ -1391,7 +1384,7 @@ class PracticeSessionUI(ttk.Frame):
         # Use preserved pot amount if hand is completed
         if self.hand_completed and self.preserved_pot_amount > 0:
             pot_amount = self.preserved_pot_amount
-            print(f"🎯 UI: Using preserved pot amount: ${pot_amount}")  # Debug
+    
         self.update_pot_amount(pot_amount)
         
         # Show current bet information in message area if there's a current bet
@@ -1406,7 +1399,7 @@ class PracticeSessionUI(ttk.Frame):
         if self.hand_completed and self.preserved_community_cards:
             # Use preserved cards after hand completion
             board_cards = self.preserved_community_cards
-            print(f"🎯 UI: Using preserved community cards: {board_cards}")  # Debug
+    
         
         # Safety check for community card widgets
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1417,8 +1410,6 @@ class PracticeSessionUI(ttk.Frame):
                     card_widget.update()
                 else:
                     card_widget.set_card("")  # Clear the card
-        else:
-            print("🎯 UI: Community card widgets not ready yet")
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
@@ -1428,7 +1419,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Update player info
         if not hasattr(self, 'player_seats') or not self.player_seats:
-            print("🎯 UI: Player seats not ready yet")
+    
             return
             
         for i, player_seat in enumerate(self.player_seats):
@@ -1437,10 +1428,6 @@ class PracticeSessionUI(ttk.Frame):
 
             player_info = game_info['players'][i]
             player_pod = player_seat.get("player_pod")
-            
-            # Debug output for human player detection
-            if player_info.get('is_human', False):
-                print(f"🎯 UI: Player {i+1} is human: {player_info['is_human']}, cards: {player_info.get('cards', [])}")
             
             # Update PlayerPod with new data
             if player_pod:
@@ -1454,10 +1441,10 @@ class PracticeSessionUI(ttk.Frame):
             # Players should be highlighted when it's their turn, even if they fold
             frame = player_seat["frame"]
             action_player = game_info.get('action_player', -1)
-            print(f"🎯 UI: Player {i+1} ({player_info['name']}) - action_player: {action_player}, current: {i}")
+    
             if i == action_player:
                 frame.config(bg=THEME["accent_primary"])
-                print(f"🎯 UI: Highlighting player {i+1} ({player_info['name']}) - it's their turn")
+        
             else:
                 frame.config(bg=THEME["secondary_bg"])
 
@@ -1502,7 +1489,7 @@ class PracticeSessionUI(ttk.Frame):
                 
                 if len(card_widgets) >= 2:
                     # Show folded card backs (dark gray, no border)
-                    print(f"🎴 Setting folded card backs for player {i+1}")
+            
                     card_widgets[0].set_card("", is_folded=True)  # Dark gray card back
                     card_widgets[1].set_card("", is_folded=True)  # Dark gray card back
         
@@ -1808,7 +1795,6 @@ class PracticeSessionUI(ttk.Frame):
             # Update session info to reflect the change
             self.update_session_info()
         else:
-            print(f"Warning: Unknown felt color '{felt_color}'")
     
     def update_stack_amount(self, player_index, new_amount):
         """Update the stack amount for a specific player."""
@@ -1890,12 +1876,10 @@ class PracticeSessionUI(ttk.Frame):
         """Updates the pot amount display with the new amount."""
         if hasattr(self, 'pot_label') and self.pot_label is not None:
             self.pot_label.config(text=f"${new_amount:.2f}")
-            print(f"💰 Updated pot: ${new_amount:.2f}")
+    
         else:
-            print(f"💰 Pot label not ready yet, skipping pot update: ${new_amount:.2f}")
 
     def _on_state_change(self, new_state):
         """Handle state changes from the state machine."""
-        print(f"🎯 UI: State changed to: {new_state}")
         self.update_display(new_state)
 
