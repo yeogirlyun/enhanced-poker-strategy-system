@@ -1897,8 +1897,8 @@ class CardWidget(tk.Frame):
         super().__init__(parent, **kwargs)
         
         # Real playing card proportions: width:height = 2.5:3.5 (approximately 5:7)
-        self.card_width = 60
-        self.card_height = int(self.card_width * 3.5 / 2.5)  # ~84 pixels
+        self.card_width = 80  # Increased from 60 to 80
+        self.card_height = int(self.card_width * 3.5 / 2.5)  # ~112 pixels
         
         # Configure frame to match card dimensions
         self.configure(
@@ -1930,7 +1930,7 @@ class CardWidget(tk.Frame):
                 text="🂠",
                 bg="#8B4513",
                 fg="#654321",
-                font=("Arial", 20, "bold"),
+                font=("Arial", 24, "bold"),  # Increased from 20 to 24
                 width=2,
                 height=1
             )
@@ -1939,13 +1939,13 @@ class CardWidget(tk.Frame):
             # Front card design
             self.configure(bg="white")
             
-            # Create card content with proper centering
+            # Create card content with proper centering and larger font
             content_label = tk.Label(
                 self,
                 text=card_text,
                 bg="white",
                 fg=card_color,
-                font=("Arial", 14, "bold"),
+                font=("Arial", 20, "bold"),  # Increased from 14 to 20
                 width=3,
                 height=1
             )
