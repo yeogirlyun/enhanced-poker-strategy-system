@@ -423,6 +423,19 @@ class PracticeSessionUI(ttk.Frame):
         )
         name_label.pack(pady=2)
         
+        # Create folded status label (initially hidden)
+        folded_label = tk.Label(
+            seat_frame,
+            text="FOLDED",
+            bg="red",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            relief="raised",
+            bd=1
+        )
+        folded_label.pack(pady=1)
+        folded_label.pack_forget()  # Initially hidden
+        
         # Cards area with realistic card proportions
         cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
         cards_frame.pack(pady=3)
@@ -473,6 +486,7 @@ class PracticeSessionUI(ttk.Frame):
         self.player_seats[index] = {
             "frame": seat_frame, 
             "name_label": name_label, 
+            "folded_label": folded_label,  # Add folded label reference
             "cards_label": cards_label,  # This is now a frame containing card labels
             "card_labels": [card1, card2],  # Store individual card labels
             "bet_label": bet_label
@@ -753,6 +767,13 @@ class PracticeSessionUI(ttk.Frame):
         # Clear community cards display when starting new hand
         for card_label in self.community_card_labels:
             card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
+        
+        # Hide all folded labels when starting new hand
+        for player_seat in self.player_seats:
+            if player_seat and "folded_label" in player_seat:
+                folded_label = player_seat["folded_label"]
+                if folded_label:
+                    folded_label.pack_forget()
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -1311,10 +1332,16 @@ class PracticeSessionUI(ttk.Frame):
         if hasattr(self, 'pot_label'):
             self.pot_label.config(text="Pot: $0.00", fg="yellow")
         
-        # FIX: Don't clear community cards immediately - let them stay visible during showdown
-        # Community cards will be cleared when the next hand starts
-        # for card_label in self.community_card_labels:
-        #     card_label.config(text="")
+        # Clear community cards display when starting new hand
+        for card_label in self.community_card_labels:
+            card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
+        
+        # Hide all folded labels when starting new hand
+        for player_seat in self.player_seats:
+            if player_seat and "folded_label" in player_seat:
+                folded_label = player_seat["folded_label"]
+                if folded_label:
+                    folded_label.pack_forget()
         
         # NEW: Clear all action indicators for new hand
         for player_index, action_label in self.action_indicators.items():
@@ -1439,6 +1466,11 @@ class PracticeSessionUI(ttk.Frame):
 
             # Update player card display with proper card styling
             if player_info['is_active']:
+                # Hide folded label for active players
+                folded_label = player_seat.get("folded_label")
+                if folded_label:
+                    folded_label.pack_forget()
+                
                 # Show cards for human players (always visible) or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     # Get the stored card labels
@@ -1467,12 +1499,18 @@ class PracticeSessionUI(ttk.Frame):
                         card_labels[0].config(text="🂠", fg="#8B4513", bg="#696969", relief="flat", bd=0)
                         card_labels[1].config(text="🂠", fg="#8B4513", bg="#696969", relief="flat", bd=0)
             else: # Player has folded
-                # Get the stored card labels
+                # Get the stored card labels and folded label
                 card_labels = player_seat.get("card_labels", [])
+                folded_label = player_seat.get("folded_label")
+                
                 if len(card_labels) >= 2:
-                    # Show "Folded" as a single word - dark grey background
-                    card_labels[0].config(text="Folded", fg="red", bg="#696969", relief="flat", bd=0)
-                    card_labels[1].config(text="", fg="red", bg="#696969", relief="flat", bd=0)
+                    # Hide the cards and show the folded label above
+                    card_labels[0].config(text="", bg="#696969", relief="flat", bd=0)
+                    card_labels[1].config(text="", bg="#696969", relief="flat", bd=0)
+                    
+                    # Show the folded label above the cards
+                    if folded_label:
+                        folded_label.pack(pady=1)
         
         # Update last action details - preserve winning announcement until new hand
         if hasattr(self, 'last_action_label'):
