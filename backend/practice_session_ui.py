@@ -1599,9 +1599,9 @@ class PracticeSessionUI(ttk.Frame):
                 card_label.config(font=large_font)
         
         # Update pot display
-        if hasattr(self, 'pot_label'):
+        if hasattr(self, 'pot_label') and self.pot_label is not None:
             self.pot_label.config(font=large_font)
-        if hasattr(self, 'pot_chips_label'):
+        if hasattr(self, 'pot_chips_label') and self.pot_chips_label is not None:
             self.pot_chips_label.config(font=small_font)
         
         # Update action buttons
@@ -1612,15 +1612,15 @@ class PracticeSessionUI(ttk.Frame):
                     button.config(font=main_font)
         
         # Update bet size entry and label
-        if hasattr(self, 'bet_size_entry'):
+        if hasattr(self, 'bet_size_entry') and self.bet_size_entry is not None:
             self.bet_size_entry.config(font=main_font)
-        if hasattr(self, 'bet_size_label'):
+        if hasattr(self, 'bet_size_label') and self.bet_size_label is not None:
             self.bet_size_label.config(font=main_font)
         
         # Update game control buttons
-        if hasattr(self, 'start_hand_btn'):
+        if hasattr(self, 'start_hand_btn') and self.start_hand_btn is not None:
             self.start_hand_btn.config(font=main_font)
-        if hasattr(self, 'reset_game_btn'):
+        if hasattr(self, 'reset_game_btn') and self.reset_game_btn is not None:
             self.reset_game_btn.config(font=main_font)
         
         # Force a complete UI refresh
