@@ -86,6 +86,7 @@ class GameState:
     min_raise: float = 1.0  # NEW: Track minimum raise amount
     big_blind: float = 1.0
     last_raise_amount: float = 0.0  # NEW: Track the size of the last raise for under-raise validation
+    last_full_raise_amount: float = 0.0  # NEW: Track the amount of the last valid, action-reopening raise
 
 
 @dataclass
@@ -1683,36 +1684,31 @@ class ImprovedPokerStateMachine:
             player.total_invested += additional_amount
             self.game_state.pot += additional_amount
             
-            # Update game state
-            old_bet = self.game_state.current_bet
-            self.game_state.current_bet = total_bet
+            # --- REFACTORED AND IMPROVED RAISE LOGIC ---
             
-            # --- FIX: UNDER-RAISE ALL-IN LOGIC ---
-            # Calculate the actual raise amount (how much more than the previous bet)
-            raise_amount = total_bet - old_bet
+            # Calculate the size of this raise
+            raise_amount = total_bet - self.game_state.current_bet
+            
+            # Check if this raise is a "full" raise
             is_full_raise = raise_amount >= self.game_state.min_raise
             
-            # Track the last raise amount for validation
-            self.game_state.last_raise_amount = raise_amount
+            # Update the game state with the new bet and raise amounts
+            self.game_state.current_bet = total_bet
+            self.game_state.min_raise = raise_amount  # The next min raise must be at least this large
             
-            # Update the minimum raise amount for the *next* player
-            self.game_state.min_raise = raise_amount
-            self._log_action(f"📈 Min raise updated to: ${self.game_state.min_raise:.2f}")
-            
-            # Only re-open the action (reset has_acted flags) if it was a full raise.
-            # An all-in that is less than a full raise does not re-open the action.
+            # If it was a full raise, update the state to reflect that the action is reopened.
+            # Otherwise, the last full raise amount remains unchanged.
             if is_full_raise:
-                self._log_action(f"🔄 Full raise made. Action is re-opened for players who have already acted.")
-                # Clear acted players (they get another chance after full raise)
-                self.game_state.players_acted.clear()
-                # Reset has_acted flags for all other players after a full raise
+                self.game_state.last_full_raise_amount = raise_amount
+                self._log_action(f"🔄 Full raise made. Action is re-opened.")
+                # Reset has_acted for other active players
                 for p in self.game_state.players:
                     if p.is_active and p != player:
                         p.has_acted_this_round = False
             else:
-                self._log_action(f"📉 Under-raise all-in. Action is not re-opened for players who have already acted.")
-                # Do NOT clear players_acted or reset has_acted flags for under-raises
-            # --- END FIX ---
+                self._log_action(f"📉 Under-raise all-in. Action is not re-opened.")
+                
+            # --- END REFACTOR ---
             
             if player.stack == 0:
                 player.is_all_in = True
@@ -2123,14 +2119,15 @@ class ImprovedPokerStateMachine:
             # A player can go all-in for less than a min-raise.
             is_all_in_raise = (player.current_bet + player.stack) == amount
 
-            # --- FIX: UNDER-RAISE ALL-IN VALIDATION ---
-            # Check if player is facing an under-raise all-in
+            # --- NEW VALIDATION LOGIC ---
+            # A player who has already acted cannot re-raise unless another player
+            # has since made a "full" raise.
             if player.has_acted_this_round:
-                # If the last raise was an under-raise (less than min_raise), 
-                # players who have already acted cannot re-raise
-                if self.game_state.last_raise_amount < self.game_state.min_raise:
-                    errors.append("Cannot re-raise as the last all-in was not a full raise")
-            # --- END FIX ---
+                # The size of the last raise must be at least the size of the last *full* raise.
+                # If it's smaller, it was an under-raise, and action is not reopened.
+                if self.game_state.min_raise < self.game_state.last_full_raise_amount:
+                    errors.append("Cannot re-raise as the last all-in was not a full raise.")
+            # --- END NEW VALIDATION ---
 
             if not is_all_in_raise and amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
