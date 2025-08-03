@@ -433,7 +433,7 @@ class PracticeSessionUI(ttk.Frame):
             text="🂠",
             bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
-            font=("Arial", 16, "bold"),
+            font=("Arial", 24, "bold"),  # Increased font size for 70% card area
             width=6,
             height=3,
             relief="flat",  # No raised relief for hidden cards
@@ -447,7 +447,7 @@ class PracticeSessionUI(ttk.Frame):
             text="🂠",
             bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
-            font=("Arial", 16, "bold"),
+            font=("Arial", 24, "bold"),  # Increased font size for 70% card area
             width=6,
             height=3,
             relief="flat",  # No raised relief for hidden cards
@@ -547,7 +547,7 @@ class PracticeSessionUI(ttk.Frame):
                 text="",
                 bg="#D3D3D3",  # Light grey background for visible cards
                 fg="black",  # Black text for visible cards
-                font=("Arial", 16, "bold"),
+                font=("Arial", 24, "bold"),  # Increased font size for 70% card area
                 width=6,
                 height=3,
                 relief="raised",  # Raised border for visible cards
@@ -737,28 +737,22 @@ class PracticeSessionUI(ttk.Frame):
         print(f"🎯 UI: Action buttons configured and should be visible")  # Debug
 
     def start_new_hand(self):
-        """Starts a new hand using the state machine."""
-        print(f"🎯 UI: start_new_hand called")  # Debug
-        self.add_game_message("🎮 Starting new hand...")
+        """Starts a new hand and resets the UI accordingly."""
+        print(f"🎯 UI: start_new_hand called")
         
-        # Clear preserved community cards and reset hand completion flag
+        # Clear preserved community cards and pot amount when starting new hand
         self.preserved_community_cards = []
+        self.preserved_pot_amount = 0.0
         self.hand_completed = False
-        self.preserved_pot_amount = 0.0  # Clear preserved pot amount
-        print(f"🎯 UI: Cleared preserved community cards and pot amount")  # Debug
+        print(f"🎯 UI: Cleared preserved community cards and pot amount")
         
-        # FIX: Clear community cards when starting a new hand
-        for card_label in self.community_card_labels:
-            card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
+        # Clear the winning announcement message when starting new hand
+        if hasattr(self, 'last_action_label'):
+            self.last_action_label.config(text="")
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
-        print(f"🎯 UI: state_machine.start_hand() completed")  # Debug
-        
-        # The state machine will automatically determine who acts first
-        # and call prompt_human_action if it's the human's turn.
-        self.update_session_info()
-        print(f"🎯 UI: start_new_hand completed")  # Debug
+        print(f"🎯 UI: start_new_hand completed")
 
     def handle_hand_complete(self, winner_info=None):
         """
@@ -823,6 +817,18 @@ class PracticeSessionUI(ttk.Frame):
         else:
             self.add_game_message("🏁 Hand complete!")
             self.pot_label.config(text="Hand Complete", fg=THEME["text_primary"])
+        
+        # Set the winning announcement message that will persist until next hand
+        if hasattr(self, 'last_action_label'):
+            winner_name = winner_info.get('name', 'Unknown')
+            amount = winner_info.get('amount', 0)
+            hand_type = winner_info.get('hand', 'unknown')
+            announcement = f"🏆 {winner_name} wins ${amount:.2f}! ({hand_type})"
+            self.last_action_label.config(text=announcement)
+            print(f"🎯 UI: Set winning announcement: {announcement}")
+        
+        # Mark hand as completed to preserve the announcement
+        self.hand_completed = True
 
         # Show game controls after a delay
         self.after(3000, self._show_game_control_buttons)
@@ -1462,10 +1468,12 @@ class PracticeSessionUI(ttk.Frame):
                     card_labels[0].config(text="Folded", fg="red", bg="#696969", relief="flat", bd=0)
                     card_labels[1].config(text="", fg="red", bg="#696969", relief="flat", bd=0)
         
-        # Update last action details
+        # Update last action details - preserve winning announcement until new hand
         if hasattr(self, 'last_action_label'):
-            last_action = game_info.get('last_action_details', '')
-            self.last_action_label.config(text=last_action)
+            # Only update if we don't have a preserved winning message
+            if not self.hand_completed:
+                last_action = game_info.get('last_action_details', '')
+                self.last_action_label.config(text=last_action)
         
         # Update session information display
         self.update_session_info()
