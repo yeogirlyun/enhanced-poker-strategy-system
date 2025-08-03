@@ -144,6 +144,9 @@ class PlayerPod(tk.Frame):
         self.chip_canvas = tk.Canvas(self.stack_frame, width=40, height=35, bg="#1a1a1a", highlightthickness=0)
         self.chip_canvas.pack(side="left", padx=5)
         
+        # Ensure the canvas is properly configured
+        self.chip_canvas.config(width=40, height=35)
+        
         # Label for the stack text
         self.stack_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 12, "bold"), bg="#1a1a1a", fg="white")
         self.stack_label.pack(side="left")
@@ -151,8 +154,10 @@ class PlayerPod(tk.Frame):
     def update_pod(self, data):
         # Update name, cards, highlighting as before
         self.name_label.config(text=data.get("name", ""))
-        self.stack_label.config(text=f"${data.get('stack', 0):.2f}")
-        self._draw_chips(data.get('stack', 0)) # Call the new chip drawing method
+        stack_amount = data.get('stack', 0)
+        self.stack_label.config(text=f"${stack_amount:.2f}")
+        print(f"🎰 PlayerPod update: {data.get('name', '')} - Stack: ${stack_amount:.2f}")
+        self._draw_chips(stack_amount) # Call the new chip drawing method
 
     def _draw_chips(self, stack):
         """Draws a graphical stack of chips based on the stack amount."""
@@ -176,9 +181,9 @@ class PlayerPod(tk.Frame):
         start_x = 8
         
         for i in range(num_chips):
-            # Draw chips from the bottom up to create a 3D effect
-            y_offset = 32 - i * 3  # Better spacing for the larger canvas
-            x_offset = start_x + (i * 2)  # More horizontal offset for better 3D effect
+            # Draw chips in a straight vertical tower
+            y_offset = 32 - i * 2  # Vertical spacing for straight tower
+            x_offset = start_x  # Same x position for all chips (straight tower)
             
             # Draw the main chip
             self.chip_canvas.create_oval(x_offset, y_offset, x_offset + chip_width, y_offset - chip_height, 
