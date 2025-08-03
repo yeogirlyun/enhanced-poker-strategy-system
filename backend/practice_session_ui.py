@@ -253,48 +253,94 @@ class PracticeSessionUI(ttk.Frame):
         )
         position_label.pack()
         
-        info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
-        info_frame.pack(pady=(2, 0))
-        
-        stack_label = tk.Label(
-            info_frame, 
-            text="$100.00", 
-            bg=THEME["secondary_bg"], 
-            fg="yellow", 
-            font=FONTS["stack_bet"]
-        )
-        stack_label.pack(side=tk.LEFT, padx=5)
-        
-        bet_label = tk.Label(
-            info_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="orange", 
-            font=FONTS["stack_bet"]
-        )
-        bet_label.pack(side=tk.LEFT, padx=5)
-        
-        # Use responsive card font sizing
-        card_font_size = max(12, int(self.canvas.winfo_height() / 35))
-        card_font = (THEME["font_family"], card_font_size, "bold")
+        # Cards area
         cards_label = tk.Label(
             seat_frame, 
             text="🂠 🂠", 
             bg=THEME["secondary_bg"], 
             fg="#CCCCCC", 
-            font=card_font
+            font=FONTS["cards"]
         )
         cards_label.pack(pady=5)
         
+        # Bet information (current bet amount)
+        bet_label = tk.Label(
+            seat_frame, 
+            text="", 
+            bg=THEME["secondary_bg"], 
+            fg="orange", 
+            font=FONTS["stack_bet"]
+        )
+        bet_label.pack()
+        
+        # Store references for updates
         self.player_seats[index] = {
             "frame": seat_frame, 
             "name_label": name_label, 
             "position_label": position_label,
-            "stack_label": stack_label, 
-            "bet_label": bet_label, 
-            "cards_label": cards_label
+            "cards_label": cards_label, 
+            "bet_label": bet_label
         }
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
+        
+        # Create separate stack graphics area in front of player
+        self._create_stack_graphics(index, x, y)
+    
+    def _create_stack_graphics(self, player_index, seat_x, seat_y):
+        """Create a separate stack graphics area positioned in front of the player."""
+        # Calculate position for stack graphics (in front of player, closer to table center)
+        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        center_x, center_y = width / 2, height / 2
+        
+        # Position stack graphics closer to table center than player seat
+        stack_radius_x = width * 0.35  # Closer to center than player seats
+        stack_radius_y = height * 0.28
+        
+        # Calculate angle for this player
+        angle = (2 * math.pi / self.num_players) * player_index - (math.pi / 2)
+        stack_x = center_x + stack_radius_x * math.cos(angle)
+        stack_y = center_y + stack_radius_y * math.sin(angle)
+        
+        # Create stack graphics frame
+        stack_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=1, relief="solid")
+        
+        # Stack amount label
+        stack_amount_label = tk.Label(
+            stack_frame,
+            text="$100.00",
+            bg=THEME["secondary_bg"],
+            fg="yellow",
+            font=FONTS["stack_bet"]
+        )
+        stack_amount_label.pack(pady=2)
+        
+        # Stack chips visualization (using Unicode chip symbols)
+        chips_label = tk.Label(
+            stack_frame,
+            text="🟡🟡🟡",  # Yellow chips
+            bg=THEME["secondary_bg"],
+            fg="yellow",
+            font=FONTS["small"]
+        )
+        chips_label.pack()
+        
+        # Store stack graphics references
+        if "stack_graphics" not in self.player_seats[player_index]:
+            self.player_seats[player_index]["stack_graphics"] = {}
+        
+        self.player_seats[player_index]["stack_graphics"] = {
+            "frame": stack_frame,
+            "amount_label": stack_amount_label,
+            "chips_label": chips_label
+        }
+        
+        # Create window for stack graphics
+        stack_window = self.canvas.create_window(
+            stack_x, stack_y, 
+            window=stack_frame, 
+            anchor="center"
+        )
+        self.player_seats[player_index]["stack_graphics"]["window"] = stack_window
 
     def _draw_community_card_area(self):
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
@@ -1113,11 +1159,6 @@ class PracticeSessionUI(ttk.Frame):
                     if position_label:
                         position_label.config(font=small_font)
                     
-                    # Update stack label
-                    stack_label = player_seat.get("stack_label")
-                    if stack_label:
-                        stack_label.config(font=main_font)
-                    
                     # Update cards label
                     cards_label = player_seat.get("cards_label")
                     if cards_label:
@@ -1127,6 +1168,17 @@ class PracticeSessionUI(ttk.Frame):
                     bet_label = player_seat.get("bet_label")
                     if bet_label:
                         bet_label.config(font=main_font)
+                
+                # Update stack graphics
+                stack_graphics = player_seat.get("stack_graphics")
+                if stack_graphics:
+                    amount_label = stack_graphics.get("amount_label")
+                    if amount_label:
+                        amount_label.config(font=main_font)
+                    
+                    chips_label = stack_graphics.get("chips_label")
+                    if chips_label:
+                        chips_label.config(font=small_font)
         
         # Update community card labels
         for card_label in self.community_card_labels:
@@ -1226,3 +1278,48 @@ class PracticeSessionUI(ttk.Frame):
             self.update_session_info()
         else:
             print(f"Warning: Unknown felt color '{felt_color}'")
+    
+    def update_stack_amount(self, player_index, new_amount):
+        """Update the stack amount for a specific player."""
+        if player_index < len(self.player_seats):
+            player_seat = self.player_seats[player_index]
+            if player_seat and "stack_graphics" in player_seat:
+                stack_graphics = player_seat["stack_graphics"]
+                amount_label = stack_graphics.get("amount_label")
+                chips_label = stack_graphics.get("chips_label")
+                
+                if amount_label:
+                    amount_label.config(text=f"${new_amount:.2f}")
+                
+                if chips_label:
+                    # Create visual chip representation based on amount
+                    chip_count = self._calculate_chip_count(new_amount)
+                    chip_symbols = self._get_chip_symbols(new_amount)
+                    chips_label.config(text=chip_symbols)
+    
+    def _calculate_chip_count(self, amount):
+        """Calculate how many chip symbols to display based on amount."""
+        if amount <= 10:
+            return 1
+        elif amount <= 50:
+            return 2
+        elif amount <= 100:
+            return 3
+        elif amount <= 200:
+            return 4
+        else:
+            return 5
+    
+    def _get_chip_symbols(self, amount):
+        """Get appropriate chip symbols based on amount."""
+        chip_count = self._calculate_chip_count(amount)
+        
+        # Different chip colors based on amount ranges
+        if amount <= 25:
+            return "🟡" * chip_count  # Yellow chips for small amounts
+        elif amount <= 100:
+            return "🟢" * chip_count  # Green chips for medium amounts
+        elif amount <= 500:
+            return "🔴" * chip_count  # Red chips for larger amounts
+        else:
+            return "🟣" * chip_count  # Purple chips for very large amounts
