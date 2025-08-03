@@ -2098,9 +2098,7 @@ class ImprovedPokerStateMachine:
         Handles hand completion, determines winner, awards pot, and notifies UI.
         This is now the single source of truth for ending a hand.
         """
-        print(f"🏆 DEBUG: Starting winner determination")  # Debug
-        print(f"💰 DEBUG: Current pot: ${self.game_state.pot}")  # Debug
-        print(f"👥 DEBUG: Active players: {[p.name for p in self.game_state.players if p.is_active]}")  # Debug
+
         
         self._log_action("Hand complete")
 
