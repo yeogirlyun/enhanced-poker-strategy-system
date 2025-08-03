@@ -2433,17 +2433,4 @@ class ImprovedPokerStateMachine:
         }
 
 
-print("🚀 Enhanced Poker State Machine loaded!")
-print("✅ All critical fixes implemented:")
-print("  1. Dynamic position tracking")
-print("  2. Correct raise logic")
-print("  3. All-in state tracking")
-print("  4. Improved round completion")
-print("  5. Strategy integration for bots")
-print("  6. Better input validation")
-print("  7. COMPREHENSIVE SESSION TRACKING - NEW!")
-print("     - Complete session history")
-print("     - Hand replay capability")
-print("     - Session export/import")
-print("     - Debug information capture")
-print("     - Session statistics")
+
