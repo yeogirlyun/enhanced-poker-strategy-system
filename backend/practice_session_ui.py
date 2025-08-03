@@ -427,32 +427,32 @@ class PracticeSessionUI(ttk.Frame):
         cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
         cards_frame.pack(pady=3)
         
-        # Create two card labels for hole cards with simple style
+        # Create two card labels for hole cards with proper styling
         card1 = tk.Label(
             cards_frame,
             text="🂠",
-            bg=THEME["secondary_bg"],  # Dark green background
+            bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
             font=("Arial", 16, "bold"),
             width=6,
             height=3,
-            relief="flat",  # No raised relief
-            bd=0,  # No border
-            highlightthickness=0  # No highlight
+            relief="flat",  # No raised relief for hidden cards
+            bd=0,  # No border for hidden cards
+            highlightthickness=0  # No highlight for hidden cards
         )
         card1.pack(side=tk.LEFT, padx=2)
         
         card2 = tk.Label(
             cards_frame,
             text="🂠",
-            bg=THEME["secondary_bg"],  # Dark green background
+            bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
             font=("Arial", 16, "bold"),
             width=6,
             height=3,
-            relief="flat",  # No raised relief
-            bd=0,  # No border
-            highlightthickness=0  # No highlight
+            relief="flat",  # No raised relief for hidden cards
+            bd=0,  # No border for hidden cards
+            highlightthickness=0  # No highlight for hidden cards
         )
         card2.pack(side=tk.LEFT, padx=2)
         
@@ -541,18 +541,19 @@ class PracticeSessionUI(ttk.Frame):
         self.community_card_labels = []
         
         for i in range(5):
-            # Create individual card label with simple style (white text on dark green)
+            # Create individual card label with proper styling (light grey background with borders)
             card_label = tk.Label(
                 community_frame,
                 text="",
-                bg=THEME["secondary_bg"],  # Dark green background
-                fg="white",  # White text
+                bg="#D3D3D3",  # Light grey background for visible cards
+                fg="black",  # Black text for visible cards
                 font=("Arial", 16, "bold"),
                 width=6,
                 height=3,
-                relief="flat",  # No raised relief
-                bd=0,  # No border
-                highlightthickness=0  # No highlight
+                relief="raised",  # Raised border for visible cards
+                bd=2,  # Border for visible cards
+                highlightthickness=1,
+                highlightbackground="#333333"
             )
             card_label.pack(side=tk.LEFT, padx=3)
             self.community_card_labels.append(card_label)
@@ -748,7 +749,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # FIX: Clear community cards when starting a new hand
         for card_label in self.community_card_labels:
-            card_label.config(text="", bg=THEME["secondary_bg"])
+            card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -792,12 +793,12 @@ class PracticeSessionUI(ttk.Frame):
                 if i < len(final_board):
                     card_text = self._format_card(final_board[i])
                     card_color = self._get_card_color(final_board[i])
-                    card_label.config(text=card_text, fg=card_color, bg=THEME["secondary_bg"])
+                    card_label.config(text=card_text, fg=card_color, bg="#D3D3D3", relief="raised", bd=2)
                     print(f"🎯 UI: Set card {i} to: {card_text} (color: {card_color})")  # Debug
                     # Force the card label to update
                     card_label.update()
                 else:
-                    card_label.config(text="", bg=THEME["secondary_bg"])
+                    card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
             
             # Force the canvas to refresh
             self.canvas.update()
@@ -1371,11 +1372,11 @@ class PracticeSessionUI(ttk.Frame):
             if i < len(board_cards):
                 card_text = self._format_card(board_cards[i])
                 card_color = self._get_card_color(board_cards[i])
-                card_label.config(text=card_text, fg=card_color, bg=THEME["secondary_bg"])
+                card_label.config(text=card_text, fg=card_color, bg="#D3D3D3", relief="raised", bd=2)
                 # Force the card label to update immediately
                 card_label.update()
             else:
-                card_label.config(text="", bg=THEME["secondary_bg"])
+                card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
@@ -1422,36 +1423,36 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
-            # Update player card display with simple card style
+            # Update player card display with proper card styling
             if player_info['is_active']:
                 # Show cards for human players or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     # Get the stored card labels
                     card_labels = player_seat.get("card_labels", [])
                     if len(card_labels) >= 2 and len(player_info['cards']) >= 2:
-                        # Update first card
+                        # Update first card - light grey background with borders for visible cards
                         card1_text = self._format_card(player_info['cards'][0])
                         card1_color = self._get_card_color(player_info['cards'][0])
-                        card_labels[0].config(text=card1_text, fg=card1_color, bg=THEME["secondary_bg"])
+                        card_labels[0].config(text=card1_text, fg=card1_color, bg="#D3D3D3", relief="raised", bd=2)
                         
-                        # Update second card
+                        # Update second card - light grey background with borders for visible cards
                         card2_text = self._format_card(player_info['cards'][1])
                         card2_color = self._get_card_color(player_info['cards'][1])
-                        card_labels[1].config(text=card2_text, fg=card2_color, bg=THEME["secondary_bg"])
+                        card_labels[1].config(text=card2_text, fg=card2_color, bg="#D3D3D3", relief="raised", bd=2)
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card labels
                     card_labels = player_seat.get("card_labels", [])
                     if len(card_labels) >= 2:
-                        # Show card backs for hidden cards
-                        card_labels[0].config(text="🂠", fg="#8B4513", bg=THEME["secondary_bg"])
-                        card_labels[1].config(text="🂠", fg="#8B4513", bg=THEME["secondary_bg"])
+                        # Show card backs for hidden cards - dark grey background
+                        card_labels[0].config(text="🂠", fg="#8B4513", bg="#696969", relief="flat", bd=0)
+                        card_labels[1].config(text="🂠", fg="#8B4513", bg="#696969", relief="flat", bd=0)
             else: # Player has folded
                 # Get the stored card labels
                 card_labels = player_seat.get("card_labels", [])
                 if len(card_labels) >= 2:
-                    # Show "Folded" on cards
-                    card_labels[0].config(text="Fold", fg="red", bg=THEME["secondary_bg"])
-                    card_labels[1].config(text="ed", fg="red", bg=THEME["secondary_bg"])
+                    # Show "Folded" on cards - dark grey background
+                    card_labels[0].config(text="Fold", fg="red", bg="#696969", relief="flat", bd=0)
+                    card_labels[1].config(text="ed", fg="red", bg="#696969", relief="flat", bd=0)
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
