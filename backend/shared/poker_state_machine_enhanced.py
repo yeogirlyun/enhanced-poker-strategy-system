@@ -1560,14 +1560,8 @@ class ImprovedPokerStateMachine:
         # --- FIX: Log and play sound immediately upon receiving the action ---
         self.log_state_change(player, action, amount)
         
-        # Create a more specific sound name for the action
-        sound_name = f"player_{action.value.lower()}"
-        if "player_fold" in self.sfx.sounds and action == ActionType.FOLD:
-             self.sfx.play("player_fold")
-        elif "chip_bet" in self.sfx.sounds and action in [ActionType.BET, ActionType.RAISE, ActionType.CALL]:
-             self.sfx.play("chip_bet")
-        elif sound_name in self.sfx.sounds:
-             self.sfx.play(sound_name)
+        # Play industry-standard sound for the action
+        self.sfx.play_action_sound(action.value.lower(), amount)
         # --- END FIX ---
         
         # --- NEW: Proper invalid action handling ---

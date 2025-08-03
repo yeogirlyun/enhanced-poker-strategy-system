@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Sound Manager for Poker Table
+Enhanced Sound Manager for Poker Table
 
-Provides sound effects for the poker table interface.
+Provides industry-standard sound effects for the poker table interface.
 Works with or without pygame for maximum compatibility.
 """
 
@@ -19,11 +19,40 @@ except ImportError:
 
 
 class SoundManager:
-    """Manages sound effects for the poker table."""
+    """Manages industry-standard sound effects for the poker table."""
     
     def __init__(self):
         self.sounds = {}
         self.sound_enabled = True
+        
+        # Industry-standard sound mappings
+        self.sound_mappings = {
+            # Core poker actions
+            "check": "player_check",
+            "call": "player_call", 
+            "bet": "player_bet",
+            "raise": "player_raise",
+            "fold": "player_fold",
+            "all_in": "player_all_in",
+            
+            # Card and dealing sounds
+            "card_deal": "card_deal",
+            "card_flip": "card_fold",  # Using existing card fold for card flip
+            "card_fold": "card_fold",
+            
+            # Chip and money sounds
+            "chip_bet": "chip_bet",
+            "chip_stack": "chip_bet",  # Using chip_bet for stacking
+            "pot_win": "winner_announce",
+            "pot_split": "pot_split",
+            "pot_rake": "pot_rake",
+            
+            # Game flow sounds
+            "winner_announce": "winner_announce",
+            "turn_notify": "turn_notify",
+            "button_move": "button_move",
+            "dealer_button": "button_move",  # Using button_move for dealer button
+        }
         
         if PYGAME_AVAILABLE:
             try:
@@ -73,27 +102,69 @@ class SoundManager:
             print(f"🎵 Generated sounds loaded: {len(generated_sounds)}")
     
     def play(self, sound_name: str):
-        """Play a sound effect."""
+        """Play a sound effect with industry-standard mapping."""
         if not self.sound_enabled:
             return
-            
-        if sound_name in self.sounds and PYGAME_AVAILABLE:
+        
+        # Map to actual sound file
+        actual_sound = self.sound_mappings.get(sound_name, sound_name)
+        
+        if actual_sound in self.sounds and PYGAME_AVAILABLE:
             try:
-                self.sounds[sound_name].play()
-                print(f"🔊 Playing: {sound_name}")
+                self.sounds[actual_sound].play()
+                print(f"🔊 Playing: {sound_name} -> {actual_sound}")
             except Exception as e:
                 print(f"⚠️  Error playing sound '{sound_name}': {e}")
         else:
             # Simulate sound with console output
             sound_emojis = {
-                "card_deal": "🎴", "card_fold": "📄", "player_check": "✅",
-                "player_call": "📞", "player_bet": "💰", "player_raise": "📈",
-                "player_all_in": "🔥", "pot_rake": "🏦", "winner_announce": "🎉",
-                "turn_notify": "🔔", "pot_split": "⚖️", "chip_bet": "💰",
-                "button_move": "🎯"
+                "check": "✅", "call": "📞", "bet": "💰", "raise": "📈", "fold": "📄",
+                "all_in": "🔥", "card_deal": "🎴", "card_flip": "🃏", "card_fold": "📄",
+                "chip_bet": "💰", "chip_stack": "🪙", "pot_win": "🏆", "pot_split": "⚖️",
+                "pot_rake": "🏦", "winner_announce": "🎉", "turn_notify": "🔔", 
+                "button_move": "🎯", "dealer_button": "🎯"
             }
             emoji = sound_emojis.get(sound_name, "🔊")
             print(f"{emoji} Sound (Simulated): {sound_name}")
+    
+    def play_action_sound(self, action: str, amount: float = 0):
+        """Play appropriate sound for poker actions with context."""
+        if action == "fold":
+            self.play("fold")
+        elif action == "check":
+            self.play("check")
+        elif action == "call":
+            self.play("call")
+        elif action == "bet":
+            self.play("bet")
+        elif action == "raise":
+            self.play("raise")
+        elif action == "all_in":
+            self.play("all_in")
+        else:
+            self.play(action)
+    
+    def play_card_sound(self, action: str):
+        """Play card-related sounds."""
+        if action == "deal":
+            self.play("card_deal")
+        elif action == "flip":
+            self.play("card_flip")
+        elif action == "fold":
+            self.play("card_fold")
+    
+    def play_money_sound(self, action: str):
+        """Play money-related sounds."""
+        if action == "chip_bet":
+            self.play("chip_bet")
+        elif action == "chip_stack":
+            self.play("chip_stack")
+        elif action == "pot_win":
+            self.play("pot_win")
+        elif action == "pot_split":
+            self.play("pot_split")
+        elif action == "pot_rake":
+            self.play("pot_rake")
     
     def enable_sound(self):
         """Enable sound effects."""
@@ -107,12 +178,37 @@ class SoundManager:
     
     def get_available_sounds(self) -> list:
         """Get list of available sound names."""
-        return list(self.sounds.keys()) if PYGAME_AVAILABLE else []
-
-
-if __name__ == "__main__":
-    # Test the sound manager
-    sm = SoundManager()
-    sm.play("card_deal")
-    sm.play("chip_bet")
-    sm.play("player_fold") 
+        return list(self.sounds.keys())
+    
+    def get_sound_mappings(self) -> dict:
+        """Get current sound mappings."""
+        return self.sound_mappings.copy()
+    
+    def set_volume(self, volume: float):
+        """Set volume for all sounds (0.0 to 1.0)."""
+        if PYGAME_AVAILABLE and self.sounds:
+            for sound in self.sounds.values():
+                sound.set_volume(max(0.0, min(1.0, volume)))
+            print(f"🔊 Volume set to {volume:.2f}")
+    
+    def get_sound_quality_report(self) -> dict:
+        """Get a report on sound quality and availability."""
+        authentic_sounds = []
+        generated_sounds = []
+        
+        for name, sound in self.sounds.items():
+            # This is a simplified check - in a real implementation you'd check file sizes
+            if name in ["player_all_in", "pot_rake", "winner_announce", "pot_split", 
+                       "player_fold", "card_fold", "player_raise", "player_bet", 
+                       "chip_bet", "player_call"]:
+                authentic_sounds.append(name)
+            else:
+                generated_sounds.append(name)
+        
+        return {
+            "total_sounds": len(self.sounds),
+            "authentic_sounds": authentic_sounds,
+            "generated_sounds": generated_sounds,
+            "sound_enabled": self.sound_enabled,
+            "pygame_available": PYGAME_AVAILABLE
+        } 
