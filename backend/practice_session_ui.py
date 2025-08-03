@@ -1485,12 +1485,10 @@ class PracticeSessionUI(ttk.Frame):
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
             # Update player card display with proper card styling
-            print(f"🎯 UI: Player {i+1} ({player_info['name']}) - is_active: {player_info['is_active']}, cards: {player_info.get('cards', [])}")
             if player_info['is_active']:
                 # Show cards for human players (always visible) or during showdown/end_hand (all active players)
                 current_state = self.state_machine.get_current_state()
                 is_showdown_or_end = current_state in [PokerState.SHOWDOWN, "end_hand"]
-                print(f"🎯 UI: Current state: {current_state}, is_showdown_or_end: {is_showdown_or_end}")
                 
                 # Show cards for human players or during showdown/end_hand (all active players)
                 # Also show cards if hand is completed but player was active (for winner display)
@@ -1503,23 +1501,11 @@ class PracticeSessionUI(ttk.Frame):
                         
                         # Update second card using raw card string
                         card_widgets[1].set_card(player_info['cards'][1])
-                        
-                        # Debug output for human player
-                        if player_info['is_human']:
-                            print(f"🎯 UI: Human player cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
-                        elif is_showdown_or_end:
-                            print(f"🎯 UI: Showdown/End Hand - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
-                        elif self.hand_completed and player_info['is_active']:
-                            print(f"🎯 UI: Hand Completed - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
-                    else:
-                        print(f"🎯 UI: Warning - Card widgets or cards not available for {player_info['name']}")
-                        print(f"🎯 UI: Card widgets: {len(card_widgets) if card_widgets else 0}, Cards: {len(player_info.get('cards', []))}")
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
                     if len(card_widgets) >= 2:
                         # Show card backs for hidden cards - use set_card with empty string
-                        print(f"🎴 Setting card backs for player {i+1} (bot)")
                         card_widgets[0].set_card("")  # This should show card back
                         card_widgets[1].set_card("")  # This should show card back
             else: # Player has folded
