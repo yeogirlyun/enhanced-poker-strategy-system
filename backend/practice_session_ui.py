@@ -1473,6 +1473,7 @@ class PracticeSessionUI(ttk.Frame):
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
             # Update player card display with proper card styling
+            print(f"🎯 UI: Player {i+1} ({player_info['name']}) - is_active: {player_info['is_active']}, cards: {player_info.get('cards', [])}")
             if player_info['is_active']:
                 # Show cards for human players (always visible) or during showdown/end_hand (all active players)
                 current_state = self.state_machine.get_current_state()

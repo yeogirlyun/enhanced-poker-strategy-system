@@ -1746,6 +1746,9 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
         self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
         self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
+        self._log_action(f"🎴 {player.name} cards: {player.cards}")
+        self._log_action(f"🃏 Board: {self.game_state.board}")
+        self._log_action(f"🏆 Street: {self.game_state.street}")
 
         # NEW: Trigger action animation callback
         if self.on_action_executed:
@@ -1754,7 +1757,9 @@ class ImprovedPokerStateMachine:
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
+            self._log_action(f"🔄 {player.name} FOLDS - Setting is_active = False")
             player.is_active = False
+            self._log_action(f"✅ {player.name} is now folded (is_active = {player.is_active})")
             
             # --- THIS IS THE CRITICAL BUG FIX ---
             # DO NOT reset the player's current bet when they fold.
@@ -1892,8 +1897,10 @@ class ImprovedPokerStateMachine:
         
         # If the hand is not over, check if the round is complete
         if self.is_round_complete():
+            self._log_action("🔄 Round is complete, handling round completion")
             self.handle_round_complete()
         else:
+            self._log_action("⏭️ Round not complete, advancing to next player")
             self.advance_to_next_player()
             self.handle_current_player_action()
         # --- END CORRECTION ---
