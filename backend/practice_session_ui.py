@@ -26,52 +26,101 @@ from gui_models import THEME, FONTS
 from tooltips import ToolTip
 
 # Custom CardWidget class for properly sized playing cards
-class CardWidget(tk.Frame):
-    """A custom widget to display a single, properly sized playing card."""
-    def __init__(self, parent, width=60, height=84):
-        # Standard playing card ratio is ~2.5 x 3.5 inches (1:1.4)
-        super().__init__(parent, width=width, height=height, bg="white", relief="solid", borderwidth=2)
+class CardWidget(tk.Canvas):
+    """A custom widget to display a single, styled playing card."""
+    def __init__(self, parent, width=50, height=70):
+        super().__init__(parent, width=width, height=height, highlightthickness=1, highlightbackground="black")
+        self.width, self.height = width, height
 
-        # This prevents the frame from shrinking to fit the text inside it
-        self.pack_propagate(False)
-        self.grid_propagate(False)
-
-        # Create a single label for the card content (rank + suit)
-        self.card_label = tk.Label(
-            self, 
-            text="", 
-            font=("Arial", 36, "bold"),  # Much larger font size for 70% card area
-            bg="white",
-            width=4,
-            height=3
-        )
-        self.card_label.place(relx=0.5, rely=0.5, anchor="center")
-
-    def set_card(self, card_str):
-        """Updates the card's rank and suit, or shows the card back."""
-        if not card_str or card_str == "**" or card_str == "":
-            self.card_label.config(text="🂠", fg="#8B4513", bg="#696969")
-            self.config(bg="#696969", relief="flat", borderwidth=0)
+    def set_card(self, card_str, is_folded=False):
+        self.delete("all") # Clear previous drawing
+        if not card_str or card_str == "**" or is_folded:
+            self._draw_card_back()
+            if is_folded:
+                # Add a semi-transparent overlay to show it's folded
+                self.create_rectangle(0, 0, self.width, self.height, fill="black", stipple="gray50", outline="")
             return
 
-        # Parse the card string (e.g., "Kd" -> "K♦")
-        rank = card_str[0]
-        suit = card_str[1]
-        
+        self.config(bg="white")
+        rank, suit = card_str[0], card_str[1]
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
-        suit_colors = {'h': 'red', 'd': 'red', 'c': 'black', 's': 'black'}
-
+        suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
         color = suit_colors.get(suit, "black")
-        symbol = suit_symbols.get(suit, "")
         
-        # Combine rank and suit in one label
-        self.card_label.config(text=f"{rank}{symbol}", fg=color, bg="white")
-        self.config(bg="white", relief="solid", borderwidth=2)
+        # Use larger, clearer fonts
+        self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
+        self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
+
+    def _draw_card_back(self):
+        """Draws a professional-looking checkerboard pattern for the card back."""
+        # Define colors from your theme
+        dark_red = "#a51d2d"
+        light_red = "#c0392b"
+        self.config(bg=dark_red)
+        
+        square_size = 6
+        for y in range(0, self.height, square_size):
+            for x in range(0, self.width, square_size):
+                color = light_red if (x // square_size + y // square_size) % 2 == 0 else dark_red
+                self.create_rectangle(x, y, x + square_size, y + square_size, fill=color, outline="")
 
     def set_folded(self):
         """Shows the card as folded (empty)."""
-        self.card_label.config(text="", bg="#696969")
-        self.config(bg="#696969", relief="flat", borderwidth=0)
+        self.set_card("", is_folded=True)
+
+class PlayerPod(tk.Frame):
+    """A custom widget for a player's area, including a graphical stack display."""
+    def __init__(self, parent):
+        # The main pod frame is transparent to sit nicely on the canvas
+        super().__init__(parent, bg="#1a1a1a") # Match your table's background
+        
+        # This frame holds the name and cards with a visible background
+        self.info_frame = tk.Frame(self, bg="gray15", highlightthickness=2)
+        self.info_frame.pack(pady=(0, 5))
+        
+        self.name_label = tk.Label(self.info_frame, text="", font=("Helvetica", 14, "bold"), bg="gray15", fg="white")
+        self.name_label.pack(pady=5)
+
+        self.cards_frame = tk.Frame(self.info_frame, bg="gray15")
+        self.cards_frame.pack(pady=(5, 10), padx=10)
+        
+        self.card1 = CardWidget(self.cards_frame, width=50, height=70)
+        self.card1.pack(side="left", padx=3)
+        self.card2 = CardWidget(self.cards_frame, width=50, height=70)
+        self.card2.pack(side="left", padx=3)
+
+        # --- NEW: Professional Stack Display ---
+        # This frame sits below the main info_frame
+        self.stack_frame = tk.Frame(self, bg="#1a1a1a")
+        self.stack_frame.pack()
+        
+        # Canvas for drawing chip graphics
+        self.chip_canvas = tk.Canvas(self.stack_frame, width=30, height=30, bg="#1a1a1a", highlightthickness=0)
+        self.chip_canvas.pack(side="left", padx=5)
+        
+        # Label for the stack text
+        self.stack_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 12, "bold"), bg="#1a1a1a", fg="white")
+        self.stack_label.pack(side="left")
+
+    def update_pod(self, data):
+        # Update name, cards, highlighting as before
+        self.name_label.config(text=data.get("name", ""))
+        self.stack_label.config(text=f"${data.get('stack', 0):.2f}")
+        self._draw_chips(data.get('stack', 0)) # Call the new chip drawing method
+
+    def _draw_chips(self, stack):
+        """Draws a graphical stack of chips based on the stack amount."""
+        self.chip_canvas.delete("all")
+        colors = ["#d35400", "#2980b9", "#27ae60"] # Orange, Blue, Green chips
+        if stack <= 0: return
+        
+        # Simple logic to make the chip stack grow with the player's stack
+        num_chips = min(6, int(stack / 200) + 1) 
+        
+        for i in range(num_chips):
+            # Draw chips from the bottom up to create a 3D effect
+            y_offset = 25 - i * 3
+            self.chip_canvas.create_oval(5, y_offset, 25, y_offset - 5, fill=colors[i % 3], outline="black")
 
 class PracticeSessionUI(ttk.Frame):
     """
@@ -458,69 +507,27 @@ class PracticeSessionUI(ttk.Frame):
             self.player_seats[i]["bet_label_window"] = bet_window
 
     def _create_player_seat_widget(self, x, y, name, position, index):
-        # Create a more compact player seat frame sized for 2 cards plus 50% more space
-        seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
-        
-        # Create name and position labels with proper font scaling
-        name_label = tk.Label(
-            seat_frame, 
-            text=f"{name} ({position})",  # Combine name and position in one label
-            bg=THEME["secondary_bg"], 
-            fg=THEME["text"], 
-            font=FONTS["player_name"]
-        )
-        name_label.pack(pady=2)
-        
-        # Create folded status label (initially hidden)
-        folded_label = tk.Label(
-            seat_frame,
-            text="FOLDED",
-            bg="red",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            relief="raised",
-            bd=1
-        )
-        folded_label.pack(pady=1)
-        folded_label.pack_forget()  # Initially hidden
-        
-        # Cards area with realistic card proportions
-        cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
-        cards_frame.pack(pady=3)
-        
-        # Create two CardWidget instances for hole cards
-        card1_widget = CardWidget(cards_frame, width=60, height=84)
-        card1_widget.pack(side=tk.LEFT, padx=2)
-        
-        card2_widget = CardWidget(cards_frame, width=60, height=84)
-        card2_widget.pack(side=tk.LEFT, padx=2)
-        
-        # Store card widgets for updates
-        cards_label = cards_frame  # Use frame as label for compatibility
-        
-        # Bet information (current bet amount) - smaller and more compact
-        bet_label = tk.Label(
-            seat_frame, 
-            text="", 
-            bg=THEME["secondary_bg"], 
-            fg="orange", 
-            font=FONTS["stack_bet"]
-        )
-        bet_label.pack(pady=1)
+        # Create a PlayerPod for professional stack display with chip graphics
+        player_pod = PlayerPod(self.canvas)
         
         # Store references for updates
         self.player_seats[index] = {
-            "frame": seat_frame, 
-            "name_label": name_label, 
-            "folded_label": folded_label,  # Add folded label reference
-            "cards_label": cards_label,  # This is now a frame containing card widgets
-            "card_widgets": [card1_widget, card2_widget],  # Store individual card widgets
-            "bet_label": bet_label
+            "frame": player_pod, 
+            "name_label": player_pod.name_label, 
+            "folded_label": None,  # Will be handled by PlayerPod
+            "cards_label": player_pod.cards_frame,  # This is the cards frame
+            "card_widgets": [player_pod.card1, player_pod.card2],  # Store individual card widgets
+            "bet_label": None,  # Will be handled by PlayerPod
+            "player_pod": player_pod  # Store the PlayerPod reference
         }
-        self.canvas.create_window(x, y, window=seat_frame, anchor="center")
+        self.canvas.create_window(x, y, window=player_pod, anchor="center")
         
-        # Create separate stack graphics area in front of player
-        self._create_stack_graphics(index, x, y)
+        # Initialize the pod with player data
+        player_data = {
+            "name": f"{name} ({position})",
+            "stack": 1000.0  # Default stack amount
+        }
+        player_pod.update_pod(player_data)
     
     def _create_stack_graphics(self, player_index, seat_x, seat_y):
         """Create a separate stack graphics area positioned in front of the player."""
@@ -1393,32 +1400,28 @@ class PracticeSessionUI(ttk.Frame):
                 continue
 
             player_info = game_info['players'][i]
-            frame = player_seat["frame"]
-            name_label = player_seat["name_label"]
-            cards_label = player_seat["cards_label"]
+            player_pod = player_seat.get("player_pod")
             
             # Debug output for human player detection
             if player_info.get('is_human', False):
                 print(f"🎯 UI: Player {i+1} is human: {player_info['is_human']}, cards: {player_info.get('cards', [])}")
             
-            # Get stack label from stack_graphics if it exists
-            stack_graphics = player_seat.get("stack_graphics", {})
-            stack_amount_label = stack_graphics.get("amount_label")
+            # Update PlayerPod with new data
+            if player_pod:
+                pod_data = {
+                    "name": f"{player_info['name']} ({player_info['position']})",
+                    "stack": player_info['stack']
+                }
+                player_pod.update_pod(pod_data)
             
             # FIXED: Highlight based on action_player index, not is_active status
             # Players should be highlighted when it's their turn, even if they fold
+            frame = player_seat["frame"]
             if i == game_info['action_player']:
                 frame.config(bg=THEME["accent_primary"])
                 print(f"🎯 UI: Highlighting player {i+1} ({player_info['name']}) - it's their turn")
             else:
                 frame.config(bg=THEME["secondary_bg"])
-
-            # Update name and position (combined in one label)
-            name_label.config(text=f"{player_info['name']} ({player_info['position']})")
-            
-            # Update stack and bet info
-            if stack_amount_label:
-                stack_amount_label.config(text=f"${player_info['stack']:.2f}")
 
             # Update the prominent bet display on the table
             bet_label_widget = player_seat.get("bet_label_widget")
@@ -1433,11 +1436,6 @@ class PracticeSessionUI(ttk.Frame):
 
             # Update player card display with proper card styling
             if player_info['is_active']:
-                # Hide folded label for active players
-                folded_label = player_seat.get("folded_label")
-                if folded_label:
-                    folded_label.pack_forget()
-                
                 # Show cards for human players (always visible) or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     # Get the stored card widgets
@@ -1783,19 +1781,15 @@ class PracticeSessionUI(ttk.Frame):
         """Update the stack amount for a specific player."""
         if player_index < len(self.player_seats):
             player_seat = self.player_seats[player_index]
-            if player_seat and "stack_graphics" in player_seat:
-                stack_graphics = player_seat["stack_graphics"]
-                amount_label = stack_graphics.get("amount_label")
-                chips_label = stack_graphics.get("chips_label")
-                
-                if amount_label:
-                    amount_label.config(text=f"${new_amount:.2f}")
-                
-                if chips_label:
-                    # Create visual chip representation based on amount
-                    chip_count = self._calculate_chip_count(new_amount)
-                    chip_symbols = self._get_chip_symbols(new_amount)
-                    chips_label.config(text=chip_symbols)
+            player_pod = player_seat.get("player_pod")
+            
+            if player_pod:
+                # Update the PlayerPod with new stack amount
+                pod_data = {
+                    "name": player_pod.name_label.cget("text"),  # Keep existing name
+                    "stack": new_amount
+                }
+                player_pod.update_pod(pod_data)
     
     def _calculate_chip_count(self, amount):
         """Calculate how many chip symbols to display based on amount."""
