@@ -87,6 +87,7 @@ class GameState:
     big_blind: float = 1.0
     last_raise_amount: float = 0.0  # NEW: Track the size of the last raise for under-raise validation
     last_full_raise_amount: float = 0.0  # NEW: Track the amount of the last valid, action-reopening raise
+    last_action_details: str = ""  # NEW: Track the last action for UI feedback
 
 
 @dataclass
@@ -1562,6 +1563,11 @@ class ImprovedPokerStateMachine:
         
         # Play industry-standard sound for the action
         self.sfx.play_action_sound(action.value.lower(), amount)
+        
+        # Track last action details for UI feedback
+        self.game_state.last_action_details = f"{player.name} {action.value.lower()}s"
+        if amount > 0:
+            self.game_state.last_action_details += f" to ${amount:.2f}"
         # --- END FIX ---
         
         # --- NEW: Proper invalid action handling ---
@@ -2200,6 +2206,7 @@ class ImprovedPokerStateMachine:
             "action_player": self.action_player_index,
             "valid_actions": valid_actions,
             "session_info": session_info,
+            "last_action_details": self.game_state.last_action_details,
         }
     
     def get_valid_actions_for_player(self, player: Player) -> dict:
@@ -2211,6 +2218,14 @@ class ImprovedPokerStateMachine:
         min_bet = self.game_state.min_raise
         min_raise_total = self.game_state.current_bet + self.game_state.min_raise
         max_bet = player.stack + player.current_bet
+        
+        # Calculate preset bet amounts for UI convenience
+        pot_size = self.game_state.pot
+        preset_bets = {
+            "half_pot": pot_size * 0.5,
+            "pot": pot_size,
+            "all_in": player.stack
+        }
         
         return {
             "fold": self.is_valid_action(player, ActionType.FOLD, 0),
@@ -2224,6 +2239,7 @@ class ImprovedPokerStateMachine:
             "max_bet": max_bet,
             "current_bet": self.game_state.current_bet,
             "player_current_bet": player.current_bet,
+            "preset_bets": preset_bets,
         }
     
     def get_hand_history(self) -> List[HandHistoryLog]:

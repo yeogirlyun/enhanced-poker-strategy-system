@@ -131,7 +131,7 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.bind("<Configure>", self._on_resize)
         
         # Initialize layout management system
-        self.layout_manager = LayoutManager()
+        self.layout_manager = self.LayoutManager()
         
         # Initialize table felt colors
         self.table_felt_colors = {
@@ -924,6 +924,16 @@ class PracticeSessionUI(ttk.Frame):
         ToolTip(self.reset_button, "Reset the entire game state")
         # --- END NEW ---
 
+        # --- Last Action Label (Center) ---
+        self.last_action_label = tk.Label(
+            self.action_bar_frame, 
+            text="", 
+            font=("Helvetica", 12, "italic"),
+            fg=THEME["text"],
+            bg=THEME["secondary_bg"]
+        )
+        self.last_action_label.pack(side=tk.LEFT, padx=10)
+        
         # --- Action Buttons (Center) ---
         action_frame = ttk.Frame(self.action_bar_frame)
         action_frame.pack(side=tk.LEFT, padx=10)
@@ -984,6 +994,43 @@ class PracticeSessionUI(ttk.Frame):
         )
         self.bet_size_label.pack()
 
+        # --- Bet/Raise Button (Right) ---
+        # --- Preset Bet Buttons (Right) ---
+        preset_frame = ttk.Frame(self.action_bar_frame)
+        preset_frame.pack(side=tk.RIGHT, padx=10)
+        
+        self.preset_bet_buttons = {}
+        
+        # Half Pot button
+        self.preset_bet_buttons['half_pot'] = ttk.Button(
+            preset_frame,
+            text="1/2 Pot",
+            style="LargeAction.TButton",
+            command=lambda: self._submit_preset_bet("half_pot")
+        )
+        self.preset_bet_buttons['half_pot'].pack(side=tk.LEFT, padx=2)
+        ToolTip(self.preset_bet_buttons['half_pot'], "Bet half the pot size")
+        
+        # Pot button
+        self.preset_bet_buttons['pot'] = ttk.Button(
+            preset_frame,
+            text="Pot",
+            style="LargeAction.TButton",
+            command=lambda: self._submit_preset_bet("pot")
+        )
+        self.preset_bet_buttons['pot'].pack(side=tk.LEFT, padx=2)
+        ToolTip(self.preset_bet_buttons['pot'], "Bet the full pot size")
+        
+        # All-in button
+        self.preset_bet_buttons['all_in'] = ttk.Button(
+            preset_frame,
+            text="All-In",
+            style="LargeAction.TButton",
+            command=lambda: self._submit_preset_bet("all_in")
+        )
+        self.preset_bet_buttons['all_in'].pack(side=tk.LEFT, padx=2)
+        ToolTip(self.preset_bet_buttons['all_in'], "Bet your entire stack")
+        
         # --- Bet/Raise Button (Right) ---
         self.human_action_controls['bet_raise'] = ttk.Button(
             self.action_bar_frame, 
@@ -1188,6 +1235,11 @@ class PracticeSessionUI(ttk.Frame):
             else: # Player has folded
                 cards_label.config(text="Folded")
         
+        # Update last action details
+        if hasattr(self, 'last_action_label'):
+            last_action = game_info.get('last_action_details', '')
+            self.last_action_label.config(text=last_action)
+        
         # Update session information display
         self.update_session_info()
     
@@ -1195,6 +1247,23 @@ class PracticeSessionUI(ttk.Frame):
         """Updates the label for the bet sizing slider."""
         self.bet_size_label.config(text=f"${self.bet_size_var.get():.2f}")
 
+    def _submit_preset_bet(self, preset_type):
+        """Submit a preset bet action."""
+        game_info = self.state_machine.get_game_info()
+        if not game_info or "valid_actions" not in game_info:
+            return
+            
+        valid_actions = game_info["valid_actions"]
+        if "preset_bets" not in valid_actions:
+            return
+            
+        preset_bets = valid_actions["preset_bets"]
+        if preset_type not in preset_bets:
+            return
+            
+        amount = preset_bets[preset_type]
+        self._submit_human_action("raise", amount)
+    
     def _submit_bet_raise(self):
         """Submits a bet or raise action based on context."""
         game_info = self.state_machine.get_game_info()
