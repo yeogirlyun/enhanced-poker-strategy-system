@@ -1846,13 +1846,13 @@ def test_conservation_of_chips(state_machine, test_suite):
     for i in range(4, len(players)):
         players[i].is_active = False
     
-    # Calculate initial total chips (only from active players) plus initial pot
-    initial_total_chips = sum(p.stack for p in players if p.is_active) + state_machine.game_state.pot
-    
     # Set up betting state
     state_machine.game_state.current_bet = 1.0
     state_machine.game_state.pot = 1.5
     state_machine.game_state.min_raise = 1.0
+    
+    # Calculate initial total chips (only from active players) plus initial pot
+    initial_total_chips = sum(p.stack for p in players if p.is_active) + state_machine.game_state.pot
     
     # Simulate betting actions manually
     # Player 0 raises to $5
