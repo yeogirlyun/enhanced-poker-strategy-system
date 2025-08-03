@@ -592,6 +592,15 @@ class PracticeSessionUI(ttk.Frame):
                     if isinstance(value, (int, float)):
                         display_text += f"• {key.replace('_', ' ').title()}: {value}\n"
         
+        # Table size information
+        table_size_info = self.get_table_size_info()
+        display_text += "\n🎮 TABLE LAYOUT\n"
+        display_text += "-" * 15 + "\n"
+        display_text += f"• Table Area: {table_size_info['table_percentage']:.1f}%\n"
+        display_text += f"• Message Area: {table_size_info['message_percentage']:.1f}%\n"
+        display_text += f"• Table Weight: {table_size_info['table_weight']}\n"
+        display_text += f"• Message Weight: {table_size_info['message_weight']}\n"
+        
         self.session_text.insert(1.0, display_text)
         self.session_text.config(state=tk.DISABLED)
 
@@ -1086,4 +1095,61 @@ class PracticeSessionUI(ttk.Frame):
             self.reset_game_btn.config(font=main_font)
         
         # Force a complete UI refresh
-        self.update() 
+        self.update()
+    
+    def increase_table_size(self):
+        """Increase the table size by adjusting column weights."""
+        # Get current weights
+        current_table_weight = self.grid_columnconfigure(0)['weight']
+        current_message_weight = self.grid_columnconfigure(1)['weight']
+        
+        # Increase table weight (make it larger)
+        new_table_weight = min(current_table_weight + 1, 8)  # Cap at 8
+        new_message_weight = max(current_message_weight - 0.5, 0.5)  # Don't go below 0.5
+        
+        # Update column weights
+        self.grid_columnconfigure(0, weight=new_table_weight)
+        self.grid_columnconfigure(1, weight=new_message_weight)
+        
+        # Force a complete redraw
+        self._on_resize()
+        
+        # Update session info to reflect the change
+        self.update_session_info()
+    
+    def decrease_table_size(self):
+        """Decrease the table size by adjusting column weights."""
+        # Get current weights
+        current_table_weight = self.grid_columnconfigure(0)['weight']
+        current_message_weight = self.grid_columnconfigure(1)['weight']
+        
+        # Decrease table weight (make it smaller)
+        new_table_weight = max(current_table_weight - 1, 3)  # Don't go below 3
+        new_message_weight = min(current_message_weight + 0.5, 2)  # Cap at 2
+        
+        # Update column weights
+        self.grid_columnconfigure(0, weight=new_table_weight)
+        self.grid_columnconfigure(1, weight=new_message_weight)
+        
+        # Force a complete redraw
+        self._on_resize()
+        
+        # Update session info to reflect the change
+        self.update_session_info()
+    
+    def get_table_size_info(self):
+        """Get current table size information for display."""
+        table_weight = self.grid_columnconfigure(0)['weight']
+        message_weight = self.grid_columnconfigure(1)['weight']
+        
+        # Calculate relative sizes
+        total_weight = table_weight + message_weight
+        table_percentage = (table_weight / total_weight) * 100
+        message_percentage = (message_weight / total_weight) * 100
+        
+        return {
+            'table_weight': table_weight,
+            'message_weight': message_weight,
+            'table_percentage': table_percentage,
+            'message_percentage': message_percentage
+        }
