@@ -84,7 +84,8 @@ class GameState:
     round_complete: bool = False
     deck: List[str] = field(default_factory=list)
     min_raise: float = 1.0  # NEW: Track minimum raise amount
-    big_blind: float = 1.0  # <-- ADD THIS LINE
+    big_blind: float = 1.0
+    last_raise_amount: float = 0.0  # NEW: Track the size of the last raise for under-raise validation
 
 
 @dataclass
@@ -1685,21 +1686,33 @@ class ImprovedPokerStateMachine:
             # Update game state
             old_bet = self.game_state.current_bet
             self.game_state.current_bet = total_bet
-            # --- CORRECTED MIN RAISE CALCULATION ---
-            # The minimum raise should be the amount by which the current bet was raised
-            self.game_state.min_raise = total_bet - old_bet
+            
+            # --- FIX: UNDER-RAISE ALL-IN LOGIC ---
+            # Calculate the actual raise amount (how much more than the previous bet)
+            raise_amount = total_bet - old_bet
+            is_full_raise = raise_amount >= self.game_state.min_raise
+            
+            # Track the last raise amount for validation
+            self.game_state.last_raise_amount = raise_amount
+            
+            # Update the minimum raise amount for the *next* player
+            self.game_state.min_raise = raise_amount
             self._log_action(f"📈 Min raise updated to: ${self.game_state.min_raise:.2f}")
-            # --- END CORRECTION ---
             
-            # Clear acted players (they get another chance after raise)
-            self.game_state.players_acted.clear()
-            
-            # --- BUG FIX: Reset has_acted flags for all other players after a raise ---
-            self._log_action(f"🔄 Resetting 'has_acted' for other players due to raise")
-            for p in self.game_state.players:
-                if p.is_active and p != player:
-                    p.has_acted_this_round = False
-            # --- END BUG FIX ---
+            # Only re-open the action (reset has_acted flags) if it was a full raise.
+            # An all-in that is less than a full raise does not re-open the action.
+            if is_full_raise:
+                self._log_action(f"🔄 Full raise made. Action is re-opened for players who have already acted.")
+                # Clear acted players (they get another chance after full raise)
+                self.game_state.players_acted.clear()
+                # Reset has_acted flags for all other players after a full raise
+                for p in self.game_state.players:
+                    if p.is_active and p != player:
+                        p.has_acted_this_round = False
+            else:
+                self._log_action(f"📉 Under-raise all-in. Action is not re-opened for players who have already acted.")
+                # Do NOT clear players_acted or reset has_acted flags for under-raises
+            # --- END FIX ---
             
             if player.stack == 0:
                 player.is_all_in = True
@@ -2109,6 +2122,15 @@ class ImprovedPokerStateMachine:
             min_raise_total = self.game_state.current_bet + self.game_state.min_raise
             # A player can go all-in for less than a min-raise.
             is_all_in_raise = (player.current_bet + player.stack) == amount
+
+            # --- FIX: UNDER-RAISE ALL-IN VALIDATION ---
+            # Check if player is facing an under-raise all-in
+            if player.has_acted_this_round:
+                # If the last raise was an under-raise (less than min_raise), 
+                # players who have already acted cannot re-raise
+                if self.game_state.last_raise_amount < self.game_state.min_raise:
+                    errors.append("Cannot re-raise as the last all-in was not a full raise")
+            # --- END FIX ---
 
             if not is_all_in_raise and amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
