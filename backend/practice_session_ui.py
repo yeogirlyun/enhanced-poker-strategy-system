@@ -1358,6 +1358,9 @@ class PracticeSessionUI(ttk.Frame):
         if self.hand_completed and self.preserved_community_cards:
             # Use preserved cards after hand completion
             board_cards = self.preserved_community_cards
+        else:
+            # For new hands, use the actual board from game_info
+            board_cards = game_info['board']
     
         
         # Safety check for community card widgets
@@ -1409,7 +1412,10 @@ class PracticeSessionUI(ttk.Frame):
                     bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
                     self.canvas.itemconfig(bet_label_window, state="normal")
             # Update player card display with proper card styling
-            if player_info['is_active']:
+            # Check if player has folded by looking at their cards (empty cards indicate folded)
+            has_folded = not player_info.get('cards') or len(player_info['cards']) == 0 or all(card == "" for card in player_info['cards'])
+            
+            if player_info['is_active'] and not has_folded:
                 # Show cards for human players (always visible) or during showdown/end_hand (all active players)
                 current_state = self.state_machine.get_current_state()
                 is_showdown_or_end = current_state in [PokerState.SHOWDOWN, "end_hand"]
@@ -1432,13 +1438,12 @@ class PracticeSessionUI(ttk.Frame):
                         # Show card backs for hidden cards - use set_card with empty string
                         card_widgets[0].set_card("")  # This should show card back
                         card_widgets[1].set_card("")  # This should show card back
-            else: # Player has folded
+            else: # Player has folded or is inactive
                 # Get the stored card widgets
                 card_widgets = player_seat.get("card_widgets", [])
                 
                 if len(card_widgets) >= 2:
                     # Show folded card backs (dark gray, no border)
-            
                     card_widgets[0].set_card("", is_folded=True)  # Dark gray card back
                     card_widgets[1].set_card("", is_folded=True)  # Dark gray card back
         
