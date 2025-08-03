@@ -580,10 +580,14 @@ class PracticeSessionUI(ttk.Frame):
         control_frame = ttk.Frame(self.action_bar_frame)
         control_frame.pack(side=tk.LEFT, padx=(0, 20))
         
+        # Create larger buttons (150% size increase)
+        button_style = ttk.Style()
+        button_style.configure('Large.TButton', padding=(15, 8))  # Increased padding for 150% size
+        
         self.start_button = ttk.Button(
             control_frame, 
             text="🚀 Start New Hand", 
-            style="Success.TButton", 
+            style="Large.TButton", 
             command=self.start_new_hand
         )
         self.start_button.pack(side=tk.LEFT, padx=5)
@@ -592,6 +596,7 @@ class PracticeSessionUI(ttk.Frame):
         self.reset_button = ttk.Button(
             control_frame, 
             text="🔄 Reset Game", 
+            style="Large.TButton",
             command=self._reset_game
         )
         self.reset_button.pack(side=tk.LEFT, padx=5)
@@ -602,10 +607,13 @@ class PracticeSessionUI(ttk.Frame):
         action_frame = ttk.Frame(self.action_bar_frame)
         action_frame.pack(side=tk.LEFT, padx=10)
         
+        # Configure large button style for action buttons
+        button_style.configure('LargeAction.TButton', padding=(12, 6))
+        
         self.human_action_controls['fold'] = ttk.Button(
             action_frame, 
             text="Fold", 
-            style="Danger.TButton", 
+            style="LargeAction.TButton", 
             command=lambda: self._submit_human_action("fold")
         )
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
@@ -614,6 +622,7 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls['check'] = ttk.Button(
             action_frame, 
             text="Check", 
+            style="LargeAction.TButton",
             command=lambda: self._submit_human_action("check")
         )
         self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
@@ -622,6 +631,7 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls['call'] = ttk.Button(
             action_frame, 
             text="Call", 
+            style="LargeAction.TButton",
             command=lambda: self._submit_human_action("call")
         )
         self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
@@ -632,25 +642,32 @@ class PracticeSessionUI(ttk.Frame):
         self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
         
         self.bet_size_var = tk.DoubleVar()
+        # Configure larger slider and label
         self.bet_slider = ttk.Scale(
             self.sizing_frame, 
             from_=0, 
             to=100, 
             orient=tk.HORIZONTAL, 
             variable=self.bet_size_var, 
-            length=200
+            length=300  # Increased from 200 to 300 (150% size)
         )
         self.bet_slider.pack(fill=tk.X)
         self.bet_slider.bind("<B1-Motion>", self._update_bet_size_label)
         
-        self.bet_size_label = ttk.Label(self.sizing_frame, text="$0.00", font=FONTS["main"])
+        # Use larger font for bet size label
+        large_font = (THEME["font_family"], FONTS["main"][1] + 2)  # Increase font size by 2
+        self.bet_size_label = ttk.Label(
+            self.sizing_frame, 
+            text="$0.00", 
+            font=large_font
+        )
         self.bet_size_label.pack()
 
         # --- Bet/Raise Button (Right) ---
         self.human_action_controls['bet_raise'] = ttk.Button(
             self.action_bar_frame, 
             text="Bet", 
-            style="Primary.TButton", 
+            style="LargeAction.TButton", 
             command=self._submit_bet_raise
         )
         self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
