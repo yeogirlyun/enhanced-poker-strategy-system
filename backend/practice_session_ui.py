@@ -315,9 +315,10 @@ class PracticeSessionUI(ttk.Frame):
         stack_amount_label.pack(pady=2)
         
         # Stack chips visualization (using Unicode chip symbols)
+        initial_chips = "🟡🟡🟡🟡🟡"  # More visible initial chips
         chips_label = tk.Label(
             stack_frame,
-            text="🟡🟡🟡",  # Yellow chips
+            text=initial_chips,
             bg=THEME["secondary_bg"],
             fg="yellow",
             font=FONTS["small"]
@@ -565,22 +566,28 @@ class PracticeSessionUI(ttk.Frame):
             winner_y = center_y + stack_radius_y * math.sin(angle)
             print(f"📍 From ({pot_x:.0f}, {pot_y:.0f}) to ({winner_x:.0f}, {winner_y:.0f})")  # Debug
             
-            # Create enhanced animated money object with glow effect
+            # Create enhanced animated money object with chip visualization
+            chip_count = self._calculate_chip_count(winner_info['amount'])
+            chip_symbols = self._get_chip_symbols(winner_info['amount'])
+            money_text = f"${winner_info['amount']:.2f}\n{chip_symbols}"
+            
             money_obj = self.canvas.create_text(
                 pot_x, pot_y, 
-                text=f"${winner_info['amount']:.2f}", 
+                text=money_text, 
                 fill="#FFD700",  # Bright gold
-                font=("Arial", 18, "bold"),
-                tags="money_animation"
+                font=("Arial", 16, "bold"),
+                tags="money_animation",
+                justify=tk.CENTER
             )
             
-            # Add glow effect
+            # Add glow effect with chip visualization
             glow_obj = self.canvas.create_text(
                 pot_x, pot_y, 
-                text=f"${winner_info['amount']:.2f}", 
+                text=money_text, 
                 fill="#FFA500",  # Orange glow
-                font=("Arial", 20, "bold"),
-                tags="money_animation_glow"
+                font=("Arial", 18, "bold"),
+                tags="money_animation_glow",
+                justify=tk.CENTER
             )
             
             print(f"💰 Created enhanced money animation: ${winner_info['amount']:.2f}")  # Debug
@@ -601,8 +608,8 @@ class PracticeSessionUI(ttk.Frame):
                     
                     # Scale effect - money gets bigger as it moves
                     scale = 1.0 + (progress * 0.5)
-                    font_size = int(18 * scale)
-                    glow_font_size = int(20 * scale)
+                    font_size = int(16 * scale)
+                    glow_font_size = int(18 * scale)
                     
                     self.canvas.itemconfig(money_obj, font=("Arial", font_size, "bold"))
                     self.canvas.itemconfig(glow_obj, font=("Arial", glow_font_size, "bold"))
@@ -1324,21 +1331,25 @@ class PracticeSessionUI(ttk.Frame):
     def _calculate_chip_count(self, amount):
         """Calculate how many chip symbols to display based on amount."""
         if amount <= 10:
-            return 1
-        elif amount <= 50:
-            return 2
-        elif amount <= 100:
             return 3
-        elif amount <= 200:
+        elif amount <= 25:
             return 4
-        else:
+        elif amount <= 50:
             return 5
+        elif amount <= 100:
+            return 6
+        elif amount <= 200:
+            return 7
+        elif amount <= 500:
+            return 8
+        else:
+            return 10
     
     def _get_chip_symbols(self, amount):
         """Get appropriate chip symbols based on amount."""
         chip_count = self._calculate_chip_count(amount)
         
-        # Different chip colors based on amount ranges
+        # Different chip colors based on amount ranges with better visibility
         if amount <= 25:
             return "🟡" * chip_count  # Yellow chips for small amounts
         elif amount <= 100:
