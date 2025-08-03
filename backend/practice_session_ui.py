@@ -878,7 +878,6 @@ class PracticeSessionUI(ttk.Frame):
             winner_seat = 0
         
         if winner_seat is not None:
-            print(f"🎯 Animating to seat {winner_seat}")  # Debug
             
             # Get pot center position
             pot_x = self.canvas.winfo_width() / 2
@@ -894,7 +893,7 @@ class PracticeSessionUI(ttk.Frame):
             angle = (2 * math.pi / self.num_players) * winner_seat - (math.pi / 2)
             winner_x = center_x + stack_radius_x * math.cos(angle)
             winner_y = center_y + stack_radius_y * math.sin(angle)
-            print(f"📍 From ({pot_x:.0f}, {pot_y:.0f}) to ({winner_x:.0f}, {winner_y:.0f})")  # Debug
+
             
             # Create enhanced animated money object with chip visualization
             chip_count = self._calculate_chip_count(winner_info['amount'])
@@ -920,7 +919,7 @@ class PracticeSessionUI(ttk.Frame):
                 justify=tk.CENTER
             )
             
-            print(f"💰 Created enhanced money animation: ${winner_info['amount']:.2f}")  # Debug
+
             
             # Enhanced animation with multiple effects
             def animate_money(step=0):
@@ -962,7 +961,7 @@ class PracticeSessionUI(ttk.Frame):
                     # Remove the animated objects
                     self.canvas.delete(money_obj)
                     self.canvas.delete(glow_obj)
-                    print("🎬 Enhanced animation complete")  # Debug
+        
                     
                     # Update the winner's stack graphics with the new amount
                     if winner_seat < len(self.player_seats):
@@ -1246,18 +1245,18 @@ class PracticeSessionUI(ttk.Frame):
 
     def _show_game_control_buttons(self):
         """Shows only the game control buttons (Start/Reset)."""
-        print(f"🎯 UI: _show_game_control_buttons called")  # Debug
+
         
         # Hide all action buttons
         for widget in self.human_action_controls.values():
             if hasattr(widget, 'pack_forget'):
                 widget.pack_forget()
-        print(f"🎯 UI: All action buttons hidden")  # Debug
+
         
         # Show game control buttons
         self.start_button.pack(side=tk.LEFT, padx=5)
         self.reset_button.pack(side=tk.LEFT, padx=5)
-        print(f"🎯 UI: Game control buttons shown")  # Debug
+
         
         # Hide bet sizing controls
         if hasattr(self, 'bet_slider'):
@@ -1266,11 +1265,11 @@ class PracticeSessionUI(ttk.Frame):
             self.bet_size_label.pack_forget()
         if hasattr(self, 'sizing_frame'):
             self.sizing_frame.pack_forget()
-        print(f"🎯 UI: Bet sizing controls hidden")  # Debug
+
 
     def _show_action_buttons(self):
         """Shows the action buttons and hides game control buttons."""
-        print(f"🎯 UI: _show_action_buttons called")  # Debug
+
         
         # Hide game control buttons
         self.start_button.pack_forget()
