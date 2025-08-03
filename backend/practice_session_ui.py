@@ -366,17 +366,48 @@ class PracticeSessionUI(ttk.Frame):
 
     def _draw_pot_display(self):
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
-        # Use responsive font sizing for pot display
+        
+        # Create pot graphics frame with unique styling
+        pot_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=3, relief="raised")
+        
+        # Pot title label
+        pot_title_label = tk.Label(
+            pot_frame,
+            text="🏆 POT",
+            bg=THEME["secondary_bg"],
+            fg="gold",
+            font=("Arial", 12, "bold")
+        )
+        pot_title_label.pack(pady=(5, 2))
+        
+        # Pot amount label
         pot_font_size = max(14, int(self.canvas.winfo_height() / 30))
         pot_font = (THEME["font_family"], pot_font_size, "bold")
         self.pot_label = tk.Label(
-            self.canvas, 
-            text="Pot: $0.00", 
-            bg="#013f28", 
-            fg="yellow", 
+            pot_frame,
+            text="$0.00",
+            bg=THEME["secondary_bg"],
+            fg="yellow",
             font=pot_font
         )
-        self.canvas.create_window(center_x, center_y + 130, window=self.pot_label)
+        self.pot_label.pack(pady=2)
+        
+        # Pot chips visualization (unique from player stacks)
+        self.pot_chips_label = tk.Label(
+            pot_frame,
+            text="🟠🟠🟠",  # Orange chips for pot (different from player chips)
+            bg=THEME["secondary_bg"],
+            fg="orange",
+            font=FONTS["small"]
+        )
+        self.pot_chips_label.pack(pady=(2, 5))
+        
+        # Create window for pot graphics
+        self.pot_window = self.canvas.create_window(
+            center_x, center_y + 130, 
+            window=pot_frame, 
+            anchor="center"
+        )
     
     # --- UI Update and Action Handling (Corrected) ---
 
@@ -980,10 +1011,12 @@ class PracticeSessionUI(ttk.Frame):
         # (Existing logging...)
 
         # Update pot and current bet display
-        pot_text = f"Pot: ${game_info['pot']:.2f}"
+        pot_amount = game_info['pot']
+        self.update_pot_amount(pot_amount)
+        
+        # Show current bet information in message area if there's a current bet
         if game_info['current_bet'] > 0:
-            pot_text += f"  |  Current Bet: ${game_info['current_bet']:.2f}"
-        self.pot_label.config(text=pot_text)
+            self.add_game_message(f"💰 Current Bet: ${game_info['current_bet']:.2f}")
 
         # --- THIS IS THE CRITICAL BUG FIX ---
         # Always display the community cards that are available on the board.
@@ -1219,6 +1252,8 @@ class PracticeSessionUI(ttk.Frame):
         # Update pot display
         if hasattr(self, 'pot_label'):
             self.pot_label.config(font=large_font)
+        if hasattr(self, 'pot_chips_label'):
+            self.pot_chips_label.config(font=small_font)
         
         # Update action buttons
         for control_name, control_dict in self.human_action_controls.items():
@@ -1358,3 +1393,45 @@ class PracticeSessionUI(ttk.Frame):
             return "🔴" * chip_count  # Red chips for larger amounts
         else:
             return "🟣" * chip_count  # Purple chips for very large amounts
+    
+    def _get_pot_chip_symbols(self, amount):
+        """Get unique pot chip symbols based on amount (different from player chips)."""
+        chip_count = self._calculate_pot_chip_count(amount)
+        
+        # Pot uses different chip colors than player stacks
+        if amount <= 25:
+            return "🟠" * chip_count  # Orange chips for small pots
+        elif amount <= 100:
+            return "🔶" * chip_count  # Dark orange chips for medium pots
+        elif amount <= 500:
+            return "🟧" * chip_count  # Light orange chips for large pots
+        else:
+            return "🟡" * chip_count  # Gold chips for very large pots
+    
+    def _calculate_pot_chip_count(self, amount):
+        """Calculate how many pot chip symbols to display based on amount."""
+        if amount <= 10:
+            return 2
+        elif amount <= 25:
+            return 3
+        elif amount <= 50:
+            return 4
+        elif amount <= 100:
+            return 5
+        elif amount <= 200:
+            return 6
+        elif amount <= 500:
+            return 7
+        else:
+            return 8
+    
+    def update_pot_amount(self, new_amount):
+        """Update the pot amount and chip visualization."""
+        if hasattr(self, 'pot_label') and hasattr(self, 'pot_chips_label'):
+            self.pot_label.config(text=f"${new_amount:.2f}")
+            
+            # Update pot chip visualization
+            chip_symbols = self._get_pot_chip_symbols(new_amount)
+            self.pot_chips_label.config(text=chip_symbols)
+            
+            print(f"💰 Updated pot: ${new_amount:.2f} with {len(chip_symbols)} chips")
