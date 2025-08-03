@@ -2356,7 +2356,7 @@ class ImprovedPokerStateMachine:
                     "is_active": p.is_active,
                     "is_all_in": p.is_all_in,
                     "is_human": p.is_human,  # BUG FIX: Add missing is_human field
-                    "cards": p.cards if p.is_human else ["**", "**"],
+                    "cards": p.cards if (p.is_human or self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]) else ["**", "**"],
                 }
                 for p in self.game_state.players
             ],
