@@ -553,17 +553,16 @@ class PracticeSessionUI(ttk.Frame):
             pot_x = self.canvas.winfo_width() / 2
             pot_y = self.canvas.winfo_height() / 2 + 130  # Pot label position
             
-            # Get winner's position
-            seat_positions = [
-                (self.canvas.winfo_width() * 0.5, self.canvas.winfo_height() * 0.1),  # Top
-                (self.canvas.winfo_width() * 0.8, self.canvas.winfo_height() * 0.2),  # Top-right
-                (self.canvas.winfo_width() * 0.9, self.canvas.winfo_height() * 0.5),  # Right
-                (self.canvas.winfo_width() * 0.8, self.canvas.winfo_height() * 0.8),  # Bottom-right
-                (self.canvas.winfo_width() * 0.5, self.canvas.winfo_height() * 0.9),  # Bottom
-                (self.canvas.winfo_width() * 0.2, self.canvas.winfo_height() * 0.8),  # Bottom-left
-            ]
+            # Get winner's stack graphics position
+            width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+            center_x, center_y = width / 2, height / 2
             
-            winner_x, winner_y = seat_positions[winner_seat]
+            # Calculate stack graphics position (same as in _create_stack_graphics)
+            stack_radius_x = width * 0.35
+            stack_radius_y = height * 0.28
+            angle = (2 * math.pi / self.num_players) * winner_seat - (math.pi / 2)
+            winner_x = center_x + stack_radius_x * math.cos(angle)
+            winner_y = center_y + stack_radius_y * math.sin(angle)
             print(f"📍 From ({pot_x:.0f}, {pot_y:.0f}) to ({winner_x:.0f}, {winner_y:.0f})")  # Debug
             
             # Create enhanced animated money object with glow effect
@@ -627,7 +626,32 @@ class PracticeSessionUI(ttk.Frame):
                     self.canvas.delete(money_obj)
                     self.canvas.delete(glow_obj)
                     print("🎬 Enhanced animation complete")  # Debug
-                    # Update the winner's stack display
+                    
+                    # Update the winner's stack graphics with the new amount
+                    if winner_seat < len(self.player_seats):
+                        player_seat = self.player_seats[winner_seat]
+                        if player_seat and "stack_graphics" in player_seat:
+                            stack_graphics = player_seat["stack_graphics"]
+                            amount_label = stack_graphics.get("amount_label")
+                            chips_label = stack_graphics.get("chips_label")
+                            
+                            if amount_label and chips_label:
+                                # Get current amount and add the pot amount
+                                current_text = amount_label.cget("text")
+                                try:
+                                    current_amount = float(current_text.replace("$", ""))
+                                    new_amount = current_amount + winner_info['amount']
+                                    
+                                    # Update stack graphics
+                                    amount_label.config(text=f"${new_amount:.2f}")
+                                    chip_symbols = self._get_chip_symbols(new_amount)
+                                    chips_label.config(text=chip_symbols)
+                                    
+                                    print(f"💰 Updated winner stack: ${current_amount:.2f} + ${winner_info['amount']:.2f} = ${new_amount:.2f}")
+                                except ValueError:
+                                    print(f"⚠️ Could not parse current stack amount: {current_text}")
+                    
+                    # Update the display
                     self.update_display()
             
             # Start the animation
