@@ -69,14 +69,20 @@ class PracticeSessionUI(ttk.Frame):
         self.session_info_labels = {}
         self.action_buttons = {}
         self.game_control_buttons = {}
+        self.human_action_controls = {}  # Add missing initialization
         self.sfx = SoundManager()
         
         # Initialize state machine
         self.state_machine = ImprovedPokerStateMachine(
-            on_action_required=self.prompt_human_action,
-            on_state_change=self._on_state_change,
-            on_hand_complete=self.handle_hand_complete
+            num_players=6,
+            strategy_data=strategy_data,
+            root_tk=parent
         )
+        
+        # Set up callbacks after initialization
+        self.state_machine.on_action_required = self.prompt_human_action
+        self.state_machine.on_state_change = self._on_state_change
+        self.state_machine.on_hand_complete = self.handle_hand_complete
         
         # Setup UI
         self._setup_ui()
@@ -526,29 +532,44 @@ class PracticeSessionUI(ttk.Frame):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         center_x, center_y = self.layout_manager.calculate_pot_position(width, height)
         
-        # Create a more realistic pot design using canvas shapes instead of rectangular frame
-        pot_radius_x = 60
-        pot_radius_y = 40
+        # Get current felt colors to match the pot background
+        felt_colors = self.table_felt_colors[self.current_felt_color]
         
-        # Draw the pot as an oval with gradient-like effect
-        pot_outer = self.canvas.create_oval(
-            center_x - pot_radius_x, center_y - pot_radius_y,
-            center_x + pot_radius_x, center_y + pot_radius_y,
-            fill="#8B4513",  # Saddle brown for pot color
-            outline="#654321",
-            width=3
-        )
+        # Create a chip stack tower as the pot
+        # Base chip stack dimensions
+        chip_radius = 25
+        chip_height = 8
+        num_chips = 5  # Default number of chips in the stack
         
-        # Inner pot highlight
-        pot_inner = self.canvas.create_oval(
-            center_x - pot_radius_x + 5, center_y - pot_radius_y + 5,
-            center_x + pot_radius_x - 5, center_y + pot_radius_y - 5,
-            fill="#A0522D",  # Sienna for inner highlight
-            outline="",
-            width=0
-        )
+        # Draw the chip stack tower
+        chip_stack_graphics = []
         
-        # Pot title label positioned above the pot
+        # Draw each chip in the stack (from bottom to top)
+        for i in range(num_chips):
+            # Calculate position for each chip (stacked)
+            chip_y = center_y + (num_chips - i - 1) * chip_height
+            
+            # Create chip with felt color background and realistic appearance
+            chip = self.canvas.create_oval(
+                center_x - chip_radius, chip_y - chip_height/2,
+                center_x + chip_radius, chip_y + chip_height/2,
+                fill=felt_colors["inner"],  # Use felt inner color for chip background
+                outline="#654321",  # Dark brown outline for chip edge
+                width=2
+            )
+            
+            # Add chip highlight for 3D effect
+            highlight = self.canvas.create_oval(
+                center_x - chip_radius + 3, chip_y - chip_height/2 + 2,
+                center_x + chip_radius - 3, chip_y + chip_height/2 - 2,
+                fill=felt_colors["pattern"],  # Use felt pattern color for highlight
+                outline="",
+                width=0
+            )
+            
+            chip_stack_graphics.append({"chip": chip, "highlight": highlight})
+        
+        # Pot title label positioned above the chip stack
         pot_title_label = tk.Label(
             self.canvas,
             text="🏆 POT",
@@ -557,28 +578,30 @@ class PracticeSessionUI(ttk.Frame):
             font=("Arial", 10, "bold")
         )
         pot_title_window = self.canvas.create_window(
-            center_x, center_y - pot_radius_y - 25,
+            center_x, center_y - chip_radius - 30,
             window=pot_title_label,
             anchor="center"
         )
         
-        # Pot amount label positioned inside the pot
+        # Pot amount label positioned on top of the chip stack
         pot_font_size = max(12, int(self.canvas.winfo_height() / 35))
         pot_font = (THEME["font_family"], pot_font_size, "bold")
         self.pot_label = tk.Label(
             self.canvas,
             text="$0.00",
-            bg="#A0522D",  # Match inner pot color
+            bg=felt_colors["inner"],  # Match chip stack background
             fg="white",
-            font=pot_font
+            font=pot_font,
+            relief="raised",
+            bd=2
         )
         self.pot_label_window = self.canvas.create_window(
-            center_x, center_y,
+            center_x, center_y - chip_radius - 10,
             window=self.pot_label,
             anchor="center"
         )
         
-        # Pot chips visualization positioned below the pot
+        # Pot chips visualization positioned below the chip stack
         self.pot_chips_label = tk.Label(
             self.canvas,
             text="🟠🟠🟠",  # Orange chips for pot (different from player chips)
@@ -587,18 +610,18 @@ class PracticeSessionUI(ttk.Frame):
             font=FONTS["small"]
         )
         self.pot_chips_window = self.canvas.create_window(
-            center_x, center_y + pot_radius_y + 20,
+            center_x, center_y + chip_radius + 20,
             window=self.pot_chips_label,
             anchor="center"
         )
         
         # Store pot graphics references for updates
         self.pot_graphics = {
-            "outer": pot_outer,
-            "inner": pot_inner,
+            "chip_stack": chip_stack_graphics,
             "title_window": pot_title_window,
             "amount_window": self.pot_label_window,
-            "chips_window": self.pot_chips_window
+            "chips_window": self.pot_chips_window,
+            "felt_colors": felt_colors  # Store felt colors for updates
         }
     
     # --- UI Update and Action Handling (Corrected) ---
@@ -1760,4 +1783,66 @@ class PracticeSessionUI(ttk.Frame):
             chip_symbols = self._get_pot_chip_symbols(new_amount)
             self.pot_chips_label.config(text=chip_symbols)
             
+            # Update chip stack height based on pot amount
+            if hasattr(self, 'pot_graphics') and 'chip_stack' in self.pot_graphics:
+                chip_stack = self.pot_graphics['chip_stack']
+                felt_colors = self.pot_graphics.get('felt_colors', self.table_felt_colors[self.current_felt_color])
+                
+                # Calculate number of chips based on pot amount
+                if new_amount <= 10:
+                    num_chips = 3
+                elif new_amount <= 25:
+                    num_chips = 4
+                elif new_amount <= 50:
+                    num_chips = 5
+                elif new_amount <= 100:
+                    num_chips = 6
+                elif new_amount <= 200:
+                    num_chips = 7
+                elif new_amount <= 500:
+                    num_chips = 8
+                else:
+                    num_chips = 10
+                
+                # Update chip stack graphics
+                width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+                center_x, center_y = self.layout_manager.calculate_pot_position(width, height)
+                chip_radius = 25
+                chip_height = 8
+                
+                # Remove old chip stack graphics
+                for chip_data in chip_stack:
+                    self.canvas.delete(chip_data['chip'])
+                    self.canvas.delete(chip_data['highlight'])
+                
+                # Create new chip stack with updated height
+                chip_stack.clear()
+                for i in range(num_chips):
+                    chip_y = center_y + (num_chips - i - 1) * chip_height
+                    
+                    # Create chip with felt color background
+                    chip = self.canvas.create_oval(
+                        center_x - chip_radius, chip_y - chip_height/2,
+                        center_x + chip_radius, chip_y + chip_height/2,
+                        fill=felt_colors["inner"],
+                        outline="#654321",
+                        width=2
+                    )
+                    
+                    # Add chip highlight for 3D effect
+                    highlight = self.canvas.create_oval(
+                        center_x - chip_radius + 3, chip_y - chip_height/2 + 2,
+                        center_x + chip_radius - 3, chip_y + chip_height/2 - 2,
+                        fill=felt_colors["pattern"],
+                        outline="",
+                        width=0
+                    )
+                    
+                    chip_stack.append({"chip": chip, "highlight": highlight})
+            
             print(f"💰 Updated pot: ${new_amount:.2f} with {len(chip_symbols)} chips")
+
+    def _on_state_change(self, new_state):
+        """Handle state changes from the state machine."""
+        print(f"🎯 UI: State changed to: {new_state}")
+        self.update_display(new_state)
