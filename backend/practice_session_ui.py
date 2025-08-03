@@ -32,28 +32,29 @@ class PracticeSessionUI(ttk.Frame):
         self.current_felt_color = "classic_green"  # Add missing attribute
         self.table_felt_colors = {
             "classic_green": {
-                "outer": "#0B6623", 
-                "inner": "#228B22", 
+                "outer": "#0B6623",
+                "inner": "#228B22",
                 "pattern": "#32CD32",
                 "community_bg": "#228B22"
             },
             "dark_green": {
-                "outer": "#0A4D0A", 
-                "inner": "#1B4F1B", 
+                "outer": "#0A4D0A",
+                "inner": "#1B4F1B",
                 "pattern": "#2E8B2E",
                 "community_bg": "#1B4F1B"
             },
             "blue": {
-                "outer": "#1E3A8A", 
-                "inner": "#3B82F6", 
-                "pattern": "#60A5FA",
-                "community_bg": "#3B82F6"
+                "outer": "#1E3A8A",
+                "inner": "#2563EB",
+                "pattern": "#3B82F6",
+                "community_bg": "#2563EB"
             }
         }  # Add missing attribute
         
-        # Add mechanism to preserve community cards after hand completion
-        self.preserved_community_cards = []  # Store the final board cards
-        self.hand_completed = False  # Track if hand is completed
+        # Initialize UI state tracking
+        self.preserved_community_cards = []
+        self.hand_completed = False
+        self.preserved_pot_amount = 0.0  # Add pot preservation
         
         # Initialize other attributes
         self.num_players = 6
@@ -712,7 +713,8 @@ class PracticeSessionUI(ttk.Frame):
         # Clear preserved community cards and reset hand completion flag
         self.preserved_community_cards = []
         self.hand_completed = False
-        print(f"🎯 UI: Cleared preserved community cards")  # Debug
+        self.preserved_pot_amount = 0.0  # Clear preserved pot amount
+        print(f"🎯 UI: Cleared preserved community cards and pot amount")  # Debug
         
         # FIX: Clear community cards when starting a new hand with white background
         for card_label in self.community_card_labels:
@@ -748,6 +750,11 @@ class PracticeSessionUI(ttk.Frame):
             self.preserved_community_cards = final_board.copy()
             self.hand_completed = True
             print(f"🎯 UI: Preserved community cards: {self.preserved_community_cards}")  # Debug
+            
+            # --- PRESERVE POT AMOUNT ---
+            # Store the pot amount to prevent it from resetting to $0
+            self.preserved_pot_amount = pot_amount
+            print(f"🎯 UI: Preserved pot amount: ${self.preserved_pot_amount}")  # Debug
 
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards with proper coloring
@@ -1310,6 +1317,10 @@ class PracticeSessionUI(ttk.Frame):
 
         # Update pot and current bet display
         pot_amount = game_info['pot']
+        # Use preserved pot amount if hand is completed
+        if self.hand_completed and self.preserved_pot_amount > 0:
+            pot_amount = self.preserved_pot_amount
+            print(f"🎯 UI: Using preserved pot amount: ${pot_amount}")  # Debug
         self.update_pot_amount(pot_amount)
         
         # Show current bet information in message area if there's a current bet
@@ -1383,13 +1394,15 @@ class PracticeSessionUI(ttk.Frame):
 
             # Update player card display with proper colors and light gray background
             if player_info['is_active']:
-                # Show cards only if the player is human or if it's showdown
+                # Show cards for human players or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
                     # Use proper card colors with light gray background
                     cards_label.config(text=cards_text, fg="#000000", bg="#F0F0F0")
-                else: # Bot's cards are hidden during play
-                    cards_label.config(text="🂠 🂠", fg="#CCCCCC", bg="#F0F0F0")
+                else: # Bot's cards are hidden during play - show realistic card backs
+                    # Create realistic card back design
+                    card_back_text = "🂠 🂠"  # Use card back symbols
+                    cards_label.config(text=card_back_text, fg="#8B4513", bg="#F0F0F0")  # Brown color for card backs
             else: # Player has folded
                 cards_label.config(text="Folded", fg="red", bg="#F0F0F0")
         
