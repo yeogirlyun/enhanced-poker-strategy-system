@@ -130,6 +130,120 @@ class PracticeSessionUI(ttk.Frame):
 
         self.canvas.bind("<Configure>", self._on_resize)
         
+        # Initialize layout management system
+        self.layout_manager = LayoutManager()
+    
+    class LayoutManager:
+        """Manages dynamic positioning to prevent overlays and ensure visibility."""
+        
+        def __init__(self):
+            self.min_spacing = 20  # Minimum pixel spacing between elements
+        
+        def calculate_player_positions(self, width, height, num_players):
+            """Calculate player seat positions with proper spacing."""
+            center_x, center_y = width / 2, height / 2
+            
+            # Dynamic radius based on table size and number of players
+            base_radius_x = width * 0.42
+            base_radius_y = height * 0.35
+            
+            # Adjust for different player counts to prevent overcrowding
+            if num_players <= 4:
+                radius_x = base_radius_x * 0.9
+                radius_y = base_radius_y * 0.9
+            elif num_players <= 6:
+                radius_x = base_radius_x
+                radius_y = base_radius_y
+            else:
+                radius_x = base_radius_x * 1.1
+                radius_y = base_radius_y * 1.1
+            
+            positions = []
+            for i in range(num_players):
+                angle = (2 * math.pi / num_players) * i - (math.pi / 2)
+                x = center_x + radius_x * math.cos(angle)
+                y = center_y + radius_y * math.sin(angle)
+                positions.append((x, y))
+            
+            return positions
+        
+        def calculate_stack_positions(self, width, height, num_players):
+            """Calculate stack graphics positions with proper spacing."""
+            center_x, center_y = width / 2, height / 2
+            
+            # Stack graphics positioned between player seats and community cards
+            stack_radius_x = width * 0.38
+            stack_radius_y = height * 0.31
+            
+            positions = []
+            for i in range(num_players):
+                angle = (2 * math.pi / num_players) * i - (math.pi / 2)
+                x = center_x + stack_radius_x * math.cos(angle)
+                y = center_y + stack_radius_y * math.sin(angle)
+                positions.append((x, y))
+            
+            return positions
+        
+        def calculate_community_card_position(self, width, height):
+            """Calculate community card area position."""
+            center_x, center_y = width / 2, height / 2
+            return (center_x, center_y)
+        
+        def calculate_pot_position(self, width, height):
+            """Calculate pot display position."""
+            center_x, center_y = width / 2, height / 2
+            # Position pot below community cards
+            return (center_x, center_y + 80)
+        
+        def calculate_bet_positions(self, width, height, num_players):
+            """Calculate bet label positions."""
+            center_x, center_y = width / 2, height / 2
+            
+            # Bet labels positioned closer to table center than player seats
+            bet_radius_x = width * 0.32
+            bet_radius_y = height * 0.25
+            
+            positions = []
+            for i in range(num_players):
+                angle = (2 * math.pi / num_players) * i - (math.pi / 2)
+                x = center_x + bet_radius_x * math.cos(angle)
+                y = center_y + bet_radius_y * math.sin(angle)
+                positions.append((x, y))
+            
+            return positions
+        
+        def validate_positions(self, positions, min_distance=30):
+            """Validate that positions don't overlap and adjust if necessary."""
+            adjusted_positions = positions.copy()
+            
+            for i in range(len(positions)):
+                for j in range(i + 1, len(positions)):
+                    x1, y1 = adjusted_positions[i]
+                    x2, y2 = adjusted_positions[j]
+                    
+                    distance = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+                    
+                    if distance < min_distance:
+                        # Adjust position to prevent overlap
+                        angle = math.atan2(y2 - y1, x2 - x1)
+                        new_x = x1 + min_distance * math.cos(angle)
+                        new_y = y1 + min_distance * math.sin(angle)
+                        adjusted_positions[j] = (new_x, new_y)
+            
+            return adjusted_positions
+        
+        def get_layout_info(self, width, height, num_players):
+            """Get comprehensive layout information for debugging."""
+            return {
+                'table_size': (width, height),
+                'num_players': num_players,
+                'player_positions': self.calculate_player_positions(width, height, num_players),
+                'stack_positions': self.calculate_stack_positions(width, height, num_players),
+                'bet_positions': self.calculate_bet_positions(width, height, num_players),
+                'community_position': self.calculate_community_card_position(width, height),
+                'pot_position': self.calculate_pot_position(width, height)
+            }
+        
         # Initialize table felt colors
         self.table_felt_colors = {
             "classic_green": {
@@ -213,18 +327,20 @@ class PracticeSessionUI(ttk.Frame):
 
     def _draw_player_seats(self):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
-        center_x, center_y = width / 2, height / 2
-        radius_x, radius_y = width * 0.42, height * 0.35
         self.player_seats = [{} for _ in range(self.num_players)]
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        
+        # Use layout manager for positioning
+        player_positions = self.layout_manager.calculate_player_positions(width, height, self.num_players)
+        bet_positions = self.layout_manager.calculate_bet_positions(width, height, self.num_players)
+        
         for i in range(self.num_players):
-            angle = (2 * math.pi / self.num_players) * i - (math.pi / 2)
-            seat_x = center_x + radius_x * math.cos(angle)
-            seat_y = center_y + radius_y * math.sin(angle)
+            seat_x, seat_y = player_positions[i]
+            bet_x, bet_y = bet_positions[i]
+            
             self._create_player_seat_widget(seat_x, seat_y, f"Player {i+1}", positions[i], i)
-            bet_radius_x, bet_radius_y = radius_x * 0.7, radius_y * 0.7
-            bet_x = center_x + bet_radius_x * math.cos(angle)
-            bet_y = center_y + bet_radius_y * math.sin(angle)
+            
+            # Create bet labels with proper positioning
             felt_colors = self.table_felt_colors[self.current_felt_color]
             bet_label = tk.Label(self.canvas, text="", bg=felt_colors["community_bg"], fg="yellow", font=FONTS["stack_bet"])
             bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_label, anchor="center", state="hidden")
@@ -288,18 +404,11 @@ class PracticeSessionUI(ttk.Frame):
     
     def _create_stack_graphics(self, player_index, seat_x, seat_y):
         """Create a separate stack graphics area positioned in front of the player."""
-        # Calculate position for stack graphics (in front of player, closer to table center)
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
-        center_x, center_y = width / 2, height / 2
         
-        # Position stack graphics closer to table center than player seat
-        stack_radius_x = width * 0.35  # Closer to center than player seats
-        stack_radius_y = height * 0.28
-        
-        # Calculate angle for this player
-        angle = (2 * math.pi / self.num_players) * player_index - (math.pi / 2)
-        stack_x = center_x + stack_radius_x * math.cos(angle)
-        stack_y = center_y + stack_radius_y * math.sin(angle)
+        # Use layout manager for stack positioning
+        stack_positions = self.layout_manager.calculate_stack_positions(width, height, self.num_players)
+        stack_x, stack_y = stack_positions[player_index]
         
         # Create stack graphics frame
         stack_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=1, relief="solid")
@@ -344,13 +453,15 @@ class PracticeSessionUI(ttk.Frame):
         self.player_seats[player_index]["stack_graphics"]["window"] = stack_window
 
     def _draw_community_card_area(self):
-        center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
+        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        center_x, center_y = self.layout_manager.calculate_community_card_position(width, height)
+        
         felt_colors = self.table_felt_colors[self.current_felt_color]
         community_frame = tk.Frame(self.canvas, bg=felt_colors["community_bg"], bd=2, relief="groove")
         self.community_card_labels = []
         for i in range(5):
             # Use responsive font sizing for community cards
-            card_font_size = max(16, int(self.canvas.winfo_height() / 25))
+            card_font_size = max(16, int(height / 25))
             card_font = (THEME["font_family"], card_font_size, "bold")
             card_label = tk.Label(
                 community_frame, 
@@ -365,7 +476,8 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
     def _draw_pot_display(self):
-        center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
+        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        center_x, center_y = self.layout_manager.calculate_pot_position(width, height)
         
         # Create pot graphics frame with unique styling
         pot_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=3, relief="raised")
