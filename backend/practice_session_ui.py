@@ -64,33 +64,65 @@ class PracticeSessionUI(ttk.Frame):
         right_panel_frame = ttk.Frame(self)
         right_panel_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
         
-        # Session Info Area (Upper)
+        # Session Info Area (Upper) with Scrollbar
         session_frame = ttk.LabelFrame(right_panel_frame, text="Session Information", padding=10)
         session_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        
+        # Create frame for session text and scrollbar
+        session_text_frame = tk.Frame(session_frame)
+        session_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Session text widget
         self.session_text = tk.Text(
-            session_frame, 
+            session_text_frame, 
             state=tk.DISABLED, 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
             font=FONTS["main"],  # Use main font instead of small
-            height=8
+            height=8,
+            wrap=tk.WORD  # Enable word wrapping
         )
-        self.session_text.pack(fill=tk.BOTH, expand=True)
+        self.session_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Action Messages Area (Lower)
+        # Session scrollbar
+        self.session_scrollbar = ttk.Scrollbar(
+            session_text_frame, 
+            orient=tk.VERTICAL, 
+            command=self.session_text.yview
+        )
+        self.session_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.session_text.config(yscrollcommand=self.session_scrollbar.set)
+        
+        # Action Messages Area (Lower) with Scrollbar
         action_frame = ttk.LabelFrame(right_panel_frame, text="Action Messages", padding=10)
         action_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
+        
+        # Create frame for action text and scrollbar
+        action_text_frame = tk.Frame(action_frame)
+        action_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Action text widget
         self.info_text = tk.Text(
-            action_frame, 
+            action_text_frame, 
             state=tk.DISABLED, 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
             font=FONTS["main"],  # Use main font instead of small
-            height=6
+            height=6,
+            wrap=tk.WORD  # Enable word wrapping
         )
-        self.info_text.pack(fill=tk.BOTH, expand=True)
+        self.info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Action scrollbar
+        self.action_scrollbar = ttk.Scrollbar(
+            action_text_frame, 
+            orient=tk.VERTICAL, 
+            command=self.info_text.yview
+        )
+        self.action_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.info_text.config(yscrollcommand=self.action_scrollbar.set)
 
         controls_frame = ttk.Frame(self)
         controls_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=10)
@@ -986,6 +1018,14 @@ class PracticeSessionUI(ttk.Frame):
         # Update action messages text area
         if hasattr(self, 'info_text'):
             self.info_text.config(font=main_font)
+        
+        # Update scrollbars to match the new font size
+        if hasattr(self, 'session_scrollbar'):
+            # Scrollbar size can be adjusted if needed
+            pass
+        if hasattr(self, 'action_scrollbar'):
+            # Scrollbar size can be adjusted if needed
+            pass
         
         # Update player seat labels and information
         for player_seat in self.player_seats:
