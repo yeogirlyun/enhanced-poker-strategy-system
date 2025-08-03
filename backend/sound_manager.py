@@ -103,6 +103,24 @@ class SoundManager:
             except Exception as e:
                 pass  # Handle sound playback errors
     
+    def play_action_sound(self, action: str, amount: float = 0):
+        """Play action-specific sound effects."""
+        if not self.sound_enabled:
+            return
+        
+        # Map action to sound
+        action_sounds = {
+            "fold": "player_fold",
+            "check": "player_check", 
+            "call": "player_call",
+            "bet": "player_bet",
+            "raise": "player_raise",
+            "all_in": "player_all_in"
+        }
+        
+        sound_name = action_sounds.get(action.lower(), action.lower())
+        self.play(sound_name)
+    
     def play_money_sound(self, action: str):
         """Play money-related sounds."""
         if action == "chip_bet":
