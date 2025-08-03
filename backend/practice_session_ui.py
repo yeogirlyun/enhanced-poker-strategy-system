@@ -1406,13 +1406,17 @@ class PracticeSessionUI(ttk.Frame):
             board_cards = self.preserved_community_cards
             print(f"🎯 UI: Using preserved community cards: {board_cards}")  # Debug
         
-        for i, card_widget in enumerate(self.community_card_widgets):
-            if i < len(board_cards):
-                card_widget.set_card(board_cards[i])
-                # Force the card widget to update immediately
-                card_widget.update()
-            else:
-                card_widget.set_card("")  # Clear the card
+        # Safety check for community card widgets
+        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+            for i, card_widget in enumerate(self.community_card_widgets):
+                if i < len(board_cards):
+                    card_widget.set_card(board_cards[i])
+                    # Force the card widget to update immediately
+                    card_widget.update()
+                else:
+                    card_widget.set_card("")  # Clear the card
+        else:
+            print("🎯 UI: Community card widgets not ready yet")
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
@@ -1421,6 +1425,10 @@ class PracticeSessionUI(ttk.Frame):
         # We'll clear action indicators in _animate_player_action when a new action is taken
         
         # Update player info
+        if not hasattr(self, 'player_seats') or not self.player_seats:
+            print("🎯 UI: Player seats not ready yet")
+            return
+            
         for i, player_seat in enumerate(self.player_seats):
             if not player_seat:
                 continue
@@ -1883,9 +1891,11 @@ class PracticeSessionUI(ttk.Frame):
     
     def update_pot_amount(self, new_amount):
         """Updates the pot amount display with the new amount."""
-        if hasattr(self, 'pot_label'):
+        if hasattr(self, 'pot_label') and self.pot_label is not None:
             self.pot_label.config(text=f"${new_amount:.2f}")
             print(f"💰 Updated pot: ${new_amount:.2f}")
+        else:
+            print(f"💰 Pot label not ready yet, skipping pot update: ${new_amount:.2f}")
 
     def _on_state_change(self, new_state):
         """Handle state changes from the state machine."""
