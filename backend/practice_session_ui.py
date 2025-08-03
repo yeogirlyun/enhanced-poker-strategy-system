@@ -433,9 +433,9 @@ class PracticeSessionUI(ttk.Frame):
             text="🂠",
             bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
-            font=("Arial", 24, "bold"),  # Increased font size for 70% card area
-            width=6,
-            height=3,
+            font=("Arial", 18, "bold"),  # Smaller font size for better proportion
+            width=3,  # Narrower width for realistic card ratio
+            height=7,  # Taller height for realistic card ratio (2.5:1 ratio)
             relief="flat",  # No raised relief for hidden cards
             bd=0,  # No border for hidden cards
             highlightthickness=0  # No highlight for hidden cards
@@ -447,9 +447,9 @@ class PracticeSessionUI(ttk.Frame):
             text="🂠",
             bg="#696969",  # Dark grey background for hidden cards
             fg="#8B4513",  # Brown color for card backs
-            font=("Arial", 24, "bold"),  # Increased font size for 70% card area
-            width=6,
-            height=3,
+            font=("Arial", 18, "bold"),  # Smaller font size for better proportion
+            width=3,  # Narrower width for realistic card ratio
+            height=7,  # Taller height for realistic card ratio (2.5:1 ratio)
             relief="flat",  # No raised relief for hidden cards
             bd=0,  # No border for hidden cards
             highlightthickness=0  # No highlight for hidden cards
@@ -547,9 +547,9 @@ class PracticeSessionUI(ttk.Frame):
                 text="",
                 bg="#D3D3D3",  # Light grey background for visible cards
                 fg="black",  # Black text for visible cards
-                font=("Arial", 24, "bold"),  # Increased font size for 70% card area
-                width=6,
-                height=3,
+                font=("Arial", 18, "bold"),  # Smaller font size for better proportion
+                width=3,  # Narrower width for realistic card ratio
+                height=7,  # Taller height for realistic card ratio (2.5:1 ratio)
                 relief="raised",  # Raised border for visible cards
                 bd=2,  # Border for visible cards
                 highlightthickness=1,
@@ -749,6 +749,10 @@ class PracticeSessionUI(ttk.Frame):
         # Clear the winning announcement message when starting new hand
         if hasattr(self, 'last_action_label'):
             self.last_action_label.config(text="")
+        
+        # Clear community cards display when starting new hand
+        for card_label in self.community_card_labels:
+            card_label.config(text="", bg="#D3D3D3", relief="raised", bd=2)
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -1453,6 +1457,8 @@ class PracticeSessionUI(ttk.Frame):
                         # Debug output for human player
                         if player_info['is_human']:
                             print(f"🎯 UI: Human player cards displayed: {card1_text} {card2_text}")
+                        elif self.state_machine.get_current_state() == PokerState.SHOWDOWN:
+                            print(f"🎯 UI: Showdown - {player_info['name']} cards displayed: {card1_text} {card2_text}")
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card labels
                     card_labels = player_seat.get("card_labels", [])
