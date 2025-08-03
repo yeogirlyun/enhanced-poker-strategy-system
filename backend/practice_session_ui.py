@@ -72,9 +72,12 @@ class CardWidget(tk.Canvas):
             # Draw a simple dark gray card with no border
             self.create_rectangle(0, 0, self.width, self.height, 
                                 fill=dark_gray, outline="")
+        else:
+            # Define colors for regular card back
+            dark_red = "#a51d2d"
+            light_red = "#c0392b"
+            border_color = "#8b0000"
             
-            # Debug: Print to confirm folded card back is being drawn
-    
             # Set the background color
             self.config(bg=dark_red)
             
@@ -95,8 +98,6 @@ class CardWidget(tk.Canvas):
             center_x, center_y = self.width // 2, self.height // 2
             self.create_oval(center_x-8, center_y-8, center_x+8, center_y+8, 
                             fill=light_red, outline=border_color, width=1)
-            
-            # Debug: Print to confirm card back is being drawn
     
 
     def set_folded(self):
