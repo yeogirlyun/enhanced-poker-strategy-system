@@ -1434,11 +1434,11 @@ def test_session_info_retrieval(state_machine, test_suite):
     
     test_suite.log_test(
         "Session Info Contains Duration",
-        "duration_seconds" in session_info,
+        "session_duration" in session_info,
         "Session info should contain duration",
         {"session_info": session_info}
     )
-    assert "duration_seconds" in session_info, "Session info should contain duration"
+    assert "session_duration" in session_info, "Session info should contain duration"
     
     # Test get_session_statistics
     stats = state_machine.get_session_statistics()
