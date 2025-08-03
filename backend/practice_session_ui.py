@@ -73,7 +73,7 @@ class PracticeSessionUI(ttk.Frame):
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
-            font=FONTS["small"],
+            font=FONTS["main"],  # Use main font instead of small
             height=8
         )
         self.session_text.pack(fill=tk.BOTH, expand=True)
@@ -87,7 +87,7 @@ class PracticeSessionUI(ttk.Frame):
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
-            font=FONTS["small"],
+            font=FONTS["main"],  # Use main font instead of small
             height=6
         )
         self.info_text.pack(fill=tk.BOTH, expand=True)
@@ -141,19 +141,67 @@ class PracticeSessionUI(ttk.Frame):
 
     def _create_player_seat_widget(self, x, y, name, position, index):
         seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
-        name_label = tk.Label(seat_frame, text=f"{name}\n{position}", bg=THEME["secondary_bg"], fg=THEME["text"], font=FONTS["player_name"])
+        
+        # Create name and position labels with proper font scaling
+        name_label = tk.Label(
+            seat_frame, 
+            text=name, 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text"], 
+            font=FONTS["player_name"]
+        )
         name_label.pack()
+        
+        position_label = tk.Label(
+            seat_frame, 
+            text=position, 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text_dark"], 
+            font=FONTS["small"]
+        )
+        position_label.pack()
+        
         info_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"])
         info_frame.pack(pady=(2, 0))
-        stack_label = tk.Label(info_frame, text="$100.00", bg=THEME["secondary_bg"], fg="yellow", font=FONTS["stack_bet"])
+        
+        stack_label = tk.Label(
+            info_frame, 
+            text="$100.00", 
+            bg=THEME["secondary_bg"], 
+            fg="yellow", 
+            font=FONTS["stack_bet"]
+        )
         stack_label.pack(side=tk.LEFT, padx=5)
-        bet_label = tk.Label(info_frame, text="", bg=THEME["secondary_bg"], fg="orange", font=FONTS["stack_bet"])
+        
+        bet_label = tk.Label(
+            info_frame, 
+            text="", 
+            bg=THEME["secondary_bg"], 
+            fg="orange", 
+            font=FONTS["stack_bet"]
+        )
         bet_label.pack(side=tk.LEFT, padx=5)
+        
+        # Use responsive card font sizing
         card_font_size = max(12, int(self.canvas.winfo_height() / 35))
-        card_font = ("Arial", card_font_size, "bold")
-        cards_label = tk.Label(seat_frame, text="🂠 🂠", bg=THEME["secondary_bg"], fg="#CCCCCC", font=card_font)
+        card_font = (THEME["font_family"], card_font_size, "bold")
+        cards_label = tk.Label(
+            seat_frame, 
+            text="🂠 🂠", 
+            bg=THEME["secondary_bg"], 
+            fg="#CCCCCC", 
+            font=card_font
+        )
         cards_label.pack(pady=5)
-        self.player_seats[index] = {"frame": seat_frame, "name_label": name_label, "stack_label": stack_label, "bet_label": bet_label, "cards_label": cards_label}
+        
+        self.player_seats[index] = {
+            "frame": seat_frame, 
+            "name_label": name_label, 
+            "position_label": position_label,
+            "stack_label": stack_label, 
+            "bet_label": bet_label, 
+            "cards_label": cards_label
+        }
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
 
     def _draw_community_card_area(self):
@@ -161,16 +209,33 @@ class PracticeSessionUI(ttk.Frame):
         community_frame = tk.Frame(self.canvas, bg="#015939", bd=2, relief="groove")
         self.community_card_labels = []
         for i in range(5):
+            # Use responsive font sizing for community cards
             card_font_size = max(16, int(self.canvas.winfo_height() / 25))
-            card_font = ("Arial", card_font_size, "bold")
-            card_label = tk.Label(community_frame, text="", bg="#015939", fg="white", font=card_font, width=4)
+            card_font = (THEME["font_family"], card_font_size, "bold")
+            card_label = tk.Label(
+                community_frame, 
+                text="", 
+                bg="#015939", 
+                fg="white", 
+                font=card_font, 
+                width=4
+            )
             card_label.pack(side=tk.LEFT, padx=3)
             self.community_card_labels.append(card_label)
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
     def _draw_pot_display(self):
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
-        self.pot_label = tk.Label(self.canvas, text="Pot: $0.00", bg="#013f28", fg="yellow", font=FONTS["title"])
+        # Use responsive font sizing for pot display
+        pot_font_size = max(14, int(self.canvas.winfo_height() / 30))
+        pot_font = (THEME["font_family"], pot_font_size, "bold")
+        self.pot_label = tk.Label(
+            self.canvas, 
+            text="Pot: $0.00", 
+            bg="#013f28", 
+            fg="yellow", 
+            font=pot_font
+        )
         self.canvas.create_window(center_x, center_y + 130, window=self.pot_label)
     
     # --- UI Update and Action Handling (Corrected) ---
@@ -891,6 +956,77 @@ class PracticeSessionUI(ttk.Frame):
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
-        new_font = (THEME["font_family"], font_size)
-        self.info_text.config(font=new_font)
-        # You can add other component font updates here if needed 
+        # Create font configurations for different component types
+        main_font = (THEME["font_family"], font_size)
+        small_font = (THEME["font_family"], max(font_size - 2, 8))  # Ensure minimum size
+        large_font = (THEME["font_family"], font_size + 2)
+        bold_font = (THEME["font_family"], font_size, "bold")
+        
+        # Update session information text area
+        if hasattr(self, 'session_text'):
+            self.session_text.config(font=main_font)
+        
+        # Update action messages text area
+        if hasattr(self, 'info_text'):
+            self.info_text.config(font=main_font)
+        
+        # Update player seat labels and information
+        for player_seat in self.player_seats:
+            if player_seat:
+                frame = player_seat.get("frame")
+                if frame:
+                    # Update player name label
+                    name_label = player_seat.get("name_label")
+                    if name_label:
+                        name_label.config(font=bold_font)
+                    
+                    # Update position label
+                    position_label = player_seat.get("position_label")
+                    if position_label:
+                        position_label.config(font=small_font)
+                    
+                    # Update stack label
+                    stack_label = player_seat.get("stack_label")
+                    if stack_label:
+                        stack_label.config(font=main_font)
+                    
+                    # Update cards label
+                    cards_label = player_seat.get("cards_label")
+                    if cards_label:
+                        cards_label.config(font=main_font)
+                    
+                    # Update bet label
+                    bet_label = player_seat.get("bet_label")
+                    if bet_label:
+                        bet_label.config(font=main_font)
+        
+        # Update community card labels
+        for card_label in self.community_card_labels:
+            if card_label:
+                card_label.config(font=large_font)
+        
+        # Update pot display
+        if hasattr(self, 'pot_label'):
+            self.pot_label.config(font=large_font)
+        
+        # Update action buttons
+        for control_name, control_dict in self.human_action_controls.items():
+            if isinstance(control_dict, dict):
+                button = control_dict.get("button")
+                if button:
+                    button.config(font=main_font)
+        
+        # Update bet size entry and label
+        if hasattr(self, 'bet_size_entry'):
+            self.bet_size_entry.config(font=main_font)
+        if hasattr(self, 'bet_size_label'):
+            self.bet_size_label.config(font=main_font)
+        
+        # Update game control buttons
+        if hasattr(self, 'start_hand_btn'):
+            self.start_hand_btn.config(font=main_font)
+        if hasattr(self, 'reset_game_btn'):
+            self.reset_game_btn.config(font=main_font)
+        
+        # Force a complete UI refresh
+        self.update() 
