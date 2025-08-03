@@ -1211,3 +1211,5 @@ if __name__ == "__main__":
     # To profile the application, run: python main_gui.py --profile
     if "--profile" in sys.argv:
         cProfile.run("main()", "output.pstats")
+    else:
+        main()
