@@ -1394,6 +1394,10 @@ class PracticeSessionUI(ttk.Frame):
             name_label = player_seat["name_label"]
             cards_label = player_seat["cards_label"]
             
+            # Debug output for human player detection
+            if player_info.get('is_human', False):
+                print(f"🎯 UI: Player {i+1} is human: {player_info['is_human']}, cards: {player_info.get('cards', [])}")
+            
             # Get stack label from stack_graphics if it exists
             stack_graphics = player_seat.get("stack_graphics", {})
             stack_amount_label = stack_graphics.get("amount_label")
@@ -1425,7 +1429,7 @@ class PracticeSessionUI(ttk.Frame):
 
             # Update player card display with proper card styling
             if player_info['is_active']:
-                # Show cards for human players or during showdown (all active players)
+                # Show cards for human players (always visible) or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     # Get the stored card labels
                     card_labels = player_seat.get("card_labels", [])
@@ -1439,6 +1443,10 @@ class PracticeSessionUI(ttk.Frame):
                         card2_text = self._format_card(player_info['cards'][1])
                         card2_color = self._get_card_color(player_info['cards'][1])
                         card_labels[1].config(text=card2_text, fg=card2_color, bg="#D3D3D3", relief="raised", bd=2)
+                        
+                        # Debug output for human player
+                        if player_info['is_human']:
+                            print(f"🎯 UI: Human player cards displayed: {card1_text} {card2_text}")
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card labels
                     card_labels = player_seat.get("card_labels", [])
