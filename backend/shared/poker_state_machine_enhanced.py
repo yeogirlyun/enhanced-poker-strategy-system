@@ -207,6 +207,7 @@ class ImprovedPokerStateMachine:
         self.on_log_entry = None
         self.on_round_complete = None
         self.on_action_executed = None  # NEW: Callback for action animations
+        self.on_action_player_changed = None  # NEW: Callback for action player changes
         
         # Sound manager
         self.sfx = SoundManager()
@@ -1023,6 +1024,10 @@ class ImprovedPokerStateMachine:
             return
 
         self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
+
+        # Call the action player changed callback for both human and bot players
+        if self.on_action_player_changed:
+            self.on_action_player_changed(current_player)
 
         if current_player.is_human:
             self._log_action(f"Human turn: {current_player.name}")
