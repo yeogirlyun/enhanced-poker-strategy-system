@@ -427,21 +427,22 @@ class PracticeSessionUI(ttk.Frame):
         cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
         cards_frame.pack(pady=3)
         
-        # Create two card labels for hole cards with realistic proportions
+        # Create two card labels for hole cards with realistic proportions and nice boundaries
         card1 = tk.Label(
             cards_frame,
             text="🂠",
             bg="#F0F0F0",  # Light gray background for hole cards
             fg="#8B4513",  # Brown color for card backs
             font=("Arial", 16, "bold"),
-            width=4,  # Realistic card width
-            height=2,  # Realistic card height (2.5:3.5 ratio)
+            width=6,  # Increased width for better proportions
+            height=3,  # Increased height for better proportions (2.5:3.5 ratio)
             relief="raised",
-            bd=2,
-            highlightthickness=1,
-            highlightbackground="#333333"
+            bd=3,  # Thicker border for nicer boundaries
+            highlightthickness=2,  # Thicker highlight for better definition
+            highlightbackground="#333333",
+            highlightcolor="#666666"  # Lighter highlight color for depth
         )
-        card1.pack(side=tk.LEFT, padx=1)
+        card1.pack(side=tk.LEFT, padx=2)  # Increased padding between cards
         
         card2 = tk.Label(
             cards_frame,
@@ -449,14 +450,15 @@ class PracticeSessionUI(ttk.Frame):
             bg="#F0F0F0",  # Light gray background for hole cards
             fg="#8B4513",  # Brown color for card backs
             font=("Arial", 16, "bold"),
-            width=4,  # Realistic card width
-            height=2,  # Realistic card height (2.5:3.5 ratio)
+            width=6,  # Increased width for better proportions
+            height=3,  # Increased height for better proportions (2.5:3.5 ratio)
             relief="raised",
-            bd=2,
-            highlightthickness=1,
-            highlightbackground="#333333"
+            bd=3,  # Thicker border for nicer boundaries
+            highlightthickness=2,  # Thicker highlight for better definition
+            highlightbackground="#333333",
+            highlightcolor="#666666"  # Lighter highlight color for depth
         )
-        card2.pack(side=tk.LEFT, padx=1)
+        card2.pack(side=tk.LEFT, padx=2)  # Increased padding between cards
         
         # Store card labels for updates
         cards_label = cards_frame  # Use frame as label for compatibility
@@ -543,21 +545,22 @@ class PracticeSessionUI(ttk.Frame):
         self.community_card_labels = []
         
         for i in range(5):
-            # Create individual card label with realistic proportions
+            # Create individual card label with realistic proportions and nice boundaries
             card_label = tk.Label(
                 community_frame,
                 text="",
                 bg="white",
                 fg="black",
                 font=("Arial", 16, "bold"),
-                width=4,  # Realistic card width
-                height=2,  # Realistic card height (2.5:3.5 ratio)
+                width=6,  # Increased width for better proportions
+                height=3,  # Increased height for better proportions (2.5:3.5 ratio)
                 relief="raised",
-                bd=2,
-                highlightthickness=1,
-                highlightbackground="#333333"
+                bd=3,  # Thicker border for nicer boundaries
+                highlightthickness=2,  # Thicker highlight for better definition
+                highlightbackground="#333333",
+                highlightcolor="#666666"  # Lighter highlight color for depth
             )
-            card_label.pack(side=tk.LEFT, padx=2)
+            card_label.pack(side=tk.LEFT, padx=3)  # Increased padding between cards
             self.community_card_labels.append(card_label)
         
         self.canvas.create_window(center_x, center_y, window=community_frame)
