@@ -11,6 +11,14 @@ from tkinter import ttk, messagebox
 import math
 import threading # Still needed for bot action delays in the state machine
 import time
+import json
+import os
+import sys
+from enum import Enum
+from typing import Dict, List, Optional, Any
+
+# Add the backend directory to the path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 
 from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
 from sound_manager import SoundManager
@@ -415,22 +423,29 @@ class PracticeSessionUI(ttk.Frame):
         )
         name_label.pack(pady=2)
         
-        # Cards area with light gray/pink background for better visibility
-        # Use responsive font sizing similar to community cards but slightly larger
-        canvas_height = self.canvas.winfo_height()
-        card_font_size = max(16, int(canvas_height / 25))  # Slightly smaller for compact design
-        card_font = (THEME["font_family"], card_font_size, "bold")
-        cards_label = tk.Label(
-            seat_frame, 
-            text="🂠 🂠", 
-            bg="#F0F0F0",  # Light gray background for hole cards
-            fg="#CCCCCC",  # Default gray for unknown cards
-            font=card_font,
-            width=6,  # Reduced width for more compact design
-            relief="solid",  # Add border to make cards look more realistic
-            bd=1
+        # Cards area with realistic card proportions
+        cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
+        cards_frame.pack(pady=3)
+        
+        # Create two card widgets for hole cards
+        card1 = CardWidget(
+            cards_frame,
+            card_text="🂠",
+            card_color="#8B4513",
+            is_back=True
         )
-        cards_label.pack(pady=3)
+        card1.pack(side=tk.LEFT, padx=1)
+        
+        card2 = CardWidget(
+            cards_frame,
+            card_text="🂠",
+            card_color="#8B4513",
+            is_back=True
+        )
+        card2.pack(side=tk.LEFT, padx=1)
+        
+        # Store card widgets for updates
+        cards_label = cards_frame  # Use frame as label for compatibility
         
         # Bet information (current bet amount) - smaller and more compact
         bet_label = tk.Label(
@@ -446,7 +461,8 @@ class PracticeSessionUI(ttk.Frame):
         self.player_seats[index] = {
             "frame": seat_frame, 
             "name_label": name_label, 
-            "cards_label": cards_label, 
+            "cards_label": cards_label,  # This is now a frame containing CardWidgets
+            "card_widgets": [card1, card2],  # Store individual card widgets
             "bet_label": bet_label
         }
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
@@ -508,25 +524,21 @@ class PracticeSessionUI(ttk.Frame):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         center_x, center_y = self.layout_manager.calculate_community_card_position(width, height)
         
-        # Create community card area with white background for better card visibility
-        community_frame = tk.Frame(self.canvas, bg="white", bd=3, relief="raised")
+        # Create community card area with proper card spacing
+        community_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=0)
         self.community_card_labels = []
+        
         for i in range(5):
-            # Use responsive font sizing for community cards
-            card_font_size = max(16, int(height / 25))
-            card_font = (THEME["font_family"], card_font_size, "bold")
-            card_label = tk.Label(
-                community_frame, 
-                text="", 
-                bg="white",  # White background for cards
-                fg="black",  # Default black text
-                font=card_font, 
-                width=4,
-                relief="solid",  # Add border to make cards look more realistic
-                bd=1
+            # Create individual card widget with realistic proportions
+            card_widget = CardWidget(
+                community_frame,
+                card_text="",
+                card_color="#000000",
+                is_back=False
             )
-            card_label.pack(side=tk.LEFT, padx=3)
-            self.community_card_labels.append(card_label)
+            card_widget.pack(side=tk.LEFT, padx=2)
+            self.community_card_labels.append(card_widget)
+        
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
     def _draw_pot_display(self):
@@ -1337,15 +1349,15 @@ class PracticeSessionUI(ttk.Frame):
             board_cards = self.preserved_community_cards
             print(f"🎯 UI: Using preserved community cards: {board_cards}")  # Debug
         
-        for i, card_label in enumerate(self.community_card_labels):
+        for i, card_widget in enumerate(self.community_card_labels):
             if i < len(board_cards):
                 card_text = self._format_card(board_cards[i])
                 card_color = self._get_card_color(board_cards[i])
-                card_label.config(text=card_text, fg=card_color, bg="white")
-                # Force the card label to update immediately
-                card_label.update()
+                card_widget.update_card(card_text, card_color, is_back=False)
+                # Force the card widget to update immediately
+                card_widget.update()
             else:
-                card_label.config(text="", bg="white")
+                card_widget.update_card("", "#000000", is_back=False)
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
@@ -1392,19 +1404,36 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
-            # Update player card display with proper colors and light gray background
+            # Update player card display with realistic card proportions
             if player_info['is_active']:
                 # Show cards for human players or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
-                    cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
-                    # Use proper card colors with light gray background
-                    cards_label.config(text=cards_text, fg="#000000", bg="#F0F0F0")
+                    # Get the stored card widgets
+                    card_widgets = player_seat.get("card_widgets", [])
+                    if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
+                        # Update first card
+                        card1_text = self._format_card(player_info['cards'][0])
+                        card1_color = self._get_card_color(player_info['cards'][0])
+                        card_widgets[0].update_card(card1_text, card1_color, is_back=False)
+                        
+                        # Update second card
+                        card2_text = self._format_card(player_info['cards'][1])
+                        card2_color = self._get_card_color(player_info['cards'][1])
+                        card_widgets[1].update_card(card2_text, card2_color, is_back=False)
                 else: # Bot's cards are hidden during play - show realistic card backs
-                    # Create realistic card back design
-                    card_back_text = "🂠 🂠"  # Use card back symbols
-                    cards_label.config(text=card_back_text, fg="#8B4513", bg="#F0F0F0")  # Brown color for card backs
+                    # Get the stored card widgets
+                    card_widgets = player_seat.get("card_widgets", [])
+                    if len(card_widgets) >= 2:
+                        # Show card backs for hidden cards
+                        card_widgets[0].update_card("🂠", "#8B4513", is_back=True)
+                        card_widgets[1].update_card("🂠", "#8B4513", is_back=True)
             else: # Player has folded
-                cards_label.config(text="Folded", fg="red", bg="#F0F0F0")
+                # Get the stored card widgets
+                card_widgets = player_seat.get("card_widgets", [])
+                if len(card_widgets) >= 2:
+                    # Show "Folded" on cards
+                    card_widgets[0].update_card("F", "red", is_back=False)
+                    card_widgets[1].update_card("D", "red", is_back=False)
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
@@ -1859,3 +1888,73 @@ class PracticeSessionUI(ttk.Frame):
         """Handle state changes from the state machine."""
         print(f"🎯 UI: State changed to: {new_state}")
         self.update_display(new_state)
+
+class CardWidget(tk.Frame):
+    """Custom card widget with realistic proportions and boundaries."""
+    
+    def __init__(self, parent, card_text="", card_color="#000000", is_back=False, **kwargs):
+        super().__init__(parent, **kwargs)
+        
+        # Real playing card proportions: width:height = 2.5:3.5 (approximately 5:7)
+        self.card_width = 60
+        self.card_height = int(self.card_width * 3.5 / 2.5)  # ~84 pixels
+        
+        # Configure frame to match card dimensions
+        self.configure(
+            width=self.card_width,
+            height=self.card_height,
+            bg="white",
+            relief="raised",
+            bd=2,
+            highlightthickness=1,
+            highlightbackground="#333333"
+        )
+        
+        # Create card content
+        self._create_card_content(card_text, card_color, is_back)
+        
+        # Prevent frame from resizing
+        self.pack_propagate(False)
+        self.grid_propagate(False)
+    
+    def _create_card_content(self, card_text, card_color, is_back):
+        """Create the card content with proper styling."""
+        if is_back:
+            # Card back design
+            self.configure(bg="#8B4513")  # Brown background for card back
+            
+            # Create card back pattern
+            back_label = tk.Label(
+                self,
+                text="🂠",
+                bg="#8B4513",
+                fg="#654321",
+                font=("Arial", 20, "bold"),
+                width=2,
+                height=1
+            )
+            back_label.place(relx=0.5, rely=0.5, anchor="center")
+        else:
+            # Front card design
+            self.configure(bg="white")
+            
+            # Create card content with proper centering
+            content_label = tk.Label(
+                self,
+                text=card_text,
+                bg="white",
+                fg=card_color,
+                font=("Arial", 14, "bold"),
+                width=3,
+                height=1
+            )
+            content_label.place(relx=0.5, rely=0.5, anchor="center")
+    
+    def update_card(self, card_text="", card_color="#000000", is_back=False):
+        """Update the card content."""
+        # Clear existing widgets
+        for widget in self.winfo_children():
+            widget.destroy()
+        
+        # Recreate card content
+        self._create_card_content(card_text, card_color, is_back)
