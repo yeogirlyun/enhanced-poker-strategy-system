@@ -255,6 +255,7 @@ class DecisionTablePanel:
             if self.on_table_change:
                 self.on_table_change()
         except Exception as e:
+            messagebox.showerror("Error", f"Failed to save changes: {e}")
 
     def _reset_to_default(self):
         """Resets the current table to default values."""

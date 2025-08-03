@@ -75,13 +75,6 @@ class CardWidget(tk.Canvas):
             
             # Debug: Print to confirm folded card back is being drawn
     
-        else:
-            # Draw normal card back - red checkerboard pattern
-            # Define colors for a more visible and professional card back
-            dark_red = "#8B0000"  # Darker red for better contrast
-            light_red = "#DC143C"  # Crimson red for alternating squares
-            border_color = "#2F2F2F"  # Dark border
-            
             # Set the background color
             self.config(bg=dark_red)
             
@@ -172,9 +165,6 @@ class PlayerPod(tk.Frame):
             num_chips = 3  # Default minimum
         elif stack < 200:
             num_chips = 5  # Medium stacks
-        else:
-            num_chips = 7  # Large stacks
-        
         # Make chips larger and more visible for the bigger canvas
         chip_width = 12
         chip_height = 14
@@ -360,10 +350,6 @@ class PracticeSessionUI(ttk.Frame):
         
         if width > 1 and height > 1:
             self._on_resize()
-        else:
-            # If canvas still doesn't have proper dimensions, try again
-            self.after(100, self._force_initial_draw)
-        
         # Initialize table felt colors
         self.table_felt_colors = {
             "classic_green": {
@@ -443,10 +429,6 @@ class PracticeSessionUI(ttk.Frame):
             elif num_players <= 6:
                 radius_x = base_radius_x
                 radius_y = base_radius_y
-            else:
-                radius_x = base_radius_x * 1.1
-                radius_y = base_radius_y * 1.1
-            
             positions = []
             for i in range(num_players):
                 angle = (2 * math.pi / num_players) * i - (math.pi / 2)
@@ -721,10 +703,6 @@ class PracticeSessionUI(ttk.Frame):
         if valid_actions.get('fold', False):
             self.human_action_controls['fold'].config(state='normal')
             self.human_action_controls['fold'].config(text="Fold")
-        else:
-            self.human_action_controls['fold'].config(state='disabled')
-            self.human_action_controls['fold'].config(text="Fold (Invalid)")
-        
         # Get call amount from state machine
         call_amount = valid_actions.get('call_amount', 0)
 
@@ -736,11 +714,6 @@ class PracticeSessionUI(ttk.Frame):
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
             self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
             self.human_action_controls['bet_raise'].config(text="Raise To")
-        else:
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
-            self.human_action_controls['call'].pack_forget()
-            self.human_action_controls['bet_raise'].config(text="Bet")
-        
         self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
 
         # Use state machine's values for bet/raise slider
@@ -808,9 +781,6 @@ class PracticeSessionUI(ttk.Frame):
                     card_widget.set_card(final_board[i])
                     # Force the card widget to update immediately
                     card_widget.update()
-                else:
-                    card_widget.set_card("")  # Clear the card
-            
             # Force the canvas to refresh
             self.canvas.update()
 
@@ -827,14 +797,6 @@ class PracticeSessionUI(ttk.Frame):
                 
                 # Start pot animation to winner
                 self._animate_pot_to_winner(winner_info)
-            else:
-                # Handle edge case where pot is $0 (shouldn't happen with our fix)
-                self.add_game_message("🏁 Hand complete - no pot to award")
-                self.pot_label.config(text="Hand Complete", fg=THEME["text_primary"])
-        else:
-            self.add_game_message("🏁 Hand complete!")
-            self.pot_label.config(text="Hand Complete", fg=THEME["text_primary"])
-        
         # Set the winning announcement message that will persist until next hand
         if hasattr(self, 'last_action_label'):
             winner_name = winner_info.get('name', 'Unknown')
@@ -956,11 +918,6 @@ class PracticeSessionUI(ttk.Frame):
                         self.canvas.itemconfig(glow_obj, fill=glow_color)
                     
                     self.canvas.after(40, lambda: animate_money(step + 1))  # Faster animation
-                else:
-                    # Remove the animated objects
-                    self.canvas.delete(money_obj)
-                    self.canvas.delete(glow_obj)
-        
                     
                     # Update the winner's stack graphics with the new amount
                     if winner_seat < len(self.player_seats):
@@ -981,16 +938,14 @@ class PracticeSessionUI(ttk.Frame):
                                     amount_label.config(text=f"${new_amount:.2f}")
                                     chip_symbols = self._get_chip_symbols(new_amount)
                                     chips_label.config(text=chip_symbols)
-                                    
                                 except ValueError:
-                    
+                                    pass  # Handle invalid number format
+                                    
                     # Update the display
                     self.update_display()
             
             # Start the animation
             animate_money()
-        else:
-    
     def add_game_message(self, message):
         """Add a message to the action messages area."""
         if hasattr(self, 'info_text'):
@@ -1408,10 +1363,6 @@ class PracticeSessionUI(ttk.Frame):
                     card_widget.set_card(board_cards[i])
                     # Force the card widget to update immediately
                     card_widget.update()
-                else:
-                    card_widget.set_card("")  # Clear the card
-        # --- End of Bug Fix ---
-
         # NEW: Only clear action indicators when the next player actually takes an action
         # Don't clear just because highlighting changes - wait for actual action
         current_action_player = game_info['action_player']
@@ -1445,9 +1396,6 @@ class PracticeSessionUI(ttk.Frame):
             if i == action_player:
                 frame.config(bg=THEME["accent_primary"])
         
-            else:
-                frame.config(bg=THEME["secondary_bg"])
-
             # Update the prominent bet display on the table
             bet_label_widget = player_seat.get("bet_label_widget")
             bet_label_window = player_seat.get("bet_label_window")
@@ -1456,9 +1404,6 @@ class PracticeSessionUI(ttk.Frame):
                 if current_bet > 0 and player_info['is_active']:
                     bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
                     self.canvas.itemconfig(bet_label_window, state="normal")
-                else:
-                    self.canvas.itemconfig(bet_label_window, state="hidden")
-
             # Update player card display with proper card styling
             if player_info['is_active']:
                 # Show cards for human players (always visible) or during showdown/end_hand (all active players)
@@ -1529,9 +1474,6 @@ class PracticeSessionUI(ttk.Frame):
         game_info = self.state_machine.get_game_info()
         if game_info and game_info.get('current_bet', 0) > 0:
             self._submit_human_action("raise")
-        else:
-            self._submit_human_action("bet")
-    
     def _animate_player_action(self, player_index: int, action: str, amount: float = 0):
         """Animate a player's action with visual feedback that persists until next player acts."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
@@ -1794,8 +1736,6 @@ class PracticeSessionUI(ttk.Frame):
             self._on_resize()
             # Update session info to reflect the change
             self.update_session_info()
-        else:
-    
     def update_stack_amount(self, player_index, new_amount):
         """Update the stack amount for a specific player."""
         if player_index < len(self.player_seats):
@@ -1824,9 +1764,6 @@ class PracticeSessionUI(ttk.Frame):
             return 7
         elif amount <= 500:
             return 8
-        else:
-            return 10
-    
     def _get_chip_symbols(self, amount):
         """Get appropriate chip symbols based on amount."""
         chip_count = self._calculate_chip_count(amount)
@@ -1838,9 +1775,6 @@ class PracticeSessionUI(ttk.Frame):
             return "🟢" * chip_count  # Green chips for medium amounts
         elif amount <= 500:
             return "🔴" * chip_count  # Red chips for larger amounts
-        else:
-            return "🟣" * chip_count  # Purple chips for very large amounts
-    
     def _get_pot_chip_symbols(self, amount):
         """Get unique pot chip symbols based on amount (different from player chips)."""
         chip_count = self._calculate_pot_chip_count(amount)
@@ -1852,9 +1786,6 @@ class PracticeSessionUI(ttk.Frame):
             return "🔶" * chip_count  # Dark orange chips for medium pots
         elif amount <= 500:
             return "🟧" * chip_count  # Light orange chips for large pots
-        else:
-            return "🟡" * chip_count  # Gold chips for very large pots
-    
     def _calculate_pot_chip_count(self, amount):
         """Calculate how many pot chip symbols to display based on amount."""
         if amount <= 10:
@@ -1869,16 +1800,11 @@ class PracticeSessionUI(ttk.Frame):
             return 6
         elif amount <= 500:
             return 7
-        else:
-            return 8
-    
     def update_pot_amount(self, new_amount):
         """Updates the pot amount display with the new amount."""
         if hasattr(self, 'pot_label') and self.pot_label is not None:
             self.pot_label.config(text=f"${new_amount:.2f}")
     
-        else:
-
     def _on_state_change(self, new_state):
         """Handle state changes from the state machine."""
         self.update_display(new_state)

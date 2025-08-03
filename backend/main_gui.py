@@ -213,17 +213,13 @@ class EnhancedMainGUI:
         # Generate modern_strategy.json
         modern_file = "modern_strategy.json"
         if not os.path.exists(modern_file):
-            if default_strategy.save_strategy_to_file(modern_file):
-            else:
-        else:
+            default_strategy.save_strategy_to_file(modern_file)
         
         # Generate aggressive_strategy.json
         aggressive_file = "aggressive_strategy.json"
         if not os.path.exists(aggressive_file):
-            if default_strategy.save_strategy_to_file(aggressive_file):
-            else:
-        else:
-        
+            default_strategy.save_strategy_to_file(aggressive_file)
+
 
     def _generate_default_strategy(self):
         """Generate a default strategy."""
