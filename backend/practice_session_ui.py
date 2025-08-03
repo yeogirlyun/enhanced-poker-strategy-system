@@ -514,8 +514,8 @@ class PracticeSessionUI(ttk.Frame):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         center_x, center_y = self.layout_manager.calculate_community_card_position(width, height)
         
-        felt_colors = self.table_felt_colors[self.current_felt_color]
-        community_frame = tk.Frame(self.canvas, bg=felt_colors["community_bg"], bd=2, relief="groove")
+        # Create community card area with white background for better card visibility
+        community_frame = tk.Frame(self.canvas, bg="white", bd=3, relief="raised")
         self.community_card_labels = []
         for i in range(5):
             # Use responsive font sizing for community cards
@@ -524,10 +524,12 @@ class PracticeSessionUI(ttk.Frame):
             card_label = tk.Label(
                 community_frame, 
                 text="", 
-                bg="#015939", 
-                fg="white", 
+                bg="white",  # White background for cards
+                fg="black",  # Default black text
                 font=card_font, 
-                width=4
+                width=4,
+                relief="solid",  # Add border to make cards look more realistic
+                bd=1
             )
             card_label.pack(side=tk.LEFT, padx=3)
             self.community_card_labels.append(card_label)
@@ -697,9 +699,9 @@ class PracticeSessionUI(ttk.Frame):
         print(f"🎯 UI: start_new_hand called")  # Debug
         self.add_game_message("🎮 Starting new hand...")
         
-        # FIX: Clear community cards when starting a new hand
+        # FIX: Clear community cards when starting a new hand with white background
         for card_label in self.community_card_labels:
-            card_label.config(text="")
+            card_label.config(text="", bg="white")
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -727,16 +729,17 @@ class PracticeSessionUI(ttk.Frame):
             print(f"🎯 UI: Winner: {winner_names}, Amount: ${pot_amount}, Board: {final_board}")  # Debug
 
             # --- ENHANCED: Better winner announcement and animation ---
-            # Display the final community cards
+            # Display the final community cards with proper coloring
             for i, card_label in enumerate(self.community_card_labels):
                 if i < len(final_board):
                     card_text = self._format_card(final_board[i])
-                    card_label.config(text=card_text)
-                    print(f"🎯 UI: Set card {i} to: {card_text}")  # Debug
+                    card_color = self._get_card_color(final_board[i])
+                    card_label.config(text=card_text, fg=card_color, bg="white")
+                    print(f"🎯 UI: Set card {i} to: {card_text} (color: {card_color})")  # Debug
                     # Force the card label to update
                     card_label.update()
                 else:
-                    card_label.config(text="")
+                    card_label.config(text="", bg="white")
             
             # Force the canvas to refresh
             self.canvas.update()
@@ -1294,13 +1297,16 @@ class PracticeSessionUI(ttk.Frame):
 
         # --- THIS IS THE CRITICAL BUG FIX ---
         # Always display the community cards that are available on the board.
+        # Ensure cards remain visible throughout the hand, including during winner announcement
         for i, card_label in enumerate(self.community_card_labels):
             if i < len(game_info['board']):
                 card_text = self._format_card(game_info['board'][i])
                 card_color = self._get_card_color(game_info['board'][i])
-                card_label.config(text=card_text, fg=card_color)
+                card_label.config(text=card_text, fg=card_color, bg="white")
+                # Force the card label to update immediately
+                card_label.update()
             else:
-                card_label.config(text="")
+                card_label.config(text="", bg="white")
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
