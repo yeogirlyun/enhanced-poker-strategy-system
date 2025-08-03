@@ -260,6 +260,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_state_change = self._on_state_change
         self.state_machine.on_hand_complete = self.handle_hand_complete
+        self.state_machine.on_action_player_changed = self.update_display
         
         # Setup UI
         self._setup_ui()
@@ -1306,6 +1307,7 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_hand_complete = self.handle_hand_complete
                 self.state_machine.on_state_change = self.update_display
                 self.state_machine.on_log_entry = self.add_game_message
+                self.state_machine.on_action_player_changed = self.update_display
                 
                 # Reset UI
                 self._reset_ui_for_new_hand()
