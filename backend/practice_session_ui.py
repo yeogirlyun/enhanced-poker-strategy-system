@@ -135,11 +135,11 @@ class PlayerPod(tk.Frame):
         self.stack_frame.pack()
         
         # Canvas for drawing chip graphics - make it larger for better visibility
-        self.chip_canvas = tk.Canvas(self.stack_frame, width=40, height=35, bg="#1a1a1a", highlightthickness=0)
+        self.chip_canvas = tk.Canvas(self.stack_frame, width=50, height=50, bg="#1a1a1a", highlightthickness=0)
         self.chip_canvas.pack(side="left", padx=5)
         
         # Ensure the canvas is properly configured
-        self.chip_canvas.config(width=40, height=35)
+        self.chip_canvas.config(width=50, height=50)
         
         # Label for the stack text
         self.stack_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 12, "bold"), bg="#1a1a1a", fg="white")
@@ -170,13 +170,13 @@ class PlayerPod(tk.Frame):
             num_chips = 7  # Large stacks
         
         # Make chips larger and more visible for the bigger canvas
-        chip_width = 12
-        chip_height = 14
-        start_x = 8
+        chip_width = 16
+        chip_height = 18
+        start_x = 12
         
         for i in range(num_chips):
             # Draw chips in a straight vertical tower
-            y_offset = 32 - i * 2  # Vertical spacing for straight tower
+            y_offset = 45 - i * 3  # Vertical spacing for straight tower
             x_offset = start_x  # Same x position for all chips (straight tower)
             
             # Draw the main chip
