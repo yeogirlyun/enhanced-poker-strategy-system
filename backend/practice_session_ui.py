@@ -63,15 +63,32 @@ class PracticeSessionUI(ttk.Frame):
 
         right_panel_frame = ttk.Frame(self)
         right_panel_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
-        info_frame = ttk.LabelFrame(right_panel_frame, text="Game Messages", padding=10)
-        info_frame.pack(fill=tk.BOTH, expand=True)
-        self.info_text = tk.Text(
-            info_frame, 
+        
+        # Session Info Area (Upper)
+        session_frame = ttk.LabelFrame(right_panel_frame, text="Session Information", padding=10)
+        session_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        self.session_text = tk.Text(
+            session_frame, 
             state=tk.DISABLED, 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
-            font=FONTS["small"]
+            font=FONTS["small"],
+            height=8
+        )
+        self.session_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Action Messages Area (Lower)
+        action_frame = ttk.LabelFrame(right_panel_frame, text="Action Messages", padding=10)
+        action_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
+        self.info_text = tk.Text(
+            action_frame, 
+            state=tk.DISABLED, 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text"], 
+            relief="flat", 
+            font=FONTS["small"],
+            height=6
         )
         self.info_text.pack(fill=tk.BOTH, expand=True)
 
@@ -241,6 +258,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.start_hand()
         # The state machine will automatically determine who acts first
         # and call prompt_human_action if it's the human's turn.
+        self.update_session_info()
 
     def handle_hand_complete(self, winner_info=None):
         """
@@ -415,12 +433,70 @@ class PracticeSessionUI(ttk.Frame):
             print(f"🔍 Available seats: {[seat.get('name_label').cget('text').split('\n')[0] if seat and seat.get('name_label') else 'None' for seat in self.player_seats]}")  # Debug
     
     def add_game_message(self, message):
-        """Add a message to the game message area."""
+        """Add a message to the action messages area."""
         if hasattr(self, 'info_text'):
             self.info_text.config(state=tk.NORMAL)
             self.info_text.insert(tk.END, f"{message}\n")
             self.info_text.see(tk.END)
             self.info_text.config(state=tk.DISABLED)
+    
+    def update_session_info(self):
+        """Update the session information display."""
+        if not self.state_machine.session_state:
+            return
+        
+        session_info = self.state_machine.get_session_info()
+        comprehensive_data = self.state_machine.get_comprehensive_session_data()
+        
+        self.session_text.config(state=tk.NORMAL)
+        self.session_text.delete(1.0, tk.END)
+        
+        # Display session information
+        display_text = "📊 SESSION INFORMATION\n"
+        display_text += "=" * 40 + "\n\n"
+        
+        # Basic session info
+        display_text += f"Session ID: {session_info.get('session_id', 'N/A')}\n"
+        display_text += f"Duration: {session_info.get('session_duration', 0):.1f}s\n"
+        display_text += f"Hands Played: {session_info.get('hands_played', 0)}\n"
+        display_text += f"Human Wins: {session_info.get('human_wins', 0)}\n"
+        display_text += f"Human Losses: {session_info.get('human_losses', 0)}\n"
+        display_text += f"Big Blind: ${session_info.get('big_blind_amount', 1.0)}\n\n"
+        
+        # Current hand info
+        game_info = self.state_machine.get_game_info()
+        if game_info:
+            display_text += "🎯 CURRENT HAND\n"
+            display_text += "-" * 20 + "\n"
+            display_text += f"State: {game_info.get('state', 'Unknown')}\n"
+            display_text += f"Pot: ${game_info.get('pot', 0):.2f}\n"
+            display_text += f"Current Bet: ${game_info.get('current_bet', 0):.2f}\n"
+            display_text += f"Board: {game_info.get('board', [])}\n\n"
+            
+            # Valid actions
+            valid_actions = game_info.get('valid_actions', {})
+            if valid_actions:
+                display_text += "✅ VALID ACTIONS\n"
+                display_text += "-" * 15 + "\n"
+                for action, is_valid in valid_actions.items():
+                    if isinstance(is_valid, bool) and is_valid:
+                        display_text += f"• {action.title()}\n"
+                    elif isinstance(is_valid, dict) and is_valid.get('amount'):
+                        display_text += f"• {action.title()}: ${is_valid['amount']:.2f}\n"
+                display_text += "\n"
+        
+        # Session statistics
+        if comprehensive_data:
+            stats = comprehensive_data.get('session_statistics', {})
+            if stats:
+                display_text += "📈 SESSION STATS\n"
+                display_text += "-" * 15 + "\n"
+                for key, value in stats.items():
+                    if isinstance(value, (int, float)):
+                        display_text += f"• {key.replace('_', ' ').title()}: {value}\n"
+        
+        self.session_text.insert(1.0, display_text)
+        self.session_text.config(state=tk.DISABLED)
 
     def _log_message(self, message: str):
         """Logs a message to the Game Messages panel."""
@@ -574,6 +650,7 @@ class PracticeSessionUI(ttk.Frame):
                 self._reset_ui_for_new_hand()
                 self.add_game_message("🔄 Game has been reset!")
                 self._log_message("✅ Game reset completed")
+                self.update_session_info()
         except Exception as e:
             self._log_message(f"❌ Error resetting game: {e}")
 
@@ -584,6 +661,12 @@ class PracticeSessionUI(ttk.Frame):
             self.info_text.config(state=tk.NORMAL)
             self.info_text.delete(1.0, tk.END)
             self.info_text.config(state=tk.DISABLED)
+        
+        # Clear session info
+        if hasattr(self, 'session_text'):
+            self.session_text.config(state=tk.NORMAL)
+            self.session_text.delete(1.0, tk.END)
+            self.session_text.config(state=tk.DISABLED)
         
         # Reset pot display
         if hasattr(self, 'pot_label'):
@@ -699,6 +782,9 @@ class PracticeSessionUI(ttk.Frame):
                     cards_label.config(text="🂠 🂠")
             else: # Player has folded
                 cards_label.config(text="Folded")
+        
+        # Update session information display
+        self.update_session_info()
     
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
