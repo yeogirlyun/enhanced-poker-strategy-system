@@ -427,24 +427,38 @@ class PracticeSessionUI(ttk.Frame):
         cards_frame = tk.Frame(seat_frame, bg=THEME["secondary_bg"], bd=0)
         cards_frame.pack(pady=3)
         
-        # Create two card widgets for hole cards
-        card1 = CardWidget(
+        # Create two card labels for hole cards with realistic proportions
+        card1 = tk.Label(
             cards_frame,
-            card_text="🂠",
-            card_color="#8B4513",
-            is_back=True
+            text="🂠",
+            bg="#F0F0F0",  # Light gray background for hole cards
+            fg="#8B4513",  # Brown color for card backs
+            font=("Arial", 16, "bold"),
+            width=4,  # Realistic card width
+            height=2,  # Realistic card height (2.5:3.5 ratio)
+            relief="raised",
+            bd=2,
+            highlightthickness=1,
+            highlightbackground="#333333"
         )
         card1.pack(side=tk.LEFT, padx=1)
         
-        card2 = CardWidget(
+        card2 = tk.Label(
             cards_frame,
-            card_text="🂠",
-            card_color="#8B4513",
-            is_back=True
+            text="🂠",
+            bg="#F0F0F0",  # Light gray background for hole cards
+            fg="#8B4513",  # Brown color for card backs
+            font=("Arial", 16, "bold"),
+            width=4,  # Realistic card width
+            height=2,  # Realistic card height (2.5:3.5 ratio)
+            relief="raised",
+            bd=2,
+            highlightthickness=1,
+            highlightbackground="#333333"
         )
         card2.pack(side=tk.LEFT, padx=1)
         
-        # Store card widgets for updates
+        # Store card labels for updates
         cards_label = cards_frame  # Use frame as label for compatibility
         
         # Bet information (current bet amount) - smaller and more compact
@@ -461,8 +475,8 @@ class PracticeSessionUI(ttk.Frame):
         self.player_seats[index] = {
             "frame": seat_frame, 
             "name_label": name_label, 
-            "cards_label": cards_label,  # This is now a frame containing CardWidgets
-            "card_widgets": [card1, card2],  # Store individual card widgets
+            "cards_label": cards_label,  # This is now a frame containing card labels
+            "card_labels": [card1, card2],  # Store individual card labels
             "bet_label": bet_label
         }
         self.canvas.create_window(x, y, window=seat_frame, anchor="center")
@@ -529,15 +543,22 @@ class PracticeSessionUI(ttk.Frame):
         self.community_card_labels = []
         
         for i in range(5):
-            # Create individual card widget with realistic proportions
-            card_widget = CardWidget(
+            # Create individual card label with realistic proportions
+            card_label = tk.Label(
                 community_frame,
-                card_text="",
-                card_color="#000000",
-                is_back=False
+                text="",
+                bg="white",
+                fg="black",
+                font=("Arial", 16, "bold"),
+                width=4,  # Realistic card width
+                height=2,  # Realistic card height (2.5:3.5 ratio)
+                relief="raised",
+                bd=2,
+                highlightthickness=1,
+                highlightbackground="#333333"
             )
-            card_widget.pack(side=tk.LEFT, padx=2)
-            self.community_card_labels.append(card_widget)
+            card_label.pack(side=tk.LEFT, padx=2)
+            self.community_card_labels.append(card_label)
         
         self.canvas.create_window(center_x, center_y, window=community_frame)
 
@@ -729,8 +750,8 @@ class PracticeSessionUI(ttk.Frame):
         print(f"🎯 UI: Cleared preserved community cards and pot amount")  # Debug
         
         # FIX: Clear community cards when starting a new hand
-        for card_widget in self.community_card_labels:
-            card_widget.update_card("", "#000000", is_back=False)
+        for card_label in self.community_card_labels:
+            card_label.config(text="", bg="white")
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -770,16 +791,16 @@ class PracticeSessionUI(ttk.Frame):
 
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards with proper coloring
-            for i, card_widget in enumerate(self.community_card_labels):
+            for i, card_label in enumerate(self.community_card_labels):
                 if i < len(final_board):
                     card_text = self._format_card(final_board[i])
                     card_color = self._get_card_color(final_board[i])
-                    card_widget.update_card(card_text, card_color, is_back=False)
+                    card_label.config(text=card_text, fg=card_color, bg="white")
                     print(f"🎯 UI: Set card {i} to: {card_text} (color: {card_color})")  # Debug
-                    # Force the card widget to update
-                    card_widget.update()
+                    # Force the card label to update
+                    card_label.update()
                 else:
-                    card_widget.update_card("", "#000000", is_back=False)
+                    card_label.config(text="", bg="white")
             
             # Force the canvas to refresh
             self.canvas.update()
@@ -1349,15 +1370,15 @@ class PracticeSessionUI(ttk.Frame):
             board_cards = self.preserved_community_cards
             print(f"🎯 UI: Using preserved community cards: {board_cards}")  # Debug
         
-        for i, card_widget in enumerate(self.community_card_labels):
+        for i, card_label in enumerate(self.community_card_labels):
             if i < len(board_cards):
                 card_text = self._format_card(board_cards[i])
                 card_color = self._get_card_color(board_cards[i])
-                card_widget.update_card(card_text, card_color, is_back=False)
-                # Force the card widget to update immediately
-                card_widget.update()
+                card_label.config(text=card_text, fg=card_color, bg="white")
+                # Force the card label to update immediately
+                card_label.update()
             else:
-                card_widget.update_card("", "#000000", is_back=False)
+                card_label.config(text="", bg="white")
         # --- End of Bug Fix ---
 
         # NEW: Only clear action indicators when the next player actually takes an action
@@ -1408,32 +1429,32 @@ class PracticeSessionUI(ttk.Frame):
             if player_info['is_active']:
                 # Show cards for human players or during showdown (all active players)
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
-                    # Get the stored card widgets
-                    card_widgets = player_seat.get("card_widgets", [])
-                    if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
+                    # Get the stored card labels
+                    card_labels = player_seat.get("card_labels", [])
+                    if len(card_labels) >= 2 and len(player_info['cards']) >= 2:
                         # Update first card
                         card1_text = self._format_card(player_info['cards'][0])
                         card1_color = self._get_card_color(player_info['cards'][0])
-                        card_widgets[0].update_card(card1_text, card1_color, is_back=False)
+                        card_labels[0].config(text=card1_text, fg=card1_color, bg="white")
                         
                         # Update second card
                         card2_text = self._format_card(player_info['cards'][1])
                         card2_color = self._get_card_color(player_info['cards'][1])
-                        card_widgets[1].update_card(card2_text, card2_color, is_back=False)
+                        card_labels[1].config(text=card2_text, fg=card2_color, bg="white")
                 else: # Bot's cards are hidden during play - show realistic card backs
-                    # Get the stored card widgets
-                    card_widgets = player_seat.get("card_widgets", [])
-                    if len(card_widgets) >= 2:
+                    # Get the stored card labels
+                    card_labels = player_seat.get("card_labels", [])
+                    if len(card_labels) >= 2:
                         # Show card backs for hidden cards
-                        card_widgets[0].update_card("🂠", "#8B4513", is_back=True)
-                        card_widgets[1].update_card("🂠", "#8B4513", is_back=True)
+                        card_labels[0].config(text="🂠", fg="#8B4513", bg="#F0F0F0")
+                        card_labels[1].config(text="🂠", fg="#8B4513", bg="#F0F0F0")
             else: # Player has folded
-                # Get the stored card widgets
-                card_widgets = player_seat.get("card_widgets", [])
-                if len(card_widgets) >= 2:
+                # Get the stored card labels
+                card_labels = player_seat.get("card_labels", [])
+                if len(card_labels) >= 2:
                     # Show "Folded" on cards
-                    card_widgets[0].update_card("F", "red", is_back=False)
-                    card_widgets[1].update_card("D", "red", is_back=False)
+                    card_labels[0].config(text="F", fg="red", bg="#F0F0F0")
+                    card_labels[1].config(text="D", fg="red", bg="#F0F0F0")
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
@@ -1890,72 +1911,3 @@ class PracticeSessionUI(ttk.Frame):
         print(f"🎯 UI: State changed to: {new_state}")
         self.update_display(new_state)
 
-class CardWidget(tk.Frame):
-    """Custom card widget with realistic proportions and boundaries."""
-    
-    def __init__(self, parent, card_text="", card_color="#000000", is_back=False, **kwargs):
-        super().__init__(parent, **kwargs)
-        
-        # Real playing card proportions: width:height = 2.5:3.5 (approximately 5:7)
-        self.card_width = 80  # Increased from 60 to 80
-        self.card_height = int(self.card_width * 3.5 / 2.5)  # ~112 pixels
-        
-        # Configure frame to match card dimensions
-        self.configure(
-            width=self.card_width,
-            height=self.card_height,
-            bg="white",
-            relief="raised",
-            bd=2,
-            highlightthickness=1,
-            highlightbackground="#333333"
-        )
-        
-        # Create card content
-        self._create_card_content(card_text, card_color, is_back)
-        
-        # Prevent frame from resizing
-        self.pack_propagate(False)
-        self.grid_propagate(False)
-    
-    def _create_card_content(self, card_text, card_color, is_back):
-        """Create the card content with proper styling."""
-        if is_back:
-            # Card back design
-            self.configure(bg="#8B4513")  # Brown background for card back
-            
-            # Create card back pattern
-            back_label = tk.Label(
-                self,
-                text="🂠",
-                bg="#8B4513",
-                fg="#654321",
-                font=("Arial", 24, "bold"),  # Increased from 20 to 24
-                width=2,
-                height=1
-            )
-            back_label.place(relx=0.5, rely=0.5, anchor="center")
-        else:
-            # Front card design
-            self.configure(bg="white")
-            
-            # Create card content with proper centering and larger font
-            content_label = tk.Label(
-                self,
-                text=card_text,
-                bg="white",
-                fg=card_color,
-                font=("Arial", 20, "bold"),  # Increased from 14 to 20
-                width=3,
-                height=1
-            )
-            content_label.place(relx=0.5, rely=0.5, anchor="center")
-    
-    def update_card(self, card_text="", card_color="#000000", is_back=False):
-        """Update the card content."""
-        # Clear existing widgets
-        for widget in self.winfo_children():
-            widget.destroy()
-        
-        # Recreate card content
-        self._create_card_content(card_text, card_color, is_back)
