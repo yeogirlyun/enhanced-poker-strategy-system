@@ -30,6 +30,9 @@ from sound_manager import SoundManager
 # Import the enhanced hand evaluator for accurate winner determination
 from enhanced_hand_evaluation import EnhancedHandEvaluator, HandRank
 
+# Import the position mapping system for strategy integration
+from position_mapping_system import EnhancedStrategyIntegration, HandHistoryManager
+
 
 class PokerState(Enum):
     """Poker game states following standard Texas Hold'em flow."""
@@ -223,9 +226,18 @@ class ImprovedPokerStateMachine:
         # Initialize players
         self._initialize_players()
         
-        # Strategy integration
-        if self.strategy_data:
-            self._log_action("Strategy data loaded successfully")
+        # Enhanced strategy integration
+        if self.strategy_data and hasattr(self.strategy_data, 'strategy_dict'):
+            self.strategy_integration = EnhancedStrategyIntegration(
+                self.strategy_data.strategy_dict, num_players
+            )
+            self._log_action("Enhanced strategy integration loaded successfully")
+        else:
+            self.strategy_integration = None
+            self._log_action("No strategy data available, using basic bot logic")
+        
+        # Initialize hand history manager
+        self.hand_history_manager = HandHistoryManager(test_mode=False)
 
     def _initialize_session_state(self) -> SessionState:
         """Initialize comprehensive session tracking."""
@@ -1018,12 +1030,38 @@ class ImprovedPokerStateMachine:
                 self.on_action_required(current_player)
         else:
             self._log_action(f"Bot turn: {current_player.name}")
-            # FIX: Make bot actions synchronous when not running in a GUI
-            # This allows the test suite to work correctly.
             if self.root_tk:
-                self.root_tk.after(1000, lambda: self.execute_bot_action(current_player))
+                # Capture all necessary state to prevent race conditions
+                bot_action_data = {
+                    'player_index': self.action_player_index,
+                    'state': self.current_state,
+                    'street': self.game_state.street,
+                    'pot': self.game_state.pot,
+                    'current_bet': self.game_state.current_bet
+                }
+                self.root_tk.after(1000, lambda: self._execute_bot_action_safe(bot_action_data))
             else:
                 self.execute_bot_action(current_player)
+    
+    def _execute_bot_action_safe(self, action_data: dict):
+        """Safely execute bot action with state validation."""
+        # Validate state hasn't changed
+        if (self.current_state != action_data['state'] or
+            self.action_player_index != action_data['player_index']):
+            self._log_action("Bot action cancelled - game state changed")
+            return
+        
+        # Validate player still exists and is active
+        if action_data['player_index'] >= len(self.game_state.players):
+            self._log_action("Bot action cancelled - player no longer exists")
+            return
+        
+        player = self.game_state.players[action_data['player_index']]
+        if not player.is_active:
+            self._log_action("Bot action cancelled - player no longer active")
+            return
+        
+        self.execute_bot_action(player)
 
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
@@ -1056,14 +1094,98 @@ class ImprovedPokerStateMachine:
         self.execute_action(player, action, amount)
 
     def get_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
-        """Get bot action using strategy data with proper hand strength calculation."""
+        """Get bot action using enhanced strategy integration with position mapping."""
+        try:
+            # Use enhanced strategy integration if available
+            if self.strategy_integration:
+                return self._get_enhanced_strategy_action(player)
+            else:
+                return self._get_basic_strategy_action(player)
+        except Exception as e:
+            self._log_action(f"❌ Strategy error: {e}, using emergency fallback")
+            return self._get_emergency_fallback_action(player)
+    
+    def _get_enhanced_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Get bot action using enhanced strategy integration."""
         street = self.game_state.street
         position = player.position
-        
-        # Calculate call amount FIRST
         call_amount = self.game_state.current_bet - player.current_bet
         
-        # --- COMPREHENSIVE LOGGING AT EACH DECISION POINT ---
+        self._log_action(f"🤖 Getting enhanced strategy for {player.name} ({position}) on {street}")
+        
+        if street == "preflop":
+            return self._get_preflop_strategy_action(player)
+        else:
+            return self._get_postflop_strategy_action(player)
+    
+    def _get_preflop_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Get preflop action with enhanced position mapping."""
+        call_amount = self.game_state.current_bet - player.current_bet
+        hand_notation = self.get_hand_notation(player.cards)
+        
+        # Get hand strength using enhanced strategy integration
+        hand_strength_tables = self.strategy_data.strategy_dict.get("hand_strength_tables", {})
+        preflop_strengths = hand_strength_tables.get("preflop", {})
+        hand_strength = preflop_strengths.get(hand_notation, 1)
+        
+        self._log_action(f"📊 Hand: {hand_notation}, Strength: {hand_strength}")
+        
+        if call_amount > 0:  # Facing a raise
+            strategy = self.strategy_integration.get_strategy_for_position(
+                player.position, "preflop", "vs_raise"
+            )
+            return self._apply_vs_raise_strategy(player, hand_strength, call_amount, strategy)
+        else:  # Opening action
+            strategy = self.strategy_integration.get_strategy_for_position(
+                player.position, "preflop", "open"
+            )
+            return self._apply_open_strategy(player, hand_strength, strategy)
+    
+    def _get_postflop_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Get postflop action with enhanced position mapping."""
+        # For now, use basic postflop logic
+        return self.get_basic_bot_action(player)
+    
+    def _apply_vs_raise_strategy(self, player: Player, hand_strength: int, 
+                                 call_amount: float, strategy: Dict) -> Tuple[ActionType, float]:
+        """Apply strategy when facing a raise."""
+        value_thresh = strategy.get("value_thresh", 75)
+        call_thresh = strategy.get("call_thresh", 65)
+        sizing = strategy.get("sizing", 3.0)
+        
+        self._log_action(f"📊 3bet threshold: {value_thresh}, call threshold: {call_thresh}")
+        
+        if hand_strength >= value_thresh:
+            self._log_action(f"🚀 3-betting with strong hand")
+            return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
+        elif hand_strength >= call_thresh:
+            self._log_action(f"📞 Calling with medium hand")
+            return ActionType.CALL, call_amount
+        else:
+            self._log_action(f"❌ Folding to raise")
+            return ActionType.FOLD, 0
+    
+    def _apply_open_strategy(self, player: Player, hand_strength: int, 
+                             strategy: Dict) -> Tuple[ActionType, float]:
+        """Apply strategy when opening action."""
+        threshold = strategy.get("threshold", 50)
+        sizing = strategy.get("sizing", 3.0)
+        
+        self._log_action(f"📊 Opening threshold: {threshold}, sizing: {sizing}")
+        
+        if hand_strength >= threshold:
+            self._log_action(f"🚀 Opening with strong hand")
+            return ActionType.RAISE, min(self.game_state.big_blind * sizing, player.stack)
+        else:
+            self._log_action(f"❌ Folding weak hand")
+            return ActionType.FOLD, 0
+    
+    def _get_basic_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Fallback to basic strategy when enhanced integration is not available."""
+        street = self.game_state.street
+        position = player.position
+        call_amount = self.game_state.current_bet - player.current_bet
+        
         self._log_action(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
         self._log_action(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
         self._log_action(f"   Call amount: ${call_amount}")
@@ -1074,6 +1196,18 @@ class ImprovedPokerStateMachine:
         if position == "Unknown" or position not in ["UTG", "MP", "CO", "BTN", "SB", "BB"]:
             self._log_action(f"   ⚠️ Unknown position '{position}', using default logic")
             return self.get_basic_bot_action(player)
+    
+    def _get_emergency_fallback_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Emergency fallback when all else fails."""
+        call_amount = self.game_state.current_bet - player.current_bet
+        
+        # Ultra-conservative strategy
+        if call_amount > player.stack * 0.1:  # More than 10% of stack
+            return ActionType.FOLD, 0
+        elif call_amount > 0:
+            return ActionType.CALL, call_amount
+        else:
+            return ActionType.CHECK, 0
         
         try:
             if street == "preflop":
@@ -1935,6 +2069,11 @@ class ImprovedPokerStateMachine:
                 'eligible_players': main_pot_players
             })
 
+        # Validate total
+        total_created = sum(pot['amount'] for pot in side_pots)
+        if abs(total_created - self.game_state.pot) > 0.01:
+            self._log_action(f"⚠️ Side pot discrepancy: {total_created} vs {self.game_state.pot}")
+        
         return side_pots
 
     def handle_end_hand(self):
