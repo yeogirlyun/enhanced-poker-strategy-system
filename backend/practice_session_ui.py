@@ -41,7 +41,7 @@ class CardWidget(tk.Canvas):
     def set_card(self, card_str, is_folded=False):
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
-            print(f"🎴 Drawing card back for card_str='{card_str}', is_folded={is_folded}")
+    
             self._draw_card_back(is_folded=is_folded)
             # Force update to ensure the drawing is applied
             self.update()
@@ -74,7 +74,7 @@ class CardWidget(tk.Canvas):
                                 fill=dark_gray, outline="")
             
             # Debug: Print to confirm folded card back is being drawn
-            print(f"🎴 Folded card back drawn: {self.width}x{self.height} canvas")
+    
         else:
             # Draw normal card back - red checkerboard pattern
             # Define colors for a more visible and professional card back
@@ -104,7 +104,7 @@ class CardWidget(tk.Canvas):
                             fill=light_red, outline=border_color, width=1)
             
             # Debug: Print to confirm card back is being drawn
-            print(f"🎴 Card back drawn: {self.width}x{self.height} canvas")
+    
 
     def set_folded(self):
         """Shows the card as folded (empty)."""
@@ -156,7 +156,7 @@ class PlayerPod(tk.Frame):
         self.name_label.config(text=data.get("name", ""))
         stack_amount = data.get('stack', 0)
         self.stack_label.config(text=f"${stack_amount:.2f}")
-        print(f"🎰 PlayerPod update: {data.get('name', '')} - Stack: ${stack_amount:.2f}")
+
         self._draw_chips(stack_amount) # Call the new chip drawing method
 
     def _draw_chips(self, stack):
@@ -165,7 +165,7 @@ class PlayerPod(tk.Frame):
         colors = ["#d35400", "#2980b9", "#27ae60"] # Orange, Blue, Green chips
         if stack <= 0: return
         
-        print(f"🎰 Drawing chips for stack: ${stack:.2f}")
+
         
         # Improved logic: Default 3 chips, then 5, then 7 for larger stacks
         if stack < 50:
@@ -706,19 +706,16 @@ class PracticeSessionUI(ttk.Frame):
 
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player."""
-        print(f"🎯 UI: prompt_human_action called for {player.name}")  # Debug
+
         
         game_info = self.state_machine.get_game_info()
         if not game_info:
-            print(f"❌ UI: No game_info available")  # Debug
             return
-
-        print(f"🎯 UI: Showing action buttons")  # Debug
         self._show_action_buttons()
         
         # --- FIXED: Use state machine's valid actions instead of duplicating logic ---
         valid_actions = self.state_machine.get_valid_actions_for_player(player)
-        print(f"🎯 UI: Valid actions: {valid_actions}")  # Debug
+
         
         # Configure fold button based on state machine's validation
         if valid_actions.get('fold', False):
@@ -730,7 +727,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Get call amount from state machine
         call_amount = valid_actions.get('call_amount', 0)
-        print(f"🎯 UI: Call amount: ${call_amount:.2f}")  # Debug
+
         # --- End of proper separation of concerns ---
         
         self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
@@ -754,18 +751,16 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_var.set(min_bet_or_raise)
         self._update_bet_size_label()
         
-        print(f"🎯 UI: Action buttons configured and should be visible")  # Debug
+
 
     def start_new_hand(self):
         """Starts a new hand and resets the UI accordingly."""
-        print(f"🎯 UI: start_new_hand called")
+
         
         # Clear preserved community cards and pot amount when starting new hand
         self.preserved_community_cards = []
         self.preserved_pot_amount = 0.0
         self.hand_completed = False
-        print(f"🎯 UI: Cleared preserved community cards and pot amount")
-        
         # Clear the winning announcement message when starting new hand
         if hasattr(self, 'last_action_label'):
             self.last_action_label.config(text="")
@@ -781,15 +776,13 @@ class PracticeSessionUI(ttk.Frame):
                 if folded_label:
                     folded_label.pack_forget()
         
-        print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
-        print(f"🎯 UI: start_new_hand completed")
 
     def handle_hand_complete(self, winner_info=None):
         """
         Handles hand completion by displaying the winner info received from the state machine.
         """
-        print(f"🎯 UI: handle_hand_complete called with: {winner_info}")  # Debug
+
         
         self.sfx.play("winner_announce")
         
@@ -799,18 +792,14 @@ class PracticeSessionUI(ttk.Frame):
             winning_hand = winner_info.get("hand", "")
             final_board = winner_info.get("board", [])
 
-            print(f"🎯 UI: Winner: {winner_names}, Amount: ${pot_amount}, Board: {final_board}")  # Debug
-
             # --- PRESERVE COMMUNITY CARDS ---
             # Store the final board cards to prevent them from disappearing
             self.preserved_community_cards = final_board.copy()
             self.hand_completed = True
-            print(f"🎯 UI: Preserved community cards: {self.preserved_community_cards}")  # Debug
             
             # --- PRESERVE POT AMOUNT ---
             # Store the pot amount to prevent it from resetting to $0
             self.preserved_pot_amount = pot_amount
-            print(f"🎯 UI: Preserved pot amount: ${self.preserved_pot_amount}")  # Debug
 
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards with proper coloring
@@ -853,7 +842,7 @@ class PracticeSessionUI(ttk.Frame):
             hand_type = winner_info.get('hand', 'unknown')
             announcement = f"🏆 {winner_name} wins ${amount:.2f}! ({hand_type})"
             self.last_action_label.config(text=announcement)
-            print(f"🎯 UI: Set winning announcement: {announcement}")
+
         
         # Mark hand as completed to preserve the announcement
         self.hand_completed = True
@@ -863,11 +852,11 @@ class PracticeSessionUI(ttk.Frame):
 
     def _animate_pot_to_winner(self, winner_info):
         """Animate pot money moving to the winner's stack."""
-        print(f"🎬 Starting animation for winner: {winner_info}")  # Debug
+
         
         # Handle multiple winners (comma-separated names)
         winner_names = winner_info['name'].split(', ')
-        print(f"🎯 Winner names: {winner_names}")  # Debug
+
         
         # Find the first winner's seat (or any winner if multiple)
         winner_seat = None
@@ -878,14 +867,14 @@ class PracticeSessionUI(ttk.Frame):
                     print(f"�� Checking seat {i}: {player_name} vs {winner_name}")  # Debug
                     if player_name == winner_name:
                         winner_seat = i
-                        print(f"✅ Found winner at seat {i}")  # Debug
+    
                         break
             if winner_seat is not None:
                 break
         
         # FIX: If we can't find the winner seat, use seat 0 as fallback
         if winner_seat is None:
-            print(f"⚠️ Could not find winner seat, using seat 0 as fallback")
+    
             winner_seat = 0
         
         if winner_seat is not None:
