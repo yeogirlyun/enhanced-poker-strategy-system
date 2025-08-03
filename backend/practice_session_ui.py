@@ -728,9 +728,9 @@ class PracticeSessionUI(ttk.Frame):
         self.preserved_pot_amount = 0.0  # Clear preserved pot amount
         print(f"🎯 UI: Cleared preserved community cards and pot amount")  # Debug
         
-        # FIX: Clear community cards when starting a new hand with white background
-        for card_label in self.community_card_labels:
-            card_label.config(text="", bg="white")
+        # FIX: Clear community cards when starting a new hand
+        for card_widget in self.community_card_labels:
+            card_widget.update_card("", "#000000", is_back=False)
         
         print(f"🎯 UI: Calling state_machine.start_hand()")  # Debug
         self.state_machine.start_hand()
@@ -770,16 +770,16 @@ class PracticeSessionUI(ttk.Frame):
 
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards with proper coloring
-            for i, card_label in enumerate(self.community_card_labels):
+            for i, card_widget in enumerate(self.community_card_labels):
                 if i < len(final_board):
                     card_text = self._format_card(final_board[i])
                     card_color = self._get_card_color(final_board[i])
-                    card_label.config(text=card_text, fg=card_color, bg="white")
+                    card_widget.update_card(card_text, card_color, is_back=False)
                     print(f"🎯 UI: Set card {i} to: {card_text} (color: {card_color})")  # Debug
-                    # Force the card label to update
-                    card_label.update()
+                    # Force the card widget to update
+                    card_widget.update()
                 else:
-                    card_label.config(text="", bg="white")
+                    card_widget.update_card("", "#000000", is_back=False)
             
             # Force the canvas to refresh
             self.canvas.update()
@@ -1636,9 +1636,10 @@ class PracticeSessionUI(ttk.Frame):
                         chips_label.config(font=small_font)
         
         # Update community card labels
-        for card_label in self.community_card_labels:
-            if card_label:
-                card_label.config(font=large_font)
+        for card_widget in self.community_card_labels:
+            if card_widget and hasattr(card_widget, 'configure'):
+                # CardWidget doesn't need font updates as it handles its own styling
+                pass
         
         # Update pot display
         if hasattr(self, 'pot_label') and self.pot_label is not None:
