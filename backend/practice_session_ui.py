@@ -38,51 +38,45 @@ class PracticeSessionUI(ttk.Frame):
                 "community_bg": "#228B22"
             },
             "dark_green": {
-                "outer": "#006400", 
-                "inner": "#228B22", 
-                "pattern": "#32CD32",
-                "community_bg": "#228B22"
+                "outer": "#0A4D0A", 
+                "inner": "#1B4F1B", 
+                "pattern": "#2E8B2E",
+                "community_bg": "#1B4F1B"
             },
             "blue": {
-                "outer": "#000080", 
-                "inner": "#4169E1", 
-                "pattern": "#87CEEB",
-                "community_bg": "#4169E1"
-            },
-            "red": {
-                "outer": "#8B0000", 
-                "inner": "#DC143C", 
-                "pattern": "#FF6B6B",
-                "community_bg": "#DC143C"
-            },
-            "purple": {
-                "outer": "#4B0082", 
-                "inner": "#9370DB", 
-                "pattern": "#DDA0DD",
-                "community_bg": "#9370DB"
+                "outer": "#1E3A8A", 
+                "inner": "#3B82F6", 
+                "pattern": "#60A5FA",
+                "community_bg": "#3B82F6"
             }
         }  # Add missing attribute
         
-        self.state_machine = ImprovedPokerStateMachine(
-            num_players=6, 
-            strategy_data=self.strategy_data, 
-            root_tk=self.winfo_toplevel()
-        )
-        self.state_machine.on_action_required = self.prompt_human_action
-        self.state_machine.on_hand_complete = self.handle_hand_complete
-        self.state_machine.on_state_change = self.update_display
-        self.state_machine.on_log_entry = self.add_game_message
-        self.state_machine.on_action_executed = self._animate_player_action  # NEW: Connect action animations
+        # Add mechanism to preserve community cards after hand completion
+        self.preserved_community_cards = []  # Store the final board cards
+        self.hand_completed = False  # Track if hand is completed
         
-        self.sfx = SoundManager()
-        self.player_seats = []
-        self.community_card_labels = []
-        self.human_action_controls = {}
+        # Initialize other attributes
         self.num_players = 6
+        self.player_seats = [None] * self.num_players
+        self.community_card_labels = []
+        self.pot_label = None
+        self.pot_label_window = None
+        self.pot_graphics = {}
+        self.bet_size_var = tk.DoubleVar(value=0.0)
+        self.bet_size_label = None
+        self.last_action_label = None
+        self.info_text = None
+        self.session_info_labels = {}
+        self.action_buttons = {}
+        self.game_control_buttons = {}
+        self.sfx = SoundManager()
         
-        # NEW: Track action indicators for each player
-        self.action_indicators = {}  # player_index -> action_label
-        self.last_action_player = None  # Track who last acted
+        # Initialize state machine
+        self.state_machine = ImprovedPokerStateMachine(
+            on_action_required=self.prompt_human_action,
+            on_state_change=self._on_state_change,
+            on_hand_complete=self.handle_hand_complete
+        )
         
         # Setup UI
         self._setup_ui()
@@ -692,6 +686,11 @@ class PracticeSessionUI(ttk.Frame):
         print(f"🎯 UI: start_new_hand called")  # Debug
         self.add_game_message("🎮 Starting new hand...")
         
+        # Clear preserved community cards and reset hand completion flag
+        self.preserved_community_cards = []
+        self.hand_completed = False
+        print(f"🎯 UI: Cleared preserved community cards")  # Debug
+        
         # FIX: Clear community cards when starting a new hand with white background
         for card_label in self.community_card_labels:
             card_label.config(text="", bg="white")
@@ -720,6 +719,12 @@ class PracticeSessionUI(ttk.Frame):
             final_board = winner_info.get("board", [])
 
             print(f"🎯 UI: Winner: {winner_names}, Amount: ${pot_amount}, Board: {final_board}")  # Debug
+
+            # --- PRESERVE COMMUNITY CARDS ---
+            # Store the final board cards to prevent them from disappearing
+            self.preserved_community_cards = final_board.copy()
+            self.hand_completed = True
+            print(f"🎯 UI: Preserved community cards: {self.preserved_community_cards}")  # Debug
 
             # --- ENHANCED: Better winner announcement and animation ---
             # Display the final community cards with proper coloring
@@ -1291,10 +1296,17 @@ class PracticeSessionUI(ttk.Frame):
         # --- THIS IS THE CRITICAL BUG FIX ---
         # Always display the community cards that are available on the board.
         # Ensure cards remain visible throughout the hand, including during winner announcement
+        # Use preserved community cards if hand is completed
+        board_cards = game_info['board']
+        if self.hand_completed and self.preserved_community_cards:
+            # Use preserved cards after hand completion
+            board_cards = self.preserved_community_cards
+            print(f"🎯 UI: Using preserved community cards: {board_cards}")  # Debug
+        
         for i, card_label in enumerate(self.community_card_labels):
-            if i < len(game_info['board']):
-                card_text = self._format_card(game_info['board'][i])
-                card_color = self._get_card_color(game_info['board'][i])
+            if i < len(board_cards):
+                card_text = self._format_card(board_cards[i])
+                card_color = self._get_card_color(board_cards[i])
                 card_label.config(text=card_text, fg=card_color, bg="white")
                 # Force the card label to update immediately
                 card_label.update()
