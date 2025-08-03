@@ -1,9 +1,9 @@
 {
   "session_info": {
-    "session_id": "011a26c9-9b63-4d0f-909f-f5ac68338cdb",
-    "start_time": "2025-08-03T13:32:48.734740",
+    "session_id": "bfde8a48-af90-4f0f-9df3-3d2f022b325e",
+    "start_time": "2025-08-03T13:35:56.048957",
     "end_time": null,
-    "duration_seconds": 0.00255584716796875,
+    "duration_seconds": 0.0014162063598632812,
     "total_hands": 0,
     "total_players": 6,
     "big_blind_amount": 1.0,
@@ -21,8 +21,8 @@
   "hands_played": [
     {
       "hand_number": 0,
-      "start_time": "2025-08-03T13:31:48.736172",
-      "end_time": "2025-08-03T13:32:48.736172",
+      "start_time": "2025-08-03T13:34:56.049626",
+      "end_time": "2025-08-03T13:35:56.049626",
       "players_at_start": [
         {
           "name": "Player 1",
@@ -105,8 +105,8 @@
           "is_human": true,
           "is_active": false,
           "cards": [
-            "5c",
-            "8d"
+            "5s",
+            "Qs"
           ],
           "current_bet": 0.0,
           "total_invested": 0.0,
@@ -188,13 +188,13 @@
         {
           "amount": 0,
           "eligible_players": [
-            "Player(name='Player 3', stack=100.5, position='BTN', is_human=False, is_active=True, cards=['9s', 'Kd'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+            "Player(name='Player 3', stack=100.5, position='BTN', is_human=False, is_active=True, cards=['Qh', '3s'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
           ]
         }
       ],
       "action_history": [
         {
-          "timestamp": "2025-08-03T13:32:48.735259",
+          "timestamp": "2025-08-03T13:35:56.049136",
           "street": "preflop",
           "player_name": "Player 4",
           "action": "fold",
@@ -210,8 +210,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "5c",
-                "8d"
+                "5s",
+                "Qs"
               ]
             },
             {
@@ -262,7 +262,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.735538",
+          "timestamp": "2025-08-03T13:35:56.049259",
           "street": "preflop",
           "player_name": "Player 5",
           "action": "fold",
@@ -278,8 +278,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "5c",
-                "8d"
+                "5s",
+                "Qs"
               ]
             },
             {
@@ -330,7 +330,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.735754",
+          "timestamp": "2025-08-03T13:35:56.049377",
           "street": "preflop",
           "player_name": "Player 6",
           "action": "fold",
@@ -346,8 +346,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "5c",
-                "8d"
+                "5s",
+                "Qs"
               ]
             },
             {
@@ -398,7 +398,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.736002",
+          "timestamp": "2025-08-03T13:35:56.049541",
           "street": "preflop",
           "player_name": "Player 2",
           "action": "fold",
@@ -414,8 +414,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "5c",
-                "8d"
+                "5s",
+                "Qs"
               ]
             },
             {
@@ -468,15 +468,15 @@
       ],
       "showdown_cards": {
         "Player 3": [
-          "9s",
-          "Kd"
+          "Qh",
+          "3s"
         ]
       }
     },
     {
       "hand_number": 1,
-      "start_time": "2025-08-03T13:31:48.736301",
-      "end_time": "2025-08-03T13:32:48.736301",
+      "start_time": "2025-08-03T13:34:56.049685",
+      "end_time": "2025-08-03T13:35:56.049685",
       "players_at_start": [
         {
           "name": "Player 1",
@@ -559,8 +559,8 @@
           "is_human": true,
           "is_active": false,
           "cards": [
-            "5c",
-            "8d"
+            "5s",
+            "Qs"
           ],
           "current_bet": 0.0,
           "total_invested": 0.0,
@@ -642,22 +642,22 @@
         {
           "amount": 0,
           "eligible_players": [
-            "Player(name='Player 3', stack=100.5, position='BTN', is_human=False, is_active=True, cards=['9s', 'Kd'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+            "Player(name='Player 3', stack=100.5, position='BTN', is_human=False, is_active=True, cards=['Qh', '3s'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
           ]
         }
       ],
       "action_history": [],
       "showdown_cards": {
         "Player 3": [
-          "9s",
-          "Kd"
+          "Qh",
+          "3s"
         ]
       }
     },
     {
       "hand_number": 2,
-      "start_time": "2025-08-03T13:31:48.737277",
-      "end_time": "2025-08-03T13:32:48.737277",
+      "start_time": "2025-08-03T13:34:56.050360",
+      "end_time": "2025-08-03T13:35:56.050360",
       "players_at_start": [
         {
           "name": "Player 1",
@@ -666,8 +666,8 @@
           "is_human": true,
           "is_active": false,
           "cards": [
-            "5c",
-            "8d"
+            "5s",
+            "Qs"
           ],
           "current_bet": 0.0,
           "total_invested": 0.0,
@@ -743,8 +743,8 @@
           "is_human": true,
           "is_active": false,
           "cards": [
-            "7h",
-            "3h"
+            "6c",
+            "3d"
           ],
           "current_bet": 0.0,
           "total_invested": 0.0,
@@ -789,7 +789,7 @@
         },
         {
           "name": "Player 5",
-          "stack": 102.0,
+          "stack": 100.0,
           "position": "SB",
           "is_human": false,
           "is_active": true,
@@ -801,7 +801,7 @@
         },
         {
           "name": "Player 6",
-          "stack": 98.5,
+          "stack": 100.5,
           "position": "BB",
           "is_human": false,
           "is_active": true,
@@ -816,7 +816,7 @@
       "pot_amount": 0,
       "winners": [
         {
-          "name": "Player 5",
+          "name": "Player 6",
           "amount": 2.0,
           "board": [],
           "hand": "high_card"
@@ -826,14 +826,14 @@
         {
           "amount": 2.0,
           "eligible_players": [
-            "Player(name='Player 5', stack=102.0, position='SB', is_human=False, is_active=True, cards=['4d', 'Ac'], current_bet=0.0, has_acted_this_round=False, is_all_in=False, total_invested=0.0, partial_call_amount=None, full_call_amount=None)",
-            "Player(name='Player 6', stack=98.5, position='BB', is_human=False, is_active=True, cards=['5d', '3d'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+            "Player(name='Player 5', stack=100.0, position='SB', is_human=False, is_active=True, cards=['Kc', 'Jc'], current_bet=0.0, has_acted_this_round=False, is_all_in=False, total_invested=0.0, partial_call_amount=None, full_call_amount=None)",
+            "Player(name='Player 6', stack=100.5, position='BB', is_human=False, is_active=True, cards=['8d', 'Ad'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
           ]
         }
       ],
       "action_history": [
         {
-          "timestamp": "2025-08-03T13:32:48.736599",
+          "timestamp": "2025-08-03T13:35:56.049884",
           "street": "preflop",
           "player_name": "Player 2",
           "action": "fold",
@@ -849,8 +849,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "7h",
-                "3h"
+                "6c",
+                "3d"
               ]
             },
             {
@@ -901,7 +901,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.736772",
+          "timestamp": "2025-08-03T13:35:56.050015",
           "street": "preflop",
           "player_name": "Player 3",
           "action": "fold",
@@ -917,8 +917,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "7h",
-                "3h"
+                "6c",
+                "3d"
               ]
             },
             {
@@ -969,7 +969,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.736931",
+          "timestamp": "2025-08-03T13:35:56.050134",
           "street": "preflop",
           "player_name": "Player 4",
           "action": "fold",
@@ -985,8 +985,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "7h",
-                "3h"
+                "6c",
+                "3d"
               ]
             },
             {
@@ -1037,7 +1037,7 @@
           ]
         },
         {
-          "timestamp": "2025-08-03T13:32:48.737097",
+          "timestamp": "2025-08-03T13:35:56.050251",
           "street": "preflop",
           "player_name": "Player 5",
           "action": "fold",
@@ -1053,8 +1053,8 @@
               "is_all_in": false,
               "is_human": true,
               "cards": [
-                "7h",
-                "3h"
+                "6c",
+                "3d"
               ]
             },
             {
@@ -1107,24 +1107,24 @@
       ],
       "showdown_cards": {
         "Player 5": [
-          "4d",
-          "Ac"
+          "Kc",
+          "Jc"
         ],
         "Player 6": [
-          "5d",
-          "3d"
+          "8d",
+          "Ad"
         ]
       }
     }
   ],
   "session_log": [
-    "[SESSION 13:32:48] Session started",
-    "[SESSION 13:32:48] Players: 6",
-    "[SESSION 13:32:48] Big Blind: $1.0",
-    "[SESSION 13:32:48] Starting hand 1",
-    "[SESSION 13:32:48] Hand 0 complete: Player 3 wins $0.00",
-    "[SESSION 13:32:48] Hand 1 complete: Player 3 wins $0.00",
-    "[SESSION 13:32:48] Starting hand 3",
-    "[SESSION 13:32:48] Hand 2 complete: Player 5 wins $2.00"
+    "[SESSION 13:35:56] Session started",
+    "[SESSION 13:35:56] Players: 6",
+    "[SESSION 13:35:56] Big Blind: $1.0",
+    "[SESSION 13:35:56] Starting hand 1",
+    "[SESSION 13:35:56] Hand 0 complete: Player 3 wins $0.00",
+    "[SESSION 13:35:56] Hand 1 complete: Player 3 wins $0.00",
+    "[SESSION 13:35:56] Starting hand 3",
+    "[SESSION 13:35:56] Hand 2 complete: Player 6 wins $2.00"
   ]
 }
