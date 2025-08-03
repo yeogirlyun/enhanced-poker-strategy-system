@@ -649,16 +649,10 @@ class PracticeSessionUI(ttk.Frame):
                 card_label.config(text="")
         # --- End of Bug Fix ---
 
-        # NEW: Clear action indicators when a new player acts
+        # NEW: Only clear action indicators when the next player actually takes an action
+        # Don't clear just because highlighting changes - wait for actual action
         current_action_player = game_info['action_player']
-        if (self.last_action_player is not None and 
-            self.last_action_player != current_action_player and
-            self.last_action_player in self.action_indicators):
-            # Clear the previous player's action indicator
-            old_label = self.action_indicators[self.last_action_player]
-            if old_label and old_label.winfo_exists():
-                old_label.destroy()
-                del self.action_indicators[self.last_action_player]
+        # We'll clear action indicators in _animate_player_action when a new action is taken
         
         # Update player info
         for i, player_seat in enumerate(self.player_seats):
@@ -735,6 +729,16 @@ class PracticeSessionUI(ttk.Frame):
             old_label = self.action_indicators[player_index]
             if old_label and old_label.winfo_exists():
                 old_label.destroy()
+        
+        # Clear the previous player's action indicator when a new action is taken
+        if (self.last_action_player is not None and 
+            self.last_action_player != player_index and
+            self.last_action_player in self.action_indicators):
+            # Clear the previous player's action indicator
+            old_label = self.action_indicators[self.last_action_player]
+            if old_label and old_label.winfo_exists():
+                old_label.destroy()
+                del self.action_indicators[self.last_action_player]
         
         # Create action indicator
         action_text = action.upper()
