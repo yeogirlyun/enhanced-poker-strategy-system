@@ -261,6 +261,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_state_change = self._on_state_change
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_action_player_changed = self.update_display
+        self.state_machine.on_log_entry = self.add_game_message
         
         # Setup UI
         self._setup_ui()
@@ -1010,10 +1011,21 @@ class PracticeSessionUI(ttk.Frame):
     def add_game_message(self, message):
         """Add a message to the action messages area."""
         if hasattr(self, 'info_text'):
-            self.info_text.config(state=tk.NORMAL)
-            self.info_text.insert(tk.END, f"{message}\n")
-            self.info_text.see(tk.END)
-            self.info_text.config(state=tk.DISABLED)
+            # Filter to show only important action messages
+            important_keywords = [
+                'attempting', 'FOLDS', 'CALLS', 'RAISES', 'BETS', 'CHECKS',
+                'wins', 'STATE TRANSITION', 'ROUND COMPLETE', 'SHOWDOWN',
+                'Player', 'raises to', 'calls', 'folds', 'bets'
+            ]
+            
+            # Check if message contains any important keywords
+            is_important = any(keyword.lower() in message.lower() for keyword in important_keywords)
+            
+            if is_important:
+                self.info_text.config(state=tk.NORMAL)
+                self.info_text.insert(tk.END, f"{message}\n")
+                self.info_text.see(tk.END)
+                self.info_text.config(state=tk.DISABLED)
     
     def update_session_info(self):
         """Update the session information display."""
