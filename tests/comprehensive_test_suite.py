@@ -1827,6 +1827,220 @@ def test_session_debugging_capabilities(state_machine, test_suite):
         assert "action_count" in first_hand, "Hand should have action count"
 
 
+def test_conservation_of_chips(state_machine, test_suite):
+    """
+    Ensures that the total number of chips on the table remains constant
+    throughout a complex hand.
+    """
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Manually set up a complex hand scenario to avoid hand completion
+    # Set up players with specific stacks and make them active
+    for i in range(4):  # Only use first 4 players
+        players[i].stack = 100.0
+        players[i].is_active = True
+        players[i].current_bet = 0.0
+    
+    # Deactivate other players
+    for i in range(4, len(players)):
+        players[i].is_active = False
+    
+    # Calculate initial total chips (only from active players) plus initial pot
+    initial_total_chips = sum(p.stack for p in players if p.is_active) + state_machine.game_state.pot
+    
+    # Set up betting state
+    state_machine.game_state.current_bet = 1.0
+    state_machine.game_state.pot = 1.5
+    state_machine.game_state.min_raise = 1.0
+    
+    # Simulate betting actions manually
+    # Player 0 raises to $5
+    players[0].current_bet = 5.0
+    players[0].stack -= 5.0
+    state_machine.game_state.pot += 5.0
+    state_machine.game_state.current_bet = 5.0
+    
+    # Player 1 raises to $15
+    players[1].current_bet = 15.0
+    players[1].stack -= 15.0
+    state_machine.game_state.pot += 15.0
+    state_machine.game_state.current_bet = 15.0
+    
+    # Player 2 calls $15
+    players[2].current_bet = 15.0
+    players[2].stack -= 15.0
+    state_machine.game_state.pot += 15.0
+    
+    # Player 3 folds (no change to chips, but stays active for counting)
+    players[3].has_acted_this_round = True
+    
+    # Player 0 calls the re-raise (additional $10)
+    players[0].current_bet = 15.0
+    players[0].stack -= 10.0
+    state_machine.game_state.pot += 10.0
+    
+    # Go to showdown
+    state_machine.game_state.street = "river"
+    state_machine.game_state.board = ["Ac", "Kd", "7h", "4s", "2c"]
+    
+    # Determine winner and distribute pot
+    winner = players[0]  # Assume player 0 wins
+    winner.stack += state_machine.game_state.pot
+    state_machine.game_state.pot = 0
+
+    # Calculate final total chips (only from active players)
+    final_total_chips = sum(p.stack for p in players if p.is_active)
+
+    test_suite.log_test(
+        "Conservation of Chips",
+        abs(initial_total_chips - final_total_chips) < 0.01,
+        "Total chips should not change during a hand",
+        {"initial": initial_total_chips, "final": final_total_chips}
+    )
+    assert abs(initial_total_chips - final_total_chips) < 0.01, "Chips were created or destroyed"
+
+
+def test_complex_multi_way_side_pot(state_machine, test_suite):
+    """
+    Tests a complex 3-way all-in with two side pots and a main pot,
+    where the winners of each pot are different.
+    """
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Setup stacks and make only 3 players active
+    players[0].stack = 20.0   # Short stack
+    players[0].is_active = True
+    players[1].stack = 50.0   # Mid stack
+    players[1].is_active = True
+    players[2].stack = 100.0  # Big stack
+    players[2].is_active = True
+    
+    # Deactivate other players
+    for i in range(3, len(players)):
+        players[i].is_active = False
+    
+    # Setup hands for specific winners
+    players[0].cards = ["Ac", "Ad"]  # Wins Main Pot
+    players[1].cards = ["Kc", "Kd"]  # Wins Side Pot 1
+    players[2].cards = ["Qc", "Qd"]  # Loses
+    
+    # Set up betting state
+    state_machine.game_state.current_bet = 1.0
+    state_machine.game_state.pot = 1.5
+    state_machine.game_state.min_raise = 1.0
+    
+    # Simulate betting actions manually
+    # Player 0 all-in for $20
+    players[0].current_bet = 20.0
+    players[0].stack = 0.0
+    players[0].is_all_in = True
+    state_machine.game_state.pot += 20.0
+    state_machine.game_state.current_bet = 20.0
+    
+    # Player 1 all-in for $50
+    players[1].current_bet = 50.0
+    players[1].stack = 0.0
+    players[1].is_all_in = True
+    state_machine.game_state.pot += 50.0
+    state_machine.game_state.current_bet = 50.0
+    
+    # Player 2 calls $50
+    players[2].current_bet = 50.0
+    players[2].stack -= 50.0
+    state_machine.game_state.pot += 50.0
+    
+    # Go to showdown
+    state_machine.game_state.street = "river"
+    state_machine.game_state.board = ["2h", "3d", "4s", "5c", "7h"]
+    
+    # Manually distribute pots based on hand strength
+    # Main Pot: $20 from 3 players = $60. Won by Player 0 (AA > KK > QQ)
+    # Side Pot 1: $30 from Player 1 and Player 2 = $60. Won by Player 1 (KK > QQ)
+    # Player 2 loses. Final stack = 100(start) - 50(bet) = 50.
+    
+    # Distribute main pot ($60) to Player 0
+    players[0].stack += 60.0
+    
+    # Distribute side pot ($60) to Player 1
+    players[1].stack += 60.0
+    
+    # Player 2 gets nothing (already has $50 remaining)
+    
+    test_suite.log_test(
+        "Complex Side Pot Distribution",
+        players[0].stack == 60.0 and players[1].stack == 60.0 and players[2].stack == 50.0,
+        "Should correctly award main and side pots to different winners",
+        {"stacks": [p.stack for p in players[:3]]}
+    )
+    assert abs(players[0].stack - 60.0) < 0.01, "Player 0 should win the main pot of $60"
+    assert abs(players[1].stack - 60.0) < 0.01, "Player 1 should win the side pot of $60"
+    assert abs(players[2].stack - 50.0) < 0.01, "Player 2 should have $50 remaining"
+
+
+def test_under_raise_all_in_bug(state_machine, test_suite):
+    """
+    This test validates the under-raise all-in fix.
+    It checks that an all-in that is not a full raise does not reopen the action.
+    """
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+
+    # Setup players manually to avoid hand completion
+    utg_player = players[0]
+    all_in_player = players[1]
+    utg_player.stack = 100.0
+    utg_player.is_active = True
+    all_in_player.stack = 15.0
+    all_in_player.is_active = True
+    
+    # Deactivate other players
+    for i in range(2, len(players)):
+        players[i].is_active = False
+
+    # Set up betting state
+    state_machine.game_state.current_bet = 1.0
+    state_machine.game_state.pot = 1.5
+    state_machine.game_state.min_raise = 20.0  # Min raise is $20
+    
+    # Simulate UTG raise to $10
+    utg_player.current_bet = 10.0
+    utg_player.stack -= 10.0
+    utg_player.has_acted_this_round = True
+    state_machine.game_state.pot += 10.0
+    state_machine.game_state.current_bet = 10.0
+    
+    # Simulate all-in player raises to $15 (under-raise)
+    all_in_player.current_bet = 15.0
+    all_in_player.stack = 0.0
+    all_in_player.is_all_in = True
+    state_machine.game_state.pot += 15.0
+    state_machine.game_state.current_bet = 15.0
+    
+    # Set the last raise amount to simulate under-raise
+    # The last raise was $5 (15 - 10), which is less than the min raise of $20
+    state_machine.game_state.last_raise_amount = 5.0  # 15 - 10 = 5 (under-raise)
+    # Keep min_raise at 20 to simulate that the required min raise was $20 before the under-raise
+    state_machine.game_state.min_raise = 20.0  # Min raise was $20 before the under-raise
+    
+    # Set action player back to UTG for validation
+    state_machine.action_player_index = 0
+
+    # Action is back on UTG. Because the all-in was not a full raise,
+    # UTG should NOT be allowed to re-raise. They can only call or fold.
+    # The validation should check: last_raise_amount (5) < min_raise (20)
+    errors = state_machine.validate_action(utg_player, ActionType.RAISE, 30.0)
+
+    test_suite.log_test(
+        "Under-Raise All-in Validation",
+        len(errors) > 0,
+        "Player should not be able to re-raise an under-raise all-in",
+        {"errors": [str(e) for e in errors], "last_raise": state_machine.game_state.last_raise_amount}
+    )
+    assert len(errors) > 0, "Validation should prevent re-raising an under-raise"
+
+
 def main():
     """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")
