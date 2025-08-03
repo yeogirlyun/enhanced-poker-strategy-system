@@ -401,43 +401,37 @@ class PracticeSessionUI(ttk.Frame):
             self.player_seats[i]["bet_label_window"] = bet_window
 
     def _create_player_seat_widget(self, x, y, name, position, index):
+        # Create a more compact player seat frame sized for 2 cards plus 50% more space
         seat_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=2, relief="ridge")
         
         # Create name and position labels with proper font scaling
         name_label = tk.Label(
             seat_frame, 
-            text=name, 
+            text=f"{name} ({position})",  # Combine name and position in one label
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             font=FONTS["player_name"]
         )
-        name_label.pack()
+        name_label.pack(pady=2)
         
-        position_label = tk.Label(
-            seat_frame, 
-            text=position, 
-            bg=THEME["secondary_bg"], 
-            fg=THEME["text_dark"], 
-            font=FONTS["small"]
-        )
-        position_label.pack()
-        
-        # Cards area - make at least as big as community cards
+        # Cards area with light gray/pink background for better visibility
         # Use responsive font sizing similar to community cards but slightly larger
         canvas_height = self.canvas.winfo_height()
-        card_font_size = max(18, int(canvas_height / 20))  # Larger than community cards
+        card_font_size = max(16, int(canvas_height / 25))  # Slightly smaller for compact design
         card_font = (THEME["font_family"], card_font_size, "bold")
         cards_label = tk.Label(
             seat_frame, 
             text="🂠 🂠", 
-            bg=THEME["secondary_bg"], 
+            bg="#F0F0F0",  # Light gray background for hole cards
             fg="#CCCCCC",  # Default gray for unknown cards
             font=card_font,
-            width=8  # Increased width to accommodate larger cards
+            width=6,  # Reduced width for more compact design
+            relief="solid",  # Add border to make cards look more realistic
+            bd=1
         )
-        cards_label.pack(pady=5)
+        cards_label.pack(pady=3)
         
-        # Bet information (current bet amount)
+        # Bet information (current bet amount) - smaller and more compact
         bet_label = tk.Label(
             seat_frame, 
             text="", 
@@ -445,13 +439,12 @@ class PracticeSessionUI(ttk.Frame):
             fg="orange", 
             font=FONTS["stack_bet"]
         )
-        bet_label.pack()
+        bet_label.pack(pady=1)
         
         # Store references for updates
         self.player_seats[index] = {
             "frame": seat_frame, 
             "name_label": name_label, 
-            "position_label": position_label,
             "cards_label": cards_label, 
             "bet_label": bet_label
         }
@@ -1335,7 +1328,7 @@ class PracticeSessionUI(ttk.Frame):
             else:
                 frame.config(bg=THEME["secondary_bg"])
 
-            # Update name and position
+            # Update name and position (combined in one label)
             name_label.config(text=f"{player_info['name']} ({player_info['position']})")
             
             # Update stack and bet info
@@ -1353,17 +1346,17 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
-            # Update player card display with proper colors
+            # Update player card display with proper colors and light gray background
             if player_info['is_active']:
                 # Show cards only if the player is human or if it's showdown
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
-                    # Use black color for player cards (they're always visible when shown)
-                    cards_label.config(text=cards_text, fg="#000000")
+                    # Use proper card colors with light gray background
+                    cards_label.config(text=cards_text, fg="#000000", bg="#F0F0F0")
                 else: # Bot's cards are hidden during play
-                    cards_label.config(text="🂠 🂠", fg="#CCCCCC")
+                    cards_label.config(text="🂠 🂠", fg="#CCCCCC", bg="#F0F0F0")
             else: # Player has folded
-                cards_label.config(text="Folded", fg="red")
+                cards_label.config(text="Folded", fg="red", bg="#F0F0F0")
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
