@@ -416,6 +416,9 @@ class PracticeSessionUI(ttk.Frame):
         
         # Set default felt color
         self.current_felt_color = "classic_green"
+        
+        # Force initial display update to show highlighting
+        self.update_display()
     
     class LayoutManager:
         """Manages dynamic positioning to prevent overlays and ensure visibility."""
@@ -1440,7 +1443,9 @@ class PracticeSessionUI(ttk.Frame):
             # FIXED: Highlight based on action_player index, not is_active status
             # Players should be highlighted when it's their turn, even if they fold
             frame = player_seat["frame"]
-            if i == game_info['action_player']:
+            action_player = game_info.get('action_player', -1)
+            print(f"🎯 UI: Player {i+1} ({player_info['name']}) - action_player: {action_player}, current: {i}")
+            if i == action_player:
                 frame.config(bg=THEME["accent_primary"])
                 print(f"🎯 UI: Highlighting player {i+1} ({player_info['name']}) - it's their turn")
             else:
