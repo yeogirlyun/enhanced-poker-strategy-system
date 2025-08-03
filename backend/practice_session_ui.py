@@ -1490,8 +1490,11 @@ class PracticeSessionUI(ttk.Frame):
                 # Show cards for human players (always visible) or during showdown/end_hand (all active players)
                 current_state = self.state_machine.get_current_state()
                 is_showdown_or_end = current_state in [PokerState.SHOWDOWN, "end_hand"]
+                print(f"🎯 UI: Current state: {current_state}, is_showdown_or_end: {is_showdown_or_end}")
                 
-                if player_info['is_human'] or is_showdown_or_end:
+                # Show cards for human players or during showdown/end_hand (all active players)
+                # Also show cards if hand is completed but player was active (for winner display)
+                if player_info['is_human'] or is_showdown_or_end or (self.hand_completed and player_info['is_active']):
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
                     if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
@@ -1506,6 +1509,11 @@ class PracticeSessionUI(ttk.Frame):
                             print(f"🎯 UI: Human player cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
                         elif is_showdown_or_end:
                             print(f"🎯 UI: Showdown/End Hand - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
+                        elif self.hand_completed and player_info['is_active']:
+                            print(f"🎯 UI: Hand Completed - {player_info['name']} cards displayed: {player_info['cards'][0]} {player_info['cards'][1]}")
+                    else:
+                        print(f"🎯 UI: Warning - Card widgets or cards not available for {player_info['name']}")
+                        print(f"🎯 UI: Card widgets: {len(card_widgets) if card_widgets else 0}, Cards: {len(player_info.get('cards', []))}")
                 else: # Bot's cards are hidden during play - show card backs
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
