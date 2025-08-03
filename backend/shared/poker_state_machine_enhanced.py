@@ -362,7 +362,7 @@ class ImprovedPokerStateMachine:
             }
             
             with open(filepath, 'w') as f:
-                json.dump(session_data, f, indent=2)
+                json.dump(session_data, f, indent=2, default=str)
             
             self._log_session_event(f"Session exported to {filepath}")
             return True
@@ -2209,11 +2209,25 @@ class ImprovedPokerStateMachine:
         if not self.session_state:
             return {}
         
+        # Convert hand history to serializable format
+        current_hand_history = []
+        for action in self.hand_history:
+            current_hand_history.append({
+                "timestamp": action.timestamp,
+                "street": action.street,
+                "player_name": action.player_name,
+                "action": action.action.value,
+                "amount": action.amount,
+                "pot_size": action.pot_size,
+                "board": action.board,
+                "player_states": action.player_states
+            })
+        
         return {
             "session_info": self.get_session_info(),
             "session_statistics": self.get_session_statistics(),
             "current_hand_state": self._capture_game_state(),
-            "current_hand_history": [action.__dict__ for action in self.hand_history],
+            "current_hand_history": current_hand_history,
             "hands_played": [
                 {
                     "hand_number": hand.hand_number,
