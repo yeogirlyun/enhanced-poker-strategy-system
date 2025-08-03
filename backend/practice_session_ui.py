@@ -31,12 +31,17 @@ class CardWidget(tk.Canvas):
     def __init__(self, parent, width=50, height=70):
         super().__init__(parent, width=width, height=height, highlightthickness=1, highlightbackground="black", bg="white")
         self.width, self.height = width, height
+        
+        # Ensure canvas is properly configured for drawing
+        self.config(width=width, height=height)
+        
         # Initialize with card back
         self._draw_card_back()
 
     def set_card(self, card_str, is_folded=False):
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
+            print(f"🎴 Drawing card back for card_str='{card_str}', is_folded={is_folded}")
             self._draw_card_back()
             if is_folded:
                 # Add a semi-transparent overlay to show it's folded
@@ -1444,9 +1449,10 @@ class PracticeSessionUI(ttk.Frame):
                     # Get the stored card widgets
                     card_widgets = player_seat.get("card_widgets", [])
                     if len(card_widgets) >= 2:
-                        # Show card backs for hidden cards - dark grey background
-                        card_widgets[0].set_folded()
-                        card_widgets[1].set_folded()
+                        # Show card backs for hidden cards - use set_card with empty string
+                        print(f"🎴 Setting card backs for player {i+1} (bot)")
+                        card_widgets[0].set_card("")  # This should show card back
+                        card_widgets[1].set_card("")  # This should show card back
             else: # Player has folded
                 # Get the stored card widgets and folded label
                 card_widgets = player_seat.get("card_widgets", [])
