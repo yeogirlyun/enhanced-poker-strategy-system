@@ -15,11 +15,20 @@ Tests all critical fixes and additional edge cases:
 10. Multi-player interactions
 11. Sound integration
 12. Hand history logging
+13. SESSION TRACKING - NEW!
+    - Session initialization and lifecycle
+    - Hand result capture
+    - Session statistics and analysis
+    - Session export/import
+    - Hand replay capabilities
+    - Debug information capture
+    - Session metadata tracking
 """
 
 import sys
 import os
 import time
+import json
 import pytest
 from typing import List, Dict, Any
 from dataclasses import dataclass
@@ -1306,6 +1315,447 @@ def test_multiple_winners_split_pot(state_machine, test_suite):
         {"expected": 100.0 + expected_split, "actual": player2.stack}
     )
     assert player2.stack == 100.0 + expected_split, f"Player 2 should have ${100.0 + expected_split}"
+
+
+# ============================================================================
+# SESSION TRACKING TESTS - NEW!
+# ============================================================================
+
+def test_session_initialization(state_machine, test_suite):
+    """Test session initialization and basic session state."""
+    # Test session initialization
+    state_machine.start_session()
+    
+    test_suite.log_test(
+        "Session Started",
+        state_machine.session_state is not None,
+        "Session state should be initialized",
+        {"session_id": state_machine.session_state.session_metadata.session_id}
+    )
+    assert state_machine.session_state is not None, "Session state should be initialized"
+    
+    # Test session metadata
+    metadata = state_machine.session_state.session_metadata
+    test_suite.log_test(
+        "Session ID Generated",
+        len(metadata.session_id) > 0,
+        "Session ID should be generated",
+        {"session_id": metadata.session_id}
+    )
+    assert len(metadata.session_id) > 0, "Session ID should be generated"
+    
+    test_suite.log_test(
+        "Start Time Recorded",
+        metadata.start_time > 0,
+        "Start time should be recorded",
+        {"start_time": metadata.start_time}
+    )
+    assert metadata.start_time > 0, "Start time should be recorded"
+    
+    test_suite.log_test(
+        "Player Count Recorded",
+        metadata.total_players == 6,
+        "Player count should be recorded",
+        {"expected": 6, "actual": metadata.total_players}
+    )
+    assert metadata.total_players == 6, "Player count should be recorded"
+
+
+def test_session_info_retrieval(state_machine, test_suite):
+    """Test session information retrieval methods."""
+    state_machine.start_session()
+    
+    # Test get_session_info
+    session_info = state_machine.get_session_info()
+    
+    test_suite.log_test(
+        "Session Info Contains ID",
+        "session_id" in session_info,
+        "Session info should contain session ID",
+        {"session_info_keys": list(session_info.keys())}
+    )
+    assert "session_id" in session_info, "Session info should contain session ID"
+    
+    test_suite.log_test(
+        "Session Info Contains Start Time",
+        "start_time" in session_info,
+        "Session info should contain start time",
+        {"session_info": session_info}
+    )
+    assert "start_time" in session_info, "Session info should contain start time"
+    
+    test_suite.log_test(
+        "Session Info Contains Duration",
+        "duration_seconds" in session_info,
+        "Session info should contain duration",
+        {"session_info": session_info}
+    )
+    assert "duration_seconds" in session_info, "Session info should contain duration"
+    
+    # Test get_session_statistics
+    stats = state_machine.get_session_statistics()
+    
+    test_suite.log_test(
+        "Session Statistics Contains Total Hands",
+        "total_hands" in stats,
+        "Session statistics should contain total hands",
+        {"stats": stats}
+    )
+    assert "total_hands" in stats, "Session statistics should contain total hands"
+    
+    test_suite.log_test(
+        "Session Statistics Contains Duration",
+        "session_duration" in stats,
+        "Session statistics should contain duration",
+        {"stats": stats}
+    )
+    assert "session_duration" in stats, "Session statistics should contain duration"
+
+
+def test_hand_result_capture(state_machine, test_suite):
+    """Test that hand results are properly captured in session."""
+    state_machine.start_session()
+    
+    # Start a hand
+    state_machine.start_hand()
+    
+    # Simulate some actions to create hand history
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.FOLD, 0)
+    
+    # Complete the hand (this should trigger hand result capture)
+    state_machine.handle_end_hand()
+    
+    # Check that hand result was captured
+    test_suite.log_test(
+        "Hand Result Captured",
+        len(state_machine.session_state.hands_played) > 0,
+        "Hand result should be captured",
+        {"hands_played": len(state_machine.session_state.hands_played)}
+    )
+    assert len(state_machine.session_state.hands_played) > 0, "Hand result should be captured"
+    
+    # Check hand result structure
+    hand_result = state_machine.session_state.hands_played[0]
+    
+    test_suite.log_test(
+        "Hand Result Has Hand Number",
+        hasattr(hand_result, 'hand_number'),
+        "Hand result should have hand number",
+        {"hand_result": hand_result}
+    )
+    assert hasattr(hand_result, 'hand_number'), "Hand result should have hand number"
+    
+    test_suite.log_test(
+        "Hand Result Has Start Time",
+        hasattr(hand_result, 'start_time'),
+        "Hand result should have start time",
+        {"hand_result": hand_result}
+    )
+    assert hasattr(hand_result, 'start_time'), "Hand result should have start time"
+    
+    test_suite.log_test(
+        "Hand Result Has End Time",
+        hasattr(hand_result, 'end_time'),
+        "Hand result should have end time",
+        {"hand_result": hand_result}
+    )
+    assert hasattr(hand_result, 'end_time'), "Hand result should have end time"
+
+
+def test_session_export_import(state_machine, test_suite):
+    """Test session export and import functionality."""
+    state_machine.start_session()
+    
+    # Play a few hands to generate data
+    for i in range(2):
+        state_machine.start_hand()
+        player = state_machine.get_action_player()
+        if player:
+            state_machine.execute_action(player, ActionType.FOLD, 0)
+        state_machine.handle_end_hand()
+    
+    # Test export
+    export_success = state_machine.export_session("test_export.json")
+    
+    test_suite.log_test(
+        "Session Export Successful",
+        export_success,
+        "Session export should succeed",
+        {"export_success": export_success}
+    )
+    assert export_success, "Session export should succeed"
+    
+    # Check exported file exists and has content
+    import os
+    if os.path.exists("test_export.json"):
+        with open("test_export.json", 'r') as f:
+            exported_data = json.load(f)
+        
+        test_suite.log_test(
+            "Exported File Has Session Info",
+            "session_info" in exported_data,
+            "Exported file should contain session info",
+            {"exported_keys": list(exported_data.keys())}
+        )
+        assert "session_info" in exported_data, "Exported file should contain session info"
+        
+        test_suite.log_test(
+            "Exported File Has Hands Played",
+            "hands_played" in exported_data,
+            "Exported file should contain hands played",
+            {"exported_keys": list(exported_data.keys())}
+        )
+        assert "hands_played" in exported_data, "Exported file should contain hands played"
+        
+        test_suite.log_test(
+            "Exported File Has Session Log",
+            "session_log" in exported_data,
+            "Exported file should contain session log",
+            {"exported_keys": list(exported_data.keys())}
+        )
+        assert "session_log" in exported_data, "Exported file should contain session log"
+
+
+def test_hand_replay_capability(state_machine, test_suite):
+    """Test hand replay functionality."""
+    state_machine.start_session()
+    
+    # Play a hand
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.CALL, 1.0)
+    state_machine.handle_end_hand()
+    
+    # Test replay
+    replay_data = state_machine.replay_hand(0)
+    
+    test_suite.log_test(
+        "Hand Replay Data Retrieved",
+        replay_data is not None,
+        "Hand replay data should be retrieved",
+        {"replay_data": replay_data}
+    )
+    assert replay_data is not None, "Hand replay data should be retrieved"
+    
+    # Check replay data structure
+    test_suite.log_test(
+        "Replay Data Has Hand Number",
+        "hand_number" in replay_data,
+        "Replay data should have hand number",
+        {"replay_keys": list(replay_data.keys())}
+    )
+    assert "hand_number" in replay_data, "Replay data should have hand number"
+    
+    test_suite.log_test(
+        "Replay Data Has Action History",
+        "action_history" in replay_data,
+        "Replay data should have action history",
+        {"replay_keys": list(replay_data.keys())}
+    )
+    assert "action_history" in replay_data, "Replay data should have action history"
+    
+    test_suite.log_test(
+        "Replay Data Has Pot Amount",
+        "pot_amount" in replay_data,
+        "Replay data should have pot amount",
+        {"replay_keys": list(replay_data.keys())}
+    )
+    assert "pot_amount" in replay_data, "Replay data should have pot amount"
+
+
+def test_comprehensive_session_data(state_machine, test_suite):
+    """Test comprehensive session data retrieval."""
+    state_machine.start_session()
+    
+    # Play a hand
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.FOLD, 0)
+    state_machine.handle_end_hand()
+    
+    # Get comprehensive data
+    comprehensive_data = state_machine.get_comprehensive_session_data()
+    
+    test_suite.log_test(
+        "Comprehensive Data Retrieved",
+        comprehensive_data is not None,
+        "Comprehensive session data should be retrieved",
+        {"comprehensive_data": comprehensive_data}
+    )
+    assert comprehensive_data is not None, "Comprehensive session data should be retrieved"
+    
+    # Check structure
+    test_suite.log_test(
+        "Comprehensive Data Has Session Info",
+        "session_info" in comprehensive_data,
+        "Comprehensive data should have session info",
+        {"comprehensive_keys": list(comprehensive_data.keys())}
+    )
+    assert "session_info" in comprehensive_data, "Comprehensive data should have session info"
+    
+    test_suite.log_test(
+        "Comprehensive Data Has Session Statistics",
+        "session_statistics" in comprehensive_data,
+        "Comprehensive data should have session statistics",
+        {"comprehensive_keys": list(comprehensive_data.keys())}
+    )
+    assert "session_statistics" in comprehensive_data, "Comprehensive data should have session statistics"
+    
+    test_suite.log_test(
+        "Comprehensive Data Has Current Hand State",
+        "current_hand_state" in comprehensive_data,
+        "Comprehensive data should have current hand state",
+        {"comprehensive_keys": list(comprehensive_data.keys())}
+    )
+    assert "current_hand_state" in comprehensive_data, "Comprehensive data should have current hand state"
+
+
+def test_session_logging(state_machine, test_suite):
+    """Test session logging functionality."""
+    state_machine.start_session()
+    
+    # Check that session log is being created
+    test_suite.log_test(
+        "Session Log Created",
+        len(state_machine.session_state.session_log) > 0,
+        "Session log should be created",
+        {"log_entries": len(state_machine.session_state.session_log)}
+    )
+    assert len(state_machine.session_state.session_log) > 0, "Session log should be created"
+    
+    # Check log entries contain session events
+    log_entries = state_machine.session_state.session_log
+    session_events = [entry for entry in log_entries if "[SESSION" in entry]
+    
+    test_suite.log_test(
+        "Session Events Logged",
+        len(session_events) > 0,
+        "Session events should be logged",
+        {"session_events": session_events}
+    )
+    assert len(session_events) > 0, "Session events should be logged"
+
+
+def test_session_end_functionality(state_machine, test_suite):
+    """Test session end functionality."""
+    state_machine.start_session()
+    
+    # Play a hand
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.FOLD, 0)
+    state_machine.handle_end_hand()
+    
+    # End session
+    state_machine.end_session()
+    
+    # Check session metadata
+    metadata = state_machine.session_state.session_metadata
+    
+    test_suite.log_test(
+        "Session End Time Recorded",
+        metadata.end_time is not None,
+        "Session end time should be recorded",
+        {"end_time": metadata.end_time}
+    )
+    assert metadata.end_time is not None, "Session end time should be recorded"
+    
+    test_suite.log_test(
+        "Total Hands Recorded",
+        metadata.total_hands > 0,
+        "Total hands should be recorded",
+        {"total_hands": metadata.total_hands}
+    )
+    assert metadata.total_hands > 0, "Total hands should be recorded"
+
+
+def test_session_with_multiple_hands(state_machine, test_suite):
+    """Test session tracking across multiple hands."""
+    state_machine.start_session()
+    
+    # Play multiple hands
+    for i in range(3):
+        state_machine.start_hand()
+        player = state_machine.get_action_player()
+        if player:
+            if i % 2 == 0:
+                state_machine.execute_action(player, ActionType.FOLD, 0)
+            else:
+                state_machine.execute_action(player, ActionType.CALL, 1.0)
+        # Only call handle_end_hand once per hand
+        state_machine.handle_end_hand()
+    
+    # Check session statistics
+    stats = state_machine.get_session_statistics()
+    
+    test_suite.log_test(
+        "Multiple Hands Tracked",
+        stats["total_hands"] == 3,
+        "Should track multiple hands",
+        {"expected": 3, "actual": stats["total_hands"]}
+    )
+    assert stats["total_hands"] == 3, "Should track multiple hands"
+    
+    # Check that all hands are in session
+    test_suite.log_test(
+        "All Hands in Session",
+        len(state_machine.session_state.hands_played) == 3,
+        "All hands should be in session",
+        {"hands_played": len(state_machine.session_state.hands_played)}
+    )
+    assert len(state_machine.session_state.hands_played) == 3, "All hands should be in session"
+
+
+def test_session_debugging_capabilities(state_machine, test_suite):
+    """Test debugging capabilities of session tracking."""
+    state_machine.start_session()
+    
+    # Play a hand with some actions
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.CALL, 1.0)
+        state_machine.execute_action(player, ActionType.RAISE, 3.0)
+    state_machine.handle_end_hand()
+    
+    # Get debugging data
+    debug_data = state_machine.get_comprehensive_session_data()
+    
+    test_suite.log_test(
+        "Debug Data Available",
+        debug_data is not None,
+        "Debug data should be available",
+        {"debug_data": debug_data}
+    )
+    assert debug_data is not None, "Debug data should be available"
+    
+    # Check that current hand state is captured
+    current_hand_state = debug_data.get("current_hand_state", {})
+    
+    test_suite.log_test(
+        "Current Hand State Captured",
+        len(current_hand_state) > 0,
+        "Current hand state should be captured",
+        {"current_hand_state": current_hand_state}
+    )
+    assert len(current_hand_state) > 0, "Current hand state should be captured"
+    
+    # Check that action history is captured
+    current_hand_history = debug_data.get("current_hand_history", [])
+    
+    test_suite.log_test(
+        "Action History Captured",
+        len(current_hand_history) > 0,
+        "Action history should be captured",
+        {"action_history_count": len(current_hand_history)}
+    )
+    assert len(current_hand_history) > 0, "Action history should be captured"
+
 
 def main():
     """Run the test suite with pytest."""
