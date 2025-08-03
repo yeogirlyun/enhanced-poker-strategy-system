@@ -57,6 +57,7 @@ FONTS = {
     "small": ("Arial", 9),
     "player_name": ("Arial", 14, "bold"),  # Bigger font for player names
     "stack_bet": ("Arial", 16, "bold"),    # Much bigger font for stack and betting amounts
+    "cards": ("Arial", 12, "bold"),        # Font for card display
 }
 
 # --- COMPREHENSIVE PREFLOP EQUITY TABLE ---

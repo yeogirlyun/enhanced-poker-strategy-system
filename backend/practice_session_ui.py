@@ -133,6 +133,20 @@ class PracticeSessionUI(ttk.Frame):
         # Initialize layout management system
         self.layout_manager = self.LayoutManager()
         
+        # Force initial drawing after a short delay to ensure canvas has proper dimensions
+        self.after(100, self._force_initial_draw)
+    
+    def _force_initial_draw(self):
+        """Force initial drawing of the poker table and all elements."""
+        width = self.canvas.winfo_width()
+        height = self.canvas.winfo_height()
+        
+        if width > 1 and height > 1:
+            self._on_resize()
+        else:
+            # If canvas still doesn't have proper dimensions, try again
+            self.after(100, self._force_initial_draw)
+        
         # Initialize table felt colors
         self.table_felt_colors = {
             "classic_green": {
