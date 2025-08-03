@@ -860,13 +860,20 @@ class ImprovedPokerStateMachine:
     def handle_deal_turn(self):
         """Deal the turn."""
 
-        self._log_action("Dealing turn")
+        self._log_action("🎴 DEALING TURN")
         
         # Burn card
         if self.game_state.deck:
             self.game_state.deck.pop()
 
-        self.game_state.board.append(self.deal_card())
+        # Deal 1 community card (turn)
+        card = self.deal_card()
+        self.game_state.board.append(card)
+        self._log_action(f"🎴 Dealt turn card: {card}")
+
+        self._log_action(f"🎴 TURN COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_action(f"📊 Pot before turn betting: ${self.game_state.pot:.2f}")
+        
         # FIX: Update street before preparing new betting round
         self.game_state.street = "turn"
         self.prepare_new_betting_round()
@@ -875,13 +882,20 @@ class ImprovedPokerStateMachine:
     def handle_deal_river(self):
         """Deal the river."""
 
-        self._log_action("Dealing river")
+        self._log_action("🎴 DEALING RIVER")
         
         # Burn card
         if self.game_state.deck:
             self.game_state.deck.pop()
 
-        self.game_state.board.append(self.deal_card())
+        # Deal 1 community card (river)
+        card = self.deal_card()
+        self.game_state.board.append(card)
+        self._log_action(f"🎴 Dealt river card: {card}")
+
+        self._log_action(f"🎴 RIVER COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_action(f"📊 Pot before river betting: ${self.game_state.pot:.2f}")
+        
         # FIX: Update street before preparing new betting round
         self.game_state.street = "river"
         self.prepare_new_betting_round()
@@ -892,7 +906,16 @@ class ImprovedPokerStateMachine:
         Resets bets for the new round and finds the correct first player to act.
         Post-flop, action starts with the first active player left of the dealer.
         """
-        self._log_action(f"Preparing new betting round for {self.game_state.street}.")
+        # Add street transition announcement
+        street_names = {
+            'preflop': 'PREFLOP',
+            'flop': 'FLOP',
+            'turn': 'TURN', 
+            'river': 'RIVER'
+        }
+        street_name = street_names.get(self.game_state.street, self.game_state.street.upper())
+        self._log_action(f"🔄 TRANSITIONING TO {street_name} BETTING")
+        self._log_action(f"📊 Pot: ${self.game_state.pot:.2f}")
         
         # Reset game state for new round
         self.game_state.current_bet = 0.0
@@ -926,7 +949,7 @@ class ImprovedPokerStateMachine:
             player_at_index = self.game_state.players[current_index]
             if player_at_index.is_active and not player_at_index.is_all_in:
                 self.action_player_index = current_index
-                self._log_action(f"New round. Action starts with {player_at_index.name} in seat {current_index}.")
+                self._log_action(f"🎯 Action starts with {player_at_index.name} in seat {current_index}.")
                 return
 
         # If no player can act, something is wrong. Log it.
