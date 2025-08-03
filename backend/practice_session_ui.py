@@ -138,13 +138,16 @@ class PracticeSessionUI(ttk.Frame):
         action_text_frame.pack(fill=tk.BOTH, expand=True)
         
         # Action text widget
+        # Use larger font for action messages (20% larger than main font)
+        action_font_size = FONTS["main"][1] + 2  # Increase font size by 2 points
+        action_font = (THEME["font_family"], action_font_size)
         self.info_text = tk.Text(
             action_text_frame, 
             state=tk.DISABLED, 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"], 
             relief="flat", 
-            font=FONTS["main"],  # Use main font instead of small
+            font=action_font,  # Use larger font for action messages
             height=6,
             wrap=tk.WORD  # Enable word wrapping
         )
@@ -297,8 +300,8 @@ class PracticeSessionUI(ttk.Frame):
         def calculate_pot_position(self, width, height):
             """Calculate pot display position."""
             center_x, center_y = width / 2, height / 2
-            # Position pot below community cards
-            return (center_x, center_y + 80)
+            # Position pot further below community cards to avoid overlay
+            return (center_x, center_y + 120)  # Increased from 80 to 120
         
         def calculate_bet_positions(self, width, height, num_players):
             """Calculate bet label positions."""
@@ -419,13 +422,18 @@ class PracticeSessionUI(ttk.Frame):
         )
         position_label.pack()
         
-        # Cards area
+        # Cards area - make at least as big as community cards
+        # Use responsive font sizing similar to community cards but slightly larger
+        canvas_height = self.canvas.winfo_height()
+        card_font_size = max(18, int(canvas_height / 20))  # Larger than community cards
+        card_font = (THEME["font_family"], card_font_size, "bold")
         cards_label = tk.Label(
             seat_frame, 
             text="🂠 🂠", 
             bg=THEME["secondary_bg"], 
-            fg="#CCCCCC", 
-            font=FONTS["cards"]
+            fg="#CCCCCC",  # Default gray for unknown cards
+            font=card_font,
+            width=8  # Increased width to accommodate larger cards
         )
         cards_label.pack(pady=5)
         
@@ -999,7 +1007,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Create larger buttons (150% size increase)
         button_style = ttk.Style()
-        button_style.configure('Large.TButton', padding=(15, 8))  # Increased padding for 150% size
+        button_style.configure('Large.TButton', padding=(18, 10))  # Increased from (15, 8) to (18, 10) - 20% larger
         
         self.start_button = ttk.Button(
             control_frame, 
@@ -1024,7 +1032,7 @@ class PracticeSessionUI(ttk.Frame):
         self.last_action_label = tk.Label(
             self.action_bar_frame, 
             text="", 
-            font=("Helvetica", 12, "italic"),
+            font=("Helvetica", 14, "italic"),  # Increased from 12 to 14 - 20% larger
             fg=THEME["text"],
             bg=THEME["secondary_bg"]
         )
@@ -1034,8 +1042,8 @@ class PracticeSessionUI(ttk.Frame):
         action_frame = ttk.Frame(self.action_bar_frame)
         action_frame.pack(side=tk.LEFT, padx=10)
         
-        # Configure large button style for action buttons
-        button_style.configure('LargeAction.TButton', padding=(12, 6))
+        # Configure large button style for action buttons (20% larger)
+        button_style.configure('LargeAction.TButton', padding=(14, 7))  # Increased from (12, 6) to (14, 7)
         
         self.human_action_controls['fold'] = ttk.Button(
             action_frame, 
@@ -1076,13 +1084,13 @@ class PracticeSessionUI(ttk.Frame):
             to=100, 
             orient=tk.HORIZONTAL, 
             variable=self.bet_size_var, 
-            length=300  # Increased from 200 to 300 (150% size)
+            length=360  # Increased from 300 to 360 (20% larger)
         )
         self.bet_slider.pack(fill=tk.X)
         self.bet_slider.bind("<B1-Motion>", self._update_bet_size_label)
         
-        # Use larger font for bet size label
-        large_font = (THEME["font_family"], FONTS["main"][1] + 2)  # Increase font size by 2
+        # Use larger font for bet size label (20% larger)
+        large_font = (THEME["font_family"], FONTS["main"][1] + 4)  # Increased from +2 to +4
         self.bet_size_label = ttk.Label(
             self.sizing_frame, 
             text="$0.00", 
@@ -1288,7 +1296,9 @@ class PracticeSessionUI(ttk.Frame):
         # Always display the community cards that are available on the board.
         for i, card_label in enumerate(self.community_card_labels):
             if i < len(game_info['board']):
-                card_label.config(text=self._format_card(game_info['board'][i]))
+                card_text = self._format_card(game_info['board'][i])
+                card_color = self._get_card_color(game_info['board'][i])
+                card_label.config(text=card_text, fg=card_color)
             else:
                 card_label.config(text="")
         # --- End of Bug Fix ---
@@ -1337,16 +1347,17 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
-            # Update player card display
+            # Update player card display with proper colors
             if player_info['is_active']:
                 # Show cards only if the player is human or if it's showdown
                 if player_info['is_human'] or self.state_machine.get_current_state() == PokerState.SHOWDOWN:
                     cards_text = " ".join(self._format_card(c) for c in player_info['cards'])
-                    cards_label.config(text=cards_text)
+                    # Use black color for player cards (they're always visible when shown)
+                    cards_label.config(text=cards_text, fg="#000000")
                 else: # Bot's cards are hidden during play
-                    cards_label.config(text="🂠 🂠")
+                    cards_label.config(text="🂠 🂠", fg="#CCCCCC")
             else: # Player has folded
-                cards_label.config(text="Folded")
+                cards_label.config(text="Folded", fg="red")
         
         # Update last action details
         if hasattr(self, 'last_action_label'):
@@ -1464,7 +1475,7 @@ class PracticeSessionUI(ttk.Frame):
                 cards_label.config(text=f"${amount:.2f}", fg="blue")
     
     def _format_card(self, card_str: str) -> str:
-        """Formats a card string for display."""
+        """Formats a card string for display with proper colors."""
         if not card_str or card_str == "**":
             return "🂠"
         
@@ -1474,7 +1485,19 @@ class PracticeSessionUI(ttk.Frame):
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
         suit_symbol = suit_symbols.get(suit, suit)
         
+        # Return formatted card with color indicators
         return f"{rank}{suit_symbol}"
+    
+    def _get_card_color(self, card_str: str) -> str:
+        """Get the appropriate color for a card (red for hearts/diamonds, black for spades/clubs)."""
+        if not card_str or card_str == "**":
+            return "#CCCCCC"  # Gray for unknown cards
+        
+        suit = card_str[1]
+        if suit in ['h', 'd']:  # Hearts and Diamonds
+            return "#FF0000"  # Red
+        else:  # Spades and Clubs
+            return "#000000"  # Black
 
     def update_font_size(self, font_size: int):
         """Updates the font size for all components in the practice session."""
