@@ -588,7 +588,7 @@ class PracticeSessionUI(ttk.Frame):
             text="Community Cards",
             bg=THEME["secondary_bg"],
             fg="white",
-            font=FONTS["community_title"]
+            font=FONTS["player_name"]  # Use existing font instead of non-existent community_title
         )
         community_title.pack(pady=2)
         
