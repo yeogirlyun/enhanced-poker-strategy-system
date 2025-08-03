@@ -838,7 +838,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_flop(self):
         """Deal the flop."""
-        print("🎴 HANDLE_DEAL_FLOP called!")  # Debug
+
         self._log_action("🎴 DEALING FLOP")
         
         # Burn card
@@ -861,7 +861,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_turn(self):
         """Deal the turn."""
-        print("🎴 HANDLE_DEAL_TURN called!")  # Debug
+
         self._log_action("Dealing turn")
         
         # Burn card
@@ -876,7 +876,7 @@ class ImprovedPokerStateMachine:
 
     def handle_deal_river(self):
         """Deal the river."""
-        print("🎴 HANDLE_DEAL_RIVER called!")  # Debug
+
         self._log_action("Dealing river")
         
         # Burn card
@@ -1891,10 +1891,6 @@ class ImprovedPokerStateMachine:
             self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
             return  # End the action here since the hand is over
 
-        # Track pot changes for debugging
-        if self.game_state.pot != old_pot:
-            print(f"💰 Pot changed: ${old_pot} → ${self.game_state.pot} (action: {action.value}, amount: ${amount})")  # Debug
-        
         # If the hand is not over, check if the round is complete
         if self.is_round_complete():
             self._log_action("🔄 Round is complete, handling round completion")
@@ -2158,7 +2154,7 @@ class ImprovedPokerStateMachine:
         else:
             self._log_action("No winner determined (should not happen in a normal game).")
             winner_info = None
-            print(f"❌ DEBUG: No winner found!")  # Debug
+    
 
         # Reset game state for next hand
         if self.game_state:
@@ -2181,10 +2177,7 @@ class ImprovedPokerStateMachine:
         self._capture_hand_result(winner_info, side_pots)
         
         if self.on_hand_complete:
-            print(f"🎯 STATE MACHINE: Calling on_hand_complete with: {winner_info}")  # Debug
             self.on_hand_complete(winner_info)
-        else:
-            print("❌ STATE MACHINE: on_hand_complete callback is None!")  # Debug
 
     def _capture_hand_result(self, winner_info: Optional[Dict], side_pots: List[Dict]):
         """Capture complete hand result for session tracking."""
