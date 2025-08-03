@@ -115,6 +115,10 @@ class PlayerPod(tk.Frame):
         self.card1.pack(side="left", padx=3)
         self.card2 = CardWidget(self.cards_frame, width=50, height=70)
         self.card2.pack(side="left", padx=3)
+        
+        # Ensure cards show card backs initially
+        self.card1.set_card("")  # This will trigger card back drawing
+        self.card2.set_card("")  # This will trigger card back drawing
 
         # --- NEW: Professional Stack Display ---
         # This frame sits below the main info_frame
@@ -147,7 +151,12 @@ class PlayerPod(tk.Frame):
         for i in range(num_chips):
             # Draw chips from the bottom up to create a 3D effect
             y_offset = 25 - i * 3
-            self.chip_canvas.create_oval(5, y_offset, 25, y_offset - 5, fill=colors[i % 3], outline="black")
+            # Make chips larger and more visible
+            self.chip_canvas.create_oval(3, y_offset, 27, y_offset - 6, 
+                                       fill=colors[i % 3], outline="black", width=1)
+            # Add a highlight to make chips look more 3D
+            self.chip_canvas.create_oval(5, y_offset-2, 25, y_offset - 4, 
+                                       fill="", outline="white", width=1)
 
 class PracticeSessionUI(ttk.Frame):
     """
@@ -556,55 +565,7 @@ class PracticeSessionUI(ttk.Frame):
         }
         player_pod.update_pod(player_data)
     
-    def _create_stack_graphics(self, player_index, seat_x, seat_y):
-        """Create a separate stack graphics area positioned in front of the player."""
-        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
-        
-        # Use layout manager for stack positioning
-        stack_positions = self.layout_manager.calculate_stack_positions(width, height, self.num_players)
-        stack_x, stack_y = stack_positions[player_index]
-        
-        # Create stack graphics frame
-        stack_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=1, relief="solid")
-        
-        # Stack amount label
-        stack_amount_label = tk.Label(
-            stack_frame,
-            text="$100.00",
-            bg=THEME["secondary_bg"],
-            fg="yellow",
-            font=FONTS["stack_bet"]
-        )
-        stack_amount_label.pack(pady=2)
-        
-        # Stack chips visualization (using Unicode chip symbols)
-        initial_chips = "🟡🟡🟡🟡🟡"  # More visible initial chips
-        chips_label = tk.Label(
-            stack_frame,
-            text=initial_chips,
-            bg=THEME["secondary_bg"],
-            fg="yellow",
-            font=FONTS["small"]
-        )
-        chips_label.pack()
-        
-        # Store stack graphics references
-        if "stack_graphics" not in self.player_seats[player_index]:
-            self.player_seats[player_index]["stack_graphics"] = {}
-        
-        self.player_seats[player_index]["stack_graphics"] = {
-            "frame": stack_frame,
-            "amount_label": stack_amount_label,
-            "chips_label": chips_label
-        }
-        
-        # Create window for stack graphics
-        stack_window = self.canvas.create_window(
-            stack_x, stack_y, 
-            window=stack_frame, 
-            anchor="center"
-        )
-        self.player_seats[player_index]["stack_graphics"]["window"] = stack_window
+    # Removed _create_stack_graphics method - PlayerPod now handles stack display internally
 
     def _draw_community_card_area(self):
         """Draws the community card area in the center of the table."""
