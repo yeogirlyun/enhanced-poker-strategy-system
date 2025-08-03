@@ -138,6 +138,18 @@ class EnhancedMainGUI:
         menubar.add_cascade(label="Tools", menu=tools_menu)
         tools_menu.add_command(label="Refresh All Panels", command=self._refresh_all_panels)
         tools_menu.add_command(label="Export Strategy to PDF", command=self._export_strategy_to_pdf)
+        
+        # Table Felt menu
+        felt_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Table Felt", menu=felt_menu)
+        felt_menu.add_command(label="Classic Green", command=lambda: self._change_table_felt("classic_green"))
+        felt_menu.add_command(label="Royal Blue", command=lambda: self._change_table_felt("royal_blue"))
+        felt_menu.add_command(label="Burgundy Red", command=lambda: self._change_table_felt("burgundy_red"))
+        felt_menu.add_command(label="Deep Purple", command=lambda: self._change_table_felt("deep_purple"))
+        felt_menu.add_command(label="Golden Brown", command=lambda: self._change_table_felt("golden_brown"))
+        felt_menu.add_command(label="Ocean Blue", command=lambda: self._change_table_felt("ocean_blue"))
+        felt_menu.add_command(label="Forest Green", command=lambda: self._change_table_felt("forest_green"))
+        felt_menu.add_command(label="Midnight Black", command=lambda: self._change_table_felt("midnight_black"))
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -1127,6 +1139,14 @@ Ready to track performance...
         if hasattr(self, 'practice_ui'):
             self.practice_ui.decrease_table_size()
             self.set_status("🔍 Table size decreased")
+        else:
+            self.set_status("Error: Practice session not initialized", duration=3000)
+
+    def _change_table_felt(self, felt_color):
+        """Change the table felt color."""
+        if hasattr(self, 'practice_ui'):
+            self.practice_ui.change_table_felt(felt_color)
+            self.set_status(f"🎨 Table felt changed to {felt_color.replace('_', ' ').title()}")
         else:
             self.set_status("Error: Practice session not initialized", duration=3000)
 

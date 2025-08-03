@@ -129,6 +129,61 @@ class PracticeSessionUI(ttk.Frame):
         self._create_human_action_controls(controls_frame)
 
         self.canvas.bind("<Configure>", self._on_resize)
+        
+        # Initialize table felt colors
+        self.table_felt_colors = {
+            "classic_green": {
+                "outer": "#013f28",
+                "inner": "#015939", 
+                "pattern": "#014a2f",
+                "community_bg": "#015939"
+            },
+            "royal_blue": {
+                "outer": "#1a365d",
+                "inner": "#2d5aa0",
+                "pattern": "#1e4a8a",
+                "community_bg": "#2d5aa0"
+            },
+            "burgundy_red": {
+                "outer": "#4a1a1a",
+                "inner": "#8b2d2d",
+                "pattern": "#6b1e1e",
+                "community_bg": "#8b2d2d"
+            },
+            "deep_purple": {
+                "outer": "#2d1a4a",
+                "inner": "#5a2d8b",
+                "pattern": "#4a1e6b",
+                "community_bg": "#5a2d8b"
+            },
+            "golden_brown": {
+                "outer": "#4a3a1a",
+                "inner": "#8b6b2d",
+                "pattern": "#6b4a1e",
+                "community_bg": "#8b6b2d"
+            },
+            "ocean_blue": {
+                "outer": "#1a4a4a",
+                "inner": "#2d8b8b",
+                "pattern": "#1e6b6b",
+                "community_bg": "#2d8b8b"
+            },
+            "forest_green": {
+                "outer": "#1a4a1a",
+                "inner": "#2d8b2d",
+                "pattern": "#1e6b1e",
+                "community_bg": "#2d8b2d"
+            },
+            "midnight_black": {
+                "outer": "#1a1a1a",
+                "inner": "#2d2d2d",
+                "pattern": "#1e1e1e",
+                "community_bg": "#2d2d2d"
+            }
+        }
+        
+        # Set default felt color
+        self.current_felt_color = "classic_green"
     
     # --- All _draw methods remain the same ---
     def _on_resize(self, event=None):
@@ -142,15 +197,19 @@ class PracticeSessionUI(ttk.Frame):
     def _draw_table(self):
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
-        self.canvas.create_oval(width*0.05, height*0.1, width*0.95, height*0.9, fill="#013f28", outline=THEME["border"], width=10)
-        self.canvas.create_oval(width*0.06, height*0.11, width*0.94, height*0.89, fill="#015939", outline="#222222", width=2)
+        
+        # Get current felt colors
+        felt_colors = self.table_felt_colors[self.current_felt_color]
+        
+        self.canvas.create_oval(width*0.05, height*0.1, width*0.95, height*0.9, fill=felt_colors["outer"], outline=THEME["border"], width=10)
+        self.canvas.create_oval(width*0.06, height*0.11, width*0.94, height*0.89, fill=felt_colors["inner"], outline="#222222", width=2)
         x_start, x_end = int(width * 0.1), int(width * 0.9)
         y_start, y_end = int(height * 0.15), int(height * 0.85)
         for i in range(x_start, x_end, 20):
             for j in range(y_start, y_end, 20):
                 if (((i - width/2)**2 / (width*0.4)**2) + ((j - height/2)**2 / (height*0.35)**2)) < 1:
                     if (i + j) % 40 == 0:
-                        self.canvas.create_oval(i, j, i + 15, j + 15, fill="#014a2f", outline="")
+                        self.canvas.create_oval(i, j, i + 15, j + 15, fill=felt_colors["pattern"], outline="")
 
     def _draw_player_seats(self):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
@@ -166,7 +225,8 @@ class PracticeSessionUI(ttk.Frame):
             bet_radius_x, bet_radius_y = radius_x * 0.7, radius_y * 0.7
             bet_x = center_x + bet_radius_x * math.cos(angle)
             bet_y = center_y + bet_radius_y * math.sin(angle)
-            bet_label = tk.Label(self.canvas, text="", bg="#015939", fg="yellow", font=FONTS["stack_bet"])
+            felt_colors = self.table_felt_colors[self.current_felt_color]
+            bet_label = tk.Label(self.canvas, text="", bg=felt_colors["community_bg"], fg="yellow", font=FONTS["stack_bet"])
             bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_label, anchor="center", state="hidden")
             self.player_seats[i]["bet_label_widget"] = bet_label
             self.player_seats[i]["bet_label_window"] = bet_window
@@ -238,7 +298,8 @@ class PracticeSessionUI(ttk.Frame):
 
     def _draw_community_card_area(self):
         center_x, center_y = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
-        community_frame = tk.Frame(self.canvas, bg="#015939", bd=2, relief="groove")
+        felt_colors = self.table_felt_colors[self.current_felt_color]
+        community_frame = tk.Frame(self.canvas, bg=felt_colors["community_bg"], bd=2, relief="groove")
         self.community_card_labels = []
         for i in range(5):
             # Use responsive font sizing for community cards
@@ -600,6 +661,7 @@ class PracticeSessionUI(ttk.Frame):
         display_text += f"• Message Area: {table_size_info['message_percentage']:.1f}%\n"
         display_text += f"• Table Weight: {table_size_info['table_weight']}\n"
         display_text += f"• Message Weight: {table_size_info['message_weight']}\n"
+        display_text += f"• Felt Color: {self.current_felt_color.replace('_', ' ').title()}\n"
         
         self.session_text.insert(1.0, display_text)
         self.session_text.config(state=tk.DISABLED)
@@ -1153,3 +1215,14 @@ class PracticeSessionUI(ttk.Frame):
             'table_percentage': table_percentage,
             'message_percentage': message_percentage
         }
+    
+    def change_table_felt(self, felt_color):
+        """Change the table felt color and redraw immediately."""
+        if felt_color in self.table_felt_colors:
+            self.current_felt_color = felt_color
+            # Force a complete redraw to apply the new felt color
+            self._on_resize()
+            # Update session info to reflect the change
+            self.update_session_info()
+        else:
+            print(f"Warning: Unknown felt color '{felt_color}'")
