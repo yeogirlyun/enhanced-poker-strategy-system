@@ -39,39 +39,20 @@ class CardWidget(tk.Canvas):
         self._draw_card_back()
 
     def set_card(self, card_str, is_folded=False):
-        # Store the current card string for highlighting
+        # Store the current card string
         self.current_card_str = card_str
-        
-        # Store current highlighting state before clearing
-        current_highlight = self.cget("highlightbackground")
-        current_thickness = self.cget("highlightthickness")
-        current_bg = self.cget("bg")
-        is_highlighted = current_highlight == "#FFFFE0" or current_bg == "#FFFFE0"
         
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
-    
             self._draw_card_back(is_folded=is_folded)
-            # Restore highlighting if it was set
-            if is_highlighted:
-                self.config(highlightbackground="#FFFFE0", highlightthickness=current_thickness)
-                self.config(bg="#FFFFE0")
-            # Force update to ensure the drawing is applied
             self.update()
             return
 
-        # Set background based on highlighting state
-        if is_highlighted:
-            self.config(bg="#FFFFE0")  # Keep light yellow background if it was highlighted
-        else:
-            self.config(bg="white")
-            
+        # Set normal white background
+        self.config(bg="white")
+        
         # Draw the card content
         self._draw_card_content(card_str)
-        
-        # Restore highlighting if it was set
-        if is_highlighted:
-            self.config(highlightbackground="#FFFFE0", highlightthickness=current_thickness)
         
         # Force update to ensure the drawing is applied
         self.update()
@@ -95,18 +76,10 @@ class CardWidget(tk.Canvas):
         # Clear any existing content
         self.delete("all")
         
-        # Check if this card should maintain light yellow highlighting
-        current_highlight = self.cget("highlightbackground")
-        current_bg = self.cget("bg")
-        should_keep_yellow = current_highlight == "#FFFFE0" or current_bg == "#FFFFE0"
-        
         if is_folded:
             # Draw folded card back - dark gray with no border
             dark_gray = "#404040"  # Dark gray for folded cards
-            if should_keep_yellow:
-                self.config(bg="#FFFFE0")  # Keep light yellow background if highlighted
-            else:
-                self.config(bg=dark_gray)
+            self.config(bg=dark_gray)
             
             # Draw a simple dark gray card with no border
             self.create_rectangle(0, 0, self.width, self.height, 
@@ -118,10 +91,7 @@ class CardWidget(tk.Canvas):
             border_color = "#8b0000"
             
             # Set the background color
-            if should_keep_yellow:
-                self.config(bg="#FFFFE0")  # Keep light yellow background if highlighted
-            else:
-                self.config(bg=dark_red)
+            self.config(bg=dark_red)
             
             # Draw the border first
             self.create_rectangle(2, 2, self.width-2, self.height-2, 
@@ -146,39 +116,7 @@ class CardWidget(tk.Canvas):
         """Shows the card as folded (empty)."""
         self.set_card("", is_folded=True)
     
-    def highlight_winning_card(self):
-        """Highlight this card as part of the winning hand."""
-        # Store the original card content before highlighting
-        self.original_card_content = self.find_all()
-        
-        # Clear the canvas and draw the highlight background first
-        self.delete("all")
-        
-        # Draw light yellow background
-        self.config(bg="#FFFFE0")
-        self.create_rectangle(0, 0, self.width, self.height, 
-                            fill="#FFFFE0", outline="#FFD700", width=2)
-        
-        # Redraw the card content on top of the background
-        if hasattr(self, 'current_card_str') and self.current_card_str:
-            self._draw_card_content(self.current_card_str)
-        
-        # Add a light yellow border for extra emphasis
-        self.config(highlightbackground="#FFFFE0", highlightthickness=3)
-    
-    def clear_highlight(self):
-        """Clear the winning card highlight."""
-        # Clear the canvas and restore original background
-        self.delete("all")
-        self.config(bg="white")
-        self.config(highlightbackground="black", highlightthickness=1)
-        
-        # Redraw the card content without highlighting
-        if hasattr(self, 'current_card_str') and self.current_card_str:
-            self._draw_card_content(self.current_card_str)
-        else:
-            # If no card content, draw card back
-            self._draw_card_back()
+
 
 class PlayerPod(tk.Frame):
     """A custom widget for a player's area, including a graphical stack display."""
@@ -836,8 +774,7 @@ class PracticeSessionUI(ttk.Frame):
                 if folded_label:
                     folded_label.pack_forget()
         
-        # Clear winning card highlights when starting new hand
-        self._clear_winning_card_highlights()
+        # Clear any winning cards data when starting new hand
         if hasattr(self, 'winning_cards'):
             self.winning_cards = []
         
@@ -897,11 +834,7 @@ class PracticeSessionUI(ttk.Frame):
                     description = winning_hand if winning_hand != "Unknown" else ""
                     winning_cards = []
                 
-                # HIGHLIGHT WINNING CARDS FIRST
-                self.hand_completed = True
-                self._highlight_winning_cards()
-                
-                # THEN: Create announcement after cards are highlighted
+                # Create winner announcement message
                 if description:
                     announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}! ({description})"
                     if winning_cards:
@@ -1677,62 +1610,7 @@ class PracticeSessionUI(ttk.Frame):
         # Update session information display
         self.update_session_info()
     
-    def _highlight_winning_cards(self):
-        """Highlight the 5 cards that form the winning hand with light yellow background."""
-        if not hasattr(self, 'winning_cards') or not self.winning_cards:
-            return
-        
-        # Don't clear highlights if hand is completed and we have winning cards
-        # This prevents the highlighting from being cleared by subsequent UI updates
-        if not self.hand_completed:
-            self._clear_winning_card_highlights()
-        
-        # Highlight community cards that are part of winning hand
-        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
-            for i, card_widget in enumerate(self.community_card_widgets):
-                if i < len(self.preserved_community_cards):
-                    card = self.preserved_community_cards[i]
-                    if card in self.winning_cards:
-                        # Highlight with light yellow background
-                        card_widget.highlight_winning_card()
-        
-        # Highlight player cards that are part of winning hand
-        # Check ALL players, not just active ones, since winner might be determined differently
-        for i, player_seat in enumerate(self.player_seats):
-            if not player_seat:
-                continue
-            
-            player_info = self.state_machine.get_game_info()['players'][i]
-            # Check if player has cards (not folded) and if any of their cards are in winning hand
-            if not player_info['cards'] or len(player_info['cards']) == 0:
-                continue
-            
-            card_widgets = player_seat.get("card_widgets", [])
-            if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
-                for j, card in enumerate(player_info['cards']):
-                    if card in self.winning_cards:
-                        # Highlight with light yellow background
-                        card_widgets[j].highlight_winning_card()
-    
-    def _clear_winning_card_highlights(self):
-        """Clear all winning card highlights."""
-        # Don't clear highlights if hand is completed and we have winning cards
-        if self.hand_completed and hasattr(self, 'winning_cards') and self.winning_cards:
-            return
-        
-        # Clear community card highlights
-        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
-            for card_widget in self.community_card_widgets:
-                card_widget.clear_highlight()
-        
-        # Clear player card highlights
-        for player_seat in self.player_seats:
-            if not player_seat:
-                continue
-            
-            card_widgets = player_seat.get("card_widgets", [])
-            for card_widget in card_widgets:
-                card_widget.clear_highlight()
+
     
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
