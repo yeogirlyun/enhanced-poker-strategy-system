@@ -760,6 +760,11 @@ class PracticeSessionUI(ttk.Frame):
                 if folded_label:
                     folded_label.pack_forget()
         
+        # Clear winning card highlights when starting new hand
+        self._clear_winning_card_highlights()
+        if hasattr(self, 'winning_cards'):
+            self.winning_cards = []
+        
         self.state_machine.start_hand()
 
     def handle_hand_complete(self, winner_info=None):
@@ -851,6 +856,15 @@ class PracticeSessionUI(ttk.Frame):
             
             self.last_action_label.config(text=announcement)
 
+        
+        # Store winning cards for highlighting
+        if winner_player and winner_player.cards:
+            hand_info = self.state_machine.get_hand_description_and_cards(
+                winner_player.cards, final_board
+            )
+            self.winning_cards = hand_info['winning_cards']
+        else:
+            self.winning_cards = []
         
         # Mark hand as completed to preserve the announcement
         self.hand_completed = True
@@ -1518,11 +1532,14 @@ class PracticeSessionUI(ttk.Frame):
             
             # FIXED: Highlight based on action_player index, not is_active status
             # Players should be highlighted when it's their turn, even if they fold
+            # BUT: Don't highlight anyone after showdown (hand is complete)
             frame = player_seat["frame"]
             action_player = game_info.get('action_player', -1)
     
-            if i == action_player:
+            if i == action_player and not self.hand_completed:
                 frame.config(bg=THEME["accent_primary"])
+            else:
+                frame.config(bg=THEME["secondary_bg"])
         
             # Update the prominent bet display on the table
             bet_label_widget = player_seat.get("bet_label_widget")
@@ -1575,8 +1592,65 @@ class PracticeSessionUI(ttk.Frame):
                 last_action = game_info.get('last_action_details', '')
                 self.last_action_label.config(text=last_action)
         
+        # Highlight winning cards if hand is completed
+        if self.hand_completed and hasattr(self, 'winning_cards'):
+            self._highlight_winning_cards()
+        
         # Update session information display
         self.update_session_info()
+    
+    def _highlight_winning_cards(self):
+        """Highlight the 5 cards that form the winning hand with light yellow background."""
+        if not hasattr(self, 'winning_cards') or not self.winning_cards:
+            return
+        
+        # Clear previous highlighting
+        self._clear_winning_card_highlights()
+        
+        # Highlight community cards that are part of winning hand
+        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+            for i, card_widget in enumerate(self.community_card_widgets):
+                if i < len(self.preserved_community_cards):
+                    card = self.preserved_community_cards[i]
+                    if card in self.winning_cards:
+                        # Highlight with light yellow background
+                        card_widget.config(bg="#FFFFE0")  # Light yellow
+                        card_widget.update()
+        
+        # Highlight player cards that are part of winning hand
+        for i, player_seat in enumerate(self.player_seats):
+            if not player_seat:
+                continue
+            
+            player_info = self.state_machine.get_game_info()['players'][i]
+            if not player_info['is_active'] or not player_info['cards']:
+                continue
+            
+            card_widgets = player_seat.get("card_widgets", [])
+            if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
+                for j, card in enumerate(player_info['cards']):
+                    if card in self.winning_cards:
+                        # Highlight with light yellow background
+                        card_widgets[j].config(bg="#FFFFE0")  # Light yellow
+                        card_widgets[j].update()
+    
+    def _clear_winning_card_highlights(self):
+        """Clear all winning card highlights."""
+        # Clear community card highlights
+        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+            for card_widget in self.community_card_widgets:
+                card_widget.config(bg="white")
+                card_widget.update()
+        
+        # Clear player card highlights
+        for player_seat in self.player_seats:
+            if not player_seat:
+                continue
+            
+            card_widgets = player_seat.get("card_widgets", [])
+            for card_widget in card_widgets:
+                card_widget.config(bg="white")
+                card_widget.update()
     
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
