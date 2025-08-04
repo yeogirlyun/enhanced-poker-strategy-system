@@ -851,13 +851,17 @@ class PracticeSessionUI(ttk.Frame):
                 # Add the winner announcement to the main game message area immediately
                 self.add_game_message(announcement)
                 
-                # Start pot animation to winner
-                self._animate_pot_to_winner(winner_info)
+                # Also display winner announcement in action button area
+                if hasattr(self, 'last_action_label'):
+                    self.last_action_label.config(text=announcement)
+                
+                # Start pot animation to winner with correct pot amount
+                self._animate_pot_to_winner(winner_info, pot_amount)
         
         # Show game controls immediately (no delay)
         self._show_game_control_buttons()
 
-    def _animate_pot_to_winner(self, winner_info):
+    def _animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
 
         
@@ -904,9 +908,9 @@ class PracticeSessionUI(ttk.Frame):
 
             
             # Create enhanced animated money object with chip visualization
-            chip_count = self._calculate_chip_count(winner_info['amount'])
-            chip_symbols = self._get_chip_symbols(winner_info['amount'])
-            money_text = f"${winner_info['amount']:.2f}\n{chip_symbols}"
+            chip_count = self._calculate_chip_count(pot_amount)
+            chip_symbols = self._get_chip_symbols(pot_amount)
+            money_text = f"${pot_amount:.2f}\n{chip_symbols}"
             
             money_obj = self.canvas.create_text(
                 pot_x, pot_y, 
