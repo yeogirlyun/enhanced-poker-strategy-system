@@ -977,22 +977,25 @@ class PracticeSessionUI(ttk.Frame):
             
 
             
-            # Enhanced animation with multiple effects - AT LEAST 2 SECONDS
-            def animate_money(step=0):
-                if step <= 100:  # 100 steps for 2+ second animation
-                    progress = step / 100
-                    # Enhanced easing function
+            # Create a step-by-step chip animation that moves from pot to winner
+            def animate_chip_movement(step=0):
+                total_steps = 60  # 60 steps for smooth animation
+                if step <= total_steps:
+                    progress = step / total_steps
+                    
+                    # Use easing function for smooth movement
                     ease = 1 - (1 - progress) ** 2
                     
+                    # Calculate current position
                     current_x = pot_x + (winner_x - pot_x) * ease
                     current_y = pot_y + (winner_y - pot_y) * ease
                     
-                    # Update both objects
+                    # Update chip position
                     self.canvas.coords(money_obj, current_x, current_y)
                     self.canvas.coords(glow_obj, current_x, current_y)
                     
-                    # Scale effect - money gets bigger as it moves
-                    scale = 1.0 + (progress * 0.5)
+                    # Scale effect - chip gets bigger as it moves
+                    scale = 1.0 + (progress * 0.3)
                     font_size = int(16 * scale)
                     glow_font_size = int(18 * scale)
                     
@@ -1006,40 +1009,10 @@ class PracticeSessionUI(ttk.Frame):
                         color = f"#00{green_intensity:02x}00"  # Green with increasing intensity
                         self.canvas.itemconfig(money_obj, fill=color)
                     
-                    # Fade out glow as it approaches
-                    if progress > 0.7:
-                        alpha = int(255 * (1 - (progress - 0.7) / 0.3))
-                        glow_color = f"#{alpha:02x}ff{alpha:02x}"
-                        self.canvas.itemconfig(glow_obj, fill=glow_color)
-                    
-                    self.canvas.after(100, lambda: animate_money(step + 1))  # 100ms intervals for 2+ second animation
-                    
-                    # Update the winner's stack graphics with the new amount
-                    if winner_seat < len(self.player_seats):
-                        player_seat = self.player_seats[winner_seat]
-                        if player_seat and "stack_graphics" in player_seat:
-                            stack_graphics = player_seat["stack_graphics"]
-                            amount_label = stack_graphics.get("amount_label")
-                            chips_label = stack_graphics.get("chips_label")
-                            
-                            if amount_label and chips_label:
-                                # Get current amount and add the pot amount
-                                current_text = amount_label.cget("text")
-                                try:
-                                    current_amount = float(current_text.replace("$", ""))
-                                    new_amount = current_amount + pot_amount
-                                    
-                                    # Update stack graphics
-                                    amount_label.config(text=f"${new_amount:.2f}")
-                                    chip_symbols = self._get_chip_symbols(new_amount)
-                                    chips_label.config(text=chip_symbols)
-                                except ValueError:
-                                    pass  # Handle invalid number format
-                                    
-                    # Update the display
-                    self.update_display()
+                    # Schedule next step - 150ms intervals for smooth movement
+                    self.canvas.after(150, lambda: animate_chip_movement(step + 1))
                 else:
-                    # Animation complete - clear pot and update winner's stack
+                    # Animation complete - NOW update the winner's stack
                     self.canvas.delete("money_animation")
                     self.canvas.delete("money_animation_glow")
                     
@@ -1071,8 +1044,8 @@ class PracticeSessionUI(ttk.Frame):
                             except ValueError:
                                 pass  # Handle invalid number format
             
-            # Start the animation
-            animate_money()
+            # Start the chip animation
+            animate_chip_movement()
     def add_game_message(self, message):
         """Add a message to the action messages area with enhanced formatting."""
         if hasattr(self, 'info_text'):
