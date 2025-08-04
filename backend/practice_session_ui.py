@@ -978,6 +978,7 @@ class PracticeSessionUI(ttk.Frame):
         """
         total_steps = 30  # Faster animation: 30 steps instead of 50
         if step > total_steps:
+            print(f"Animation complete at step {step}, calling _distribute_pot_to_winner")
             self.canvas.delete(chip_window)  # Animation is done, destroy the chip.
             
             # IMPORTANT: Now that the animation is finished,
@@ -998,6 +999,10 @@ class PracticeSessionUI(ttk.Frame):
         Final method called after animation completes to update the winner's stack.
         """
         print("Animation complete - clearing pot and updating winner stack")
+        
+        # Clear the preserved pot amount to prevent override
+        self.preserved_pot_amount = 0.0
+        print(f"Cleared preserved_pot_amount to: {self.preserved_pot_amount}")
         
         # Clear the pot display
         self.pot_label.config(text="Pot: $0.00", fg="white")
