@@ -39,10 +39,17 @@ class CardWidget(tk.Canvas):
         self._draw_card_back()
 
     def set_card(self, card_str, is_folded=False):
+        # Store current highlighting state before clearing
+        current_highlight = self.cget("highlightbackground")
+        current_thickness = self.cget("highlightthickness")
+        
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
     
             self._draw_card_back(is_folded=is_folded)
+            # Restore highlighting if it was set
+            if current_highlight == "#FFFF00":
+                self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
             # Force update to ensure the drawing is applied
             self.update()
             return
@@ -56,6 +63,11 @@ class CardWidget(tk.Canvas):
         # Use larger, clearer fonts
         self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
         self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
+        
+        # Restore highlighting if it was set
+        if current_highlight == "#FFFF00":
+            self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
+        
         # Force update to ensure the drawing is applied
         self.update()
 
