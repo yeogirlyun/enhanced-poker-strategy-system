@@ -966,7 +966,7 @@ class PracticeSessionUI(ttk.Frame):
             self.canvas.tag_raise(chip_window)  # Bring to front
 
             # 3. Add start delay and then start the recursive move function.
-            self.root.after(200, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))
+            self.root.after(100, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))  # Reduced delay to 100ms for faster animation
             
         except Exception as e:
             print(f"Animation error: {e}")
@@ -992,7 +992,7 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.coords(chip_window, new_x, new_y)
 
         # Schedule the next call to this method - faster timing
-        self.root.after(25, lambda: self._move_chip_step(chip_window, x1, y1, x2, y2, step + 1))
+        self.root.after(15, lambda: self._move_chip_step(chip_window, x1, y1, x2, y2, step + 1))  # Reduced delay to 15ms for faster animation
 
     def _distribute_pot_to_winner(self):
         """
