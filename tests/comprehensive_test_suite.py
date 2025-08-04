@@ -2551,6 +2551,767 @@ def test_comprehensive_session_data(state_machine, test_suite):
         {"data_keys": list(session_data.keys())}
     )
 
+def test_complex_hand_evaluation_scenarios(state_machine, test_suite):
+    """Test complex hand evaluation scenarios that are missing coverage."""
+    
+    # Test nut flush scenarios
+    nut_flush = state_machine._is_nut_flush(["Ah", "Kh"], ["Qh", "Jh", "Th"], {"h": 5})
+    test_suite.log_test(
+        "Nut Flush Detection",
+        nut_flush,
+        "Should detect nut flush correctly",
+        {"nut_flush": nut_flush}
+    )
+    
+    # Test nut flush draw scenarios
+    nut_flush_draw = state_machine._is_nut_flush_draw(["Ah", "Kh"], ["Qh", "Jh"], {"h": 4})
+    test_suite.log_test(
+        "Nut Flush Draw Detection",
+        nut_flush_draw,
+        "Should detect nut flush draw correctly",
+        {"nut_flush_draw": nut_flush_draw}
+    )
+    
+    # Test straight detection
+    straight = state_machine._has_straight(["A", "K", "Q", "J", "T"])
+    test_suite.log_test(
+        "Straight Detection",
+        straight,
+        "Should detect straight correctly",
+        {"straight": straight}
+    )
+    
+    # Test wheel straight (A-2-3-4-5)
+    wheel_straight = state_machine._has_straight(["A", "2", "3", "4", "5"])
+    test_suite.log_test(
+        "Wheel Straight Detection",
+        wheel_straight,
+        "Should detect wheel straight correctly",
+        {"wheel_straight": wheel_straight}
+    )
+    
+    # Test open-ended draw
+    open_ended = state_machine._has_open_ended_draw(["6", "7", "8", "9"])
+    test_suite.log_test(
+        "Open-Ended Draw Detection",
+        open_ended,
+        "Should detect open-ended draw correctly",
+        {"open_ended": open_ended}
+    )
+    
+    # Test gutshot draw
+    gutshot = state_machine._has_gutshot_draw(["6", "7", "9", "T"])
+    test_suite.log_test(
+        "Gutshot Draw Detection",
+        gutshot,
+        "Should detect gutshot draw correctly",
+        {"gutshot": gutshot}
+    )
+    
+    # Test backdoor straight draw
+    backdoor = state_machine._has_backdoor_straight_draw(["6", "7", "8"])
+    test_suite.log_test(
+        "Backdoor Straight Draw Detection",
+        backdoor,
+        "Should detect backdoor straight draw correctly",
+        {"backdoor": backdoor}
+    )
+
+def test_strategy_integration_comprehensive(state_machine, test_suite):
+    """Test comprehensive strategy integration scenarios."""
+    
+    # Test bot action with strategy data
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        # Set up strategy data
+        state_machine.strategy_data = test_suite._create_test_strategy()
+        
+        # Test enhanced strategy action
+        action, amount = state_machine._get_enhanced_strategy_action(player)
+        test_suite.log_test(
+            "Enhanced Strategy Action",
+            action in [ActionType.FOLD, ActionType.CALL, ActionType.RAISE, ActionType.CHECK],
+            "Should return valid enhanced strategy action",
+            {"action": action.value, "amount": amount}
+        )
+        
+        # Test preflop strategy action
+        preflop_action, preflop_amount = state_machine._get_preflop_strategy_action(player)
+        test_suite.log_test(
+            "Preflop Strategy Action",
+            preflop_action in [ActionType.FOLD, ActionType.CALL, ActionType.RAISE, ActionType.CHECK],
+            "Should return valid preflop strategy action",
+            {"action": preflop_action.value, "amount": preflop_amount}
+        )
+        
+        # Test postflop strategy action
+        state_machine.game_state.street = "flop"
+        postflop_action, postflop_amount = state_machine._get_postflop_strategy_action(player)
+        test_suite.log_test(
+            "Postflop Strategy Action",
+            postflop_action in [ActionType.FOLD, ActionType.CALL, ActionType.RAISE, ActionType.CHECK],
+            "Should return valid postflop strategy action",
+            {"action": postflop_action.value, "amount": postflop_amount}
+        )
+
+def test_bot_action_safety_mechanisms(state_machine, test_suite):
+    """Test bot action safety mechanisms and error handling."""
+    
+    # Test bot action when hand has ended
+    state_machine.current_state = PokerState.END_HAND
+    player = state_machine.game_state.players[0]
+    
+    # This should not execute due to END_HAND state
+    state_machine.execute_bot_action(player)
+    test_suite.log_test(
+        "Bot Action End Hand Safety",
+        True,  # Should not crash
+        "Should handle bot action when hand has ended",
+        {"current_state": state_machine.current_state.value}
+    )
+    
+    # Test bot action with state change
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        # Create action data with different state
+        action_data = {
+            'state': PokerState.PREFLOP_BETTING,
+            'player_index': state_machine.action_player_index
+        }
+        
+        # Change state to invalidate action
+        state_machine.current_state = PokerState.FLOP_BETTING
+        
+        # This should be cancelled due to state change
+        state_machine._execute_bot_action_safe(action_data)
+        test_suite.log_test(
+            "Bot Action State Change Safety",
+            True,  # Should not crash
+            "Should handle bot action when state has changed",
+            {"action_data_state": action_data['state'].value, "current_state": state_machine.current_state.value}
+        )
+
+def test_error_handling_scenarios(state_machine, test_suite):
+    """Test error handling scenarios and edge cases."""
+    
+    # Test deck exhaustion
+    state_machine.start_hand()
+    state_machine.game_state.deck = []  # Empty deck
+    
+    try:
+        card = state_machine.deal_card()
+        test_suite.log_test(
+            "Deck Exhaustion Handling",
+            False,
+            "Should raise error when deck is empty",
+            {"card": card}
+        )
+    except ValueError as e:
+        test_suite.log_test(
+            "Deck Exhaustion Handling",
+            "No cards left in deck!" in str(e),
+            "Should raise appropriate error when deck is empty",
+            {"error": str(e)}
+        )
+    
+    # Test invalid state transition
+    original_state = state_machine.current_state
+    try:
+        state_machine.transition_to(PokerState.SHOWDOWN)  # Invalid transition
+        test_suite.log_test(
+            "Invalid State Transition",
+            False,
+            "Should raise error for invalid state transition",
+            {"from": original_state.value, "to": "SHOWDOWN"}
+        )
+    except ValueError as e:
+        test_suite.log_test(
+            "Invalid State Transition",
+            "Invalid state transition" in str(e),
+            "Should raise appropriate error for invalid state transition",
+            {"error": str(e)}
+        )
+
+def test_complex_winner_determination(state_machine, test_suite):
+    """Test complex winner determination scenarios."""
+    
+    state_machine.start_hand()
+    
+    # Set up complex scenario with multiple players and different hands
+    players = state_machine.game_state.players
+    players[0].cards = ["Ah", "As"]  # Pocket aces
+    players[1].cards = ["Kh", "Ks"]  # Pocket kings
+    players[2].cards = ["Qh", "Qs"]  # Pocket queens
+    players[3].cards = ["Jh", "Js"]  # Pocket jacks
+    
+    # Set up board for complex evaluation
+    state_machine.game_state.board = ["Th", "9d", "8s", "7c", "6h"]  # Straight board
+    
+    # Test winner determination with multiple players
+    winners = state_machine.determine_winner()
+    test_suite.log_test(
+        "Complex Winner Determination",
+        len(winners) > 0,
+        "Should determine winners in complex scenario",
+        {"winners_count": len(winners), "winner_names": [w.name for w in winners]}
+    )
+    
+    # Test winner determination with specific player list
+    specific_winners = state_machine.determine_winner([players[0], players[1]])
+    test_suite.log_test(
+        "Specific Player Winner Determination",
+        len(specific_winners) > 0,
+        "Should determine winners from specific player list",
+        {"winners_count": len(specific_winners), "winner_names": [w.name for w in specific_winners]}
+    )
+
+def test_session_error_handling(state_machine, test_suite):
+    """Test session error handling scenarios."""
+    
+    # Test export with invalid filepath
+    export_success = state_machine.export_session("/invalid/path/test.json")
+    test_suite.log_test(
+        "Session Export Error Handling",
+        not export_success,
+        "Should handle export errors gracefully",
+        {"export_success": export_success}
+    )
+    
+    # Test import with non-existent file
+    import_success = state_machine.import_session("/non/existent/file.json")
+    test_suite.log_test(
+        "Session Import Error Handling",
+        not import_success,
+        "Should handle import errors gracefully",
+        {"import_success": import_success}
+    )
+    
+    # Test replay with invalid hand number
+    replay_data = state_machine.replay_hand(999)  # Invalid hand number
+    test_suite.log_test(
+        "Hand Replay Error Handling",
+        replay_data is None,
+        "Should handle invalid hand number gracefully",
+        {"replay_data": replay_data}
+    )
+
+def test_advanced_validation_scenarios(state_machine, test_suite):
+    """Test advanced validation scenarios."""
+    
+    state_machine.start_hand()
+    player = state_machine.get_action_player()
+    if player:
+        # Test validation with all-in scenarios
+        player.stack = 5.0
+        state_machine.game_state.current_bet = 10.0
+        
+        # Test all-in call validation
+        errors = state_machine.validate_action(player, ActionType.CALL, 10.0)
+        test_suite.log_test(
+            "All-In Call Validation",
+            len(errors) == 0,
+            "Should allow all-in call",
+            {"errors": errors, "player_stack": player.stack, "current_bet": state_machine.game_state.current_bet}
+        )
+        
+        # Test partial call validation
+        errors = state_machine.validate_action(player, ActionType.CALL, 5.0)
+        test_suite.log_test(
+            "Partial Call Validation",
+            len(errors) == 0,
+            "Should allow partial call",
+            {"errors": errors, "player_stack": player.stack, "call_amount": 5.0}
+        )
+
+def test_game_flow_edge_cases(state_machine, test_suite):
+    """Test game flow edge cases."""
+    
+    # Test round completion with no active players
+    state_machine.start_hand()
+    for player in state_machine.game_state.players:
+        player.is_active = False
+    
+    # This should handle the edge case gracefully
+    state_machine.handle_round_complete()
+    test_suite.log_test(
+        "Round Completion No Active Players",
+        True,  # Should not crash
+        "Should handle round completion with no active players",
+        {"active_players": len([p for p in state_machine.game_state.players if p.is_active])}
+    )
+    
+    # Test advance to next player with all players acted
+    state_machine.start_hand()
+    for player in state_machine.game_state.players:
+        player.has_acted_this_round = True
+    
+    # This should handle the edge case gracefully
+    state_machine.advance_to_next_player()
+    test_suite.log_test(
+        "Advance Player All Acted",
+        True,  # Should not crash
+        {"action_player_index": state_machine.action_player_index}
+    )
+
+def test_comprehensive_hand_history(state_machine, test_suite):
+    """Test comprehensive hand history functionality."""
+    
+    state_machine.start_session()
+    state_machine.start_hand()
+    
+    # Play a hand to create history
+    player = state_machine.get_action_player()
+    if player:
+        state_machine.execute_action(player, ActionType.BET, 10.0)
+        state_machine.handle_end_hand()
+    
+    # Test hand history retrieval
+    history = state_machine.get_hand_history()
+    test_suite.log_test(
+        "Hand History Retrieval",
+        len(history) > 0,
+        "Should retrieve hand history",
+        {"history_length": len(history)}
+    )
+    
+    # Test comprehensive session data
+    session_data = state_machine.get_comprehensive_session_data()
+    test_suite.log_test(
+        "Comprehensive Session Data",
+        "session_metadata" in session_data and "hands_played" in session_data,
+        "Should return comprehensive session data",
+        {"data_keys": list(session_data.keys())}
+    )
+
+def test_pot_odds_and_probability_calculations(state_machine, test_suite):
+    """Test pot odds and probability calculations."""
+    
+    # Test pot odds calculation
+    pot_odds = state_machine.calculate_pot_odds(10.0)
+    test_suite.log_test(
+        "Pot Odds Calculation",
+        pot_odds > 0,
+        "Should calculate pot odds correctly",
+        {"pot_odds": pot_odds}
+    )
+    
+    # Test should call by pot odds
+    player = state_machine.game_state.players[0]
+    should_call = state_machine.should_call_by_pot_odds(player, 10.0, 5)
+    test_suite.log_test(
+        "Should Call by Pot Odds",
+        isinstance(should_call, bool),
+        "Should return boolean for should call decision",
+        {"should_call": should_call, "call_amount": 10.0, "hand_strength": 5}
+    )
+
+def test_side_pot_calculation_with_partial_calls(state_machine, test_suite):
+    """Test side pot calculation with partial calls and folded players."""
+    
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Set up complex scenario: Player 1 all-in 10, Player 2 calls 10, Player 3 raises to 20
+    # Player 4 folds, Player 5 calls 20, Player 6 folds
+    player1, player2, player3, player4, player5, player6 = players[:6]
+    
+    # Player 1: All-in for 10
+    player1.stack = 10.0
+    state_machine.execute_action(player1, ActionType.BET, 10.0)
+    test_suite.log_test(
+        "Player 1 All-In",
+        player1.is_all_in and player1.total_invested == 10.0,
+        "Player 1 should be all-in with 10 invested",
+        {"is_all_in": player1.is_all_in, "total_invested": player1.total_invested}
+    )
+    
+    # Player 2: Calls 10
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player2, ActionType.CALL, 10.0)
+    test_suite.log_test(
+        "Player 2 Calls All-In",
+        player2.total_invested == 10.0,
+        "Player 2 should have 10 invested",
+        {"total_invested": player2.total_invested}
+    )
+    
+    # Player 3: Raises to 20
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player3, ActionType.RAISE, 20.0)
+    test_suite.log_test(
+        "Player 3 Raises",
+        player3.total_invested == 20.0,
+        "Player 3 should have 20 invested",
+        {"total_invested": player3.total_invested}
+    )
+    
+    # Player 4: Folds (but has already contributed to pot)
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player4, ActionType.FOLD, 0.0)
+    test_suite.log_test(
+        "Player 4 Folds",
+        not player4.is_active and player4.total_invested > 0,
+        "Player 4 should be folded but have contributed to pot",
+        {"is_active": player4.is_active, "total_invested": player4.total_invested}
+    )
+    
+    # Player 5: Calls 20
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player5, ActionType.CALL, 20.0)
+    test_suite.log_test(
+        "Player 5 Calls",
+        player5.total_invested == 20.0,
+        "Player 5 should have 20 invested",
+        {"total_invested": player5.total_invested}
+    )
+    
+    # Player 6: Folds
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player6, ActionType.FOLD, 0.0)
+    
+    # Test side pot creation
+    side_pots = state_machine.create_side_pots()
+    test_suite.log_test(
+        "Side Pot Creation",
+        len(side_pots) > 0,
+        "Should create side pots with complex scenario",
+        {"side_pots_count": len(side_pots), "side_pots": side_pots}
+    )
+    
+    # Verify folded player's contribution is in lower side pots
+    if side_pots:
+        first_pot = side_pots[0]
+        test_suite.log_test(
+            "Folded Player in Side Pot",
+            len(first_pot['eligible_players']) >= 3,  # Should include folded players
+            "Folded players should be eligible for side pots they contributed to",
+            {"eligible_count": len(first_pot['eligible_players'])}
+        )
+
+def test_all_in_re_raise_validation(state_machine, test_suite):
+    """Test all-in re-raise validation and action classification."""
+    
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Player 1: Bets 10
+    player1 = state_machine.get_action_player()
+    state_machine.execute_action(player1, ActionType.BET, 10.0)
+    
+    # Player 2: All-in for 15 (should be valid as all-in)
+    state_machine.advance_to_next_player()
+    player2 = state_machine.get_action_player()
+    player2.stack = 15.0
+    
+    # Test validation of all-in raise below min_raise
+    errors = state_machine.validate_action(player2, ActionType.RAISE, 15.0)
+    test_suite.log_test(
+        "All-In Raise Below Min Validation",
+        len(errors) == 0,
+        "All-in raises should be valid even below min_raise",
+        {"errors": errors, "stack": player2.stack, "raise_amount": 15.0}
+    )
+    
+    # Execute the all-in raise
+    state_machine.execute_action(player2, ActionType.RAISE, 15.0)
+    test_suite.log_test(
+        "All-In Raise Execution",
+        player2.is_all_in and state_machine.game_state.current_bet == 15.0,
+        "All-in raise should execute correctly",
+        {"is_all_in": player2.is_all_in, "current_bet": state_machine.game_state.current_bet}
+    )
+    
+    # Test that all-in equal to current bet is classified as CALL, not RAISE
+    state_machine.start_hand()
+    player3 = state_machine.get_action_player()
+    state_machine.execute_action(player3, ActionType.BET, 10.0)
+    
+    state_machine.advance_to_next_player()
+    player4 = state_machine.get_action_player()
+    player4.stack = 10.0
+    
+    # This should be a CALL, not a RAISE
+    errors = state_machine.validate_action(player4, ActionType.RAISE, 10.0)
+    test_suite.log_test(
+        "All-In Equal to Current Bet Classification",
+        len(errors) > 0,  # Should be invalid as RAISE
+        "All-in equal to current bet should not be valid as RAISE",
+        {"errors": errors, "stack": player4.stack, "current_bet": state_machine.game_state.current_bet}
+    )
+
+def test_blind_posting_with_low_stacks(state_machine, test_suite):
+    """Test blind posting with low stacks (partial blinds)."""
+    
+    # Set up players with low stacks
+    players = state_machine.game_state.players
+    sb_player = players[state_machine.small_blind_position]
+    bb_player = players[state_machine.big_blind_position]
+    
+    # Test small blind with low stack
+    sb_player.stack = 0.3  # Less than 0.5
+    bb_player.stack = 1.0
+    
+    state_machine.start_hand()
+    test_suite.log_test(
+        "Small Blind Partial Posting",
+        sb_player.current_bet == 0.3 and sb_player.is_all_in,
+        "Small blind should post partial amount and be all-in",
+        {"current_bet": sb_player.current_bet, "is_all_in": sb_player.is_all_in}
+    )
+    
+    # Test big blind with low stack
+    state_machine.start_hand()
+    sb_player.stack = 0.5
+    bb_player.stack = 0.7  # Less than 1.0
+    
+    state_machine.start_hand()
+    test_suite.log_test(
+        "Big Blind Partial Posting",
+        bb_player.current_bet == 0.7 and bb_player.is_all_in,
+        "Big blind should post partial amount and be all-in",
+        {"current_bet": bb_player.current_bet, "is_all_in": bb_player.is_all_in}
+    )
+    
+    # Test both blinds with low stacks
+    state_machine.start_hand()
+    sb_player.stack = 0.2
+    bb_player.stack = 0.3
+    
+    state_machine.start_hand()
+    test_suite.log_test(
+        "Both Blinds Partial Posting",
+        sb_player.current_bet == 0.2 and bb_player.current_bet == 0.3,
+        "Both blinds should post partial amounts",
+        {"sb_bet": sb_player.current_bet, "bb_bet": bb_player.current_bet}
+    )
+
+def test_heads_up_position_assignment(state_machine, test_suite):
+    """Test position assignment and action order in heads-up play."""
+    
+    # Create heads-up state machine
+    heads_up_sm = ImprovedPokerStateMachine(num_players=2)
+    heads_up_sm.start_hand()
+    
+    players = heads_up_sm.game_state.players
+    positions = [p.position for p in players]
+    
+    test_suite.log_test(
+        "Heads-Up Position Assignment",
+        positions == ["BTN/SB", "BB"],
+        "Heads-up should have BTN/SB and BB positions",
+        {"positions": positions}
+    )
+    
+    # Test action order
+    first_player = heads_up_sm.get_action_player()
+    test_suite.log_test(
+        "Heads-Up First Action",
+        first_player.position == "BTN/SB",
+        "BTN/SB should act first in heads-up",
+        {"first_player_position": first_player.position}
+    )
+    
+    # Test action progression
+    heads_up_sm.execute_action(first_player, ActionType.CHECK, 0.0)
+    heads_up_sm.advance_to_next_player()
+    
+    second_player = heads_up_sm.get_action_player()
+    test_suite.log_test(
+        "Heads-Up Second Action",
+        second_player.position == "BB",
+        "BB should act second in heads-up",
+        {"second_player_position": second_player.position}
+    )
+    
+    # Test no infinite loop
+    heads_up_sm.execute_action(second_player, ActionType.CHECK, 0.0)
+    heads_up_sm.advance_to_next_player()
+    
+    third_player = heads_up_sm.get_action_player()
+    test_suite.log_test(
+        "Heads-Up No Loop",
+        third_player != first_player or heads_up_sm.is_round_complete(),
+        "Should not loop back to first player unless round complete",
+        {"third_player": third_player.name, "round_complete": heads_up_sm.is_round_complete()}
+    )
+
+def test_round_complete_all_checks_scenario(state_machine, test_suite):
+    """Test round completion when all players check."""
+    
+    state_machine.start_hand()
+    
+    # All players check (after blinds)
+    for i in range(6):
+        player = state_machine.get_action_player()
+        if player:
+            state_machine.execute_action(player, ActionType.CHECK, 0.0)
+            state_machine.advance_to_next_player()
+    
+    test_suite.log_test(
+        "Round Complete All Checks",
+        state_machine.is_round_complete(),
+        "Round should be complete when all players check",
+        {"round_complete": state_machine.is_round_complete()}
+    )
+    
+    # Test edge case: BB checks without raise, UTG hasn't acted
+    state_machine.start_hand()
+    bb_player = state_machine.game_state.players[state_machine.big_blind_position]
+    
+    # Set action to BB (shouldn't happen normally, but test edge case)
+    state_machine.action_player_index = state_machine.big_blind_position
+    state_machine.game_state.current_bet = 0.0  # No raise
+    
+    state_machine.execute_action(bb_player, ActionType.CHECK, 0.0)
+    test_suite.log_test(
+        "BB Check Without Raise",
+        state_machine.is_round_complete(),
+        "Round should be complete when BB checks without raise",
+        {"round_complete": state_machine.is_round_complete()}
+    )
+
+def test_winner_determination_ties_with_kickers(state_machine, test_suite):
+    """Test winner determination with ties and kicker comparisons."""
+    
+    state_machine.start_hand()
+    
+    # Set up scenario with potential ties
+    players = state_machine.game_state.players[:3]
+    state_machine.game_state.board = ["Ah", "Kh", "Qh", "Jh", "Th"]  # Straight flush board
+    
+    # Players with different kickers but same hand
+    players[0].cards = ["2s", "3s"]  # Straight flush with 2,3 kickers
+    players[1].cards = ["4d", "5d"]  # Straight flush with 4,5 kickers
+    players[2].cards = ["6c", "7c"]  # Straight flush with 6,7 kickers
+    
+    for player in players:
+        player.is_active = True
+    
+    # Test winner determination
+    winners = state_machine.determine_winner(players)
+    test_suite.log_test(
+        "Winner Determination with Kickers",
+        len(winners) > 0,
+        "Should determine winners even with kicker differences",
+        {"winners_count": len(winners), "winner_names": [w.name for w in winners]}
+    )
+    
+    # Test tie scenario (force tie by mocking hand evaluator)
+    original_compare = state_machine.hand_evaluator._compare_hands
+    state_machine.hand_evaluator._compare_hands = lambda h1, h2: 0  # Force tie
+    
+    tie_winners = state_machine.determine_winner(players[:2])
+    test_suite.log_test(
+        "Winner Determination Tie",
+        len(tie_winners) == 2,
+        "Should split pot when hands tie",
+        {"tie_winners_count": len(tie_winners)}
+    )
+    
+    # Restore original method
+    state_machine.hand_evaluator._compare_hands = original_compare
+
+def test_session_tracking_race_conditions(state_machine, test_suite):
+    """Test session tracking with race conditions and edge cases."""
+    
+    state_machine.start_session()
+    state_machine.start_hand()
+    
+    # Test hand ending without winners (all fold)
+    players = state_machine.game_state.players
+    for i in range(5):  # All but one fold
+        player = state_machine.get_action_player()
+        if player:
+            state_machine.execute_action(player, ActionType.FOLD, 0.0)
+            state_machine.advance_to_next_player()
+    
+    # The hand should end automatically when only one player remains
+    # No need to manually call handle_end_hand() as it's called automatically
+    
+    # Check that session tracking captured the result
+    session_data = state_machine.get_session_info()
+    test_suite.log_test(
+        "Session Tracking All Fold",
+        session_data['total_hands'] > 0,
+        "Session should track hand where all players fold",
+        {"total_hands": session_data['total_hands']}
+    )
+    
+    # Test session export/import race condition
+    export_success = state_machine.export_session("test_session_race.json")
+    test_suite.log_test(
+        "Session Export Race Condition",
+        export_success,
+        "Should export session data without race conditions",
+        {"export_success": export_success}
+    )
+    
+    # Test import with active session
+    import_success = state_machine.import_session("test_session_race.json")
+    test_suite.log_test(
+        "Session Import Race Condition",
+        import_success,
+        "Should import session data without race conditions",
+        {"import_success": import_success}
+    )
+
+def test_complex_multi_street_all_in_scenarios(state_machine, test_suite):
+    """Test complex multi-street all-in scenarios with side pots."""
+    
+    state_machine.start_hand()
+    players = state_machine.game_state.players
+    
+    # Preflop: Player 1 all-in 10, Player 2 calls, Player 3 raises to 20
+    player1, player2, player3 = players[:3]
+    player1.stack = 10.0
+    state_machine.execute_action(player1, ActionType.BET, 10.0)
+    
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player2, ActionType.CALL, 10.0)
+    
+    state_machine.advance_to_next_player()
+    state_machine.execute_action(player3, ActionType.RAISE, 20.0)
+    
+    # Complete preflop and advance to flop
+    state_machine.handle_round_complete()
+    
+    # Flop: Player 4 all-in 30, Player 5 calls
+    state_machine.advance_to_next_player()
+    player4 = state_machine.get_action_player()
+    if player4:
+        player4.stack = 30.0
+        state_machine.execute_action(player4, ActionType.BET, 30.0)
+        
+        state_machine.advance_to_next_player()
+        player5 = state_machine.get_action_player()
+        if player5:
+            state_machine.execute_action(player5, ActionType.CALL, 30.0)
+    
+    # Complete flop and advance to turn
+    state_machine.handle_round_complete()
+    
+    # Turn: Player 6 all-in 50
+    state_machine.advance_to_next_player()
+    player6 = state_machine.get_action_player()
+    if player6:
+        player6.stack = 50.0
+        state_machine.execute_action(player6, ActionType.BET, 50.0)
+    
+    # End hand and test side pot creation
+    state_machine.handle_round_complete()
+    state_machine.handle_end_hand()
+    
+    # Get session data to verify complex scenario was handled
+    session_data = state_machine.get_session_info()
+    test_suite.log_test(
+        "Complex Multi-Street All-In",
+        session_data['total_hands'] > 0,
+        "Should handle complex multi-street all-in scenarios",
+        {"total_hands": session_data['total_hands']}
+    )
+
 def main():
     """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")

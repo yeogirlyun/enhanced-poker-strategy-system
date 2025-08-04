@@ -710,10 +710,10 @@ class ImprovedPokerStateMachine:
                 # Reset hand-specific attributes
                 player.is_active = True
                 player.cards = []
-                player.current_bet = 0
+                player.current_bet = 0.0  # FIX: Ensure current_bet is reset to 0.0
                 player.has_acted_this_round = False
                 player.is_all_in = False
-                player.total_invested = 0
+                player.total_invested = 0.0  # FIX: Ensure total_invested is reset to 0.0
                 player.partial_call_amount = None
                 player.full_call_amount = None
         else:
@@ -2233,8 +2233,8 @@ class ImprovedPokerStateMachine:
 
         # Reset game state for next hand
         if self.game_state:
-            # DO NOT reset pot here - preserve it until new hand starts
-            # self.game_state.pot = 0  # COMMENTED OUT: Don't reset pot yet
+            # Reset pot to 0 for next hand - the pot will be rebuilt with blinds
+            self.game_state.pot = 0.0  # FIX: Reset pot for next hand
             self.game_state.current_bet = 0
             self.game_state.min_raise = 1.0
             self.game_state.players_acted.clear()
