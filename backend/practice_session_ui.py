@@ -63,17 +63,19 @@ class CardWidget(tk.Canvas):
         else:
             self.config(bg="white")
             
-        rank, suit = card_str[0], card_str[1]
-        suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
-        suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
-        color = suit_colors.get(suit, "black")
-        
-        # Use larger, clearer fonts
-        self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
-        self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
+        # Only process card string if it's not empty
+        if card_str and len(card_str) >= 2:
+            rank, suit = card_str[0], card_str[1]
+            suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
+            suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
+            color = suit_colors.get(suit, "black")
+            
+            # Use larger, clearer fonts
+            self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
+            self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
         
         # Restore highlighting if it was set
-        if current_highlight == "#FFFF00":
+        if current_highlight == "#FFFFE0":
             self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
         
         # Force update to ensure the drawing is applied

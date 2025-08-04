@@ -1549,6 +1549,10 @@ class ImprovedPokerStateMachine:
 
     def _classification_to_description(self, classification: str, cards: List[str], board: List[str]) -> str:
         """Convert internal classification to user-friendly description."""
+        # Safety check for None classification
+        if classification is None:
+            return "Unknown Hand"
+            
         descriptions = {
             'quads': 'Four of a Kind',
             'full_house': 'Full House',
