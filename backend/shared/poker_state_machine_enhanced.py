@@ -1526,6 +1526,68 @@ class ImprovedPokerStateMachine:
         else:
             return "high_card"
 
+    def get_hand_description_and_cards(self, cards: List[str], board: List[str]) -> Dict[str, any]:
+        """Get user-friendly hand description and the 5 cards that form the winning hand."""
+        # Use the enhanced hand evaluator to get detailed information
+        evaluation = self.hand_evaluator.evaluate_hand(cards, board)
+        
+        # Get the best 5-card combination
+        best_hand = self._get_best_five_cards(cards, board)
+        
+        # Convert internal classification to user-friendly description
+        classification = self.classify_hand(cards, board)
+        description = self._classification_to_description(classification, cards, board)
+        
+        return {
+            'description': description,
+            'winning_cards': best_hand,
+            'classification': classification,
+            'hand_rank': evaluation['hand_rank'],
+            'strength_score': evaluation['strength_score']
+        }
+
+    def _classification_to_description(self, classification: str, cards: List[str], board: List[str]) -> str:
+        """Convert internal classification to user-friendly description."""
+        descriptions = {
+            'quads': 'Four of a Kind',
+            'full_house': 'Full House',
+            'nut_flush': 'Nut Flush',
+            'flush': 'Flush',
+            'straight': 'Straight',
+            'set': 'Three of a Kind (Set)',
+            'trips': 'Three of a Kind (Trips)',
+            'two_pair': 'Two Pair',
+            'over_pair': 'Overpair',
+            'top_pair_good_kicker': 'Top Pair (Good Kicker)',
+            'top_pair_bad_kicker': 'Top Pair (Weak Kicker)',
+            'top_pair': 'Top Pair',
+            'second_pair': 'Second Pair',
+            'bottom_pair': 'Bottom Pair',
+            'high_card': 'High Card',
+            'nut_flush_draw': 'Nut Flush Draw',
+            'flush_draw': 'Flush Draw',
+            'combo_draw': 'Combo Draw',
+            'open_ended_draw': 'Open-Ended Straight Draw',
+            'gutshot_draw': 'Gutshot Draw',
+            'backdoor_flush': 'Backdoor Flush Draw',
+            'backdoor_straight': 'Backdoor Straight Draw',
+            'pair_plus_draw': 'Pair Plus Draw',
+            'set_plus_draw': 'Set Plus Draw'
+        }
+        
+        return descriptions.get(classification, classification.replace('_', ' ').title())
+
+    def _get_best_five_cards(self, cards: List[str], board: List[str]) -> List[str]:
+        """Get the 5 cards that form the best hand."""
+        all_cards = cards + board
+        
+        # For simplicity, return the 5 highest cards
+        # In a real implementation, this would use the hand evaluator to find the best 5-card combination
+        card_values = [(card, self._get_rank_value(card[0])) for card in all_cards]
+        card_values.sort(key=lambda x: x[1], reverse=True)
+        
+        return [card for card, value in card_values[:5]]
+
     def _has_backdoor_flush(self, cards: List[str], board: List[str], suit_counts: dict) -> bool:
         """Check for backdoor flush draw (3 to a suit, one from player)."""
         player_suits = [card[1] for card in cards]

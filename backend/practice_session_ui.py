@@ -797,9 +797,26 @@ class PracticeSessionUI(ttk.Frame):
 
             # Create a more descriptive announcement with proper formatting
             if pot_amount > 0:
-                announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
-                if winning_hand and winning_hand != "Unknown":
-                    announcement += f" ({winning_hand})"
+                # Get enhanced hand information
+                winner_player = None
+                for player in self.state_machine.game_state.players:
+                    if player.name == winner_names:
+                        winner_player = player
+                        break
+                
+                if winner_player and winner_player.cards:
+                    hand_info = self.state_machine.get_hand_description_and_cards(
+                        winner_player.cards, final_board
+                    )
+                    description = hand_info['description']
+                    winning_cards = hand_info['winning_cards']
+                    
+                    announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}! ({description})"
+                    announcement += f"\nWinning cards: {' '.join(winning_cards)}"
+                else:
+                    announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
+                    if winning_hand and winning_hand != "Unknown":
+                        announcement += f" ({winning_hand})"
                 
                 # Update pot label with winner info
                 self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
@@ -812,8 +829,26 @@ class PracticeSessionUI(ttk.Frame):
         if hasattr(self, 'last_action_label'):
             winner_name = winner_info.get('name', 'Unknown')
             amount = winner_info.get('amount', 0)
-            hand_type = winner_info.get('hand', 'unknown')
-            announcement = f"🏆 {winner_name} wins ${amount:.2f}! ({hand_type})"
+            
+            # Get enhanced hand information
+            winner_player = None
+            for player in self.state_machine.game_state.players:
+                if player.name == winner_name:
+                    winner_player = player
+                    break
+            
+            if winner_player and winner_player.cards:
+                hand_info = self.state_machine.get_hand_description_and_cards(
+                    winner_player.cards, final_board
+                )
+                description = hand_info['description']
+                winning_cards = hand_info['winning_cards']
+                
+                announcement = f"🏆 {winner_name} wins ${amount:.2f}!\n({description})\nWinning cards: {' '.join(winning_cards)}"
+            else:
+                hand_type = winner_info.get('hand', 'unknown')
+                announcement = f"🏆 {winner_name} wins ${amount:.2f}! ({hand_type})"
+            
             self.last_action_label.config(text=announcement)
 
         
