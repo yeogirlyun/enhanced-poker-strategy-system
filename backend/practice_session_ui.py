@@ -910,10 +910,17 @@ class PracticeSessionUI(ttk.Frame):
         winner_seat = None
         for winner_name in winner_names:
             for i, seat in enumerate(self.player_seats):
-                if seat and seat.get("name_label"):
-                    player_name = seat["name_label"].cget("text").split('\n')[0]
+                if seat and seat.get("player_pod"):
+                    # Get player name from PlayerPod
+                    player_pod = seat["player_pod"]
+                    if hasattr(player_pod, 'name_var'):
+                        player_name = player_pod.name_var.get()
+                    else:
+                        # Fallback to old method if name_var doesn't exist
+                        player_name = seat.get("name_label", "").cget("text") if seat.get("name_label") else ""
+                    
                     # Extract just the player name part (before the position)
-                    # player_name format: "Player 1 (CO - Cutoff)" -> extract "Player 1"
+                    # player_name format: "Player 1 (CO)" -> extract "Player 1"
                     player_name_clean = player_name.split(' (')[0]
                     if player_name_clean == winner_name:
                         winner_seat = i
@@ -1550,16 +1557,19 @@ class PracticeSessionUI(ttk.Frame):
             
             # Update PlayerPod with new data including bet information
             if player_pod:
+                # Clear bet amounts after hand completion
+                bet_amount = 0 if self.hand_completed else player_info.get('current_bet', 0)
+                
                 pod_data = {
                     "name": f"{player_info['name']} ({player_info['position']})",
                     "stack": player_info['stack'],
-                    "bet": player_info.get('current_bet', 0),
+                    "bet": bet_amount,
                     "starting_stack": 100.0  # Default starting stack for progress bar
                 }
                 player_pod.update_pod(pod_data)
                 
-                # Set active player highlighting
-                is_active_turn = (i == game_info.get('action_player', -1))
+                # Set active player highlighting (no highlighting after hand completion)
+                is_active_turn = (i == game_info.get('action_player', -1)) and not self.hand_completed
                 player_pod.set_active_player(is_active_turn)
             
             # FIXED: Highlight based on action_player index, not is_active status
@@ -1577,10 +1587,16 @@ class PracticeSessionUI(ttk.Frame):
             bet_label_widget = player_seat.get("bet_label_widget")
             bet_label_window = player_seat.get("bet_label_window")
             if bet_label_widget and bet_label_window:
-                current_bet = player_info.get("current_bet", 0.0)
-                if current_bet > 0 and player_info['is_active']:
-                    bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
-                    self.canvas.itemconfig(bet_label_window, state="normal")
+                # Clear bet displays after hand completion
+                if self.hand_completed:
+                    self.canvas.itemconfig(bet_label_window, state="hidden")
+                else:
+                    current_bet = player_info.get("current_bet", 0.0)
+                    if current_bet > 0 and player_info['is_active']:
+                        bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
+                        self.canvas.itemconfig(bet_label_window, state="normal")
+                    else:
+                        self.canvas.itemconfig(bet_label_window, state="hidden")
             # Update player card display with proper card styling
             # Check if player has folded by looking at their cards (empty cards indicate folded)
             has_folded = not player_info.get('cards') or len(player_info['cards']) == 0 or all(card == "" for card in player_info['cards'])
