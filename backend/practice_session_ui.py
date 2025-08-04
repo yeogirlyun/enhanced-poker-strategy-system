@@ -824,7 +824,10 @@ class PracticeSessionUI(ttk.Frame):
         """
         Handles hand completion by displaying the winner info received from the state machine.
         """
-
+        
+        # Add logging to track pot amounts
+        pot_amount = winner_info.get("amount", 0) if winner_info else 0
+        print(f"handle_hand_complete called with pot: ${pot_amount:.2f}")
         
         self.sfx.play("winner_announce")
         
@@ -914,44 +917,51 @@ class PracticeSessionUI(ttk.Frame):
         Triggers the visual animation of chips moving to the winner.
         This is the function you should call at the start of the showdown.
         """
-        # Force the main window to process all pending drawing events.
-        # This is the CRITICAL step to ensure we get correct coordinates.
-        self.root.update_idletasks()
+        try:
+            # Force the main window to process all pending drawing events.
+            # This is the CRITICAL step to ensure we get correct coordinates.
+            self.root.update_idletasks()
 
-        winner_seat_widget = self.player_seats[winner_seat_index]
-        pot_widget = self.pot_label  # Assuming your pot display is self.pot_label
+            winner_seat_widget = self.player_seats[winner_seat_index]
+            pot_widget = self.pot_label  # Assuming your pot display is self.pot_label
 
-        # 1. Get Start and End coordinates in the screen's coordinate system.
-        start_x = pot_widget.winfo_rootx() + (pot_widget.winfo_width() // 2)
-        start_y = pot_widget.winfo_rooty() + (pot_widget.winfo_height() // 2)
+            # 1. Get Start and End coordinates in the screen's coordinate system.
+            start_x = pot_widget.winfo_rootx() + (pot_widget.winfo_width() // 2)
+            start_y = pot_widget.winfo_rooty() + (pot_widget.winfo_height() // 2)
 
-        end_x = winner_seat_widget.winfo_rootx() + (winner_seat_widget.winfo_width() // 2)
-        end_y = winner_seat_widget.winfo_rooty() + (winner_seat_widget.winfo_height() // 2)
+            end_x = winner_seat_widget.winfo_rootx() + (winner_seat_widget.winfo_width() // 2)
+            end_y = winner_seat_widget.winfo_rooty() + (winner_seat_widget.winfo_height() // 2)
 
-        # Validate coordinates to ensure animation is visible
-        if start_x == 0 and start_y == 0:
-            print("Warning: Invalid start coordinates for animation")
-            return
-        
-        if end_x == 0 and end_y == 0:
-            print("Warning: Invalid end coordinates for animation")
-            return
+            # Validate coordinates to ensure animation is visible
+            if start_x == 0 and start_y == 0:
+                print("Warning: Invalid start coordinates for animation")
+                self.add_game_message("Animation failed: Invalid start coordinates")
+                return
+            
+            if end_x == 0 and end_y == 0:
+                print("Warning: Invalid end coordinates for animation")
+                self.add_game_message("Animation failed: Invalid end coordinates")
+                return
 
-        # 2. Create the chip label with better visibility
-        chip_label = tk.Label(
-            self.root, 
-            text="💰", 
-            font=("Arial", 40, "bold"), 
-            bg="gold", 
-            fg="black", 
-            bd=2, 
-            relief="raised"
-        )
-        chip_label.place(x=start_x, y=start_y, anchor="center")
-        chip_label.lift()  # Bring to front
+            # 2. Create the chip label with better visibility
+            chip_label = tk.Label(
+                self.root, 
+                text="💰", 
+                font=("Arial", 40, "bold"), 
+                bg="gold", 
+                fg="black", 
+                bd=2, 
+                relief="raised"
+            )
+            chip_label.place(x=start_x, y=start_y, anchor="center")
+            chip_label.lift()  # Bring to front
 
-        # 3. Add start delay and then start the recursive move function.
-        self.root.after(500, lambda: self._move_chip_step(chip_label, start_x, start_y, end_x, end_y))
+            # 3. Add start delay and then start the recursive move function.
+            self.root.after(500, lambda: self._move_chip_step(chip_label, start_x, start_y, end_x, end_y))
+            
+        except Exception as e:
+            print(f"Animation error: {e}")
+            self.add_game_message(f"Animation failed: {str(e)}")
 
     def _move_chip_step(self, widget, x1, y1, x2, y2, step=0):
         """

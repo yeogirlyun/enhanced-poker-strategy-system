@@ -1953,22 +1953,13 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
         
         if len(active_players) == 1:
-            winner = active_players[0]
-            winner.stack += self.game_state.pot
-            pot_amount = self.game_state.pot
-            self.game_state.pot = 0
-            self._log_action(f"🏆 {winner.name} wins ${pot_amount:.2f} (all others folded)")
-            self._log_action(f"💰 {winner.name} new stack: ${winner.stack:.2f}")
-            
-            # Don't play winner announcement sound when everyone folds
-            # Only play it during actual showdowns
+            # CRITICAL FIX: Defer awarding to handle_end_hand to preserve pot for animation
+            self._log_action(f"🏆 {active_players[0].name} wins by default (all others folded)")
+            self._log_action(f"💰 Pot preserved for animation: ${self.game_state.pot:.2f}")
             
             # Only transition if not already in END_HAND state
             if self.current_state != PokerState.END_HAND:
                 self.transition_to(PokerState.END_HAND)
-            # Store winner info for UI callback
-            self._last_winner = {"name": winner.name, "amount": pot_amount}
-            self._log_action(f"🏆 Winner info stored for UI: {winner.name} wins ${pot_amount:.2f}")
             return  # End the action here since the hand is over
 
         # If the hand is not over, check if the round is complete
