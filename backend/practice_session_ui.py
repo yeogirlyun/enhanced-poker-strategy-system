@@ -1649,8 +1649,10 @@ class PracticeSessionUI(ttk.Frame):
         if not hasattr(self, 'winning_cards') or not self.winning_cards:
             return
         
-        # Clear previous highlighting
-        self._clear_winning_card_highlights()
+        # Only clear previous highlighting if we're not in a completed hand
+        # This prevents clearing the highlighting during UI refresh cycles
+        if not self.hand_completed:
+            self._clear_winning_card_highlights()
         
         # Highlight community cards that are part of winning hand
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1658,8 +1660,11 @@ class PracticeSessionUI(ttk.Frame):
                 if i < len(self.preserved_community_cards):
                     card = self.preserved_community_cards[i]
                     if card in self.winning_cards:
-                        # Highlight with yellow border
+                        # Highlight with light yellow background
                         card_widget.highlight_winning_card()
+                        print(f"DEBUG: Highlighting community card {card} as winning card")
+                    else:
+                        print(f"DEBUG: Community card {card} not in winning cards {self.winning_cards}")
         
         # Highlight player cards that are part of winning hand
         for i, player_seat in enumerate(self.player_seats):
@@ -1674,8 +1679,11 @@ class PracticeSessionUI(ttk.Frame):
             if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
                 for j, card in enumerate(player_info['cards']):
                     if card in self.winning_cards:
-                        # Highlight with yellow border
+                        # Highlight with light yellow background
                         card_widgets[j].highlight_winning_card()
+                        print(f"DEBUG: Highlighting player {i} card {card} as winning card")
+                    else:
+                        print(f"DEBUG: Player {i} card {card} not in winning cards {self.winning_cards}")
     
     def _clear_winning_card_highlights(self):
         """Clear all winning card highlights."""
