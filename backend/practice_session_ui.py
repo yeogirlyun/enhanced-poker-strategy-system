@@ -119,10 +119,10 @@ class CardWidget(tk.Canvas):
 
 
 class PlayerPod(tk.Frame):
-    """A custom widget for a player's area, including a graphical stack display."""
+    """A modern widget for a player's area with enhanced stack display and active player highlighting."""
     def __init__(self, parent):
-        # The main pod frame is transparent to sit nicely on the canvas
-        super().__init__(parent, bg="#1a1a1a") # Match your table's background
+        # The main pod frame with highlightable border for active player indication
+        super().__init__(parent, bg="#1a1a1a", highlightthickness=2, highlightbackground="#006400")
         
         # This frame holds the name and cards with a visible background
         self.info_frame = tk.Frame(self, bg="gray15", highlightthickness=2)
@@ -143,29 +143,66 @@ class PlayerPod(tk.Frame):
         self.card1.set_card("")  # This will trigger card back drawing
         self.card2.set_card("")  # This will trigger card back drawing
 
-        # --- NEW: Professional Stack Display ---
+        # --- ENHANCED: Modern Stack Display ---
         # This frame sits below the main info_frame
         self.stack_frame = tk.Frame(self, bg="#1a1a1a")
         self.stack_frame.pack()
         
-        # Canvas for drawing chip graphics - make it larger for better visibility
+        # Numerical stack display
+        self.stack_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 12, "bold"), bg="#1a1a1a", fg="white")
+        self.stack_label.pack(fill='x', pady=(0, 2))
+        
+        # Graphical stack bar using ttk.Progressbar
+        self.stack_bar = ttk.Progressbar(self.stack_frame, orient='horizontal', length=120, mode='determinate')
+        self.stack_bar.pack(fill='x', pady=(0, 3))
+        
+        # Bet amount display
+        self.bet_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 10, "bold"), bg="#1a1a1a", fg="gold")
+        self.bet_label.pack(fill='x')
+        
+        # Canvas for drawing chip graphics
         self.chip_canvas = tk.Canvas(self.stack_frame, width=50, height=50, bg="#1a1a1a", highlightthickness=0)
         self.chip_canvas.pack(side="left", padx=5)
-        
-        # Ensure the canvas is properly configured
         self.chip_canvas.config(width=50, height=50)
         
-        # Label for the stack text
-        self.stack_label = tk.Label(self.stack_frame, text="", font=("Helvetica", 12, "bold"), bg="#1a1a1a", fg="white")
-        self.stack_label.pack(side="left")
+        # Initialize starting stack for progress bar
+        self.starting_stack = 100.0  # Default starting stack
 
     def update_pod(self, data):
-        # Update name, cards, highlighting as before
+        """Updates all player information including stack bar and highlighting."""
+        # Update name
         self.name_label.config(text=data.get("name", ""))
+        
+        # Update stack information
         stack_amount = data.get('stack', 0)
-        self.stack_label.config(text=f"${stack_amount:.2f}")
-
-        self._draw_chips(stack_amount) # Call the new chip drawing method
+        bet_amount = data.get('bet', 0)
+        starting_stack = data.get('starting_stack', stack_amount)
+        
+        # Update numerical stack display
+        self.stack_label.config(text=f"${stack_amount:,.2f}")
+        
+        # Update bet display
+        if bet_amount > 0:
+            self.bet_label.config(text=f"Bet: ${bet_amount:,.2f}")
+        else:
+            self.bet_label.config(text="")
+        
+        # Update stack progress bar
+        self.starting_stack = starting_stack if starting_stack > 0 else 100.0
+        progress = (stack_amount / self.starting_stack) * 100
+        self.stack_bar['value'] = min(progress, 100)  # Cap at 100%
+        
+        # Update chip graphics
+        self._draw_chips(stack_amount)
+    
+    def set_active_player(self, is_active):
+        """Applies a 'lighting effect' to indicate the active player."""
+        if is_active:
+            # Bright gold border for active player
+            self.config(highlightbackground="gold", highlightthickness=3)
+        else:
+            # Standard border for inactive players
+            self.config(highlightbackground="#006400", highlightthickness=2)
 
     def _draw_chips(self, stack):
         """Draws a graphical stack of chips based on the stack amount."""
@@ -1511,13 +1548,19 @@ class PracticeSessionUI(ttk.Frame):
             player_info = game_info['players'][i]
             player_pod = player_seat.get("player_pod")
             
-            # Update PlayerPod with new data
+            # Update PlayerPod with new data including bet information
             if player_pod:
                 pod_data = {
                     "name": f"{player_info['name']} ({player_info['position']})",
-                    "stack": player_info['stack']
+                    "stack": player_info['stack'],
+                    "bet": player_info.get('current_bet', 0),
+                    "starting_stack": 100.0  # Default starting stack for progress bar
                 }
                 player_pod.update_pod(pod_data)
+                
+                # Set active player highlighting
+                is_active_turn = (i == game_info.get('action_player', -1))
+                player_pod.set_active_player(is_active_turn)
             
             # FIXED: Highlight based on action_player index, not is_active status
             # Players should be highlighted when it's their turn, even if they fold
