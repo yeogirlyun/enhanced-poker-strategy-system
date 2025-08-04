@@ -103,6 +103,15 @@ class CardWidget(tk.Canvas):
     def set_folded(self):
         """Shows the card as folded (empty)."""
         self.set_card("", is_folded=True)
+    
+    def highlight_winning_card(self):
+        """Highlight this card as part of the winning hand."""
+        # Add a yellow border to indicate this card is part of the winning hand
+        self.config(highlightbackground="#FFFF00", highlightthickness=3)
+    
+    def clear_highlight(self):
+        """Clear the winning card highlight."""
+        self.config(highlightbackground="black", highlightthickness=1)
 
 class PlayerPod(tk.Frame):
     """A custom widget for a player's area, including a graphical stack display."""
@@ -1602,7 +1611,7 @@ class PracticeSessionUI(ttk.Frame):
         self.update_session_info()
     
     def _highlight_winning_cards(self):
-        """Highlight the 5 cards that form the winning hand with light yellow background."""
+        """Highlight the 5 cards that form the winning hand with yellow border."""
         if not hasattr(self, 'winning_cards') or not self.winning_cards:
             return
         
@@ -1615,9 +1624,8 @@ class PracticeSessionUI(ttk.Frame):
                 if i < len(self.preserved_community_cards):
                     card = self.preserved_community_cards[i]
                     if card in self.winning_cards:
-                        # Highlight with light yellow background
-                        card_widget.config(bg="#FFFFE0")  # Light yellow
-                        card_widget.update()
+                        # Highlight with yellow border
+                        card_widget.highlight_winning_card()
         
         # Highlight player cards that are part of winning hand
         for i, player_seat in enumerate(self.player_seats):
@@ -1632,17 +1640,15 @@ class PracticeSessionUI(ttk.Frame):
             if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
                 for j, card in enumerate(player_info['cards']):
                     if card in self.winning_cards:
-                        # Highlight with light yellow background
-                        card_widgets[j].config(bg="#FFFFE0")  # Light yellow
-                        card_widgets[j].update()
+                        # Highlight with yellow border
+                        card_widgets[j].highlight_winning_card()
     
     def _clear_winning_card_highlights(self):
         """Clear all winning card highlights."""
         # Clear community card highlights
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
             for card_widget in self.community_card_widgets:
-                card_widget.config(bg="white")
-                card_widget.update()
+                card_widget.clear_highlight()
         
         # Clear player card highlights
         for player_seat in self.player_seats:
@@ -1651,8 +1657,7 @@ class PracticeSessionUI(ttk.Frame):
             
             card_widgets = player_seat.get("card_widgets", [])
             for card_widget in card_widgets:
-                card_widget.config(bg="white")
-                card_widget.update()
+                card_widget.clear_highlight()
     
     def _update_bet_size_label(self, event=None):
         """Updates the label for the bet sizing slider."""
