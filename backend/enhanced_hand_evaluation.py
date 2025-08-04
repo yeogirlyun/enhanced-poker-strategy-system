@@ -143,7 +143,7 @@ class EnhancedHandEvaluator:
             return HandRank.FOUR_OF_A_KIND, sorted(rank_values, reverse=True), "Four of a Kind"
         
         # Check for full house
-        if sorted_values == [3, 2]:
+        if len(sorted_values) >= 2 and sorted_values[:2] == [3, 2]:
             return HandRank.FULL_HOUSE, sorted(rank_values, reverse=True), "Full House"
         
         # Check for flush
@@ -195,14 +195,22 @@ class EnhancedHandEvaluator:
         return False
     
     def _calculate_strength_score(self, hand_rank: HandRank, rank_values: List[int]) -> int:
-        """Calculate a strength score from 0-100."""
-        base_score = hand_rank.value * 10
+        """Calculate a detailed strength score that allows precise hand comparison."""
+        # Use a hierarchical scoring system similar to the user's suggestion
+        # Hand rank is the most significant part (multiply by large factor)
+        hand_rank_strength = hand_rank.value * 10**10
         
-        # Add kicker strength
-        kicker_strength = sum(rank_values[:5]) / 70.0  # Normalize to 0-1
+        # Card ranks are the second most significant part
+        # Create a single number from the rank values (e.g., [14, 10, 8] becomes 141008)
+        if rank_values:
+            # Pad rank values to 2 digits to ensure correct sorting
+            rank_strings = [f"{rank:02d}" for rank in rank_values[:5]]  # Take top 5 ranks
+            card_strength = int("".join(rank_strings))
+        else:
+            card_strength = 0
         
-        total_score = base_score + (kicker_strength * 10)
-        return min(100, int(total_score))
+        # The final strength is the sum of hand rank value and card strength
+        return hand_rank_strength + card_strength
     
     def _compare_hands(self, hand1: Tuple[HandRank, List[int]], 
                       hand2: Tuple[HandRank, List[int]]) -> int:
@@ -269,6 +277,103 @@ class EnhancedHandEvaluator:
             HandRank.ROYAL_FLUSH: 'royal_flush'
         }
         return conversion.get(hand_rank, 'high_card')
+
+    def get_best_five_cards(self, hole_cards: List[str], board_cards: List[str]) -> List[str]:
+        """
+        Get the 5 cards that form the best hand.
+        This is crucial for proper highlighting of winning cards.
+        """
+        evaluation = self.evaluate_hand(hole_cards, board_cards)
+        hand_rank = evaluation['hand_rank']
+        rank_values = evaluation['rank_values']
+        
+        all_cards = hole_cards + board_cards
+        card_values = [(card, self.rank_values[card[0]]) for card in all_cards]
+        card_values.sort(key=lambda x: x[1], reverse=True)
+        
+        # For pairs, two pairs, three of a kind, full house, four of a kind:
+        # Find the cards that form the main part of the hand plus kickers
+        if hand_rank in [HandRank.PAIR, HandRank.TWO_PAIR, HandRank.THREE_OF_A_KIND, 
+                        HandRank.FULL_HOUSE, HandRank.FOUR_OF_A_KIND]:
+            # Count ranks to find the main hand components
+            rank_counts = {}
+            for card in all_cards:
+                rank = card[0]
+                rank_counts[rank] = rank_counts.get(rank, 0) + 1
+            
+            # Sort ranks by count (descending) then by value (descending)
+            sorted_ranks = sorted(rank_counts.items(), 
+                                key=lambda x: (x[1], self.rank_values[x[0]]), 
+                                reverse=True)
+            
+            best_cards = []
+            # Add cards for the main hand components (pairs, trips, quads)
+            for rank, count in sorted_ranks:
+                if count >= 2:  # Only include ranks that form part of the hand
+                    rank_cards = [card for card in all_cards if card[0] == rank]
+                    # Take the highest cards of this rank
+                    rank_cards.sort(key=lambda x: self.rank_values[x[0]], reverse=True)
+                    best_cards.extend(rank_cards[:min(count, 5 - len(best_cards))])
+                    if len(best_cards) >= 5:
+                        break
+            
+            # Add kickers if needed
+            remaining_cards = [card for card in all_cards if card not in best_cards]
+            remaining_cards.sort(key=lambda x: self.rank_values[x[0]], reverse=True)
+            best_cards.extend(remaining_cards[:5 - len(best_cards)])
+            
+            return best_cards[:5]
+        
+        # For straight, flush, straight flush, royal flush:
+        # Find the 5 cards that form the straight/flush
+        elif hand_rank in [HandRank.STRAIGHT, HandRank.FLUSH, 
+                          HandRank.STRAIGHT_FLUSH, HandRank.ROYAL_FLUSH]:
+            # For flush-based hands, find the 5 highest cards of the flush suit
+            if hand_rank in [HandRank.FLUSH, HandRank.STRAIGHT_FLUSH, HandRank.ROYAL_FLUSH]:
+                # Find the flush suit
+                suit_counts = {}
+                for card in all_cards:
+                    suit = card[1]
+                    suit_counts[suit] = suit_counts.get(suit, 0) + 1
+                
+                flush_suit = max(suit_counts.items(), key=lambda x: x[1])[0]
+                flush_cards = [card for card in all_cards if card[1] == flush_suit]
+                flush_cards.sort(key=lambda x: self.rank_values[x[0]], reverse=True)
+                return flush_cards[:5]
+            
+            # For straight-based hands, find the 5 cards that form the straight
+            else:  # STRAIGHT
+                # Find the highest straight
+                unique_ranks = sorted(list(set([card[0] for card in all_cards])), 
+                                    key=lambda x: self.rank_values[x], reverse=True)
+                
+                # Check for regular straight
+                for i in range(len(unique_ranks) - 4):
+                    straight_ranks = unique_ranks[i:i+5]
+                    if (self.rank_values[straight_ranks[0]] - 
+                        self.rank_values[straight_ranks[4]] == 4):
+                        # Find the highest cards for each rank in the straight
+                        straight_cards = []
+                        for rank in straight_ranks:
+                            rank_cards = [card for card in all_cards if card[0] == rank]
+                            straight_cards.append(max(rank_cards, 
+                                                   key=lambda x: self.rank_values[x[0]]))
+                        return straight_cards
+                
+                # Check for wheel straight (A-2-3-4-5)
+                wheel_ranks = ['A', '2', '3', '4', '5']
+                if all(rank in unique_ranks for rank in wheel_ranks):
+                    wheel_cards = []
+                    for rank in wheel_ranks:
+                        rank_cards = [card for card in all_cards if card[0] == rank]
+                        wheel_cards.append(max(rank_cards, 
+                                            key=lambda x: self.rank_values[x[0]]))
+                    return wheel_cards
+        
+        # For high card:
+        # Return the 5 highest cards
+        else:
+            return [card for card, value in card_values[:5]]
 
 
 # Global instance for easy access
