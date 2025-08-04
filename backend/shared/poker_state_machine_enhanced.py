@@ -646,7 +646,9 @@ class ImprovedPokerStateMachine:
         """Update blind positions based on current dealer position."""
         active_players = [i for i, p in enumerate(self.game_state.players) if p.is_active]
         if len(active_players) < 2:
-            self._log_action("Not enough active players for blinds")
+            # Only log this message if we're not in the middle of a hand completion
+            if self.current_state not in [PokerState.END_HAND, PokerState.SHOWDOWN]:
+                self._log_action("Not enough active players for blinds")
             self.small_blind_position = -1
             self.big_blind_position = -1
             return
