@@ -1778,9 +1778,7 @@ class ImprovedPokerStateMachine:
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
-            self._log_action(f"🔄 {player.name} FOLDS - Setting is_active = False")
             player.is_active = False
-            self._log_action(f"✅ {player.name} is now folded (is_active = {player.is_active})")
             
             # --- THIS IS THE CRITICAL BUG FIX ---
             # DO NOT reset the player's current bet when they fold.
@@ -1789,8 +1787,6 @@ class ImprovedPokerStateMachine:
             # --- End of Bug Fix ---
 
         elif action == ActionType.CHECK:
-            # FIX: Add proper CHECK logging
-            self._log_action(f"✅ {player.name}: CHECK")
             # Only valid when current_bet is 0 or player already has current bet
             call_amount = self.game_state.current_bet - player.current_bet
             if call_amount > 0:
