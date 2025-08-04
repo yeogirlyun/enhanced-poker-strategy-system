@@ -1645,14 +1645,12 @@ class PracticeSessionUI(ttk.Frame):
         self.update_session_info()
     
     def _highlight_winning_cards(self):
-        """Highlight the 5 cards that form the winning hand with yellow border."""
+        """Highlight the 5 cards that form the winning hand with light yellow background."""
         if not hasattr(self, 'winning_cards') or not self.winning_cards:
             return
         
-        # Only clear previous highlighting if we're not in a completed hand
-        # This prevents clearing the highlighting during UI refresh cycles
-        if not self.hand_completed:
-            self._clear_winning_card_highlights()
+        # Clear previous highlighting first
+        self._clear_winning_card_highlights()
         
         # Highlight community cards that are part of winning hand
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1662,9 +1660,6 @@ class PracticeSessionUI(ttk.Frame):
                     if card in self.winning_cards:
                         # Highlight with light yellow background
                         card_widget.highlight_winning_card()
-                        print(f"DEBUG: Highlighting community card {card} as winning card")
-                    else:
-                        print(f"DEBUG: Community card {card} not in winning cards {self.winning_cards}")
         
         # Highlight player cards that are part of winning hand
         for i, player_seat in enumerate(self.player_seats):
@@ -1681,12 +1676,13 @@ class PracticeSessionUI(ttk.Frame):
                     if card in self.winning_cards:
                         # Highlight with light yellow background
                         card_widgets[j].highlight_winning_card()
-                        print(f"DEBUG: Highlighting player {i} card {card} as winning card")
-                    else:
-                        print(f"DEBUG: Player {i} card {card} not in winning cards {self.winning_cards}")
     
     def _clear_winning_card_highlights(self):
         """Clear all winning card highlights."""
+        # Don't clear highlights if hand is completed and we have winning cards
+        if self.hand_completed and hasattr(self, 'winning_cards') and self.winning_cards:
+            return
+        
         # Clear community card highlights
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
             for card_widget in self.community_card_widgets:
