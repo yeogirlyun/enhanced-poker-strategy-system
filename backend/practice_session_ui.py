@@ -991,6 +991,25 @@ class PracticeSessionUI(ttk.Frame):
             if is_action or is_community_cards or is_showdown or is_street_transition:
                 self.info_text.config(state=tk.NORMAL)
                 
+                # Get current font size from the info_text widget
+                current_font = self.info_text.cget("font")
+                if isinstance(current_font, str):
+                    # Parse font string like "Arial 10"
+                    font_parts = current_font.split()
+                    if len(font_parts) >= 2:
+                        font_family = font_parts[0]
+                        font_size = int(font_parts[1])
+                    else:
+                        font_family = "Arial"
+                        font_size = 10
+                else:
+                    # Font is already a tuple
+                    font_family = current_font[0]
+                    font_size = current_font[1]
+                
+                # Create bold font for highlighted messages
+                bold_font = (font_family, font_size, "bold")
+                
                 # Apply appropriate formatting based on message type
                 if is_action:
                     # Bold yellow for player actions
@@ -1000,7 +1019,7 @@ class PracticeSessionUI(ttk.Frame):
                     last_line_start = self.info_text.index("end-2c linestart")
                     last_line_end = self.info_text.index("end-1c")
                     self.info_text.tag_add("action_highlight", last_line_start, last_line_end)
-                    self.info_text.tag_config("action_highlight", foreground="yellow", font=("Arial", 10, "bold"))
+                    self.info_text.tag_config("action_highlight", foreground="yellow", font=bold_font)
                     
                 elif is_community_cards:
                     # Bold cyan for community card events
@@ -1009,7 +1028,7 @@ class PracticeSessionUI(ttk.Frame):
                     last_line_start = self.info_text.index("end-2c linestart")
                     last_line_end = self.info_text.index("end-1c")
                     self.info_text.tag_add("community_highlight", last_line_start, last_line_end)
-                    self.info_text.tag_config("community_highlight", foreground="cyan", font=("Arial", 10, "bold"))
+                    self.info_text.tag_config("community_highlight", foreground="cyan", font=bold_font)
                     
                 elif is_showdown:
                     # Bold yellow for showdown results
@@ -1018,7 +1037,7 @@ class PracticeSessionUI(ttk.Frame):
                     last_line_start = self.info_text.index("end-2c linestart")
                     last_line_end = self.info_text.index("end-1c")
                     self.info_text.tag_add("showdown_highlight", last_line_start, last_line_end)
-                    self.info_text.tag_config("showdown_highlight", foreground="yellow", font=("Arial", 10, "bold"))
+                    self.info_text.tag_config("showdown_highlight", foreground="yellow", font=bold_font)
                     
                 elif is_street_transition:
                     # Bold green for street transitions
@@ -1027,7 +1046,7 @@ class PracticeSessionUI(ttk.Frame):
                     last_line_start = self.info_text.index("end-2c linestart")
                     last_line_end = self.info_text.index("end-1c")
                     self.info_text.tag_add("transition_highlight", last_line_start, last_line_end)
-                    self.info_text.tag_config("transition_highlight", foreground="green", font=("Arial", 10, "bold"))
+                    self.info_text.tag_config("transition_highlight", foreground="green", font=bold_font)
                     
                 else:
                     # Regular formatting for other important messages
@@ -1668,6 +1687,12 @@ class PracticeSessionUI(ttk.Frame):
         # Update action messages text area
         if hasattr(self, 'info_text'):
             self.info_text.config(font=main_font)
+            # Update existing tags with new font size
+            bold_font = (THEME["font_family"], font_size, "bold")
+            self.info_text.tag_config("action_highlight", font=bold_font)
+            self.info_text.tag_config("community_highlight", font=bold_font)
+            self.info_text.tag_config("showdown_highlight", font=bold_font)
+            self.info_text.tag_config("transition_highlight", font=bold_font)
         
         # Update scrollbars to match the new font size
         if hasattr(self, 'session_scrollbar'):
