@@ -830,9 +830,11 @@ class PracticeSessionUI(ttk.Frame):
             for i, seat in enumerate(self.player_seats):
                 if seat and seat.get("name_label"):
                     player_name = seat["name_label"].cget("text").split('\n')[0]
-                    if player_name == winner_name:
+                    # Extract just the player name part (before the position)
+                    # player_name format: "Player 1 (CO - Cutoff)" -> extract "Player 1"
+                    player_name_clean = player_name.split(' (')[0]
+                    if player_name_clean == winner_name:
                         winner_seat = i
-    
                         break
             if winner_seat is not None:
                 break
@@ -951,21 +953,79 @@ class PracticeSessionUI(ttk.Frame):
             # Start the animation
             animate_money()
     def add_game_message(self, message):
-        """Add a message to the action messages area."""
+        """Add a message to the action messages area with enhanced formatting."""
         if hasattr(self, 'info_text'):
-            # Filter to show only important action messages
-            important_keywords = [
-                'attempting', 'FOLDS', 'CALLS', 'RAISES', 'BETS', 'CHECKS',
-                'wins', 'STATE TRANSITION', 'ROUND COMPLETE', 'SHOWDOWN',
-                'Player', 'raises to', 'calls', 'folds', 'bets'
+            # Enhanced keywords for vivid formatting
+            action_keywords = [
+                'FOLDS', 'CALLS', 'RAISES', 'BETS', 'CHECKS', 'folds', 'calls', 'raises', 'bets', 'checks',
+                'attempting FOLD', 'attempting CALL', 'attempting RAISE', 'attempting BET', 'attempting CHECK'
             ]
             
-            # Check if message contains any important keywords
-            is_important = any(keyword.lower() in message.lower() for keyword in important_keywords)
+            community_card_keywords = [
+                'DEALING FLOP', 'DEALING TURN', 'DEALING RIVER', 'FLOP COMPLETE', 'TURN COMPLETE', 'RIVER COMPLETE',
+                'Dealt card', 'Dealt flop', 'Dealt turn', 'Dealt river'
+            ]
             
-            if is_important:
+            showdown_keywords = [
+                'SHOWDOWN', 'wins with', 'wins $', 'Winner(s):', '🏆', 'Main Pot', 'Side Pot'
+            ]
+            
+            street_transition_keywords = [
+                'TRANSITIONING TO', 'PREFLOP BETTING', 'FLOP BETTING', 'TURN BETTING', 'RIVER BETTING'
+            ]
+            
+            # Check message type for appropriate formatting
+            is_action = any(keyword.lower() in message.lower() for keyword in action_keywords)
+            is_community_cards = any(keyword.lower() in message.lower() for keyword in community_card_keywords)
+            is_showdown = any(keyword.lower() in message.lower() for keyword in showdown_keywords)
+            is_street_transition = any(keyword.lower() in message.lower() for keyword in street_transition_keywords)
+            
+            # Always show important messages
+            if is_action or is_community_cards or is_showdown or is_street_transition:
                 self.info_text.config(state=tk.NORMAL)
-                self.info_text.insert(tk.END, f"{message}\n")
+                
+                # Apply appropriate formatting based on message type
+                if is_action:
+                    # Bold yellow for player actions
+                    formatted_message = f"🎯 {message}\n"
+                    self.info_text.insert(tk.END, formatted_message)
+                    # Apply yellow color to the last line
+                    last_line_start = self.info_text.index("end-2c linestart")
+                    last_line_end = self.info_text.index("end-1c")
+                    self.info_text.tag_add("action_highlight", last_line_start, last_line_end)
+                    self.info_text.tag_config("action_highlight", foreground="yellow", font=("Arial", 10, "bold"))
+                    
+                elif is_community_cards:
+                    # Bold cyan for community card events
+                    formatted_message = f"🎴 {message}\n"
+                    self.info_text.insert(tk.END, formatted_message)
+                    last_line_start = self.info_text.index("end-2c linestart")
+                    last_line_end = self.info_text.index("end-1c")
+                    self.info_text.tag_add("community_highlight", last_line_start, last_line_end)
+                    self.info_text.tag_config("community_highlight", foreground="cyan", font=("Arial", 10, "bold"))
+                    
+                elif is_showdown:
+                    # Bold yellow for showdown results
+                    formatted_message = f"🏆 {message}\n"
+                    self.info_text.insert(tk.END, formatted_message)
+                    last_line_start = self.info_text.index("end-2c linestart")
+                    last_line_end = self.info_text.index("end-1c")
+                    self.info_text.tag_add("showdown_highlight", last_line_start, last_line_end)
+                    self.info_text.tag_config("showdown_highlight", foreground="yellow", font=("Arial", 10, "bold"))
+                    
+                elif is_street_transition:
+                    # Bold green for street transitions
+                    formatted_message = f"🔄 {message}\n"
+                    self.info_text.insert(tk.END, formatted_message)
+                    last_line_start = self.info_text.index("end-2c linestart")
+                    last_line_end = self.info_text.index("end-1c")
+                    self.info_text.tag_add("transition_highlight", last_line_start, last_line_end)
+                    self.info_text.tag_config("transition_highlight", foreground="green", font=("Arial", 10, "bold"))
+                    
+                else:
+                    # Regular formatting for other important messages
+                    self.info_text.insert(tk.END, f"{message}\n")
+                
                 self.info_text.see(tk.END)
                 self.info_text.config(state=tk.DISABLED)
     
