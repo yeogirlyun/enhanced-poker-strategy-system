@@ -1513,6 +1513,7 @@ class ImprovedPokerStateMachine:
         elif max(suit_counts.values()) == 3:
             if self._has_backdoor_flush(cards, board, suit_counts):
                 return "backdoor_flush"
+            return "high_card"  # Default for 3-to-a-suit without backdoor flush
         
         elif self._has_backdoor_straight_draw(list(rank_counts.keys())):
             return "backdoor_straight"
@@ -1579,101 +1580,8 @@ class ImprovedPokerStateMachine:
 
     def _get_best_five_cards(self, cards: List[str], board: List[str]) -> List[str]:
         """Get the 5 cards that form the best hand."""
-        # Use the enhanced hand evaluator to get the actual best 5-card combination
-        evaluation = self.hand_evaluator.evaluate_hand(cards, board)
-        
-        # Get the hand rank and rank values to determine which cards form the best hand
-        hand_rank = evaluation['hand_rank']
-        rank_values = evaluation['rank_values']
-        
-        # Analyze the hand structure to find the actual best 5 cards
-        all_cards = cards + board
-        card_values = [(card, self._get_rank_value(card[0])) for card in all_cards]
-        card_values.sort(key=lambda x: x[1], reverse=True)
-        
-        # For pairs, two pairs, three of a kind, full house, four of a kind:
-        # Find the cards that form the main part of the hand plus kickers
-        if hand_rank in [HandRank.PAIR, HandRank.TWO_PAIR, HandRank.THREE_OF_A_KIND, 
-                        HandRank.FULL_HOUSE, HandRank.FOUR_OF_A_KIND]:
-            # Count ranks to find the main hand components
-            rank_counts = {}
-            for card in all_cards:
-                rank = card[0]
-                rank_counts[rank] = rank_counts.get(rank, 0) + 1
-            
-            # Sort ranks by count (descending) then by value (descending)
-            sorted_ranks = sorted(rank_counts.items(), 
-                                key=lambda x: (x[1], self._get_rank_value(x[0])), 
-                                reverse=True)
-            
-            best_cards = []
-            # Add cards for the main hand components (pairs, trips, quads)
-            for rank, count in sorted_ranks:
-                if count >= 2:  # Only include ranks that form part of the hand
-                    rank_cards = [card for card in all_cards if card[0] == rank]
-                    # Take the highest cards of this rank
-                    rank_cards.sort(key=lambda x: self._get_rank_value(x[0]), reverse=True)
-                    best_cards.extend(rank_cards[:min(count, 5 - len(best_cards))])
-                    if len(best_cards) >= 5:
-                        break
-            
-            # Add kickers if needed
-            remaining_cards = [card for card in all_cards if card not in best_cards]
-            remaining_cards.sort(key=lambda x: self._get_rank_value(x[0]), reverse=True)
-            best_cards.extend(remaining_cards[:5 - len(best_cards)])
-            
-            return best_cards[:5]
-        
-        # For straight, flush, straight flush, royal flush:
-        # Find the 5 cards that form the straight/flush
-        elif hand_rank in [HandRank.STRAIGHT, HandRank.FLUSH, 
-                          HandRank.STRAIGHT_FLUSH, HandRank.ROYAL_FLUSH]:
-            # For flush-based hands, find the 5 highest cards of the flush suit
-            if hand_rank in [HandRank.FLUSH, HandRank.STRAIGHT_FLUSH, HandRank.ROYAL_FLUSH]:
-                # Find the flush suit
-                suit_counts = {}
-                for card in all_cards:
-                    suit = card[1]
-                    suit_counts[suit] = suit_counts.get(suit, 0) + 1
-                
-                flush_suit = max(suit_counts.items(), key=lambda x: x[1])[0]
-                flush_cards = [card for card in all_cards if card[1] == flush_suit]
-                flush_cards.sort(key=lambda x: self._get_rank_value(x[0]), reverse=True)
-                return flush_cards[:5]
-            
-            # For straight-based hands, find the 5 cards that form the straight
-            else:  # STRAIGHT
-                # Find the highest straight
-                unique_ranks = sorted(list(set([card[0] for card in all_cards])), 
-                                    key=lambda x: self._get_rank_value(x), reverse=True)
-                
-                # Check for regular straight
-                for i in range(len(unique_ranks) - 4):
-                    straight_ranks = unique_ranks[i:i+5]
-                    if (self._get_rank_value(straight_ranks[0]) - 
-                        self._get_rank_value(straight_ranks[4]) == 4):
-                        # Find the highest cards for each rank in the straight
-                        straight_cards = []
-                        for rank in straight_ranks:
-                            rank_cards = [card for card in all_cards if card[0] == rank]
-                            straight_cards.append(max(rank_cards, 
-                                                   key=lambda x: self._get_rank_value(x[0])))
-                        return straight_cards
-                
-                # Check for wheel straight (A-2-3-4-5)
-                wheel_ranks = ['A', '2', '3', '4', '5']
-                if all(rank in unique_ranks for rank in wheel_ranks):
-                    wheel_cards = []
-                    for rank in wheel_ranks:
-                        rank_cards = [card for card in all_cards if card[0] == rank]
-                        wheel_cards.append(max(rank_cards, 
-                                            key=lambda x: self._get_rank_value(x[0])))
-                    return wheel_cards
-        
-        # For high card:
-        # Return the 5 highest cards
-        else:
-            return [card for card, value in card_values[:5]]
+        # Use the enhanced hand evaluator's new method to get the actual best 5-card combination
+        return self.hand_evaluator.get_best_five_cards(cards, board)
 
     def _has_backdoor_flush(self, cards: List[str], board: List[str], suit_counts: dict) -> bool:
         """Check for backdoor flush draw (3 to a suit, one from player)."""
