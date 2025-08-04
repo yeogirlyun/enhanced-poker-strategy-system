@@ -847,42 +847,15 @@ class PracticeSessionUI(ttk.Frame):
                 # Update pot label with winner info
                 self.pot_label.config(text=f"Winner: {winner_names}!", fg=THEME["accent_secondary"])
                 self.pot_label.update()  # Force pot label update
+                
+                # Add the winner announcement to the main game message area immediately
                 self.add_game_message(announcement)
                 
                 # Start pot animation to winner
                 self._animate_pot_to_winner(winner_info)
-        # Set the winning announcement message that will persist until next hand
-        if hasattr(self, 'last_action_label'):
-            winner_name = winner_info.get('name', 'Unknown')
-            amount = winner_info.get('amount', 0)
-            
-            # Get enhanced hand information
-            winner_player = None
-            for player in self.state_machine.game_state.players:
-                if player.name == winner_name:
-                    winner_player = player
-                    break
-            
-            if winner_player and winner_player.cards:
-                hand_info = self.state_machine.get_hand_description_and_cards(
-                    winner_player.cards, final_board
-                )
-                description = hand_info['description']
-                winning_cards = hand_info['winning_cards']
-                
-                announcement = f"🏆 {winner_name} wins ${amount:.2f}!\n({description})\nWinning cards: {' '.join(winning_cards)}"
-            else:
-                hand_type = winner_info.get('hand', 'unknown')
-                announcement = f"🏆 {winner_name} wins ${amount:.2f}! ({hand_type})"
-            
-            self.last_action_label.config(text=announcement)
-
         
-        # Note: Winning cards are already stored and highlighted above
-        # No need to duplicate the storage and highlighting here
-
-        # Show game controls after a delay
-        self.after(3000, self._show_game_control_buttons)
+        # Show game controls immediately (no delay)
+        self._show_game_control_buttons()
 
     def _animate_pot_to_winner(self, winner_info):
         """Animate pot money moving to the winner's stack."""
