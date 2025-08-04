@@ -800,24 +800,36 @@ class PracticeSessionUI(ttk.Frame):
             # Force the canvas to refresh
             self.canvas.update()
 
-            # Create a more descriptive announcement with proper formatting
+            # FIRST: Get winner information and highlight winning cards BEFORE announcement
+            winner_player = None
             if pot_amount > 0:
-                # Get enhanced hand information
-                winner_player = None
                 for player in self.state_machine.game_state.players:
                     if player.name == winner_names:
                         winner_player = player
                         break
                 
+                # Store and highlight winning cards FIRST
                 if winner_player and winner_player.cards:
                     hand_info = self.state_machine.get_hand_description_and_cards(
                         winner_player.cards, final_board
                     )
+                    self.winning_cards = hand_info['winning_cards']
                     description = hand_info['description']
                     winning_cards = hand_info['winning_cards']
-                    
+                else:
+                    self.winning_cards = []
+                    description = winning_hand if winning_hand != "Unknown" else ""
+                    winning_cards = []
+                
+                # HIGHLIGHT WINNING CARDS FIRST
+                self.hand_completed = True
+                self._highlight_winning_cards()
+                
+                # THEN: Create announcement after cards are highlighted
+                if description:
                     announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}! ({description})"
-                    announcement += f"\nWinning cards: {' '.join(winning_cards)}"
+                    if winning_cards:
+                        announcement += f"\nWinning cards: {' '.join(winning_cards)}"
                 else:
                     announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
                     if winning_hand and winning_hand != "Unknown":
@@ -857,20 +869,8 @@ class PracticeSessionUI(ttk.Frame):
             self.last_action_label.config(text=announcement)
 
         
-        # Store winning cards for highlighting
-        if winner_player and winner_player.cards:
-            hand_info = self.state_machine.get_hand_description_and_cards(
-                winner_player.cards, final_board
-            )
-            self.winning_cards = hand_info['winning_cards']
-        else:
-            self.winning_cards = []
-        
-        # Mark hand as completed to preserve the announcement
-        self.hand_completed = True
-        
-        # IMMEDIATE: Highlight winning cards right when winner is announced
-        self._highlight_winning_cards()
+        # Note: Winning cards are already stored and highlighted above
+        # No need to duplicate the storage and highlighting here
 
         # Show game controls after a delay
         self.after(3000, self._show_game_control_buttons)
