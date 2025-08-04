@@ -1004,6 +1004,10 @@ class PracticeSessionUI(ttk.Frame):
         self.preserved_pot_amount = 0.0
         print(f"Cleared preserved_pot_amount to: {self.preserved_pot_amount}")
         
+        # CRITICAL FIX: Reset the game state pot to 0 to prevent update_display override
+        self.state_machine.game_state.pot = 0.0
+        print(f"Reset game_state.pot to: {self.state_machine.game_state.pot}")
+        
         # Clear the pot display
         self.pot_label.config(text="Pot: $0.00", fg="white")
         print(f"Pot cleared to: {self.pot_label.cget('text')}")
