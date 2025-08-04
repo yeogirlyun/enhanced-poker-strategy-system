@@ -55,6 +55,10 @@ class MockSoundManager:
 
     def play(self, sound_name):
         self.last_played = sound_name
+    
+    def play_action_sound(self, action_name, amount):
+        """Mock method for playing action sounds."""
+        self.last_played = f"{action_name}_{amount}"
 
 class MockHandEvaluator:
     class HandRank:
@@ -1116,6 +1120,111 @@ def test_hand_classification(state_machine, test_suite):
         {"hand_type": hand_type}
     )
     assert hand_type == "top_pair", f"Expected top_pair, got {hand_type}"
+
+
+def test_critical_hand_evaluation_fix(state_machine, test_suite):
+    """Test the critical hand evaluation bug fix: Full House vs Two Pair."""
+    print("🧪 Testing Critical Hand Evaluation Fix...")
+    
+    # Import the real hand evaluator for this test
+    from enhanced_hand_evaluation import EnhancedHandEvaluator
+    
+    # Create real evaluator and replace the mock
+    real_evaluator = EnhancedHandEvaluator()
+    state_machine.hand_evaluator = real_evaluator
+    
+    # The bug scenario from the user's screenshot
+    community_cards = ['Ad', 'Ac', 'Ks', 'Kh', 'Qc']  # Board: A♦ A♣ K♠ K♥ Q♣
+    player1_cards = ['Ah', '2d']  # Player 1: A♥ 2♦ (Full House: Aces full of Kings)
+    player3_cards = ['5h', '6d']  # Player 3: 5♥ 6♦ (Two Pair: Aces and Kings)
+    
+    print(f"🎴 Board: {' '.join(community_cards)}")
+    print(f"👤 Player 1: {' '.join(player1_cards)}")
+    print(f"👤 Player 3: {' '.join(player3_cards)}")
+    
+    # Evaluate both hands
+    player1_eval = real_evaluator.evaluate_hand(player1_cards, community_cards)
+    player3_eval = real_evaluator.evaluate_hand(player3_cards, community_cards)
+    
+    print(f"\n📊 Player 1 Evaluation:")
+    print(f"   Hand Rank: {player1_eval['hand_rank'].name}")
+    print(f"   Description: {player1_eval['hand_description']}")
+    print(f"   Strength Score: {player1_eval['strength_score']}")
+    
+    print(f"\n📊 Player 3 Evaluation:")
+    print(f"   Hand Rank: {player3_eval['hand_rank'].name}")
+    print(f"   Description: {player3_eval['hand_description']}")
+    print(f"   Strength Score: {player3_eval['strength_score']}")
+    
+    # Test winner determination
+    player1_strength = player1_eval['strength_score']
+    player3_strength = player3_eval['strength_score']
+    
+    print(f"\n🏆 Winner Determination:")
+    winner_correct = player1_strength > player3_strength
+    if winner_correct:
+        print("✅ Player 1 wins (CORRECT - Full House beats Two Pair)")
+    else:
+        print("❌ Player 3 wins (INCORRECT - Two Pair should not beat Full House)")
+    
+    # Test best 5 cards identification
+    print(f"\n🎯 Best 5 Cards Test:")
+    player1_best_cards = real_evaluator.get_best_five_cards(player1_cards, community_cards)
+    player3_best_cards = real_evaluator.get_best_five_cards(player3_cards, community_cards)
+    
+    print(f"Player 1 best 5 cards: {' '.join(player1_best_cards)}")
+    print(f"Player 3 best 5 cards: {' '.join(player3_best_cards)}")
+    
+    # Validate that Player 1's best cards include the Aces and Kings that form the Full House
+    expected_player1_cards = ['Ah', 'Ad', 'Ac', 'Ks', 'Kh']  # Aces full of Kings
+    cards_correct = set(player1_best_cards) == set(expected_player1_cards)
+    
+    if cards_correct:
+        print("✅ Player 1's best 5 cards are correct (Full House cards)")
+    else:
+        print(f"❌ Player 1's best 5 cards are incorrect")
+        print(f"   Expected: {' '.join(expected_player1_cards)}")
+        print(f"   Got: {' '.join(player1_best_cards)}")
+    
+    # Test state machine's hand evaluation
+    print(f"\n🤖 State Machine Test:")
+    
+    # Simulate the showdown scenario
+    player1 = state_machine.game_state.players[0]
+    player3 = state_machine.game_state.players[2]
+    
+    player1.cards = player1_cards
+    player3.cards = player3_cards
+    state_machine.game_state.board = community_cards
+    
+    # Determine winner using state machine
+    winners = state_machine.determine_winner([player1, player3])
+    
+    state_machine_correct = len(winners) == 1 and winners[0] == player1
+    if state_machine_correct:
+        print("✅ State machine correctly determines Player 1 as winner")
+    else:
+        print("❌ State machine incorrectly determines winner")
+        print(f"   Winners: {[w.name for w in winners]}")
+    
+    # Overall test result
+    all_passed = winner_correct and cards_correct and state_machine_correct
+    
+    print(f"\n📋 Test Summary:")
+    print(f"   Winner determination: {'✅ PASS' if winner_correct else '❌ FAIL'}")
+    print(f"   Best 5 cards: {'✅ PASS' if cards_correct else '❌ FAIL'}")
+    print(f"   State machine: {'✅ PASS' if state_machine_correct else '❌ FAIL'}")
+    
+    print(f"\n🎉 Overall Result: {'✅ ALL TESTS PASSED' if all_passed else '❌ SOME TESTS FAILED'}")
+    
+    if all_passed:
+        test_suite.log_test("Critical Hand Evaluation Fix", True, 
+                           "Full House correctly beats Two Pair, best 5 cards identified correctly")
+    else:
+        test_suite.log_test("Critical Hand Evaluation Fix", False, 
+                           "Hand evaluation fix not working correctly")
+    
+    return all_passed
 
 def test_game_info(state_machine, test_suite):
     """Test game info retrieval."""
