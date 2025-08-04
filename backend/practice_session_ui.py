@@ -977,10 +977,10 @@ class PracticeSessionUI(ttk.Frame):
             
 
             
-            # Enhanced animation with multiple effects - SLOWER AND MORE VISIBLE
+            # Enhanced animation with multiple effects - AT LEAST 2 SECONDS
             def animate_money(step=0):
-                if step <= 60:  # 60 steps for slower, more visible animation
-                    progress = step / 60
+                if step <= 100:  # 100 steps for 2+ second animation
+                    progress = step / 100
                     # Enhanced easing function
                     ease = 1 - (1 - progress) ** 2
                     
@@ -1012,7 +1012,7 @@ class PracticeSessionUI(ttk.Frame):
                         glow_color = f"#{alpha:02x}ff{alpha:02x}"
                         self.canvas.itemconfig(glow_obj, fill=glow_color)
                     
-                    self.canvas.after(80, lambda: animate_money(step + 1))  # Slower animation (80ms instead of 40ms)
+                    self.canvas.after(100, lambda: animate_money(step + 1))  # 100ms intervals for 2+ second animation
                     
                     # Update the winner's stack graphics with the new amount
                     if winner_seat < len(self.player_seats):
@@ -1027,7 +1027,7 @@ class PracticeSessionUI(ttk.Frame):
                                 current_text = amount_label.cget("text")
                                 try:
                                     current_amount = float(current_text.replace("$", ""))
-                                    new_amount = current_amount + winner_info['amount']
+                                    new_amount = current_amount + pot_amount
                                     
                                     # Update stack graphics
                                     amount_label.config(text=f"${new_amount:.2f}")
@@ -1038,6 +1038,38 @@ class PracticeSessionUI(ttk.Frame):
                                     
                     # Update the display
                     self.update_display()
+                else:
+                    # Animation complete - clear pot and update winner's stack
+                    self.canvas.delete("money_animation")
+                    self.canvas.delete("money_animation_glow")
+                    
+                    # Clear the pot display
+                    self.pot_label.config(text="Pot: $0.00", fg="white")
+                    
+                    # Update winner's stack in the state machine
+                    if winner_seat < len(self.player_seats):
+                        player_seat = self.player_seats[winner_seat]
+                        if player_seat and "player_pod" in player_seat:
+                            player_pod = player_seat["player_pod"]
+                            # Get current stack from PlayerPod
+                            current_stack_text = player_pod.stack_label.cget("text")
+                            try:
+                                current_stack = float(current_stack_text.replace("$", "").replace(",", ""))
+                                new_stack = current_stack + pot_amount
+                                
+                                # Update PlayerPod with new stack
+                                pod_data = {
+                                    "name": player_pod.name_var.get(),
+                                    "stack": new_stack,
+                                    "bet": 0,  # Clear bet
+                                    "starting_stack": player_pod.starting_stack
+                                }
+                                player_pod.update_pod(pod_data)
+                                
+                                # Force update display
+                                self.update_display()
+                            except ValueError:
+                                pass  # Handle invalid number format
             
             # Start the animation
             animate_money()
