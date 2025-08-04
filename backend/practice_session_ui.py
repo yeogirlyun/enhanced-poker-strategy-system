@@ -868,6 +868,9 @@ class PracticeSessionUI(ttk.Frame):
         
         # Mark hand as completed to preserve the announcement
         self.hand_completed = True
+        
+        # IMMEDIATE: Highlight winning cards right when winner is announced
+        self._highlight_winning_cards()
 
         # Show game controls after a delay
         self.after(3000, self._show_game_control_buttons)
@@ -1592,9 +1595,8 @@ class PracticeSessionUI(ttk.Frame):
                 last_action = game_info.get('last_action_details', '')
                 self.last_action_label.config(text=last_action)
         
-        # Highlight winning cards if hand is completed
-        if self.hand_completed and hasattr(self, 'winning_cards'):
-            self._highlight_winning_cards()
+        # Note: Winning cards are highlighted immediately when hand completes
+        # No need to highlight again here as it's already done in handle_hand_complete
         
         # Update session information display
         self.update_session_info()
