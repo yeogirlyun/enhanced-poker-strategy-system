@@ -859,8 +859,10 @@ class PracticeSessionUI(ttk.Frame):
             # FIRST: Get winner information and highlight winning cards BEFORE announcement
             winner_player = None
             if pot_amount > 0:
+                # Handle split pots - winner_names may contain multiple names
+                winner_names_list = [name.strip() for name in winner_names.split(', ')]
                 for player in self.state_machine.game_state.players:
-                    if player.name == winner_names:
+                    if player.name in winner_names_list:
                         winner_player = player
                         break
                 
@@ -879,11 +881,19 @@ class PracticeSessionUI(ttk.Frame):
                 
                 # Create winner announcement message
                 if description:
-                    announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}! ({description})"
+                    # Check if this is a split pot
+                    if ',' in winner_names:
+                        announcement = f"🏆 Split pot! {winner_names} each win ${pot_amount/len(winner_names_list):.2f}! ({description})"
+                    else:
+                        announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}! ({description})"
                     if winning_cards:
                         announcement += f"\nWinning cards: {' '.join(winning_cards)}"
                 else:
-                    announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
+                    # Check if this is a split pot
+                    if ',' in winner_names:
+                        announcement = f"🏆 Split pot! {winner_names} each win ${pot_amount/len(winner_names_list):.2f}!"
+                    else:
+                        announcement = f"🏆 {winner_names} wins ${pot_amount:.2f}!"
                     if winning_hand and winning_hand != "Unknown":
                         announcement += f" ({winning_hand})"
                 
