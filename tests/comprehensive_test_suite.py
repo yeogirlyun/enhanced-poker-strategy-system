@@ -2208,6 +2208,46 @@ def test_bet_then_raise_validation(state_machine, test_suite):
                 {"error": str(e), "min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
             )
 
+def test_invalid_raise_error_handling(state_machine, test_suite):
+    """Test that invalid raises are properly rejected with error logging."""
+    state_machine.start_hand()
+    
+    # Get the first player and make a BET
+    first_player = state_machine.get_action_player()
+    state_machine.execute_action(first_player, ActionType.BET, 3.0)
+    
+    # Get the next player and try an invalid raise
+    next_player = state_machine.get_action_player()
+    if next_player:
+        # Capture logs to verify error message
+        logs = []
+        original_log = state_machine._log_action
+        state_machine._log_action = lambda msg: logs.append(msg)
+        
+        # Try to raise to $4.0 when min total should be $6.0
+        state_machine.execute_action(next_player, ActionType.RAISE, 4.0)
+        
+        # Restore original logging
+        state_machine._log_action = original_log
+        
+        # Check that error was logged
+        error_logged = any("ERROR: Minimum raise is" in log for log in logs)
+        
+        test_suite.log_test(
+            "Invalid Raise Error Handling",
+            error_logged,
+            f"Invalid raise should log error message",
+            {"logs": logs, "min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
+        )
+        
+        # Verify that the action was not executed (player state unchanged)
+        test_suite.log_test(
+            "Invalid Raise No Execution",
+            next_player.current_bet == 0.0,
+            f"Invalid raise should not change player's bet",
+            {"player_bet": next_player.current_bet, "expected": 0.0}
+        )
+
 def main():
     """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")
