@@ -1682,8 +1682,10 @@ class PracticeSessionUI(ttk.Frame):
         if not hasattr(self, 'winning_cards') or not self.winning_cards:
             return
         
-        # Clear previous highlighting first
-        self._clear_winning_card_highlights()
+        # Don't clear highlights if hand is completed and we have winning cards
+        # This prevents the highlighting from being cleared by subsequent UI updates
+        if not self.hand_completed:
+            self._clear_winning_card_highlights()
         
         # Highlight community cards that are part of winning hand
         if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1695,12 +1697,14 @@ class PracticeSessionUI(ttk.Frame):
                         card_widget.highlight_winning_card()
         
         # Highlight player cards that are part of winning hand
+        # Check ALL players, not just active ones, since winner might be determined differently
         for i, player_seat in enumerate(self.player_seats):
             if not player_seat:
                 continue
             
             player_info = self.state_machine.get_game_info()['players'][i]
-            if not player_info['is_active'] or not player_info['cards']:
+            # Check if player has cards (not folded) and if any of their cards are in winning hand
+            if not player_info['cards'] or len(player_info['cards']) == 0:
                 continue
             
             card_widgets = player_seat.get("card_widgets", [])
