@@ -898,14 +898,91 @@ class PracticeSessionUI(ttk.Frame):
         # Show game controls immediately (no delay)
         self._show_game_control_buttons()
 
+    def animate_pot_distribution(self, winner_seat_index):
+        """
+        Triggers the visual animation of chips moving to the winner.
+        This is the function you should call at the start of the showdown.
+        """
+        # Force the main window to process all pending drawing events.
+        # This is the CRITICAL step to ensure we get correct coordinates.
+        self.root.update_idletasks()
+
+        winner_seat_widget = self.player_seats[winner_seat_index]
+        pot_widget = self.pot_label  # Assuming your pot display is self.pot_label
+
+        # 1. Get Start and End coordinates in the screen's coordinate system.
+        start_x = pot_widget.winfo_rootx() + (pot_widget.winfo_width() // 2)
+        start_y = pot_widget.winfo_rooty() + (pot_widget.winfo_height() // 2)
+
+        end_x = winner_seat_widget.winfo_rootx() + (winner_seat_widget.winfo_width() // 2)
+        end_y = winner_seat_widget.winfo_rooty() + (winner_seat_widget.winfo_height() // 2)
+
+        # 2. Create the chip label. It MUST be a child of the root window to use screen coordinates.
+        chip_label = tk.Label(self.root, text="💰", font=("Arial", 20), bg="#006400", bd=0)
+        chip_label.place(x=start_x, y=start_y, anchor="center")
+
+        # 3. Start the recursive move function.
+        self._move_chip_step(chip_label, start_x, start_y, end_x, end_y)
+
+    def _move_chip_step(self, widget, x1, y1, x2, y2, step=0):
+        """
+        Private method to move the chip one step at a time.
+        """
+        total_steps = 25  # Increase for slower animation, decrease for faster
+        if step > total_steps:
+            widget.destroy()  # Animation is done, destroy the chip.
+            
+            # IMPORTANT: Now that the animation is finished,
+            # tell the state machine to update the data model.
+            self._distribute_pot_to_winner()
+            return
+
+        # Calculate the position for the current step
+        new_x = x1 + (x2 - x1) * (step / total_steps)
+        new_y = y1 + (y2 - y1) * (step / total_steps)
+        widget.place(x=new_x, y=new_y, anchor="center")
+
+        # Schedule the next call to this method
+        self.root.after(20, lambda: self._move_chip_step(widget, x1, y1, x2, y2, step + 1))
+
+    def _distribute_pot_to_winner(self):
+        """
+        Final method called after animation completes to update the winner's stack.
+        """
+        # Clear the pot display
+        self.pot_label.config(text="Pot: $0.00", fg="white")
+        
+        # Update winner's stack in the state machine
+        if hasattr(self, 'current_winner_seat') and self.current_winner_seat < len(self.player_seats):
+            player_seat = self.player_seats[self.current_winner_seat]
+            if player_seat and "player_pod" in player_seat:
+                player_pod = player_seat["player_pod"]
+                # Get current stack from PlayerPod
+                current_stack_text = player_pod.stack_label.cget("text")
+                try:
+                    current_stack = float(current_stack_text.replace("$", "").replace(",", ""))
+                    new_stack = current_stack + self.current_pot_amount
+                    
+                    # Update PlayerPod with new stack
+                    pod_data = {
+                        "name": player_pod.name_label.cget("text"),
+                        "stack": new_stack,
+                        "bet": 0,  # Clear bet
+                        "starting_stack": player_pod.starting_stack
+                    }
+                    player_pod.update_pod(pod_data)
+                    
+                    # Force update display
+                    self.update_display()
+                except ValueError:
+                    pass  # Handle invalid number format
+
     def _animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
-
         
         # Handle multiple winners (comma-separated names)
         winner_names = winner_info['name'].split(', ')
 
-        
         # Find the first winner's seat (or any winner if multiple)
         winner_seat = None
         for winner_name in winner_names:
@@ -926,122 +1003,14 @@ class PracticeSessionUI(ttk.Frame):
         
         # FIX: If we can't find the winner seat, use seat 0 as fallback
         if winner_seat is None:
-    
             winner_seat = 0
         
-        if winner_seat is not None:
-            
-            # Get pot center position
-            pot_x = self.canvas.winfo_width() / 2
-            pot_y = self.canvas.winfo_height() / 2 + 130  # Pot label position
-            
-            # Get winner's stack graphics position
-            width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
-            center_x, center_y = width / 2, height / 2
-            
-            # Calculate stack graphics position (same as in _create_stack_graphics)
-            stack_radius_x = width * 0.35
-            stack_radius_y = height * 0.28
-            angle = (2 * math.pi / self.num_players) * winner_seat - (math.pi / 2)
-            winner_x = center_x + stack_radius_x * math.cos(angle)
-            winner_y = center_y + stack_radius_y * math.sin(angle)
-
-            
-            # Create enhanced animated money object with chip visualization
-            chip_count = self._calculate_chip_count(pot_amount)
-            chip_symbols = self._get_chip_symbols(pot_amount)
-            money_text = f"${pot_amount:.2f}\n{chip_symbols}"
-            
-            money_obj = self.canvas.create_text(
-                pot_x, pot_y, 
-                text=money_text, 
-                fill="#FFD700",  # Bright gold
-                font=("Arial", 16, "bold"),
-                tags="money_animation",
-                justify=tk.CENTER
-            )
-            
-            # Add glow effect with chip visualization
-            glow_obj = self.canvas.create_text(
-                pot_x, pot_y, 
-                text=money_text, 
-                fill="#FFA500",  # Orange glow
-                font=("Arial", 18, "bold"),
-                tags="money_animation_glow",
-                justify=tk.CENTER
-            )
-            
-
-            
-            # Create a step-by-step chip animation that moves from pot to winner
-            def animate_chip_movement(step=0):
-                total_steps = 60  # 60 steps for smooth animation
-                if step <= total_steps:
-                    progress = step / total_steps
-                    
-                    # Use easing function for smooth movement
-                    ease = 1 - (1 - progress) ** 2
-                    
-                    # Calculate current position
-                    current_x = pot_x + (winner_x - pot_x) * ease
-                    current_y = pot_y + (winner_y - pot_y) * ease
-                    
-                    # Update chip position
-                    self.canvas.coords(money_obj, current_x, current_y)
-                    self.canvas.coords(glow_obj, current_x, current_y)
-                    
-                    # Scale effect - chip gets bigger as it moves
-                    scale = 1.0 + (progress * 0.3)
-                    font_size = int(16 * scale)
-                    glow_font_size = int(18 * scale)
-                    
-                    self.canvas.itemconfig(money_obj, font=("Arial", font_size, "bold"))
-                    self.canvas.itemconfig(glow_obj, font=("Arial", glow_font_size, "bold"))
-                    
-                    # Color transition effect
-                    if progress > 0.5:
-                        # Transition from gold to green (success color)
-                        green_intensity = int(255 * (progress - 0.5) * 2)
-                        color = f"#00{green_intensity:02x}00"  # Green with increasing intensity
-                        self.canvas.itemconfig(money_obj, fill=color)
-                    
-                    # Schedule next step - 150ms intervals for smooth movement
-                    self.canvas.after(150, lambda: animate_chip_movement(step + 1))
-                else:
-                    # Animation complete - NOW update the winner's stack
-                    self.canvas.delete("money_animation")
-                    self.canvas.delete("money_animation_glow")
-                    
-                    # Clear the pot display
-                    self.pot_label.config(text="Pot: $0.00", fg="white")
-                    
-                    # Update winner's stack in the state machine
-                    if winner_seat < len(self.player_seats):
-                        player_seat = self.player_seats[winner_seat]
-                        if player_seat and "player_pod" in player_seat:
-                            player_pod = player_seat["player_pod"]
-                            # Get current stack from PlayerPod
-                            current_stack_text = player_pod.stack_label.cget("text")
-                            try:
-                                current_stack = float(current_stack_text.replace("$", "").replace(",", ""))
-                                new_stack = current_stack + pot_amount
-                                
-                                # Update PlayerPod with new stack
-                                pod_data = {
-                                    "name": player_pod.name_label.cget("text"),
-                                    "stack": new_stack,
-                                    "bet": 0,  # Clear bet
-                                    "starting_stack": player_pod.starting_stack
-                                }
-                                player_pod.update_pod(pod_data)
-                                
-                                # Force update display
-                                self.update_display()
-                            except ValueError:
-                                pass  # Handle invalid number format
-            
-            # Start the chip animation
-            animate_chip_movement()
+        # Store winner info for the final distribution
+        self.current_winner_seat = winner_seat
+        self.current_pot_amount = pot_amount
+        
+        # Start the improved animation
+        self.animate_pot_distribution(winner_seat)
     def add_game_message(self, message):
         """Add a message to the action messages area with enhanced formatting."""
         if hasattr(self, 'info_text'):
