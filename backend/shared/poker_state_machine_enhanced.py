@@ -1067,7 +1067,7 @@ class ImprovedPokerStateMachine:
                     'pot': self.game_state.pot,
                     'current_bet': self.game_state.current_bet
                 }
-                self.root_tk.after(1000, lambda: self._execute_bot_action_safe(bot_action_data))
+                self.root_tk.after(500, lambda: self._execute_bot_action_safe(bot_action_data))  # Reduced delay to 500ms for faster bot play
             else:
                 self.execute_bot_action(current_player)
     
