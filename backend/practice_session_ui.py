@@ -46,22 +46,22 @@ class CardWidget(tk.Canvas):
         current_highlight = self.cget("highlightbackground")
         current_thickness = self.cget("highlightthickness")
         current_bg = self.cget("bg")
+        is_highlighted = current_highlight == "#FFFFE0" or current_bg == "#FFFFE0"
         
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
     
             self._draw_card_back(is_folded=is_folded)
             # Restore highlighting if it was set
-            if current_highlight == "#FFFFE0":
-                self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
-            if current_bg == "#FFFFE0":
-                self.config(bg=current_bg)
+            if is_highlighted:
+                self.config(highlightbackground="#FFFFE0", highlightthickness=current_thickness)
+                self.config(bg="#FFFFE0")
             # Force update to ensure the drawing is applied
             self.update()
             return
 
         # Set background based on highlighting state
-        if current_bg == "#FFFFE0":
+        if is_highlighted:
             self.config(bg="#FFFFE0")  # Keep light yellow background if it was highlighted
         else:
             self.config(bg="white")
@@ -70,8 +70,8 @@ class CardWidget(tk.Canvas):
         self._draw_card_content(card_str)
         
         # Restore highlighting if it was set
-        if current_highlight == "#FFFFE0":
-            self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
+        if is_highlighted:
+            self.config(highlightbackground="#FFFFE0", highlightthickness=current_thickness)
         
         # Force update to ensure the drawing is applied
         self.update()
@@ -96,8 +96,9 @@ class CardWidget(tk.Canvas):
         self.delete("all")
         
         # Check if this card should maintain light yellow highlighting
+        current_highlight = self.cget("highlightbackground")
         current_bg = self.cget("bg")
-        should_keep_yellow = current_bg == "#FFFFE0"
+        should_keep_yellow = current_highlight == "#FFFFE0" or current_bg == "#FFFFE0"
         
         if is_folded:
             # Draw folded card back - dark gray with no border
