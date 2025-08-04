@@ -926,12 +926,19 @@ class PracticeSessionUI(ttk.Frame):
             winner_seat_widget = winner_seat_data["player_pod"]  # Get the actual PlayerPod widget
             pot_widget = self.pot_label  # Assuming your pot display is self.pot_label
 
-            # 1. Get Start and End coordinates in the screen's coordinate system.
-            start_x = pot_widget.winfo_rootx() + (pot_widget.winfo_width() // 2)
-            start_y = pot_widget.winfo_rooty() + (pot_widget.winfo_height() // 2)
-
-            end_x = winner_seat_widget.winfo_rootx() + (winner_seat_widget.winfo_width() // 2)
-            end_y = winner_seat_widget.winfo_rooty() + (winner_seat_widget.winfo_height() // 2)
+            # 1. Get Start and End coordinates using canvas coordinates instead of screen coordinates
+            # Get pot position from layout manager
+            width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+            pot_x, pot_y = self.layout_manager.calculate_pot_position(width, height)
+            
+            # Get winner position from layout manager
+            player_positions = self.layout_manager.calculate_player_positions(width, height, self.num_players)
+            winner_x, winner_y = player_positions[winner_seat_index]
+            
+            start_x = pot_x
+            start_y = pot_y
+            end_x = winner_x
+            end_y = winner_y
 
             # Validate coordinates to ensure animation is visible
             if start_x == 0 and start_y == 0:
@@ -944,9 +951,9 @@ class PracticeSessionUI(ttk.Frame):
                 self.add_game_message("Animation failed: Invalid end coordinates")
                 return
 
-            # 2. Create the chip label with better visibility
+            # 2. Create the chip label with better visibility - use canvas coordinates
             chip_label = tk.Label(
-                self.root, 
+                self.canvas, 
                 text="💰", 
                 font=("Arial", 40, "bold"), 
                 bg="gold", 
@@ -954,23 +961,24 @@ class PracticeSessionUI(ttk.Frame):
                 bd=2, 
                 relief="raised"
             )
-            chip_label.place(x=start_x, y=start_y, anchor="center")
-            chip_label.lift()  # Bring to front
+            # Create window on canvas instead of placing on root
+            chip_window = self.canvas.create_window(start_x, start_y, window=chip_label, anchor="center")
+            self.canvas.tag_raise(chip_window)  # Bring to front
 
             # 3. Add start delay and then start the recursive move function.
-            self.root.after(500, lambda: self._move_chip_step(chip_label, start_x, start_y, end_x, end_y))
+            self.root.after(500, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))
             
         except Exception as e:
             print(f"Animation error: {e}")
             self.add_game_message(f"Animation failed: {str(e)}")
 
-    def _move_chip_step(self, widget, x1, y1, x2, y2, step=0):
+    def _move_chip_step(self, chip_window, x1, y1, x2, y2, step=0):
         """
         Private method to move the chip one step at a time.
         """
         total_steps = 50  # Slower animation: 50 steps instead of 25
         if step > total_steps:
-            widget.destroy()  # Animation is done, destroy the chip.
+            self.canvas.delete(chip_window)  # Animation is done, destroy the chip.
             
             # IMPORTANT: Now that the animation is finished,
             # tell the state machine to update the data model.
@@ -980,10 +988,10 @@ class PracticeSessionUI(ttk.Frame):
         # Calculate the position for the current step
         new_x = x1 + (x2 - x1) * (step / total_steps)
         new_y = y1 + (y2 - y1) * (step / total_steps)
-        widget.place(x=new_x, y=new_y, anchor="center")
+        self.canvas.coords(chip_window, new_x, new_y)
 
         # Schedule the next call to this method - slower timing
-        self.root.after(40, lambda: self._move_chip_step(widget, x1, y1, x2, y2, step + 1))
+        self.root.after(40, lambda: self._move_chip_step(chip_window, x1, y1, x2, y2, step + 1))
 
     def _distribute_pot_to_winner(self):
         """
