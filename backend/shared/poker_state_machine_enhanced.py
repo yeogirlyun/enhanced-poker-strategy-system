@@ -1895,6 +1895,10 @@ class ImprovedPokerStateMachine:
             self.game_state.pot += actual_bet
             self.game_state.current_bet = actual_bet
             
+            # CRITICAL FIX: Set min_raise to the size of the bet
+            self.game_state.min_raise = actual_bet
+            self._log_action(f"💰 Bet of ${actual_bet:.2f} sets min_raise to ${self.game_state.min_raise:.2f}")
+            
             # Check for all-in
             if player.stack == 0:
                 player.is_all_in = True
