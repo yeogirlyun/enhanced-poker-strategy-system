@@ -48,18 +48,18 @@ class CardWidget(tk.Canvas):
         if not card_str or card_str == "**" or is_folded:
     
             self._draw_card_back(is_folded=is_folded)
-            # Restore highlighting if it was set
-            if current_highlight == "#FFFF00":
-                self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
-            if current_bg == "#FFFF00":
-                self.config(bg=current_bg)
+                    # Restore highlighting if it was set
+        if current_highlight == "#FFFFE0":
+            self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
+        if current_bg == "#FFFFE0":
+            self.config(bg=current_bg)
             # Force update to ensure the drawing is applied
             self.update()
             return
 
         # Set background based on highlighting state
-        if current_bg == "#FFFF00":
-            self.config(bg="#FFFF00")  # Keep yellow background if it was highlighted
+        if current_bg == "#FFFFE0":
+            self.config(bg="#FFFFE0")  # Keep light yellow background if it was highlighted
         else:
             self.config(bg="white")
             
@@ -84,15 +84,15 @@ class CardWidget(tk.Canvas):
         # Clear any existing content
         self.delete("all")
         
-        # Check if this card should maintain yellow highlighting
+        # Check if this card should maintain light yellow highlighting
         current_bg = self.cget("bg")
-        should_keep_yellow = current_bg == "#FFFF00"
+        should_keep_yellow = current_bg == "#FFFFE0"
         
         if is_folded:
             # Draw folded card back - dark gray with no border
             dark_gray = "#404040"  # Dark gray for folded cards
             if should_keep_yellow:
-                self.config(bg="#FFFF00")  # Keep yellow background if highlighted
+                self.config(bg="#FFFFE0")  # Keep light yellow background if highlighted
             else:
                 self.config(bg=dark_gray)
             
@@ -107,7 +107,7 @@ class CardWidget(tk.Canvas):
             
             # Set the background color
             if should_keep_yellow:
-                self.config(bg="#FFFF00")  # Keep yellow background if highlighted
+                self.config(bg="#FFFFE0")  # Keep light yellow background if highlighted
             else:
                 self.config(bg=dark_red)
             
@@ -136,10 +136,10 @@ class CardWidget(tk.Canvas):
     
     def highlight_winning_card(self):
         """Highlight this card as part of the winning hand."""
-        # Change the background color to yellow for the entire card
-        self.config(bg="#FFFF00")
-        # Also add a yellow border for extra emphasis
-        self.config(highlightbackground="#FFFF00", highlightthickness=3)
+        # Change the background color to light yellow for the entire card
+        self.config(bg="#FFFFE0")
+        # Also add a light yellow border for extra emphasis
+        self.config(highlightbackground="#FFFFE0", highlightthickness=3)
     
     def clear_highlight(self):
         """Clear the winning card highlight."""
