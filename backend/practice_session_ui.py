@@ -39,6 +39,9 @@ class CardWidget(tk.Canvas):
         self._draw_card_back()
 
     def set_card(self, card_str, is_folded=False):
+        # Store the current card string for highlighting
+        self.current_card_str = card_str
+        
         # Store current highlighting state before clearing
         current_highlight = self.cget("highlightbackground")
         current_thickness = self.cget("highlightthickness")
@@ -48,11 +51,11 @@ class CardWidget(tk.Canvas):
         if not card_str or card_str == "**" or is_folded:
     
             self._draw_card_back(is_folded=is_folded)
-                    # Restore highlighting if it was set
-        if current_highlight == "#FFFFE0":
-            self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
-        if current_bg == "#FFFFE0":
-            self.config(bg=current_bg)
+            # Restore highlighting if it was set
+            if current_highlight == "#FFFFE0":
+                self.config(highlightbackground=current_highlight, highlightthickness=current_thickness)
+            if current_bg == "#FFFFE0":
+                self.config(bg=current_bg)
             # Force update to ensure the drawing is applied
             self.update()
             return
@@ -63,16 +66,8 @@ class CardWidget(tk.Canvas):
         else:
             self.config(bg="white")
             
-        # Only process card string if it's not empty
-        if card_str and len(card_str) >= 2:
-            rank, suit = card_str[0], card_str[1]
-            suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
-            suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
-            color = suit_colors.get(suit, "black")
-            
-            # Use larger, clearer fonts
-            self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
-            self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
+        # Draw the card content
+        self._draw_card_content(card_str)
         
         # Restore highlighting if it was set
         if current_highlight == "#FFFFE0":
@@ -80,6 +75,20 @@ class CardWidget(tk.Canvas):
         
         # Force update to ensure the drawing is applied
         self.update()
+
+    def _draw_card_content(self, card_str):
+        """Draw the card content (rank and suit) on the canvas."""
+        if not card_str or len(card_str) < 2:
+            return
+            
+        rank, suit = card_str[0], card_str[1]
+        suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
+        suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
+        color = suit_colors.get(suit, "black")
+        
+        # Use larger, clearer fonts
+        self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
+        self.create_text(self.width / 2, self.height / 2 + 18, text=suit_symbols.get(suit, ""), font=("Helvetica", 16), fill=color)
 
     def _draw_card_back(self, is_folded=False):
         """Draws a professional-looking checkerboard pattern for the card back."""
@@ -138,16 +147,37 @@ class CardWidget(tk.Canvas):
     
     def highlight_winning_card(self):
         """Highlight this card as part of the winning hand."""
-        # Change the background color to light yellow for the entire card
+        # Store the original card content before highlighting
+        self.original_card_content = self.find_all()
+        
+        # Clear the canvas and draw the highlight background first
+        self.delete("all")
+        
+        # Draw light yellow background
         self.config(bg="#FFFFE0")
-        # Also add a light yellow border for extra emphasis
+        self.create_rectangle(0, 0, self.width, self.height, 
+                            fill="#FFFFE0", outline="#FFD700", width=2)
+        
+        # Redraw the card content on top of the background
+        if hasattr(self, 'current_card_str') and self.current_card_str:
+            self._draw_card_content(self.current_card_str)
+        
+        # Add a light yellow border for extra emphasis
         self.config(highlightbackground="#FFFFE0", highlightthickness=3)
     
     def clear_highlight(self):
         """Clear the winning card highlight."""
-        # Restore original background and border
+        # Clear the canvas and restore original background
+        self.delete("all")
         self.config(bg="white")
         self.config(highlightbackground="black", highlightthickness=1)
+        
+        # Redraw the card content without highlighting
+        if hasattr(self, 'current_card_str') and self.current_card_str:
+            self._draw_card_content(self.current_card_str)
+        else:
+            # If no card content, draw card back
+            self._draw_card_back()
 
 class PlayerPod(tk.Frame):
     """A custom widget for a player's area, including a graphical stack display."""
