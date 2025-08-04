@@ -966,7 +966,7 @@ class PracticeSessionUI(ttk.Frame):
             self.canvas.tag_raise(chip_window)  # Bring to front
 
             # 3. Add start delay and then start the recursive move function.
-            self.root.after(500, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))
+            self.root.after(200, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))
             
         except Exception as e:
             print(f"Animation error: {e}")
@@ -976,7 +976,7 @@ class PracticeSessionUI(ttk.Frame):
         """
         Private method to move the chip one step at a time.
         """
-        total_steps = 50  # Slower animation: 50 steps instead of 25
+        total_steps = 30  # Faster animation: 30 steps instead of 50
         if step > total_steps:
             self.canvas.delete(chip_window)  # Animation is done, destroy the chip.
             
@@ -990,15 +990,18 @@ class PracticeSessionUI(ttk.Frame):
         new_y = y1 + (y2 - y1) * (step / total_steps)
         self.canvas.coords(chip_window, new_x, new_y)
 
-        # Schedule the next call to this method - slower timing
-        self.root.after(40, lambda: self._move_chip_step(chip_window, x1, y1, x2, y2, step + 1))
+        # Schedule the next call to this method - faster timing
+        self.root.after(25, lambda: self._move_chip_step(chip_window, x1, y1, x2, y2, step + 1))
 
     def _distribute_pot_to_winner(self):
         """
         Final method called after animation completes to update the winner's stack.
         """
+        print("Animation complete - clearing pot and updating winner stack")
+        
         # Clear the pot display
         self.pot_label.config(text="Pot: $0.00", fg="white")
+        print(f"Pot cleared to: {self.pot_label.cget('text')}")
         
         # Update winner's stack in the state machine
         if hasattr(self, 'current_winner_seat') and self.current_winner_seat < len(self.player_seats):
@@ -1010,6 +1013,7 @@ class PracticeSessionUI(ttk.Frame):
                 try:
                     current_stack = float(current_stack_text.replace("$", "").replace(",", ""))
                     new_stack = current_stack + self.current_pot_amount
+                    print(f"Updating winner stack: ${current_stack:.2f} + ${self.current_pot_amount:.2f} = ${new_stack:.2f}")
                     
                     # Update PlayerPod with new stack
                     pod_data = {
@@ -1023,6 +1027,7 @@ class PracticeSessionUI(ttk.Frame):
                     # Force update display
                     self.update_display()
                 except ValueError:
+                    print("Error updating winner stack")
                     pass  # Handle invalid number format
 
     def _animate_pot_to_winner(self, winner_info, pot_amount):
