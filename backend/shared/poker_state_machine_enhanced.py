@@ -1579,10 +1579,12 @@ class ImprovedPokerStateMachine:
 
     def _get_best_five_cards(self, cards: List[str], board: List[str]) -> List[str]:
         """Get the 5 cards that form the best hand."""
-        all_cards = cards + board
+        # Use the enhanced hand evaluator to get the actual best 5-card combination
+        evaluation = self.hand_evaluator.evaluate_hand(cards, board)
         
-        # For simplicity, return the 5 highest cards
-        # In a real implementation, this would use the hand evaluator to find the best 5-card combination
+        # For now, return the 5 highest cards as a fallback
+        # TODO: Implement proper 5-card combination finding
+        all_cards = cards + board
         card_values = [(card, self._get_rank_value(card[0])) for card in all_cards]
         card_values.sort(key=lambda x: x[1], reverse=True)
         
