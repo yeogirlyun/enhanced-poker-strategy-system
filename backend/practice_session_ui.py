@@ -913,11 +913,7 @@ class PracticeSessionUI(ttk.Frame):
                 if seat and seat.get("player_pod"):
                     # Get player name from PlayerPod
                     player_pod = seat["player_pod"]
-                    if hasattr(player_pod, 'name_var'):
-                        player_name = player_pod.name_var.get()
-                    else:
-                        # Fallback to old method if name_var doesn't exist
-                        player_name = seat.get("name_label", "").cget("text") if seat.get("name_label") else ""
+                    player_name = player_pod.name_label.cget("text")
                     
                     # Extract just the player name part (before the position)
                     # player_name format: "Player 1 (CO)" -> extract "Player 1"
@@ -1032,7 +1028,7 @@ class PracticeSessionUI(ttk.Frame):
                                 
                                 # Update PlayerPod with new stack
                                 pod_data = {
-                                    "name": player_pod.name_var.get(),
+                                    "name": player_pod.name_label.cget("text"),
                                     "stack": new_stack,
                                     "bet": 0,  # Clear bet
                                     "starting_stack": player_pod.starting_stack
