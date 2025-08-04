@@ -2149,6 +2149,64 @@ def test_under_raise_all_in_bug(state_machine, test_suite):
     )
     assert len(errors) > 0, "Validation should prevent re-raising an under-raise"
 
+def test_bet_then_raise_validation(state_machine, test_suite):
+    """Test that a BET properly sets min_raise for subsequent RAISE validation."""
+    state_machine.start_hand()
+    
+    # Get the first player and make a BET
+    first_player = state_machine.get_action_player()
+    state_machine.execute_action(first_player, ActionType.BET, 3.0)
+    
+    # Verify that min_raise was set to the bet amount
+    test_suite.log_test(
+        "Bet Sets Min Raise",
+        state_machine.game_state.min_raise == 3.0,
+        f"Bet of $3.0 should set min_raise to $3.0, got ${state_machine.game_state.min_raise:.1f}",
+        {"expected_min_raise": 3.0, "actual_min_raise": state_machine.game_state.min_raise}
+    )
+    
+    # Get the next player and test RAISE validation
+    next_player = state_machine.get_action_player()
+    if next_player:
+        # Test that a "raise" to $4.0 is invalid (should be at least $6.0)
+        errors = state_machine.validate_action(next_player, ActionType.RAISE, 4.0)
+        
+        test_suite.log_test(
+            "Invalid Raise After Bet",
+            len(errors) > 0,
+            f"Raise to $4.0 should be invalid after $3.0 bet (min total should be $6.0)",
+            {"errors": errors, "min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
+        )
+        
+        # Test that a proper raise to $6.0 is valid
+        errors_valid = state_machine.validate_action(next_player, ActionType.RAISE, 6.0)
+        
+        test_suite.log_test(
+            "Valid Raise After Bet",
+            len(errors_valid) == 0,
+            f"Raise to $6.0 should be valid after $3.0 bet",
+            {"errors": errors_valid, "min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
+        )
+        
+        # CRITICAL TEST: Actually try to execute the invalid raise
+        # This should fail with the old version but work with the new version
+        try:
+            state_machine.execute_action(next_player, ActionType.RAISE, 4.0)
+            # If we get here, the bug is present (invalid raise was allowed)
+            test_suite.log_test(
+                "Bug Detection: Invalid Raise Execution",
+                False,  # This should fail
+                f"BUG: Invalid raise to $4.0 was executed when it should have been rejected",
+                {"min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
+            )
+        except Exception as e:
+            # This is expected - the raise should be rejected
+            test_suite.log_test(
+                "Bug Detection: Invalid Raise Execution",
+                True,  # This should pass
+                f"Invalid raise to $4.0 was correctly rejected",
+                {"error": str(e), "min_raise": state_machine.game_state.min_raise, "current_bet": state_machine.game_state.current_bet}
+            )
 
 def main():
     """Run the test suite with pytest."""
