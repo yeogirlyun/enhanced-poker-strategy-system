@@ -523,12 +523,12 @@ class PracticeSessionUI(ttk.Frame):
             return (center_x, center_y + 120)  # Increased from 80 to 120
         
         def calculate_bet_positions(self, width, height, num_players):
-            """Calculate bet label positions."""
+            """Calculate bet label positions - positioned to avoid overlay with stack display."""
             center_x, center_y = width / 2, height / 2
             
-            # Bet labels positioned closer to table center than player seats
-            bet_radius_x = width * 0.32
-            bet_radius_y = height * 0.25
+            # Bet labels positioned closer to table center than player seats to avoid overlay
+            bet_radius_x = width * 0.25  # Closer to center than player seats
+            bet_radius_y = height * 0.20  # Closer to center than player seats
             
             positions = []
             for i in range(num_players):
@@ -977,10 +977,10 @@ class PracticeSessionUI(ttk.Frame):
             
 
             
-            # Enhanced animation with multiple effects
+            # Enhanced animation with multiple effects - SLOWER AND MORE VISIBLE
             def animate_money(step=0):
-                if step <= 30:  # 30 steps for smoother animation
-                    progress = step / 30
+                if step <= 60:  # 60 steps for slower, more visible animation
+                    progress = step / 60
                     # Enhanced easing function
                     ease = 1 - (1 - progress) ** 2
                     
@@ -1012,7 +1012,7 @@ class PracticeSessionUI(ttk.Frame):
                         glow_color = f"#{alpha:02x}ff{alpha:02x}"
                         self.canvas.itemconfig(glow_obj, fill=glow_color)
                     
-                    self.canvas.after(40, lambda: animate_money(step + 1))  # Faster animation
+                    self.canvas.after(80, lambda: animate_money(step + 1))  # Slower animation (80ms instead of 40ms)
                     
                     # Update the winner's stack graphics with the new amount
                     if winner_seat < len(self.player_seats):
