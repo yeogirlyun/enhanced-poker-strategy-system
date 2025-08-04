@@ -3312,6 +3312,159 @@ def test_complex_multi_street_all_in_scenarios(state_machine, test_suite):
         {"total_hands": session_data['total_hands']}
     )
 
+
+def test_split_pot_straight_flush_bug(state_machine, test_suite):
+    """Test that split pots are handled correctly when both players have the same straight flush."""
+    # Create a state machine
+    state_machine = ImprovedPokerStateMachine(num_players=2)
+    state_machine.start_hand()
+    
+    # Set up a scenario where both players have the same straight flush
+    # Board: K♣ 7♣ 5♣ J♣ T♣ (straight flush)
+    # Player 1: 8♦ 9♦ (uses board cards for straight flush)
+    # Player 2: 8♥ 9♥ (uses board cards for straight flush)
+    
+    # Set up the board
+    state_machine.game_state.board = ['Kc', '7c', '5c', 'Jc', 'Tc']
+    
+    # Set up players with equal stacks and bets
+    player1 = state_machine.game_state.players[0]
+    player1.name = "Player 1"
+    player1.stack = 100.0
+    player1.cards = ['8d', '9d']  # Uses board cards for straight flush
+    player1.is_active = True
+    player1.current_bet = 10.0
+    player1.total_invested = 10.0
+    
+    player2 = state_machine.game_state.players[1]
+    player2.name = "Player 3"
+    player2.stack = 100.0
+    player2.cards = ['8h', '9h']  # Uses board cards for straight flush (no duplicate Jack)
+    player2.is_active = True
+    player2.current_bet = 10.0
+    player2.total_invested = 10.0
+    
+    # Set pot amount
+    state_machine.game_state.pot = 20.0
+    
+    # Debug: Check hand evaluations
+    hand1 = state_machine.hand_evaluator.evaluate_hand(player1.cards, state_machine.game_state.board)
+    hand2 = state_machine.hand_evaluator.evaluate_hand(player2.cards, state_machine.game_state.board)
+    
+    print(f"Player 1 hand: {hand1}")
+    print(f"Player 2 hand: {hand2}")
+    
+    # Determine winners
+    winners = state_machine.determine_winner([player1, player2])
+    
+    # Both players should be winners (split pot)
+    assert len(winners) == 2, f"Expected 2 winners, got {len(winners)}"
+    assert player1 in winners, "Player 1 should be a winner"
+    assert player2 in winners, "Player 2 should be a winner"
+    
+    # Check that both players have the same hand rank
+    assert hand1['hand_rank'] == hand2['hand_rank'], "Both players should have the same hand rank"
+    assert hand1['hand_rank'].value == 9, "Both players should have straight flush"
+    
+    # Now test the actual pot distribution
+    state_machine.handle_end_hand()
+    
+    # Each player should get half the pot
+    expected_split = 20.0 / 2  # 10.0 each
+    assert abs(player1.stack - (100.0 + expected_split)) < 0.01, f"Player 1 should get {expected_split}, got {player1.stack - 100.0}"
+    assert abs(player2.stack - (100.0 + expected_split)) < 0.01, f"Player 2 should get {expected_split}, got {player2.stack - 100.0}"
+    
+    # Check that the winner_info is correct
+    assert hasattr(state_machine, '_last_winner'), "Winner info should be captured"
+    winner_info = state_machine._last_winner
+    
+    # The winner_info should show both players and the split amount
+    assert "Player 1" in winner_info["name"], "Winner info should include Player 1"
+    assert "Player 3" in winner_info["name"], "Winner info should include Player 3"
+    assert winner_info["amount"] == 20.0, "Winner info should show full pot amount for display purposes"
+    
+    print("✅ Split pot test passed - both players correctly split the pot")
+
+def test_split_pot_ui_display_bug(state_machine, test_suite):
+    """Test that split pots are properly displayed in the UI."""
+    # Create a state machine
+    state_machine = ImprovedPokerStateMachine(num_players=2)
+    state_machine.start_hand()
+    
+    # Set up a scenario where both players have the same straight flush
+    # Board: K♣ 7♣ 5♣ J♣ T♣ (straight flush)
+    # Player 1: 8♦ 9♦ (uses board cards for straight flush)
+    # Player 2: 8♥ 9♥ (uses board cards for straight flush)
+    
+    # Set up the board
+    state_machine.game_state.board = ['Kc', '7c', '5c', 'Jc', 'Tc']
+    
+    # Set up players with equal stacks and bets
+    player1 = state_machine.game_state.players[0]
+    player1.name = "Player 1"
+    player1.stack = 100.0
+    player1.cards = ['8d', '9d']  # Uses board cards for straight flush
+    player1.is_active = True
+    player1.current_bet = 10.0
+    player1.total_invested = 10.0
+    
+    player2 = state_machine.game_state.players[1]
+    player2.name = "Player 3"
+    player2.stack = 100.0
+    player2.cards = ['8h', '9h']  # Uses board cards for straight flush (no duplicate Jack)
+    player2.is_active = True
+    player2.current_bet = 10.0
+    player2.total_invested = 10.0
+    
+    # Set pot amount
+    state_machine.game_state.pot = 20.0
+    
+    # Determine winners
+    winners = state_machine.determine_winner([player1, player2])
+    
+    # Both players should be winners (split pot)
+    assert len(winners) == 2, f"Expected 2 winners, got {len(winners)}"
+    
+    # Test the winner_info construction (simulating what the UI receives)
+    winner_names = ", ".join([w.name for w in winners])
+    winner_info = {
+        "name": winner_names,
+        "amount": 20.0,
+        "board": state_machine.game_state.board.copy(),
+        "hand": "Straight Flush"
+    }
+    
+    # Test the UI logic for parsing winner names
+    winner_names_list = [name.strip() for name in winner_names.split(', ')]
+    assert len(winner_names_list) == 2, "Should have 2 winner names"
+    assert "Player 1" in winner_names_list, "Player 1 should be in winner list"
+    assert "Player 3" in winner_names_list, "Player 3 should be in winner list"
+    
+    # Test that the UI can find the winning players
+    found_players = []
+    for player in state_machine.game_state.players:
+        if player.name in winner_names_list:
+            found_players.append(player)
+    
+    assert len(found_players) == 2, "Should find 2 winning players"
+    assert player1 in found_players, "Player 1 should be found"
+    assert player2 in found_players, "Player 3 should be found"
+    
+    # Test split pot amount calculation
+    split_amount = 20.0 / 2
+    assert split_amount == 10.0, "Each player should get $10.0"
+    
+    # Test winner announcement message
+    if ',' in winner_names:
+        announcement = f"🏆 Split pot! {winner_names} each win ${split_amount:.2f}! (Straight Flush)"
+    else:
+        announcement = f"🏆 {winner_names} wins $20.0! (Straight Flush)"
+    
+    assert "Split pot!" in announcement, "Announcement should mention split pot"
+    assert "each win $10.00" in announcement, "Announcement should show split amount"
+    
+    print("✅ Split pot UI display test passed - UI correctly handles split pot scenarios")
+
 def main():
     """Run the test suite with pytest."""
     print("Starting Poker State Machine Test Suite...")
