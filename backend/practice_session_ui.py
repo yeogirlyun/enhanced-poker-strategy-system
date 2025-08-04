@@ -247,6 +247,9 @@ class PracticeSessionUI(ttk.Frame):
     def __init__(self, parent, strategy_data, **kwargs):
         super().__init__(parent, **kwargs)
         
+        # CRITICAL FIX: Get the actual root Tk window for animation
+        self.root = self.winfo_toplevel()
+        
         self.strategy_data = strategy_data
         
         # Initialize missing attributes
@@ -294,11 +297,11 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls = {}  # Add missing initialization
         self.sfx = SoundManager()
         
-        # Initialize state machine
+        # Initialize state machine with proper root reference
         self.state_machine = ImprovedPokerStateMachine(
             num_players=6,
             strategy_data=strategy_data,
-            root_tk=parent
+            root_tk=self.root  # Use the actual root window
         )
         
         # Set up callbacks after initialization
@@ -895,6 +898,14 @@ class PracticeSessionUI(ttk.Frame):
                 # Start pot animation to winner with correct pot amount
                 self._animate_pot_to_winner(winner_info, pot_amount)
         
+        # Ensure animation triggers even for fold scenarios
+        elif winner_info and winner_info.get("amount", 0) > 0:
+            # Handle cases where pot_amount might be 0 but winner_info has amount
+            pot_amount = winner_info.get("amount", 0)
+            if pot_amount > 0:
+                print(f"Triggering animation for fold scenario: ${pot_amount:.2f}")
+                self._animate_pot_to_winner(winner_info, pot_amount)
+        
         # Show game controls immediately (no delay)
         self._show_game_control_buttons()
 
@@ -917,18 +928,36 @@ class PracticeSessionUI(ttk.Frame):
         end_x = winner_seat_widget.winfo_rootx() + (winner_seat_widget.winfo_width() // 2)
         end_y = winner_seat_widget.winfo_rooty() + (winner_seat_widget.winfo_height() // 2)
 
-        # 2. Create the chip label. It MUST be a child of the root window to use screen coordinates.
-        chip_label = tk.Label(self.root, text="💰", font=("Arial", 20), bg="#006400", bd=0)
-        chip_label.place(x=start_x, y=start_y, anchor="center")
+        # Validate coordinates to ensure animation is visible
+        if start_x == 0 and start_y == 0:
+            print("Warning: Invalid start coordinates for animation")
+            return
+        
+        if end_x == 0 and end_y == 0:
+            print("Warning: Invalid end coordinates for animation")
+            return
 
-        # 3. Start the recursive move function.
-        self._move_chip_step(chip_label, start_x, start_y, end_x, end_y)
+        # 2. Create the chip label with better visibility
+        chip_label = tk.Label(
+            self.root, 
+            text="💰", 
+            font=("Arial", 40, "bold"), 
+            bg="gold", 
+            fg="black", 
+            bd=2, 
+            relief="raised"
+        )
+        chip_label.place(x=start_x, y=start_y, anchor="center")
+        chip_label.lift()  # Bring to front
+
+        # 3. Add start delay and then start the recursive move function.
+        self.root.after(500, lambda: self._move_chip_step(chip_label, start_x, start_y, end_x, end_y))
 
     def _move_chip_step(self, widget, x1, y1, x2, y2, step=0):
         """
         Private method to move the chip one step at a time.
         """
-        total_steps = 25  # Increase for slower animation, decrease for faster
+        total_steps = 50  # Slower animation: 50 steps instead of 25
         if step > total_steps:
             widget.destroy()  # Animation is done, destroy the chip.
             
@@ -942,8 +971,8 @@ class PracticeSessionUI(ttk.Frame):
         new_y = y1 + (y2 - y1) * (step / total_steps)
         widget.place(x=new_x, y=new_y, anchor="center")
 
-        # Schedule the next call to this method
-        self.root.after(20, lambda: self._move_chip_step(widget, x1, y1, x2, y2, step + 1))
+        # Schedule the next call to this method - slower timing
+        self.root.after(40, lambda: self._move_chip_step(widget, x1, y1, x2, y2, step + 1))
 
     def _distribute_pot_to_winner(self):
         """
@@ -980,6 +1009,9 @@ class PracticeSessionUI(ttk.Frame):
     def _animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
         
+        # Add logging to track animation calls
+        print(f"Animating ${pot_amount:.2f} to {winner_info['name']}")
+        
         # Handle multiple winners (comma-separated names)
         winner_names = winner_info['name'].split(', ')
 
@@ -1004,10 +1036,17 @@ class PracticeSessionUI(ttk.Frame):
         # FIX: If we can't find the winner seat, use seat 0 as fallback
         if winner_seat is None:
             winner_seat = 0
+            print(f"Warning: Could not find winner seat, using seat {winner_seat}")
         
         # Store winner info for the final distribution
         self.current_winner_seat = winner_seat
         self.current_pot_amount = pot_amount
+        
+        # Play sound effect for animation
+        try:
+            self.sfx.play("pot_win")
+        except:
+            pass  # Ignore if sound fails
         
         # Start the improved animation
         self.animate_pot_distribution(winner_seat)
