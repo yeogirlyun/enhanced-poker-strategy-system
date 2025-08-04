@@ -922,7 +922,8 @@ class PracticeSessionUI(ttk.Frame):
             # This is the CRITICAL step to ensure we get correct coordinates.
             self.root.update_idletasks()
 
-            winner_seat_widget = self.player_seats[winner_seat_index]
+            winner_seat_data = self.player_seats[winner_seat_index]
+            winner_seat_widget = winner_seat_data["player_pod"]  # Get the actual PlayerPod widget
             pot_widget = self.pot_label  # Assuming your pot display is self.pot_label
 
             # 1. Get Start and End coordinates in the screen's coordinate system.
