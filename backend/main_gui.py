@@ -54,9 +54,8 @@ class EnhancedMainGUI:
         # Initialize strategy data
         self.strategy_data = StrategyData()
 
-        # Try to load modern_strategy.json by default
-        if os.path.exists("modern_strategy.json"):
-            self.strategy_data.load_strategy_from_file("modern_strategy.json")
+        # Load strategy - will generate default if file doesn't exist
+        self.strategy_data.load_strategy_from_file("modern_strategy.json")
         # --- NEW: Status Bar Variable ---
         self.status_bar_text = tk.StringVar()
 
@@ -243,6 +242,9 @@ class EnhancedMainGUI:
             self._update_overview()
         # Update strategy file display
         self._update_strategy_file_display()
+        
+        # Refresh all panels to ensure they display the loaded strategy data
+        self._refresh_all_panels()
         self.set_status("All panels refreshed.")
 
     def _update_strategy_file_display(self):
