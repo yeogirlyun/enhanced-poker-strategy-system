@@ -392,31 +392,11 @@ class EnhancedMainGUI:
         practice_frame = ttk.Frame(self.notebook)
         self.notebook.add(practice_frame, text="🎰 Practice Session")
 
-        # Create control panel for practice session
+        # Create control panel for practice session (simplified - no duplicate buttons)
         control_frame = ttk.Frame(practice_frame)
         control_frame.pack(fill=tk.X, padx=10, pady=5)
         
-        # Add start game button
-        start_game_btn = ttk.Button(
-            control_frame, 
-            text="🎯 Start New Hand", 
-            command=self._start_practice_game,
-            style="Primary.TButton"
-        )
-        start_game_btn.pack(side=tk.LEFT, padx=5)
-        ToolTip(start_game_btn, "Start a new poker hand with the current strategy")
-        
-        # Add reset game button
-        reset_game_btn = ttk.Button(
-            control_frame, 
-            text="🔄 Reset Game", 
-            command=self._reset_practice_game,
-            style="Danger.TButton"
-        )
-        reset_game_btn.pack(side=tk.LEFT, padx=5)
-        ToolTip(reset_game_btn, "Reset the current game state")
-        
-        # Add table size controls
+        # Add table size controls (only table controls remain)
         size_frame = ttk.Frame(control_frame)
         size_frame.pack(side=tk.RIGHT, padx=10)
         

@@ -1265,18 +1265,22 @@ class PracticeSessionUI(ttk.Frame):
         self.info_text.config(state=tk.DISABLED)
 
     def _create_human_action_controls(self, parent_frame):
-        """Creates a modern, dynamic action bar for the human player."""
+        """Creates a fixed-position action bar for consistent user experience."""
         parent_frame.grid_columnconfigure(0, weight=1)
-        self.action_bar_frame = ttk.Frame(parent_frame)  # Store reference
-        self.action_bar_frame.grid(row=0, column=0, pady=5)
-
-        # --- NEW: Game Control Buttons (Left Side) ---
-        control_frame = ttk.Frame(self.action_bar_frame)
-        control_frame.pack(side=tk.LEFT, padx=(0, 20))
+        self.action_bar_frame = ttk.Frame(parent_frame)
+        self.action_bar_frame.grid(row=0, column=0, pady=5, sticky="ew")
         
-        # Create larger buttons (150% size increase)
+        # Configure the action bar to maintain fixed layout
+        self.action_bar_frame.grid_columnconfigure(1, weight=1)  # Center section expands
+        self.action_bar_frame.grid_columnconfigure(3, weight=1)  # Right section expands
+        
+        # --- Game Control Buttons (Left - Fixed Position) ---
+        control_frame = ttk.Frame(self.action_bar_frame)
+        control_frame.grid(row=0, column=0, sticky="w", padx=(0, 20))
+        
+        # Create larger buttons
         button_style = ttk.Style()
-        button_style.configure('Large.TButton', padding=(18, 10))  # Increased from (15, 8) to (18, 10) - 20% larger
+        button_style.configure('Large.TButton', padding=(18, 10))
         
         self.start_button = ttk.Button(
             control_frame, 
@@ -1295,25 +1299,25 @@ class PracticeSessionUI(ttk.Frame):
         )
         self.reset_button.pack(side=tk.LEFT, padx=5)
         ToolTip(self.reset_button, "Reset the entire game state")
-        # --- END NEW ---
 
-        # --- Last Action Label (Center) ---
+        # --- Last Action Label (Center - Fixed Position) ---
         self.last_action_label = tk.Label(
             self.action_bar_frame, 
             text="", 
-            font=("Helvetica", 14, "italic"),  # Increased from 12 to 14 - 20% larger
+            font=("Helvetica", 14, "italic"),
             fg=THEME["text"],
             bg=THEME["secondary_bg"]
         )
-        self.last_action_label.pack(side=tk.LEFT, padx=10)
+        self.last_action_label.grid(row=0, column=1, padx=10, sticky="ew")
         
-        # --- Action Buttons (Center) ---
+        # --- Action Buttons (Center - Fixed Position) ---
         action_frame = ttk.Frame(self.action_bar_frame)
-        action_frame.pack(side=tk.LEFT, padx=10)
+        action_frame.grid(row=0, column=2, padx=10, sticky="ew")
         
-        # Configure large button style for action buttons (20% larger)
-        button_style.configure('LargeAction.TButton', padding=(14, 7))  # Increased from (12, 6) to (14, 7)
+        # Configure large button style for action buttons
+        button_style.configure('LargeAction.TButton', padding=(14, 7))
         
+        # Create all action buttons (always present, just enabled/disabled)
         self.human_action_controls['fold'] = ttk.Button(
             action_frame, 
             text="Fold", 
@@ -1341,19 +1345,18 @@ class PracticeSessionUI(ttk.Frame):
         self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
         ToolTip(self.human_action_controls['call'], "Call the current bet")
 
-        # --- Bet Sizing Slider (Center-Right) ---
+        # --- Bet Sizing Slider (Right - Fixed Position) ---
         self.sizing_frame = ttk.Frame(self.action_bar_frame)
-        self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+        self.sizing_frame.grid(row=0, column=3, padx=10, sticky="ew")
         
         self.bet_size_var = tk.DoubleVar()
-        # Configure larger slider and label
         self.bet_slider = ttk.Scale(
             self.sizing_frame, 
             from_=0, 
             to=100, 
             orient=tk.HORIZONTAL, 
             variable=self.bet_size_var, 
-            length=360  # Increased from 300 to 360 (20% larger)
+            length=360
         )
         self.bet_slider.pack(fill=tk.X)
         self.bet_slider.bind("<B1-Motion>", self._update_bet_size_label)
@@ -1367,10 +1370,9 @@ class PracticeSessionUI(ttk.Frame):
         )
         self.bet_size_label.pack()
 
-        # --- Bet/Raise Button (Right) ---
-        # --- Preset Bet Buttons (Right) ---
+        # --- Preset Bet Buttons (Right - Fixed Position) ---
         preset_frame = ttk.Frame(self.action_bar_frame)
-        preset_frame.pack(side=tk.RIGHT, padx=10)
+        preset_frame.grid(row=0, column=4, padx=10, sticky="e")
         
         self.preset_bet_buttons = {}
         
@@ -1404,61 +1406,68 @@ class PracticeSessionUI(ttk.Frame):
         self.preset_bet_buttons['all_in'].pack(side=tk.LEFT, padx=2)
         ToolTip(self.preset_bet_buttons['all_in'], "Bet your entire stack")
         
-        # --- Bet/Raise Button (Right) ---
+        # --- Bet/Raise Button (Right - Fixed Position) ---
         self.human_action_controls['bet_raise'] = ttk.Button(
             self.action_bar_frame, 
             text="Bet", 
             style="LargeAction.TButton", 
             command=self._submit_bet_raise
         )
-        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
+        self.human_action_controls['bet_raise'].grid(row=0, column=5, padx=5, sticky="e")
         ToolTip(self.human_action_controls['bet_raise'], "Make a bet or raise")
 
         # Initially show only game control buttons
         self._show_game_control_buttons()
 
     def _show_game_control_buttons(self):
-        """Shows only the game control buttons (Start/Reset)."""
-
+        """Shows only the game control buttons (Start/Reset) - Fixed Position."""
         
-        # Hide all action buttons
+        # Enable game control buttons
+        self.start_button.config(state=tk.NORMAL)
+        self.reset_button.config(state=tk.NORMAL)
+        
+        # Disable all action buttons
         for widget in self.human_action_controls.values():
-            if hasattr(widget, 'pack_forget'):
-                widget.pack_forget()
-
+            widget.config(state=tk.DISABLED)
         
-        # Show game control buttons
-        self.start_button.pack(side=tk.LEFT, padx=5)
-        self.reset_button.pack(side=tk.LEFT, padx=5)
-
+        # Disable preset bet buttons
+        for button in self.preset_bet_buttons.values():
+            button.config(state=tk.DISABLED)
         
         # Hide bet sizing controls
         if hasattr(self, 'bet_slider'):
-            self.bet_slider.pack_forget()
+            self.bet_slider.config(state=tk.DISABLED)
         if hasattr(self, 'bet_size_label'):
-            self.bet_size_label.pack_forget()
+            self.bet_size_label.config(text="")
         if hasattr(self, 'sizing_frame'):
-            self.sizing_frame.pack_forget()
-
+            for child in self.sizing_frame.winfo_children():
+                if hasattr(child, 'config'):
+                    child.config(state=tk.DISABLED)
 
     def _show_action_buttons(self):
-        """Shows the action buttons and hides game control buttons."""
-
+        """Shows the action buttons and hides game control buttons - Fixed Position."""
         
-        # Hide game control buttons
-        self.start_button.pack_forget()
-        self.reset_button.pack_forget()
-
+        # Disable game control buttons
+        self.start_button.config(state=tk.DISABLED)
+        self.reset_button.config(state=tk.DISABLED)
+        
+        # Enable all action buttons
+        for widget in self.human_action_controls.values():
+            widget.config(state=tk.NORMAL)
+        
+        # Enable preset bet buttons
+        for button in self.preset_bet_buttons.values():
+            button.config(state=tk.NORMAL)
         
         # Show bet sizing controls
         if hasattr(self, 'bet_slider'):
-            self.bet_slider.pack(fill=tk.X)
-
+            self.bet_slider.config(state=tk.NORMAL)
         if hasattr(self, 'bet_size_label'):
-            self.bet_size_label.pack()
-
+            self.bet_size_label.config(text="Bet Size: $0.00")
         if hasattr(self, 'sizing_frame'):
-            self.sizing_frame.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+            for child in self.sizing_frame.winfo_children():
+                if hasattr(child, 'config'):
+                    child.config(state=tk.NORMAL)
 
 
     def _reset_game(self):
