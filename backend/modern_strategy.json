@@ -1,128 +1,126 @@
 {
   "hand_strength_tables": {
     "preflop": {
-      "AA": 100,
-      "KK": 95,
-      "QQ": 90,
-      "AKs": 85,
-      "JJ": 80,
-      "AKo": 80,
       "AQs": 80,
+      "JJ": 80,
+      "QQ": 90,
+      "AKo": 80,
       "TT": 80,
-      "AQo": 75,
-      "AJs": 75,
-      "KQs": 75,
-      "99": 70,
+      "KK": 95,
+      "AKs": 85,
+      "AA": 100,
       "AJo": 70,
-      "KJs": 70,
-      "ATs": 70,
       "88": 65,
-      "KQo": 65,
+      "KQs": 75,
       "QJs": 65,
+      "AJs": 75,
       "KTs": 65,
-      "77": 60,
+      "ATs": 70,
+      "AQo": 75,
+      "KJs": 70,
+      "KQo": 65,
+      "99": 70,
+      "A6s": 50,
+      "T9s": 50,
       "A9s": 60,
       "A8s": 60,
-      "JTs": 60,
       "66": 55,
+      "A7s": 55,
+      "55": 50,
       "KJo": 55,
       "QTs": 55,
-      "A7s": 55,
-      "A5s": 55,
-      "55": 50,
-      "A6s": 50,
+      "JTs": 60,
       "A4s": 50,
-      "T9s": 50,
-      "44": 45,
-      "A3s": 45,
-      "A2s": 45,
-      "K9s": 45,
-      "33": 40,
-      "Q9s": 40,
+      "77": 60,
+      "A5s": 55,
       "J9s": 40,
-      "98s": 40,
-      "22": 35,
+      "A2s": 45,
+      "A3s": 45,
       "87s": 35,
-      "K8s": 30,
-      "76s": 30,
+      "44": 45,
+      "98s": 40,
+      "Q9s": 40,
+      "33": 40,
+      "K9s": 45,
+      "22": 35,
       "65s": 25,
-      "54s": 25,
-      "T8s": 20
+      "T8s": 20,
+      "76s": 30,
+      "K8s": 30,
+      "54s": 25
     },
     "postflop": {
       "high_card": 5,
       "pair": 15,
-      "bottom_pair": 20,
-      "middle_pair": 25,
-      "top_pair": 35,
-      "over_pair": 45,
-      "two_pair": 55,
-      "set": 70,
-      "straight": 80,
-      "flush": 85,
-      "full_house": 95,
+      "top_pair": 30,
+      "over_pair": 35,
+      "two_pair": 45,
+      "set": 60,
+      "straight": 70,
+      "flush": 80,
+      "full_house": 90,
       "quads": 100,
-      "straight_flush": 100,
-      "gutshot_draw": 15,
-      "open_ended_draw": 25,
-      "flush_draw": 30,
-      "combo_draw": 45,
-      "nut_flush_draw": 35,
-      "nut_straight_draw": 30,
-      "overcard_draw": 10,
-      "backdoor_flush": 5,
-      "backdoor_straight": 5,
-      "pair_plus_draw": 40,
-      "set_plus_draw": 75
+      "straight_flush": 120,
+      "gutshot_draw": 12,
+      "open_ended_draw": 18,
+      "flush_draw": 20,
+      "combo_draw": 35,
+      "nut_flush_draw": 25,
+      "nut_straight_draw": 22,
+      "overcard_draw": 8,
+      "backdoor_flush": 3,
+      "backdoor_straight": 2,
+      "pair_plus_draw": 28,
+      "set_plus_draw": 65
     }
   },
   "preflop": {
     "open_rules": {
       "UTG": {
-        "threshold": 50,
+        "threshold": 60,
         "sizing": 3.0
       },
       "MP": {
-        "threshold": 45,
+        "threshold": 55,
         "sizing": 3.0
       },
       "CO": {
-        "threshold": 35,
+        "threshold": 48,
         "sizing": 2.5
       },
       "BTN": {
-        "threshold": 20,
+        "threshold": 40,
         "sizing": 2.5
       },
       "SB": {
-        "threshold": 35,
+        "threshold": 50,
         "sizing": 3.0
       }
     },
     "vs_raise": {
       "UTG": {
-        "value_thresh": 70,
-        "call_thresh": 55,
+        "value_thresh": 75,
+        "call_thresh": 65,
         "sizing": 3.0
       },
       "MP": {
-        "value_thresh": 65,
-        "call_thresh": 50,
+        "value_thresh": 72,
+        "call_thresh": 62,
         "sizing": 3.0
       },
       "CO": {
-        "value_thresh": 60,
-        "call_thresh": 45,
+        "value_thresh": 70,
+        "call_thresh": 60,
         "sizing": 2.5
       },
       "BTN": {
-        "value_thresh": 55,
-        "call_thresh": 35,
+        "value_thresh": 68,
+        "call_thresh": 55,
         "sizing": 2.5
       },
       "SB": {
-        "value_thresh": 65,
-        "call_thresh": 50,
+        "value_thresh": 70,
+        "call_thresh": 60,
         "sizing": 3.0
       }
     }
@@ -132,81 +130,81 @@
       "flop": {
         "UTG": {
           "val_thresh": 35,
-          "check_thresh": 20,
-          "sizing": 0.66
+          "check_thresh": 15,
+          "sizing": 0.75
         },
         "MP": {
-          "val_thresh": 35,
-          "check_thresh": 15,
-          "sizing": 0.66
-        },
-        "CO": {
           "val_thresh": 30,
           "check_thresh": 15,
-          "sizing": 0.66
+          "sizing": 0.75
         },
-        "BTN": {
+        "CO": {
           "val_thresh": 25,
           "check_thresh": 10,
-          "sizing": 0.66
+          "sizing": 0.75
+        },
+        "BTN": {
+          "val_thresh": 20,
+          "check_thresh": 10,
+          "sizing": 0.75
         },
         "SB": {
-          "val_thresh": 35,
-          "check_thresh": 20,
+          "val_thresh": 25,
+          "check_thresh": 15,
           "sizing": 0.75
         }
       },
       "turn": {
         "UTG": {
-          "val_thresh": 45,
-          "check_thresh": 25,
-          "sizing": 0.75
+          "val_thresh": 40,
+          "check_thresh": 20,
+          "sizing": 0.8
         },
         "MP": {
-          "val_thresh": 40,
-          "check_thresh": 25,
-          "sizing": 0.75
-        },
-        "CO": {
           "val_thresh": 35,
           "check_thresh": 20,
-          "sizing": 0.75
+          "sizing": 0.8
         },
-        "BTN": {
+        "CO": {
           "val_thresh": 30,
           "check_thresh": 15,
-          "sizing": 0.75
+          "sizing": 0.8
+        },
+        "BTN": {
+          "val_thresh": 25,
+          "check_thresh": 15,
+          "sizing": 0.8
         },
         "SB": {
-          "val_thresh": 40,
-          "check_thresh": 25,
-          "sizing": 0.75
+          "val_thresh": 30,
+          "check_thresh": 20,
+          "sizing": 0.8
         }
       },
       "river": {
         "UTG": {
-          "val_thresh": 55,
-          "check_thresh": 35,
-          "sizing": 1.0
-        },
-        "MP": {
-          "val_thresh": 50,
-          "check_thresh": 30,
-          "sizing": 1.0
-        },
-        "CO": {
           "val_thresh": 45,
           "check_thresh": 25,
           "sizing": 1.0
         },
-        "BTN": {
+        "MP": {
           "val_thresh": 40,
+          "check_thresh": 25,
+          "sizing": 1.0
+        },
+        "CO": {
+          "val_thresh": 35,
+          "check_thresh": 20,
+          "sizing": 1.0
+        },
+        "BTN": {
+          "val_thresh": 30,
           "check_thresh": 20,
           "sizing": 1.0
         },
         "SB": {
-          "val_thresh": 50,
-          "check_thresh": 30,
+          "val_thresh": 35,
+          "check_thresh": 25,
           "sizing": 1.0
         }
       }
@@ -214,85 +212,85 @@
     "caller": {
       "flop": {
         "UTG": {
-          "val_thresh": 30,
-          "check_thresh": 15,
-          "sizing": 0.66
+          "val_thresh": 25,
+          "check_thresh": 10,
+          "sizing": 0.75
         },
         "MP": {
-          "val_thresh": 25,
-          "check_thresh": 15,
-          "sizing": 0.66
-        },
-        "CO": {
-          "val_thresh": 25,
-          "check_thresh": 10,
-          "sizing": 0.66
-        },
-        "BTN": {
           "val_thresh": 20,
           "check_thresh": 10,
-          "sizing": 0.66
+          "sizing": 0.75
+        },
+        "CO": {
+          "val_thresh": 15,
+          "check_thresh": 5,
+          "sizing": 0.75
+        },
+        "BTN": {
+          "val_thresh": 15,
+          "check_thresh": 5,
+          "sizing": 0.75
         },
         "SB": {
-          "val_thresh": 30,
-          "check_thresh": 15,
+          "val_thresh": 20,
+          "check_thresh": 10,
           "sizing": 0.75
         }
       },
       "turn": {
         "UTG": {
-          "val_thresh": 35,
-          "check_thresh": 20,
-          "sizing": 0.75
+          "val_thresh": 30,
+          "check_thresh": 15,
+          "sizing": 0.8
         },
         "MP": {
-          "val_thresh": 30,
-          "check_thresh": 20,
-          "sizing": 0.75
-        },
-        "CO": {
-          "val_thresh": 30,
-          "check_thresh": 15,
-          "sizing": 0.75
-        },
-        "BTN": {
           "val_thresh": 25,
           "check_thresh": 15,
-          "sizing": 0.75
+          "sizing": 0.8
+        },
+        "CO": {
+          "val_thresh": 20,
+          "check_thresh": 10,
+          "sizing": 0.8
+        },
+        "BTN": {
+          "val_thresh": 20,
+          "check_thresh": 10,
+          "sizing": 0.8
         },
         "SB": {
-          "val_thresh": 35,
-          "check_thresh": 20,
-          "sizing": 0.75
+          "val_thresh": 25,
+          "check_thresh": 15,
+          "sizing": 0.8
         }
       },
       "river": {
         "UTG": {
-          "val_thresh": 45,
-          "check_thresh": 25,
-          "sizing": 1.0
-        },
-        "MP": {
-          "val_thresh": 40,
-          "check_thresh": 25,
-          "sizing": 1.0
-        },
-        "CO": {
           "val_thresh": 35,
           "check_thresh": 20,
           "sizing": 1.0
         },
-        "BTN": {
+        "MP": {
           "val_thresh": 30,
           "check_thresh": 20,
           "sizing": 1.0
         },
+        "CO": {
+          "val_thresh": 25,
+          "check_thresh": 15,
+          "sizing": 1.0
+        },
+        "BTN": {
+          "val_thresh": 25,
+          "check_thresh": 15,
+          "sizing": 1.0
+        },
         "SB": {
-          "val_thresh": 40,
-          "check_thresh": 25,
+          "val_thresh": 30,
+          "check_thresh": 20,
           "sizing": 1.0
         }
       }
     }
   }
-} 
+}
