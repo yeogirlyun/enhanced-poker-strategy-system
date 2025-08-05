@@ -805,6 +805,10 @@ class EnhancedMainGUI:
             self.game_statistics.configure(font=font_config)
         if hasattr(self, "hand_log_text"):
             self.hand_log_text.configure(font=font_config)
+        
+        # Update strategy optimization panel fonts
+        if hasattr(self, "optimization_panel"):
+            self.optimization_panel.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
 
     def _on_tier_data_change(self):
         """Handle tier data changes."""
