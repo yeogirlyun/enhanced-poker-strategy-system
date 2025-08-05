@@ -208,11 +208,37 @@ class StrategyOptimizationPanel:
         self.progress_text.config(state=tk.DISABLED)
 
     def update_font_size(self, font_size: int):
-        """Update font size for all widgets."""
+        """Update font size for all widgets in the optimization panel."""
         self.current_font_size = font_size
-        # Update font sizes for labels and text areas
-        for widget in self.main_frame.winfo_children():
-            if isinstance(widget, ttk.Label):
-                widget.configure(font=("Arial", font_size))
-            elif isinstance(widget, tk.Text):
-                widget.configure(font=("Consolas", font_size)) 
+        
+        # Create font configurations
+        main_font = (THEME["font_family"], font_size)
+        monospace_font = ("Consolas", font_size)  # For progress text
+        
+        # Update progress text widget
+        if hasattr(self, "progress_text"):
+            self.progress_text.configure(font=monospace_font)
+        
+        # Update all labels and text widgets recursively
+        self._update_widget_fonts(self.main_frame, main_font, monospace_font)
+    
+    def _update_widget_fonts(self, parent_widget, main_font, monospace_font):
+        """Recursively update font sizes for all widgets."""
+        for widget in parent_widget.winfo_children():
+            try:
+                if isinstance(widget, ttk.Label):
+                    widget.configure(font=main_font)
+                elif isinstance(widget, tk.Text):
+                    widget.configure(font=monospace_font)
+                elif isinstance(widget, ttk.Entry):
+                    widget.configure(font=main_font)
+                elif isinstance(widget, ttk.Radiobutton):
+                    widget.configure(font=main_font)
+                elif isinstance(widget, ttk.Button):
+                    widget.configure(font=main_font)
+                # Recursively update child widgets
+                if hasattr(widget, 'winfo_children'):
+                    self._update_widget_fonts(widget, main_font, monospace_font)
+            except tk.TclError:
+                # Some widgets don't support font configuration
+                pass 
