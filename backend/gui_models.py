@@ -179,12 +179,18 @@ class StrategyData:
         self.strategy_dict = self._create_strategy_from_tiers()
 
     def load_strategy_from_file(self, filename: str = None) -> bool:
-        """Loads strategy data from a JSON file or defaults to built-in strategy."""
+        """Loads strategy data from a JSON file or generates and saves default strategy."""
         try:
-            # If no filename provided or file doesn't exist, load default strategy
+            # If no filename provided or file doesn't exist, generate and save default
             if filename is None or not os.path.exists(filename):
-                print(f"📁 Loading default strategy (file not found: {filename})")
+                print(f"📁 Generating default strategy (file not found: {filename})")
                 self.load_default_tiers()
+                
+                # Save the default strategy to modern_strategy.json
+                default_filename = "modern_strategy.json"
+                self.save_strategy_to_file(default_filename)
+                self.current_strategy_file = default_filename
+                print(f"💾 Saved default strategy to {default_filename}")
                 return True
 
             with open(filename, "r") as f:
@@ -195,8 +201,14 @@ class StrategyData:
             self.current_strategy_file = filename
             return True
         except Exception as e:
-            print(f"⚠️ Error loading strategy file, falling back to default: {e}")
+            print(f"⚠️ Error loading strategy file, generating default: {e}")
             self.load_default_tiers()
+            
+            # Save the default strategy to modern_strategy.json
+            default_filename = "modern_strategy.json"
+            self.save_strategy_to_file(default_filename)
+            self.current_strategy_file = default_filename
+            print(f"💾 Saved default strategy to {default_filename}")
             return True
 
     def _create_tiers_from_strategy(self, strategy_data: Dict[str, Any]):
