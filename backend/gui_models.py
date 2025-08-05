@@ -144,21 +144,36 @@ class StrategyData:
             self.tiers.pop(index)
 
     def load_default_tiers(self):
-        """Loads a default set of tiers for a new strategy."""
-        # Using a more vibrant and distinct color set
+        """Loads modern 5-tier system with memorable boundaries."""
         tier_colors = {
-            "Elite": "#D13438",   # Strong Red
-            "Premium": "#0E639C", # Strong Blue
-            "Gold": "#FF8C00",    # Dark Orange
-            "Silver": "#4CAF50",  # Green
-            "Bronze": "#8A3FFC",  # Purple
+            "Premium": "#FF0000",    # Bright Red - The Monsters
+            "Strong": "#FFA500",     # Orange - The Workhorses  
+            "Playable": "#FFD700",   # Gold - The Bread & Butter
+            "Speculative": "#00FF00", # Green - The Connectors
+            "Marginal": "#87CEEB"    # Sky Blue - The Situational
         }
+        
         self.tiers = [
-            HandStrengthTier("Elite", 85, 100, tier_colors["Elite"], {"AA", "KK", "QQ", "AKs"}),
-            HandStrengthTier("Premium", 75, 84, tier_colors["Premium"], {"JJ", "AKo", "AQs", "TT", "AQo", "AJs", "KQs"}),
-            HandStrengthTier("Gold", 60, 74, tier_colors["Gold"], {"99", "AJo", "KJs", "ATs", "88", "KQo", "QJs", "KTs", "77", "A9s", "A8s", "JTs"}),
-            HandStrengthTier("Silver", 45, 59, tier_colors["Silver"], {"66", "KJo", "QTs", "A7s", "A5s", "55", "A6s", "A4s", "T9s", "44", "A3s", "A2s", "K9s", "33", "Q9s", "J9s", "98s"}),
-            HandStrengthTier("Bronze", 30, 44, tier_colors["Bronze"], {"22", "87s", "K8s", "76s", "65s", "54s", "T8s"}),
+            HandStrengthTier(
+                "Premium", 80, 100, tier_colors["Premium"], 
+                {"AA", "KK", "QQ", "AKs", "JJ", "AKo", "AQs", "TT"}
+            ),
+            HandStrengthTier(
+                "Strong", 65, 79, tier_colors["Strong"], 
+                {"AQo", "AJs", "KQs", "99", "AJo", "KJs", "ATs", "88", "KQo", "QJs", "KTs"}
+            ),
+            HandStrengthTier(
+                "Playable", 50, 64, tier_colors["Playable"], 
+                {"77", "A9s", "A8s", "JTs", "66", "KJo", "QTs", "A7s", "A5s", "55", "A6s", "A4s", "T9s"}
+            ),
+            HandStrengthTier(
+                "Speculative", 35, 49, tier_colors["Speculative"], 
+                {"44", "A3s", "A2s", "K9s", "33", "Q9s", "J9s", "98s", "22", "87s"}
+            ),
+            HandStrengthTier(
+                "Marginal", 20, 34, tier_colors["Marginal"], 
+                {"K8s", "76s", "65s", "54s", "T8s"}
+            ),
         ]
         self.current_strategy_file = None
         self.strategy_dict = self._create_strategy_from_tiers()
@@ -188,16 +203,16 @@ class StrategyData:
             return
 
         tier_colors = {
-            "Elite": "#D13438", "Premium": "#0E639C", "Gold": "#FF8C00",
-            "Silver": "#4CAF50", "Bronze": "#8A3FFC"
+            "Premium": "#FF0000", "Strong": "#FFA500", "Playable": "#FFD700",
+            "Speculative": "#00FF00", "Marginal": "#87CEEB"
         }
         strength_groups = {}
         for hand, strength in hand_strength_table.items():
-            if strength >= 85: tier_name, min_hs, max_hs = "Elite", 85, 100
-            elif strength >= 75: tier_name, min_hs, max_hs = "Premium", 75, 84
-            elif strength >= 60: tier_name, min_hs, max_hs = "Gold", 60, 74
-            elif strength >= 45: tier_name, min_hs, max_hs = "Silver", 45, 59
-            elif strength >= 30: tier_name, min_hs, max_hs = "Bronze", 30, 44
+            if strength >= 80: tier_name, min_hs, max_hs = "Premium", 80, 100
+            elif strength >= 65: tier_name, min_hs, max_hs = "Strong", 65, 79
+            elif strength >= 50: tier_name, min_hs, max_hs = "Playable", 50, 64
+            elif strength >= 35: tier_name, min_hs, max_hs = "Speculative", 35, 49
+            elif strength >= 20: tier_name, min_hs, max_hs = "Marginal", 20, 34
             else: continue  # Skip unplayable hands
             
             if tier_name not in strength_groups:
