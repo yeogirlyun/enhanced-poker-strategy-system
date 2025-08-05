@@ -790,6 +790,21 @@ class EnhancedMainGUI:
         if hasattr(self, "practice_ui"):
             self.practice_ui.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
         # --- END NEW ---
+        
+        # Update strategy overview text font
+        if hasattr(self, "overview_text"):
+            font_config = GridSettings.get_size_config(new_size)["font"]
+            self.overview_text.configure(font=font_config)
+        
+        # Update enhanced game tab text widgets
+        if hasattr(self, "enhanced_game_state"):
+            self.enhanced_game_state.configure(font=font_config)
+        if hasattr(self, "strategy_analysis"):
+            self.strategy_analysis.configure(font=font_config)
+        if hasattr(self, "game_statistics"):
+            self.game_statistics.configure(font=font_config)
+        if hasattr(self, "hand_log_text"):
+            self.hand_log_text.configure(font=font_config)
 
     def _on_tier_data_change(self):
         """Handle tier data changes."""
