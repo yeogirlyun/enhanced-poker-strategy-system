@@ -178,11 +178,14 @@ class StrategyData:
         self.current_strategy_file = None
         self.strategy_dict = self._create_strategy_from_tiers()
 
-    def load_strategy_from_file(self, filename: str) -> bool:
-        """Loads strategy data from a JSON file."""
+    def load_strategy_from_file(self, filename: str = None) -> bool:
+        """Loads strategy data from a JSON file or defaults to built-in strategy."""
         try:
-            if not os.path.exists(filename):
-                return False
+            # If no filename provided or file doesn't exist, load default strategy
+            if filename is None or not os.path.exists(filename):
+                print(f"📁 Loading default strategy (file not found: {filename})")
+                self.load_default_tiers()
+                return True
 
             with open(filename, "r") as f:
                 strategy_data = json.load(f)
@@ -192,7 +195,9 @@ class StrategyData:
             self.current_strategy_file = filename
             return True
         except Exception as e:
-            return False
+            print(f"⚠️ Error loading strategy file, falling back to default: {e}")
+            self.load_default_tiers()
+            return True
 
     def _create_tiers_from_strategy(self, strategy_data: Dict[str, Any]):
         """Creates tiers from strategy data."""
@@ -235,17 +240,29 @@ class StrategyData:
             return False
 
     def _create_strategy_from_tiers(self) -> Dict[str, Any]:
-        """Creates strategy data from tiers, using the equity table for HS scores."""
+        """Creates strategy data from tiers with improved GTO hand strength scores."""
+        # Use improved GTO hand strength scores for default strategy
+        improved_hand_strength = {
+            "AA": 100, "KK": 95, "QQ": 90, "AKs": 85, "JJ": 80, "AKo": 80, "AQs": 80, "TT": 80,
+            "AQo": 75, "AJs": 75, "KQs": 75, "99": 70, "AJo": 70, "KJs": 70, "ATs": 70,
+            "88": 65, "KQo": 65, "QJs": 65, "KTs": 65, "77": 60, "A9s": 60, "A8s": 60, "JTs": 60,
+            "66": 55, "KJo": 55, "QTs": 55, "A7s": 55, "A5s": 55, "55": 50, "A6s": 50, "A4s": 50, "T9s": 50,
+            "44": 45, "A3s": 45, "A2s": 45, "K9s": 45, "33": 40, "Q9s": 40, "J9s": 40, "98s": 40,
+            "22": 35, "87s": 35, "K8s": 30, "76s": 30, "65s": 25, "54s": 25, "T8s": 20
+        }
+        
         hand_strength_table = {}
-
-        # Use existing strategy data if available, otherwise use equity table
+        
+        # Use existing strategy data if available, otherwise use improved scores
         existing_hand_strength = self.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
         
         for tier in self.tiers:
             for hand in tier.hands:
-                # Use existing HS score if available, otherwise use equity table
+                # Use existing HS score if available, otherwise use improved scores
                 if hand in existing_hand_strength:
                     hand_strength_table[hand] = existing_hand_strength[hand]
+                elif hand in improved_hand_strength:
+                    hand_strength_table[hand] = improved_hand_strength[hand]
                 elif hand in PREFLOP_EQUITY_TABLE:
                     hand_strength_table[hand] = PREFLOP_EQUITY_TABLE[hand]
 
