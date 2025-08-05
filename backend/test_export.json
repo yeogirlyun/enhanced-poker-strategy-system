@@ -1,0 +1,1133 @@
+{
+  "session_info": {
+    "session_id": "8911d37a-b71f-4bd4-92c9-cd56fcabd83a",
+    "start_time": "2025-08-04T16:21:34.073933",
+    "end_time": null,
+    "session_duration": 0.0009579658508300781,
+    "total_hands": 0,
+    "total_players": 6,
+    "big_blind_amount": 1.0,
+    "initial_stacks": {
+      "Player 1": 100.0,
+      "Player 2": 100.0,
+      "Player 3": 100.0,
+      "Player 4": 100.0,
+      "Player 5": 100.0,
+      "Player 6": 100.0
+    },
+    "final_stacks": {},
+    "session_notes": "",
+    "hands_played": 3,
+    "human_wins": 0,
+    "human_losses": 0
+  },
+  "hands_played": [
+    {
+      "hand_number": 0,
+      "start_time": "2025-08-04T16:20:34.074398",
+      "end_time": "2025-08-04T16:21:34.074398",
+      "players_at_start": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "BTN",
+          "is_human": true,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 2",
+          "stack": 100.0,
+          "position": "SB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 3",
+          "stack": 100.0,
+          "position": "BB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 5",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 6",
+          "stack": 100.0,
+          "position": "CO",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        }
+      ],
+      "players_at_end": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "CO",
+          "is_human": true,
+          "is_active": false,
+          "cards": [
+            "Qh",
+            "8h"
+          ],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 2",
+          "stack": 99.5,
+          "position": "BTN",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.5,
+          "total_invested": 0.5,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 3",
+          "stack": 100.5,
+          "position": "SB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 1.0,
+          "total_invested": 1.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "BB",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 5",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 6",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        }
+      ],
+      "board_cards": [],
+      "pot_amount": 1.5,
+      "winners": [
+        {
+          "name": "Player 3",
+          "amount": 1.5,
+          "board": [],
+          "hand": "pair"
+        }
+      ],
+      "side_pots": [
+        {
+          "amount": 1.5,
+          "eligible_players": [
+            "Player(name='Player 3', stack=102.0, position='BTN', is_human=False, is_active=True, cards=['Kc', 'Kd'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+          ]
+        }
+      ],
+      "action_history": [
+        {
+          "timestamp": "2025-08-04T16:21:34.074100",
+          "street": "preflop",
+          "player_name": "Player 4",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 1.5,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "Qh",
+                "8h"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 99.5,
+              "current_bet": 0.5,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 99.0,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074172",
+          "street": "preflop",
+          "player_name": "Player 5",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 1.5,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "Qh",
+                "8h"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 99.5,
+              "current_bet": 0.5,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 99.0,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074233",
+          "street": "preflop",
+          "player_name": "Player 6",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 1.5,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "Qh",
+                "8h"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 99.5,
+              "current_bet": 0.5,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 99.0,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074330",
+          "street": "preflop",
+          "player_name": "Player 2",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 1.5,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "Qh",
+                "8h"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 99.5,
+              "current_bet": 0.5,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 99.0,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        }
+      ],
+      "showdown_cards": {
+        "Player 3": [
+          "Kc",
+          "Kd"
+        ]
+      }
+    },
+    {
+      "hand_number": 1,
+      "start_time": "2025-08-04T16:20:34.074437",
+      "end_time": "2025-08-04T16:21:34.074437",
+      "players_at_start": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "BTN",
+          "is_human": true,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 2",
+          "stack": 100.0,
+          "position": "SB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 3",
+          "stack": 100.0,
+          "position": "BB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 5",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 6",
+          "stack": 100.0,
+          "position": "CO",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        }
+      ],
+      "players_at_end": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": true,
+          "is_active": false,
+          "cards": [
+            "Qh",
+            "8h"
+          ],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 2",
+          "stack": 99.5,
+          "position": "CO",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.5,
+          "total_invested": 0.5,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 3",
+          "stack": 102.0,
+          "position": "BTN",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 1.0,
+          "total_invested": 1.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "SB",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 5",
+          "stack": 100.0,
+          "position": "BB",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 6",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        }
+      ],
+      "board_cards": [],
+      "pot_amount": 1.5,
+      "winners": [
+        {
+          "name": "Player 3",
+          "amount": 1.5,
+          "board": [],
+          "hand": "pair"
+        }
+      ],
+      "side_pots": [
+        {
+          "amount": 1.5,
+          "eligible_players": [
+            "Player(name='Player 3', stack=102.0, position='BTN', is_human=False, is_active=True, cards=['Kc', 'Kd'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+          ]
+        }
+      ],
+      "action_history": [],
+      "showdown_cards": {
+        "Player 3": [
+          "Kc",
+          "Kd"
+        ]
+      }
+    },
+    {
+      "hand_number": 2,
+      "start_time": "2025-08-04T16:20:34.074874",
+      "end_time": "2025-08-04T16:21:34.074874",
+      "players_at_start": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": true,
+          "is_active": false,
+          "cards": [
+            "Qh",
+            "8h"
+          ],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 2",
+          "stack": 99.5,
+          "position": "CO",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.5,
+          "total_invested": 0.5,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 3",
+          "stack": 102.0,
+          "position": "BTN",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 1.0,
+          "total_invested": 1.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "SB",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 5",
+          "stack": 100.0,
+          "position": "BB",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 6",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        }
+      ],
+      "players_at_end": [
+        {
+          "name": "Player 1",
+          "stack": 100.0,
+          "position": "UTG",
+          "is_human": true,
+          "is_active": false,
+          "cards": [
+            "2s",
+            "3d"
+          ],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 2",
+          "stack": 100.0,
+          "position": "MP",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 3",
+          "stack": 100.0,
+          "position": "CO",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 4",
+          "stack": 100.0,
+          "position": "BTN",
+          "is_human": false,
+          "is_active": false,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": true
+        },
+        {
+          "name": "Player 5",
+          "stack": 102.0,
+          "position": "SB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 0.0,
+          "total_invested": 0.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        },
+        {
+          "name": "Player 6",
+          "stack": 98.5,
+          "position": "BB",
+          "is_human": false,
+          "is_active": true,
+          "cards": [],
+          "current_bet": 1.0,
+          "total_invested": 1.0,
+          "is_all_in": false,
+          "has_acted_this_round": false
+        }
+      ],
+      "board_cards": [],
+      "pot_amount": 2.0,
+      "winners": [
+        {
+          "name": "Player 5",
+          "amount": 2.0,
+          "board": [],
+          "hand": "high_card"
+        }
+      ],
+      "side_pots": [
+        {
+          "amount": 2.0,
+          "eligible_players": [
+            "Player(name='Player 5', stack=102.0, position='SB', is_human=False, is_active=True, cards=['Jc', 'Ad'], current_bet=0.0, has_acted_this_round=False, is_all_in=False, total_invested=0.0, partial_call_amount=None, full_call_amount=None)",
+            "Player(name='Player 6', stack=98.5, position='BB', is_human=False, is_active=True, cards=['5h', '9c'], current_bet=1.0, has_acted_this_round=False, is_all_in=False, total_invested=1.0, partial_call_amount=None, full_call_amount=None)"
+          ]
+        }
+      ],
+      "action_history": [
+        {
+          "timestamp": "2025-08-04T16:21:34.074606",
+          "street": "preflop",
+          "player_name": "Player 2",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 2.0,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "2s",
+                "3d"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 98.5,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074663",
+          "street": "preflop",
+          "player_name": "Player 3",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 2.0,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "2s",
+                "3d"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 98.5,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074718",
+          "street": "preflop",
+          "player_name": "Player 4",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 2.0,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "2s",
+                "3d"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 98.5,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        },
+        {
+          "timestamp": "2025-08-04T16:21:34.074772",
+          "street": "preflop",
+          "player_name": "Player 5",
+          "action": "fold",
+          "amount": 0,
+          "pot_size": 2.0,
+          "board": [],
+          "player_states": [
+            {
+              "name": "Player 1",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": true,
+              "cards": [
+                "2s",
+                "3d"
+              ]
+            },
+            {
+              "name": "Player 2",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 3",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 4",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": false,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 5",
+              "stack": 100.0,
+              "current_bet": 0.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            },
+            {
+              "name": "Player 6",
+              "stack": 98.5,
+              "current_bet": 1.0,
+              "is_active": true,
+              "is_all_in": false,
+              "is_human": false,
+              "cards": []
+            }
+          ]
+        }
+      ],
+      "showdown_cards": {
+        "Player 5": [
+          "Jc",
+          "Ad"
+        ],
+        "Player 6": [
+          "5h",
+          "9c"
+        ]
+      }
+    }
+  ],
+  "session_log": [
+    "[SESSION 16:21:34] Session started",
+    "[SESSION 16:21:34] Players: 6",
+    "[SESSION 16:21:34] Big Blind: $1.0",
+    "[SESSION 16:21:34] Starting hand 1",
+    "[SESSION 16:21:34] Hand 0 complete: Player 3 wins $1.50",
+    "[SESSION 16:21:34] Hand 1 complete: Player 3 wins $1.50",
+    "[SESSION 16:21:34] Starting hand 3",
+    "[SESSION 16:21:34] Hand 2 complete: Player 5 wins $2.00"
+  ]
+}
