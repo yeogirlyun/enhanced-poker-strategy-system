@@ -171,6 +171,19 @@ class EnhancedHandEvaluator:
     
     def _is_straight_flush(self, rank_counts: Dict, suit_counts: Dict) -> bool:
         """Check for straight flush."""
+        # Find the flush suit
+        flush_suit = None
+        for suit, count in suit_counts.items():
+            if count >= 5:
+                flush_suit = suit
+                break
+        
+        if not flush_suit:
+            return False
+        
+        # For straight flush, we need to check if there's a straight among the flush cards
+        # This is a simplified check - the actual best 5-card combination will be found
+        # in the get_best_five_cards method
         return (self._is_straight(rank_counts) and 
                 max(suit_counts.values()) >= 5)
     

@@ -154,9 +154,9 @@ class StrategyData:
             "Bronze": "#8A3FFC",  # Purple
         }
         self.tiers = [
-            HandStrengthTier("Elite", 40, 50, tier_colors["Elite"], {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo"}),
-            HandStrengthTier("Premium", 30, 39, tier_colors["Premium"], {"TT", "99", "AJo", "KQs", "AJs", "KJs", "QJs", "JTs", "ATs", "KQo", "A9s", "A8s", "KTs", "QTs", "J9s"}),
-            HandStrengthTier("Gold", 20, 29, tier_colors["Gold"], {"88", "77", "KJo", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s", "A4s", "A3s", "A2s"}),
+            HandStrengthTier("Elite", 60, 100, tier_colors["Elite"], {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo", "AJs", "KQs", "KJo"}),
+            HandStrengthTier("Premium", 40, 59, tier_colors["Premium"], {"TT", "99", "AJo", "KJs", "QJs", "JTs", "ATs", "KQo", "A9s", "A8s", "KTs", "QTs", "J9s"}),
+            HandStrengthTier("Gold", 20, 39, tier_colors["Gold"], {"88", "77", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s", "A4s", "A3s", "A2s"}),
             HandStrengthTier("Silver", 10, 19, tier_colors["Silver"], {"66", "55", "44", "K8s", "Q8s", "J7s", "T8s", "98s", "K7s", "Q7s", "J6s", "T7s", "97s", "87s"}),
             HandStrengthTier("Bronze", 1, 9, tier_colors["Bronze"], {"33", "22", "K6s", "Q6s", "J5s", "T6s", "96s", "86s", "76s", "K5s", "Q5s", "J4s", "T5s", "95s", "85s", "75s"}),
         ]
@@ -193,9 +193,9 @@ class StrategyData:
         }
         strength_groups = {}
         for hand, strength in hand_strength_table.items():
-            if strength >= 40: tier_name, min_hs, max_hs = "Elite", 40, 50
-            elif strength >= 30: tier_name, min_hs, max_hs = "Premium", 30, 39
-            elif strength >= 20: tier_name, min_hs, max_hs = "Gold", 20, 29
+            if strength >= 60: tier_name, min_hs, max_hs = "Elite", 60, 100
+            elif strength >= 40: tier_name, min_hs, max_hs = "Premium", 40, 59
+            elif strength >= 20: tier_name, min_hs, max_hs = "Gold", 20, 39
             elif strength >= 10: tier_name, min_hs, max_hs = "Silver", 10, 19
             else: tier_name, min_hs, max_hs = "Bronze", 1, 9
             
@@ -222,12 +222,16 @@ class StrategyData:
         """Creates strategy data from tiers, using the equity table for HS scores."""
         hand_strength_table = {}
 
-        # --- NEW: Only include hands that are in a tier ---
+        # Use existing strategy data if available, otherwise use equity table
+        existing_hand_strength = self.strategy_dict.get("hand_strength_tables", {}).get("preflop", {})
+        
         for tier in self.tiers:
             for hand in tier.hands:
-                if hand in PREFLOP_EQUITY_TABLE:
+                # Use existing HS score if available, otherwise use equity table
+                if hand in existing_hand_strength:
+                    hand_strength_table[hand] = existing_hand_strength[hand]
+                elif hand in PREFLOP_EQUITY_TABLE:
                     hand_strength_table[hand] = PREFLOP_EQUITY_TABLE[hand]
-        # --- END NEW ---
 
         # Complete postflop strategy with all positions and streets
         postflop_strategy = {
