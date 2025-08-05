@@ -154,11 +154,11 @@ class StrategyData:
             "Bronze": "#8A3FFC",  # Purple
         }
         self.tiers = [
-            HandStrengthTier("Elite", 60, 100, tier_colors["Elite"], {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo", "AJs", "KQs", "KJo"}),
-            HandStrengthTier("Premium", 40, 59, tier_colors["Premium"], {"TT", "99", "AJo", "KJs", "QJs", "JTs", "ATs", "KQo", "A9s", "A8s", "KTs", "QTs", "J9s"}),
-            HandStrengthTier("Gold", 20, 39, tier_colors["Gold"], {"88", "77", "A7s", "A6s", "A5s", "K9s", "Q9s", "J8s", "T9s", "A4s", "A3s", "A2s"}),
-            HandStrengthTier("Silver", 10, 19, tier_colors["Silver"], {"66", "55", "44", "K8s", "Q8s", "J7s", "T8s", "98s", "K7s", "Q7s", "J6s", "T7s", "97s", "87s"}),
-            HandStrengthTier("Bronze", 1, 9, tier_colors["Bronze"], {"33", "22", "K6s", "Q6s", "J5s", "T6s", "96s", "86s", "76s", "K5s", "Q5s", "J4s", "T5s", "95s", "85s", "75s"}),
+            HandStrengthTier("Elite", 75, 100, tier_colors["Elite"], {"AA", "KK", "QQ", "JJ", "AKs", "AKo", "AQs", "AQo"}),
+            HandStrengthTier("Premium", 68, 74, tier_colors["Premium"], {"TT", "99", "AJs", "KQs", "AJo", "KJs", "QJs", "ATs", "KQo"}),
+            HandStrengthTier("Gold", 60, 67, tier_colors["Gold"], {"88", "77", "A9s", "A8s", "KTs", "QTs", "JTs", "A7s", "KJo", "A6s"}),
+            HandStrengthTier("Silver", 52, 59, tier_colors["Silver"], {"66", "55", "A5s", "A4s", "A3s", "A2s", "K9s", "Q9s", "J9s", "T9s", "A9o"}),
+            HandStrengthTier("Bronze", 45, 51, tier_colors["Bronze"], {"44", "33", "22", "K8s", "Q8s", "J8s", "T8s", "98s", "87s", "76s", "65s"}),
         ]
         self.current_strategy_file = None
         self.strategy_dict = self._create_strategy_from_tiers()
@@ -193,11 +193,12 @@ class StrategyData:
         }
         strength_groups = {}
         for hand, strength in hand_strength_table.items():
-            if strength >= 60: tier_name, min_hs, max_hs = "Elite", 60, 100
-            elif strength >= 40: tier_name, min_hs, max_hs = "Premium", 40, 59
-            elif strength >= 20: tier_name, min_hs, max_hs = "Gold", 20, 39
-            elif strength >= 10: tier_name, min_hs, max_hs = "Silver", 10, 19
-            else: tier_name, min_hs, max_hs = "Bronze", 1, 9
+            if strength >= 75: tier_name, min_hs, max_hs = "Elite", 75, 100
+            elif strength >= 68: tier_name, min_hs, max_hs = "Premium", 68, 74
+            elif strength >= 60: tier_name, min_hs, max_hs = "Gold", 60, 67
+            elif strength >= 52: tier_name, min_hs, max_hs = "Silver", 52, 59
+            elif strength >= 45: tier_name, min_hs, max_hs = "Bronze", 45, 51
+            else: continue  # Skip unplayable hands
             
             if tier_name not in strength_groups:
                 strength_groups[tier_name] = {"hands": set(), "min_hs": min_hs, "max_hs": max_hs, "color": tier_colors[tier_name]}
