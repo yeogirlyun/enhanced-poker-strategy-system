@@ -805,7 +805,7 @@ class ImprovedPokerStateMachine:
         self.game_state.current_bet = bb_amount
         self.game_state.min_raise = bb_amount
 
-        # Deal hole cards
+        # Deal hole cards with animation
         self.deal_hole_cards()
 
         # --- THIS IS THE FIX ---
@@ -820,15 +820,24 @@ class ImprovedPokerStateMachine:
         self.transition_to(PokerState.PREFLOP_BETTING)
 
     def deal_hole_cards(self):
-        """Deal hole cards to all players."""
+        """Deal hole cards to all players with animation callback."""
         self._log_action(f"🃏 Dealing hole cards to {len(self.game_state.players)} players")
         self._log_action(f"🃏 Deck has {len(self.game_state.deck)} cards remaining")
+        
+        # Trigger dealing animation callback if available
+        if hasattr(self, 'on_dealing_cards') and self.on_dealing_cards:
+            self.on_dealing_cards()
         
         for i, player in enumerate(self.game_state.players):
             card1 = self.deal_card()
             card2 = self.deal_card()
             player.cards = [card1, card2]
             self._log_action(f"🃏 {player.name} ({player.position}): {card1} {card2}")
+            
+            # Trigger individual card deal callback if available
+            if hasattr(self, 'on_card_dealt') and self.on_card_dealt:
+                self.on_card_dealt(i, card1, card2)
+            
             # Play card dealing sound for each card dealt
             self.sound_manager.play("card_deal")  # Authentic dealing sound
         

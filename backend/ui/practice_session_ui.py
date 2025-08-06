@@ -316,6 +316,8 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_player_changed = self.update_action_player_highlighting
         self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
         self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
+        self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
+        self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
         self.state_machine.on_log_entry = self.add_game_message
         
         # Setup UI
@@ -1512,6 +1514,8 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_action_player_changed = self.update_action_player_highlighting
                 self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
                 self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
+                self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
+                self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
                 
                 # Reset UI
                 self._reset_ui_for_new_hand()
@@ -2033,6 +2037,116 @@ class PracticeSessionUI(ttk.Frame):
         # Animate all bet displays consolidating into the pot
         self._animate_all_bets_to_pot()
     
+    def _handle_dealing_start(self):
+        """Handle the start of card dealing animation."""
+        self._log_message("🃏 Starting card dealing animation")
+        self.add_game_message("🃏 Dealer is dealing hole cards...")
+        
+        # Clear all existing cards first
+        self._clear_all_player_cards()
+    
+    def _handle_card_dealt(self, player_index: int, card1: str, card2: str):
+        """Handle animation of individual cards being dealt to a player."""
+        self._log_message(f"🃏 Dealing cards to Player {player_index}: {card1} {card2}")
+        
+        # Animate cards being dealt to this player with a delay
+        delay = player_index * 500  # 500ms delay between each player
+        self.root.after(delay, lambda: self._animate_dealing_cards_to_player(player_index, card1, card2))
+    
+    def _clear_all_player_cards(self):
+        """Clear all player cards at the start of dealing."""
+        for player_seat in self.player_seats:
+            if player_seat:
+                card_widgets = player_seat.get("card_widgets", [])
+                for widget in card_widgets:
+                    widget.set_card("")  # Clear card
+                    widget._current_card = None  # Clear stored card data
+        self._log_message("🃏 Cleared all player cards for new dealing")
+    
+    def _animate_dealing_cards_to_player(self, player_index: int, card1: str, card2: str):
+        """Animate cards being dealt to a specific player."""
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        card_widgets = player_seat.get("card_widgets", [])
+        
+        if len(card_widgets) >= 2:
+            # Create dealer position (center top of table)
+            dealer_x = self.canvas.winfo_width() // 2
+            dealer_y = 50
+            
+            # Get player position
+            player_pod = player_seat.get("player_pod")
+            if player_pod:
+                player_x = player_pod.winfo_x() + player_pod.winfo_width() // 2
+                player_y = player_pod.winfo_y() + player_pod.winfo_height() // 2
+                
+                # Animate first card
+                self._animate_single_card_deal(dealer_x, dealer_y, player_x, player_y, card1, 
+                                               lambda: self._set_player_card(player_index, 0, card1))
+                
+                # Animate second card with delay
+                self.root.after(300, lambda: self._animate_single_card_deal(dealer_x, dealer_y, player_x, player_y, card2,
+                                                                           lambda: self._set_player_card(player_index, 1, card2)))
+    
+    def _animate_single_card_deal(self, start_x, start_y, end_x, end_y, card, callback):
+        """Animate a single card being dealt from dealer to player."""
+        # Create card animation
+        card_width, card_height = 40, 60
+        card_rect = self.canvas.create_rectangle(
+            start_x - card_width//2, start_y - card_height//2,
+            start_x + card_width//2, start_y + card_height//2,
+            fill="lightblue", outline="blue", width=2
+        )
+        
+        # Animate movement
+        self._move_card_step(card_rect, start_x, start_y, end_x, end_y, callback)
+    
+    def _move_card_step(self, card_rect, start_x, start_y, end_x, end_y, callback, step=0):
+        """Animate card movement step by step."""
+        total_steps = 20
+        
+        if step >= total_steps:
+            # Animation complete
+            self.canvas.delete(card_rect)
+            callback()  # Set the actual card
+            return
+        
+        # Calculate current position
+        progress = step / total_steps
+        ease_progress = 1 - (1 - progress) ** 2  # Ease-out animation
+        
+        current_x = start_x + (end_x - start_x) * ease_progress
+        current_y = start_y + (end_y - start_y) * ease_progress
+        
+        # Move card
+        card_width, card_height = 40, 60
+        self.canvas.coords(card_rect,
+                          current_x - card_width//2, current_y - card_height//2,
+                          current_x + card_width//2, current_y + card_height//2)
+        
+        # Continue animation
+        self.root.after(30, lambda: self._move_card_step(card_rect, start_x, start_y, end_x, end_y, callback, step + 1))
+    
+    def _set_player_card(self, player_index: int, card_index: int, card: str):
+        """Set a specific card for a player after animation."""
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        card_widgets = player_seat.get("card_widgets", [])
+        
+        if card_index < len(card_widgets):
+            # For non-human players, show card back initially
+            if player_index == 0:  # Human player
+                card_widgets[card_index].set_card(card)
+                card_widgets[card_index]._current_card = card
+            else:  # Bot players
+                card_widgets[card_index].set_card("")  # Show card back
+                card_widgets[card_index]._current_card = card  # Store actual card
+            self._log_message(f"🃏 Set card {card_index} for Player {player_index}: {card}")
+    
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display with proper colors."""
         if not card_str or card_str == "**":
@@ -2295,10 +2409,22 @@ class PracticeSessionUI(ttk.Frame):
                         # Check if player has folded (is not active)
                         player_has_folded = not player_info.get('is_active', True)
                         
+                        # FIXED: Only set cards if they haven't been set yet or are different
+                        # This prevents cards from changing during showdown
+                        current_card1 = getattr(card_widgets[0], '_current_card', None)
+                        current_card2 = getattr(card_widgets[1], '_current_card', None)
+                        new_card1 = player_info['cards'][0] if len(player_info['cards']) > 0 else ""
+                        new_card2 = player_info['cards'][1] if len(player_info['cards']) > 1 else ""
+                        
                         if card_visible:
                             # Show actual cards for human players or during showdown
-                            card_widgets[0].set_card(player_info['cards'][0])
-                            card_widgets[1].set_card(player_info['cards'][1])
+                            # Only update if cards have actually changed
+                            if current_card1 != new_card1:
+                                card_widgets[0].set_card(new_card1)
+                                card_widgets[0]._current_card = new_card1
+                            if current_card2 != new_card2:
+                                card_widgets[1].set_card(new_card2)
+                                card_widgets[1]._current_card = new_card2
                             self._log_message(f"🎴 Showing cards for {player_info['name']}: {player_info['cards']}")
                         else:
                             # Show card backs for hidden cards
@@ -2308,9 +2434,12 @@ class PracticeSessionUI(ttk.Frame):
                                 card_widgets[1].set_folded()
                                 self._log_message(f"🎴 Showing folded cards for {player_info['name']}")
                             else:
-                                # Show normal card backs
+                                # Show normal card backs - but preserve the actual card data
                                 card_widgets[0].set_card("")  # This will show card back
                                 card_widgets[1].set_card("")  # This will show card back
+                                # Store the actual cards for later reveal
+                                card_widgets[0]._current_card = new_card1
+                                card_widgets[1]._current_card = new_card2
                                 self._log_message(f"🎴 Hiding cards for {player_info['name']}")
         
         # Update frame highlighting
