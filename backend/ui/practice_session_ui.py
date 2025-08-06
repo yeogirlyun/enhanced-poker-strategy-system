@@ -315,6 +315,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_hand_complete = self.handle_hand_complete
         self.state_machine.on_action_player_changed = self.update_action_player_highlighting
         self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
+        self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
         self.state_machine.on_log_entry = self.add_game_message
         
         # Setup UI
@@ -928,11 +929,8 @@ class PracticeSessionUI(ttk.Frame):
                 if hasattr(self, 'last_action_label'):
                     self.last_action_label.config(text=announcement)
                 
-                # ✅ NEW: First animate all individual bets consolidating into the pot
-                self._animate_all_bets_to_pot()
-                
-                # Then animate pot distribution to winner
-                self.root.after(1000, lambda: self._animate_pot_to_winner(winner_info, pot_amount))
+                # ✅ FIXED: Only animate pot distribution to winner (consolidation happens at street completion)
+                self._animate_pot_to_winner(winner_info, pot_amount)
         
         # Ensure animation triggers even for fold scenarios
         elif winner_info and winner_info.get("amount", 0) > 0:
@@ -1513,6 +1511,7 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_log_entry = self.add_game_message
                 self.state_machine.on_action_player_changed = self.update_action_player_highlighting
                 self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
+                self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
                 
                 # Reset UI
                 self._reset_ui_for_new_hand()
@@ -1763,9 +1762,9 @@ class PracticeSessionUI(ttk.Frame):
                 self.canvas.itemconfig(bet_label_window, state="normal")
                 self._log_message(f"💰 Updated bet display for Player {player_index}: ${amount:.2f}")
                 
-                # ✅ NEW: Animate chips moving from player to pot for betting actions
-                if action.upper() in ["BET", "RAISE", "CALL"] and amount > 0:
-                    self._animate_chips_to_pot(player_index, amount)
+                # ✅ FIXED: Only update bet display, no individual animations
+                # Individual chip animations removed - will be handled at street completion
+                self._log_message(f"💰 Updated bet display for {action.upper()} ${amount:.2f}")
             else:
                 # Hide bet display for non-betting actions
                 self.canvas.itemconfig(bet_label_window, state="hidden")
@@ -2084,6 +2083,13 @@ class PracticeSessionUI(ttk.Frame):
                 self.canvas.itemconfig(bet_label_window, state="hidden")
         
         self._log_message("✅ All bet displays cleared after consolidation")
+    
+    def _handle_round_complete(self):
+        """Handle street completion by animating all bets consolidating into the pot."""
+        self._log_message("🔄 Street complete - animating bet consolidation to pot")
+        
+        # Animate all bet displays consolidating into the pot
+        self._animate_all_bets_to_pot()
     
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display with proper colors."""
