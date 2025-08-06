@@ -795,13 +795,15 @@ class PracticeSessionUI(ttk.Frame):
 
     def start_new_hand(self):
         """Starts a new hand and resets the UI accordingly."""
-
+        
+        print("DEBUG: start_new_hand called")
         
         # Clear preserved community cards and pot amount when starting new hand
         self.preserved_community_cards = []
         self.preserved_pot_amount = 0.0
         self.hand_completed = False
         self.last_board_cards = []  # Reset board tracking for new hand
+        
         # Clear the winning announcement message when starting new hand
         if hasattr(self, 'last_action_label'):
             self.last_action_label.config(text="")
@@ -821,7 +823,22 @@ class PracticeSessionUI(ttk.Frame):
         if hasattr(self, 'winning_cards'):
             self.winning_cards = []
         
-        self.state_machine.start_hand()
+        # Reset UI for new hand
+        self._reset_ui_for_new_hand()
+        
+        # Start new hand in state machine
+        try:
+            self.state_machine.start_hand()
+            print("DEBUG: state_machine.start_hand() completed successfully")
+            
+            # Update the display to show the new hand
+            self.update_display()
+            print("DEBUG: update_display() called after starting new hand")
+            
+        except Exception as e:
+            print(f"ERROR: Failed to start new hand: {e}")
+            import traceback
+            traceback.print_exc()
 
     def handle_hand_complete(self, winner_info=None):
         """
