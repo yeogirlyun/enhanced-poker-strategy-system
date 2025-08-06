@@ -2457,15 +2457,15 @@ class ImprovedPokerStateMachine:
             # A player can go all-in for less than a min-raise.
             is_all_in_raise = (player.current_bet + player.stack) == amount
 
-            # --- NEW VALIDATION LOGIC ---
+            # --- FIXED: All-in raise validation ---
             # A player who has already acted cannot re-raise unless another player
-            # has since made a "full" raise.
-            if player.has_acted_this_round:
+            # has since made a "full" raise, EXCEPT for all-in raises
+            if player.has_acted_this_round and not is_all_in_raise:
                 # The size of the last raise must be at least the size of the last *full* raise.
                 # If it's smaller, it was an under-raise, and action is not reopened.
                 if self.game_state.min_raise < self.game_state.last_full_raise_amount:
                     errors.append("Cannot re-raise as the last all-in was not a full raise.")
-            # --- END NEW VALIDATION ---
+            # --- End of fixed validation ---
 
             if not is_all_in_raise and amount < min_raise_total:
                 errors.append(f"Raise to ${amount:.2f} is less than minimum raise to ${min_raise_total:.2f}")
