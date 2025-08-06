@@ -23,6 +23,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import sys
+import signal
+import atexit
 from typing import Dict
 from datetime import datetime
 import cProfile
@@ -1281,9 +1283,35 @@ These settings can be configured in the main strategy panels."""
 
 
 def main():
-    """Main entry point."""
-    app = EnhancedMainGUI()
-    app.run()
+    """Main entry point with graceful shutdown handling."""
+    print("🚀 Starting Poker Training System...")
+    
+    # Setup graceful shutdown
+    def signal_handler(signum, frame):
+        print(f"\n🔄 Received shutdown signal - gracefully exiting...")
+        print("💾 Session data will be saved automatically...")
+        # The SessionLogger will handle the actual cleanup
+        sys.exit(0)
+    
+    def cleanup_on_exit():
+        print("👋 Thank you for using Poker Training System!")
+    
+    # Register handlers
+    signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
+    signal.signal(signal.SIGTERM, signal_handler)  # Termination
+    atexit.register(cleanup_on_exit)
+    
+    try:
+        app = EnhancedMainGUI()
+        app.run()
+    except KeyboardInterrupt:
+        print("\n🔄 Keyboard interrupt detected - shutting down gracefully...")
+    except Exception as e:
+        print(f"❌ Application error: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        print("🔄 Application cleanup complete")
 
 
 if __name__ == "__main__":
