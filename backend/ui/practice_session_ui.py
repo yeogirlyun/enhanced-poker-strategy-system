@@ -1968,8 +1968,8 @@ class PracticeSessionUI(ttk.Frame):
                     except (ValueError, IndexError):
                         self._log_message(f"⚠️ Could not parse bet amount from: {bet_text}")
         
-        # Clear all bet displays after animation - longer delay for better visibility
-        self.root.after(3000, self._clear_all_bet_displays)
+        # Clear all bet displays after animation - faster clear to match showdown speed
+        self.root.after(1000, self._clear_all_bet_displays)
     
     def _animate_bet_label_to_pot(self, bet_label_window, start_x, start_y, end_x, end_y, amount, player_index):
         """Animate a bet label moving to the pot."""
@@ -1993,13 +1993,13 @@ class PracticeSessionUI(ttk.Frame):
         # Hide the original bet label
         self.canvas.itemconfig(bet_label_window, state="hidden")
         
-        # Start animation with staggered delay based on player index
-        delay = player_index * 400  # Longer stagger for better visibility
+        # Start animation with fast staggered delay (same as showdown speed)
+        delay = player_index * 100  # Faster stagger to match showdown timing
         self.root.after(delay, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y))
     
     def _move_bet_to_pot_step(self, chip_window, amount_text, start_x, start_y, end_x, end_y, step=0):
-        """Animate bet label movement to pot."""
-        total_steps = 50  # Much slower animation for better visibility
+        """Animate bet label movement to pot (fast like showdown animation)."""
+        total_steps = 30  # FIXED: Fast animation same as showdown (was 50)
         
         if step >= total_steps:
             # Animation complete
@@ -2007,12 +2007,11 @@ class PracticeSessionUI(ttk.Frame):
             self.canvas.delete(amount_text)
             return
         
-        # Calculate current position with easing
+        # Calculate current position with simpler easing (same as showdown)
         progress = step / total_steps
-        ease_progress = 1 - (1 - progress) ** 3  # Stronger ease-out for consolidation
         
-        current_x = start_x + (end_x - start_x) * ease_progress
-        current_y = start_y + (end_y - start_y) * ease_progress
+        current_x = start_x + (end_x - start_x) * progress
+        current_y = start_y + (end_y - start_y) * progress
         
         # Move chip and text
         chip_size = 25
@@ -2021,8 +2020,8 @@ class PracticeSessionUI(ttk.Frame):
                           current_x + chip_size//2, current_y + chip_size//2)
         self.canvas.coords(amount_text, current_x, current_y)
         
-        # Continue animation with slower timing
-        self.root.after(60, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
+        # FIXED: Fast timing same as showdown animation (was 60ms)
+        self.root.after(15, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
     
     def _clear_all_bet_displays(self):
         """Clear all bet displays after consolidation animation."""
