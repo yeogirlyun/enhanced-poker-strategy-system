@@ -817,7 +817,9 @@ class ImprovedPokerStateMachine:
             player.is_active = True
         # --- End of Fix ---
 
-        self.transition_to(PokerState.PREFLOP_BETTING)
+        # FIXED: Don't transition to preflop betting immediately
+        # Wait for dealing animation to complete via callback
+        self._log_action("🃏 Waiting for dealing animation to complete before starting betting...")
 
     def deal_hole_cards(self):
         """Deal hole cards to all players with animation callback."""
@@ -842,6 +844,16 @@ class ImprovedPokerStateMachine:
             self.sound_manager.play("card_deal")  # Authentic dealing sound
         
         self._log_action(f"🃏 After dealing, deck has {len(self.game_state.deck)} cards remaining")
+        
+        # Notify UI that dealing is complete and calculate dealing animation time
+        total_dealing_time = len(self.game_state.players) * 500 + 600  # Player delay + card delays
+        if hasattr(self, 'on_dealing_complete'):
+            self.on_dealing_complete(total_dealing_time)
+    
+    def start_preflop_betting_after_dealing(self):
+        """Start preflop betting after dealing animation is complete."""
+        self._log_action("🃏 All cards dealt - starting preflop betting round")
+        self.transition_to(PokerState.PREFLOP_BETTING)
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
