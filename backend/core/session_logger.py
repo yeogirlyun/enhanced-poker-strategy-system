@@ -202,17 +202,22 @@ class SessionLogger:
     def start_hand(self, hand_number: int, players: List[Dict], dealer_button: int, 
                    small_blind: int, big_blind: int, sb_amount: float = 0.5, bb_amount: float = 1.0) -> str:
         """Start logging a new hand."""
+        import sys
         print(f"🐛 DEBUG: start_hand called for hand {hand_number}")
+        sys.stdout.flush()
         print(f"🐛 DEBUG: session = {self.session}")
+        sys.stdout.flush()
         
         if not self.session:
             print("❌ DEBUG: No active session!")
+            sys.stdout.flush()
             raise ValueError("No active session")
             
         hand_id = f"{self.session.session_id}_{hand_number}"
         self.hand_start_time = time.time()
         
         print(f"🐛 DEBUG: Creating new HandLog with hand_id = {hand_id}")
+        sys.stdout.flush()
         
         self.current_hand = HandLog(
             hand_id=hand_id,
@@ -228,6 +233,7 @@ class SessionLogger:
         )
         
         print(f"✅ DEBUG: current_hand created: {self.current_hand}")
+        sys.stdout.flush()
         
         self.log_system("INFO", "HAND", f"Started hand {hand_number}", {
             "hand_id": hand_id,
@@ -236,26 +242,34 @@ class SessionLogger:
         })
         
         print(f"✅ DEBUG: Hand {hand_number} logging started successfully")
+        sys.stdout.flush()
         return hand_id
     
     def log_hole_cards(self, player_cards: Dict[str, List[str]]):
         """Log hole cards for all players."""
+        import sys
         print(f"🐛 DEBUG: log_hole_cards called with {len(player_cards)} players")
+        sys.stdout.flush()
         print(f"🐛 DEBUG: current_hand = {self.current_hand}")
+        sys.stdout.flush()
         print(f"🐛 DEBUG: session = {self.session}")
+        sys.stdout.flush()
         
         if not self.current_hand:
             print("❌ DEBUG: No current_hand, cannot log hole cards!")
+            sys.stdout.flush()
             return
             
         self.current_hand.hole_cards = dict(player_cards)
         print(f"✅ DEBUG: Hole cards stored in current_hand")
+        sys.stdout.flush()
         
         self.log_system("INFO", "CARDS", "Hole cards dealt", {
             "hand_id": self.current_hand.hand_id,
             "cards_dealt": len(player_cards)
         })
         print(f"✅ DEBUG: Hole cards system log completed")
+        sys.stdout.flush()
     
     def log_board_cards(self, board: List[str], street: str):
         """Log community cards for current street."""
@@ -368,7 +382,7 @@ class SessionLogger:
         self.hand_start_time = None
     
     def log_system(self, level: str, category: str, message: str, data: Optional[Dict] = None):
-        """Log system-level messages."""
+        """Log system-level messages with immediate flush."""
         if not self.session:
             return
             
@@ -383,8 +397,9 @@ class SessionLogger:
         
         self.session.system_logs.append(system_log)
         
-        # Also save system logs incrementally
+        # IMMEDIATE FLUSH - critical for debugging
         self._save_system_logs()
+        self._force_flush_all()
     
     def _save_session(self):
         """Save session data to JSON file."""
@@ -477,6 +492,21 @@ class SessionLogger:
         except Exception as e:
             print(f"Warning: Error during exit cleanup: {e}")
     
+    def _force_flush_all(self):
+        """Force immediate flush of all log files."""
+        try:
+            import sys
+            # Flush stdout/stderr for debug messages
+            sys.stdout.flush()
+            sys.stderr.flush()
+            
+            # Force save session and system logs
+            self._save_session()
+            self._save_system_logs()
+            
+        except Exception as e:
+            print(f"Warning: Could not force flush: {e}")
+    
     def _emergency_save(self):
         """Emergency save of all session data."""
         try:
@@ -510,6 +540,7 @@ class SessionLogger:
                 # Force save
                 self._save_session()
                 self._save_system_logs()
+                self._force_flush_all()
                 
         except Exception as e:
             print(f"Error during emergency save: {e}")
@@ -517,6 +548,7 @@ class SessionLogger:
             try:
                 if self.session:
                     self._save_session()
+                    self._force_flush_all()
             except:
                 print("Failed to save session data")
 
