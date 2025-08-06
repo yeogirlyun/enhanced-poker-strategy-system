@@ -183,19 +183,13 @@ class ImprovedPokerStateMachine:
     }
 
     def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
-        """Initialize the state machine with enhanced hand evaluator."""
+        """Initialize the poker state machine."""
         self.num_players = num_players
         self.strategy_data = strategy_data
         self.root_tk = root_tk
         
-        # Initialize action log FIRST (before any logging calls)
-        self.action_log = []
-        self.max_log_size = 1000
-        
-        # Initialize the enhanced hand evaluator
-        self.hand_evaluator = EnhancedHandEvaluator()
-        
         # Game state
+        self.current_state = PokerState.START_HAND
         self.game_state = GameState(
             players=[],
             board=[],
@@ -204,18 +198,14 @@ class ImprovedPokerStateMachine:
             street="preflop",
             deck=[]
         )
-        
-        # State tracking
-        self.current_state = PokerState.START_HAND
         self.action_player_index = 0
-        self.dealer_position = 0
+        self.hand_completed = False  # Add hand_completed attribute
+        self.preserved_board = None  # Add preserved_board attribute
         
-        # Blind positions
+        # Position tracking
+        self.dealer_position = 0
         self.small_blind_position = 0
         self.big_blind_position = 0
-        
-        # Winner tracking
-        self._last_winner = None
         
         # Callbacks
         self.on_action_required = None
@@ -223,44 +213,29 @@ class ImprovedPokerStateMachine:
         self.on_state_change = None
         self.on_log_entry = None
         self.on_round_complete = None
-        self.on_action_executed = None  # NEW: Callback for action animations
-        self.on_action_player_changed = None  # NEW: Callback for action player changes
+        self.on_action_executed = None
+        self.on_action_player_changed = None
         
-        # Sound manager - use enhanced sound manager for custom mappings
-        from enhanced_sound_manager import sound_manager
-        self.sfx = sound_manager
-        
-        # Voice announcement system
-        from voice_announcement_system import voice_system
-        self.voice_system = voice_system
-        
-        # Hand history
+        # Session tracking
+        self.session_state = None
         self.hand_history = []
         
-        # Initialize hand evaluator cache
-        self._hand_eval_cache = {}
-        self._cache_hits = 0
-        self._cache_misses = 0
-        self._max_cache_size = 1000
-        
-        # SESSION TRACKING - NEW!
-        self.session_state = self._initialize_session_state()
-        
-        # Initialize players
-        self._initialize_players()
-        
-        # Enhanced strategy integration
-        if self.strategy_data and hasattr(self.strategy_data, 'strategy_dict'):
-            self.strategy_integration = EnhancedStrategyIntegration(
-                self.strategy_data.strategy_dict, num_players
-            )
-            self._log_action("Enhanced strategy integration loaded successfully")
+        # Strategy integration
+        if strategy_data and hasattr(strategy_data, 'strategy_dict'):
+            self.strategy_integration = EnhancedStrategyIntegration(strategy_data.strategy_dict, num_players)
         else:
             self.strategy_integration = None
-            self._log_action("No strategy data available, using basic bot logic")
+        self.hand_history_manager = HandHistoryManager()
         
-        # Initialize hand history manager
-        self.hand_history_manager = HandHistoryManager(test_mode=False)
+        # Hand evaluator
+        self.hand_evaluator = EnhancedHandEvaluator()
+        
+        # Sound manager
+        self.sound_manager = SoundManager()
+        
+        # Initialize players and session
+        self._initialize_players()
+        self._initialize_session_state()
 
     def _initialize_session_state(self) -> SessionState:
         """Initialize comprehensive session tracking."""
@@ -830,7 +805,7 @@ class ImprovedPokerStateMachine:
         for player in self.game_state.players:
             player.cards = [self.deal_card(), self.deal_card()]
             # Play card dealing sound for each card dealt
-            self.sfx.play("card_deal")  # Authentic dealing sound
+            self.sound_manager.play("card_deal")  # Authentic dealing sound
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
@@ -1873,7 +1848,7 @@ class ImprovedPokerStateMachine:
         self.log_state_change(player, action, amount)
         
         # Play industry-standard sound for the action
-        self.sfx.play_action_sound(action.value.lower(), amount)
+        self.sound_manager.play_action_sound(action.value.lower(), amount)
         
         # Play voice announcement for the action
         self.voice_system.play_action_with_voice(f"player_{action.value.lower()}", amount)
@@ -2219,10 +2194,13 @@ class ImprovedPokerStateMachine:
         """Handle showdown with tie handling and side pots."""
         self._log_action("Showdown")
         
+        # Preserve the board cards for display during showdown
+        self.preserved_board = self.game_state.board.copy()
+        
         # Only play winner announcement if there's actually a showdown (multiple active players)
         active_players = [p for p in self.game_state.players if p.is_active]
         if len(active_players) > 1:
-            self.sfx.play("winner_announce")
+            self.sound_manager.play("winner_announce")
 
         # FIX: Don't award pot here - let handle_end_hand do it
         # This prevents double-awarding the pot
@@ -2683,7 +2661,7 @@ class ImprovedPokerStateMachine:
         # Card visibilities: Show for human or during showdown/end
         is_showdown_or_end = self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]
         visibilities = [
-            p.is_human or is_showdown_or_end or (p.is_active and self.hand_completed)
+            p.is_human or is_showdown_or_end
             for p in self.game_state.players
         ]
 
@@ -2700,7 +2678,7 @@ class ImprovedPokerStateMachine:
         community_cards = self.game_state.board.copy()
         if self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]:
             # Use preserved board if available
-            if hasattr(self, 'preserved_board') and self.preserved_board:
+            if self.preserved_board:
                 community_cards = self.preserved_board
 
         return DisplayState(
@@ -2806,7 +2784,7 @@ class ImprovedPokerStateMachine:
         
         return positions
 
-    def execute_action(self, player: Player, action_str: str, amount: float = 0):
+    def execute_action_string(self, player: Player, action_str: str, amount: float = 0):
         """Execute action with string input (UI-friendly)."""
         action_map = {
             "fold": ActionType.FOLD,
@@ -2825,7 +2803,7 @@ class ImprovedPokerStateMachine:
         if action == ActionType.BET and self.game_state.current_bet > 0:
             action = ActionType.RAISE
         
-        # Execute the action
+        # Execute the action using the original execute_action method
         self.execute_action(player, action, amount)
 
 
