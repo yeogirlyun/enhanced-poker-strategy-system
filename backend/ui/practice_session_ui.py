@@ -835,9 +835,9 @@ class PracticeSessionUI(ttk.Frame):
             self.state_machine.start_hand()
             print("DEBUG: state_machine.start_hand() completed successfully")
             
-            # Update the display to show the new hand
-            self.update_display()
-            print("DEBUG: update_display() called after starting new hand")
+            # FIXED: Don't call update_display() immediately - let dealing animation handle it
+            # The dealing animation will properly show cards at the right time
+            print("DEBUG: Skipping immediate update_display() - waiting for dealing animation")
             
         except Exception as e:
             print(f"ERROR: Failed to start new hand: {e}")
@@ -1566,16 +1566,16 @@ class PracticeSessionUI(ttk.Frame):
         self.action_indicators.clear()
         self.last_action_player = None
         
-        # Reset player displays
+        # Reset player displays and clear all cards
         for player_seat in self.player_seats:
             if player_seat:
                 frame = player_seat.get("frame")
                 if frame:
                     frame.config(bg=THEME["secondary_bg"])
                 
+                # Clear old cards_label (legacy)
                 cards_label = player_seat.get("cards_label")
                 if cards_label:
-                    # Handle different widget types safely
                     try:
                         if hasattr(cards_label, 'config'):
                             cards_label.config(text="")
@@ -1583,6 +1583,17 @@ class PracticeSessionUI(ttk.Frame):
                             cards_label.set_card("")  # For CardWidget
                     except Exception as e:
                         print(f"Warning: Could not reset cards_label: {e}")
+                
+                # FIXED: Clear card_widgets properly for new hand
+                card_widgets = player_seat.get("card_widgets", [])
+                for widget in card_widgets:
+                    try:
+                        widget.set_card("")  # Clear card display
+                        widget._current_card = None  # Clear stored card data
+                    except Exception as e:
+                        print(f"Warning: Could not reset card_widget: {e}")
+                
+                self._log_message(f"🃏 Cleared all cards for player seat {self.player_seats.index(player_seat)}")
                 
                 bet_label = player_seat.get("bet_label")
                 if bet_label:
@@ -2047,8 +2058,10 @@ class PracticeSessionUI(ttk.Frame):
         # Show dealer indicator
         self._show_dealer_indicator()
         
-        # Clear all existing cards first
+        # CRITICAL: Clear all existing cards first to ensure no old cards show
+        self._log_message("🃏 CLEARING ALL CARDS before dealing starts")
         self._clear_all_player_cards()
+        self._log_message("🃏 ALL CARDS CLEARED - ready for dealing")
     
     def _handle_single_card_dealt(self, player_index: int, card_index: int, card: str):
         """Handle animation of a single card being dealt to a player."""

@@ -717,6 +717,7 @@ class ImprovedPokerStateMachine:
         self._log_action("🃏 Creating fresh deck for new hand")
         deck = self.create_deck()
         self._log_action(f"🃏 New deck created with {len(deck)} cards")
+        self._log_action(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
 
         # Use existing players or create new ones
         if existing_players:
