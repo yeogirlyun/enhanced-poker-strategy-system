@@ -691,7 +691,15 @@ class ImprovedPokerStateMachine:
             random.shuffle(deck)
         
         self._log_action(f"🃏 Created and shuffled deck: {len(deck)} cards")
-        self._log_action(f"🃏 First 5 cards: {deck[:5]}")
+        self._log_action(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
+        self._log_action(f"🃏 DEBUG: Last 5 cards in new deck: {deck[-5:]}")
+        
+        # Force a different random seed each call to ensure different shuffles
+        import time
+        random.seed(time.time())
+        random.shuffle(deck)  # Extra shuffle with time-based seed
+        self._log_action(f"🃏 DEBUG: After extra shuffle, first 10 cards: {deck[:10]}")
+        
         return deck
 
     def deal_card(self) -> str:
@@ -763,6 +771,10 @@ class ImprovedPokerStateMachine:
             big_blind=1.0,
         )
         self._log_action(f"🃏 New game state created with fresh board and {len(deck)} cards")
+        
+        # DEBUG: Verify deck was properly assigned and is different 
+        self._log_action(f"🃏 DEBUG: GameState deck assigned, first 5 cards: {self.game_state.deck[:5]}")
+        self._log_action(f"🃏 DEBUG: Deck object id: {id(self.game_state.deck)}")
 
         # Assign positions correctly
         self.assign_positions()
