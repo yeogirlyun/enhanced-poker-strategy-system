@@ -685,7 +685,13 @@ class ImprovedPokerStateMachine:
         ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
         suits = ["h", "d", "c", "s"]
         deck = [f"{rank}{suit}" for rank in ranks for suit in suits]
-        random.shuffle(deck)
+        
+        # Ensure proper shuffling with multiple passes
+        for _ in range(3):  # Multiple shuffle passes for better randomization
+            random.shuffle(deck)
+        
+        self._log_action(f"🃏 Created and shuffled deck: {len(deck)} cards")
+        self._log_action(f"🃏 First 5 cards: {deck[:5]}")
         return deck
 
     def deal_card(self) -> str:
@@ -707,8 +713,10 @@ class ImprovedPokerStateMachine:
         # --- NEW: Clear the hand history ---
         self.hand_history.clear()
 
-        # Create deck
+        # Create a fresh, properly shuffled deck
+        self._log_action("🃏 Creating fresh deck for new hand")
         deck = self.create_deck()
+        self._log_action(f"🃏 New deck created with {len(deck)} cards")
 
         # Use existing players or create new ones
         if existing_players:
@@ -742,17 +750,18 @@ class ImprovedPokerStateMachine:
                 )
                 players.append(player)
 
-        # Create enhanced game state
+        # Create enhanced game state with fresh board and deck
         self.game_state = GameState(
             players=players,
-            board=[],
+            board=[],  # Fresh empty board
             pot=0.0,
             current_bet=0.0,
             street="preflop",
-            deck=deck,
+            deck=deck,  # Fresh shuffled deck
             min_raise=1.0,
-            big_blind=1.0,  # <-- ADD THIS LINE
+            big_blind=1.0,
         )
+        self._log_action(f"🃏 New game state created with fresh board and {len(deck)} cards")
 
         # Assign positions correctly
         self.assign_positions()
@@ -812,10 +821,18 @@ class ImprovedPokerStateMachine:
 
     def deal_hole_cards(self):
         """Deal hole cards to all players."""
-        for player in self.game_state.players:
-            player.cards = [self.deal_card(), self.deal_card()]
+        self._log_action(f"🃏 Dealing hole cards to {len(self.game_state.players)} players")
+        self._log_action(f"🃏 Deck has {len(self.game_state.deck)} cards remaining")
+        
+        for i, player in enumerate(self.game_state.players):
+            card1 = self.deal_card()
+            card2 = self.deal_card()
+            player.cards = [card1, card2]
+            self._log_action(f"🃏 {player.name} ({player.position}): {card1} {card2}")
             # Play card dealing sound for each card dealt
             self.sound_manager.play("card_deal")  # Authentic dealing sound
+        
+        self._log_action(f"🃏 After dealing, deck has {len(self.game_state.deck)} cards remaining")
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
