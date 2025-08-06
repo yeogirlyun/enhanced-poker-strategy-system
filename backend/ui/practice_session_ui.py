@@ -999,8 +999,8 @@ class PracticeSessionUI(ttk.Frame):
             chip_window = self.canvas.create_window(start_x, start_y, window=chip_label, anchor="center")
             self.canvas.tag_raise(chip_window)  # Bring to front
 
-            # 3. Add start delay and then start the recursive move function.
-            self.root.after(100, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))  # Reduced delay to 100ms for faster animation
+            # 3. Start the animation immediately (no delay needed)
+            self.root.after(15, lambda: self._move_chip_step(chip_window, start_x, start_y, end_x, end_y))  # Faster start delay to match other animations
             
         except Exception as e:
             print(f"Animation error: {e}")
@@ -1870,9 +1870,12 @@ class PracticeSessionUI(ttk.Frame):
                 old_label.destroy()
                 del self.action_indicators[self.last_action_player]
         
-        # Create action indicator
+        # Create action indicator - FIXED: Unify CALL and BET graphics
         action_text = action.upper()
-        if amount > 0:
+        if action.upper() == "CALL" and amount > 0:
+            # FIXED: Show CALL as BET for visual consistency (both put money in front)
+            action_text = f"BET ${amount:.2f}"
+        elif amount > 0:
             action_text += f" ${amount:.2f}"
         elif action.upper() == "CHECK":
             action_text = "CHECK"  # Keep it simple for check
