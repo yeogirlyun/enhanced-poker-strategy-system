@@ -1710,6 +1710,10 @@ class PracticeSessionUI(ttk.Frame):
         # Animate the specific player's action immediately
         self._animate_player_action(player_index, action, amount)
         
+        # Handle fold action - set cards to folded state
+        if action.upper() == "FOLD":
+            self._handle_fold_action(player_index)
+        
         # Update betting graphics immediately using the action data we have
         self._update_player_bet_display_immediate(player_index, action, amount)
         
@@ -1719,6 +1723,23 @@ class PracticeSessionUI(ttk.Frame):
         # Action player highlighting will be handled by on_action_player_changed callback separately
         
         self._log_message(f"🎯 Selective update: Player {player_index} {action} ${amount:.2f}")
+    
+    def _handle_fold_action(self, player_index: int):
+        """Handle when a player folds - set their cards to folded state."""
+        if not hasattr(self, 'player_seats') or not self.player_seats:
+            return
+            
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        player_pod = player_seat.get("player_pod")
+        
+        if player_pod:
+            # Set both cards to folded state
+            player_pod.card1.set_folded()
+            player_pod.card2.set_folded()
+            self._log_message(f"🃏 Player {player_index} cards set to folded state")
     
     def _update_player_bet_display_immediate(self, player_index: int, action: str, amount: float):
         """Update a player's bet display immediately after their action."""
