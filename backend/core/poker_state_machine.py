@@ -30,16 +30,8 @@ from .hand_evaluation import EnhancedHandEvaluator, HandRank
 # Import the position mapping system for strategy integration
 from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
 
-# Create a simple SoundManager class for now
-class SoundManager:
-    def __init__(self):
-        self.enabled = True
-    
-    def play(self, sound_name):
-        pass
-    
-    def play_action_sound(self, action, amount=0):
-        pass
+# Import the sound manager
+from utils.sound_manager import SoundManager
 
 
 @dataclass
