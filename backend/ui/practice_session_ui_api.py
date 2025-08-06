@@ -9,9 +9,9 @@ import requests
 import threading
 from queue import Queue
 
-from sound_manager import SoundManager
-from gui_models import THEME, FONTS
-from tooltips import ToolTip
+# from sound_manager import SoundManager  # Removed in cleanup
+from core.gui_models import THEME, FONTS
+from ui.components.tooltips import ToolTip
 
 # API Client for communicating with FastAPI backend
 class ApiClient:
@@ -41,7 +41,7 @@ class PracticeSessionUI(ttk.Frame):
         # Initialize API Client and Sound Manager
         self.api_client = ApiClient()
         self.session_id = None
-        self.sfx = SoundManager()
+        # self.sfx = SoundManager()  # Removed in cleanup
 
         # --- NEW: Queue for thread-safe UI updates ---
         self.response_queue = Queue()

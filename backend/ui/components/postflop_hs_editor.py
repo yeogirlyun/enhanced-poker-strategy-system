@@ -8,7 +8,7 @@ Provides interface for editing postflop hand strength values.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Dict, Any, Optional, Callable
-from gui_models import StrategyData, THEME
+from core.gui_models import StrategyData, THEME
 
 
 class PostflopHSEditor:

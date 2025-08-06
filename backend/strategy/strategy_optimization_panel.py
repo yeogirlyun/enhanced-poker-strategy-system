@@ -8,7 +8,7 @@ Provides interface for optimizing poker strategies.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Optional, Callable
-from gui_models import StrategyData, THEME
+from core.gui_models import StrategyData, THEME
 
 
 class StrategyOptimizationPanel:

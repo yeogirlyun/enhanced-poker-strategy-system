@@ -20,10 +20,10 @@ from typing import Dict, List, Optional, Any
 # Add the backend directory to the path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 
-from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
-from sound_manager import SoundManager
-from gui_models import THEME, FONTS
-from tooltips import ToolTip
+from core.poker_state_machine import ImprovedPokerStateMachine, ActionType, PokerState
+# from sound_manager import SoundManager  # Removed in cleanup
+from core.gui_models import THEME, FONTS
+from ui.components.tooltips import ToolTip
 
 # Custom CardWidget class for properly sized playing cards
 class CardWidget(tk.Canvas):
@@ -298,7 +298,11 @@ class PracticeSessionUI(ttk.Frame):
         self.action_buttons = {}
         self.game_control_buttons = {}
         self.human_action_controls = {}  # Add missing initialization
-        self.sfx = SoundManager()
+        # Create a simple sound manager replacement
+        class SimpleSoundManager:
+            def play_action_sound(self, action_str, amount=0):
+                pass  # No sound for now
+        self.sfx = SimpleSoundManager()
         
         # Initialize state machine with proper root reference
         self.state_machine = ImprovedPokerStateMachine(

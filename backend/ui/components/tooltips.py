@@ -14,7 +14,7 @@ Version 1.0 (2025-07-29) - Initial Version
 
 import tkinter as tk
 from tkinter import ttk
-from gui_models import THEME, FONTS
+from core.gui_models import THEME, FONTS
 
 
 class ToolTip:
@@ -273,14 +273,14 @@ class RichToolTip(ToolTip):
 # --- Usage Examples ---
 """
 # Basic tooltip
-from tooltips import ToolTip
+from ui.components.tooltips import ToolTip
 
 button = ttk.Button(root, text="Optimize")
 button.pack()
 ToolTip(button, "Run the strategy optimizer to improve decision tables.")
 
 # Rich tooltip with formatting
-from tooltips import RichToolTip
+from ui.components.tooltips import RichToolTip
 
 complex_button = ttk.Button(root, text="Advanced Settings")
 complex_button.pack()
