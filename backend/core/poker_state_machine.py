@@ -2670,10 +2670,10 @@ class ImprovedPokerStateMachine:
         # Player highlights: True for action player
         highlights = [i == self.action_player_index for i in range(len(self.game_state.players))]
 
-        # Card visibilities: Show for human or during showdown/end
+        # Card visibilities: Show for human or during showdown/end (but only for active players)
         is_showdown_or_end = self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]
         visibilities = [
-            p.is_human or is_showdown_or_end
+            p.is_human or (is_showdown_or_end and p.is_active)
             for p in self.game_state.players
         ]
 
