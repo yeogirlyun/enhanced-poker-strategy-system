@@ -1586,10 +1586,14 @@ class PracticeSessionUI(ttk.Frame):
                 
                 # FIXED: Clear card_widgets properly for new hand
                 card_widgets = player_seat.get("card_widgets", [])
-                for widget in card_widgets:
+                for i, widget in enumerate(card_widgets):
                     try:
+                        old_card = getattr(widget, '_current_card', None)
                         widget.set_card("")  # Clear card display
                         widget._current_card = None  # Clear stored card data
+                        # DEBUG: Log card clearing for human player
+                        if self.player_seats.index(player_seat) == 0:
+                            self._log_message(f"🐛 CLEAR DEBUG - Player 0 card {i}: {old_card} -> None")
                     except Exception as e:
                         print(f"Warning: Could not reset card_widget: {e}")
                 
@@ -2309,6 +2313,9 @@ class PracticeSessionUI(ttk.Frame):
             # All players (including human) show card backs during dealing
             card_widgets[card_index].set_card("")  # Show card back during dealing
             card_widgets[card_index]._current_card = card  # Store actual card for later
+            # DEBUG: Extra logging for human player
+            if player_index == 0:
+                self._log_message(f"🐛 DEAL DEBUG - Player 0 card {card_index}: stored {card}")
             self._log_message(f"🃏 Stored card {card_index} for Player {player_index}: {card} (showing back during dealing)")
     
     def _format_card(self, card_str: str) -> str:
@@ -2579,6 +2586,10 @@ class PracticeSessionUI(ttk.Frame):
                         current_card2 = getattr(card_widgets[1], '_current_card', None)
                         new_card1 = player_info['cards'][0] if len(player_info['cards']) > 0 else ""
                         new_card2 = player_info['cards'][1] if len(player_info['cards']) > 1 else ""
+                        
+                        # DEBUG: Log card changes to track the persistence bug
+                        if player_index == 0:  # Human player
+                            self._log_message(f"🐛 CARD DEBUG - Player {player_index}: current=({current_card1}, {current_card2}) new=({new_card1}, {new_card2})")
                         
                         if card_visible:
                             # Show actual cards for human players or during showdown
