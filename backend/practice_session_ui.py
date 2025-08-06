@@ -1711,6 +1711,10 @@ class PracticeSessionUI(ttk.Frame):
     
     def update_display(self, new_state=None):
         """Updates the UI using display state from the state machine."""
+        # Safety check: Don't update if UI isn't ready yet
+        if not hasattr(self, 'pot_label') or self.pot_label is None:
+            return
+            
         display_state = self.state_machine.get_display_state()
         if not display_state:
             self._log_message("DEBUG: update_display called but no display_state available.")
@@ -1725,100 +1729,18 @@ class PracticeSessionUI(ttk.Frame):
 
         # Update community cards using display state
         board_cards = display_state.community_cards
-        
-        if board_cards != self.last_board_cards:
-            self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
-            
-            # Safety check for community card widgets
-            if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
-                for i, card_widget in enumerate(self.community_card_widgets):
-                    if i < len(board_cards):
-                        card_widget.set_card(board_cards[i])
-                        # Force the card widget to update immediately
-                        card_widget.update()
-                        self._log_message(f"   Set card {i}: {board_cards[i]}")
-                        
-            # Update tracking variable
-            self.last_board_cards = board_cards.copy()
+        if board_cards:
+            self._draw_community_cards(board_cards)
 
-        # Update player info using display state
-        if not hasattr(self, 'player_seats') or not self.player_seats:
-            return
-            
-        for i, player_seat in enumerate(self.player_seats):
-            if not player_seat:
-                continue
+        # Update player positions and highlights using display state
+        for i, (position, highlight) in enumerate(zip(display_state.layout_positions, display_state.player_highlights)):
+            if i < len(self.player_seats) and self.player_seats[i]:
+                self._update_player_position(i, position, highlight)
 
-            # Get player data from state machine
-            game_info = self.state_machine.get_game_info()
-            if not game_info or i >= len(game_info['players']):
-                continue
-                
-            player_info = game_info['players'][i]
-            player_pod = player_seat.get("player_pod")
-            
-            # Update PlayerPod with new data including bet information
-            if player_pod:
-                # Clear bet amounts after hand completion
-                bet_amount = 0 if self.hand_completed else player_info.get('current_bet', 0)
-                
-                pod_data = {
-                    "name": f"{player_info['name']} ({player_info['position']})",
-                    "stack": player_info['stack'],
-                    "bet": bet_amount,
-                    "starting_stack": 100.0  # Default starting stack for progress bar
-                }
-                player_pod.update_pod(pod_data)
-                
-                # Set active player highlighting using display state
-                is_active_turn = display_state.player_highlights[i] and not self.hand_completed
-                player_pod.set_active_player(is_active_turn)
-            
-            # Update player highlighting using display state
-            frame = player_seat["frame"]
-            if display_state.player_highlights[i] and not self.hand_completed:
-                frame.config(bg=THEME["accent_primary"])
-            else:
-                frame.config(bg=THEME["secondary_bg"])
-        
-            # Update the prominent bet display on the table
-            bet_label_widget = player_seat.get("bet_label_widget")
-            bet_label_window = player_seat.get("bet_label_window")
-            if bet_label_widget and bet_label_window:
-                # Clear bet displays after hand completion
-                if self.hand_completed:
-                    self.canvas.itemconfig(bet_label_window, state="hidden")
-                else:
-                    current_bet = player_info.get("current_bet", 0.0)
-                    if current_bet > 0 and player_info['is_active']:
-                        bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
-                        self.canvas.itemconfig(bet_label_window, state="normal")
-                    else:
-                        self.canvas.itemconfig(bet_label_window, state="hidden")
-            
-            # Update player card display using display state
-            card_visible = display_state.card_visibilities[i]
-            card_widgets = player_seat.get("card_widgets", [])
-            
-            if len(card_widgets) >= 2:
-                if card_visible:
-                    # Show cards for human players or during showdown/end_hand
-                    if len(player_info['cards']) >= 2:
-                        card_widgets[0].set_card(player_info['cards'][0])
-                        card_widgets[1].set_card(player_info['cards'][1])
-                else:
-                    # Show card backs for hidden cards
-                    card_widgets[0].set_card("")  # This should show card back
-                    card_widgets[1].set_card("")  # This should show card back
-        
-        # Update last action details from display state
-        if hasattr(self, 'last_action_label'):
-            # Only update if we don't have a preserved winning message
-            if not self.hand_completed:
-                self.last_action_label.config(text=display_state.last_action_details)
-        
-        # Update session information display
-        self.update_session_info()
+        # Update action controls using display state
+        valid_actions = display_state.valid_actions
+        if valid_actions:
+            self._update_action_controls(valid_actions)
     
 
     
@@ -2115,14 +2037,79 @@ class PracticeSessionUI(ttk.Frame):
 
     def update_pot_amount(self, new_amount):
         """Update the pot amount display."""
-        if hasattr(self, 'pot_label') and self.pot_label is not None:
-            # Get chip representation from display state
-            display_state = self.state_machine.get_display_state()
-            chip_symbols = display_state.chip_representations.get('pot', '')
+        # Safety check: Don't update if pot_label isn't ready yet
+        if not hasattr(self, 'pot_label') or self.pot_label is None:
+            return
             
+        # Get chip representation from display state
+        display_state = self.state_machine.get_display_state()
+        if display_state:
+            chip_symbols = display_state.chip_representations.get('pot', '')
             self.pot_label.config(text=f"Pot: ${new_amount:.2f} {chip_symbols}")
+        else:
+            self.pot_label.config(text=f"Pot: ${new_amount:.2f}")
     
     def _on_state_change(self, new_state):
         """Handle state changes from the state machine."""
         self.update_display(new_state)
+
+    def _update_player_position(self, player_index, position, highlight):
+        """Update player position and highlighting using display state data."""
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        player_pod = player_seat.get("player_pod")
+        frame = player_seat.get("frame")
+        
+        if player_pod:
+            # Update player pod with new data
+            game_info = self.state_machine.get_game_info()
+            if game_info and player_index < len(game_info['players']):
+                player_info = game_info['players'][player_index]
+                pod_data = {
+                    "name": f"{player_info['name']} ({player_info['position']})",
+                    "stack": player_info['stack'],
+                    "bet": player_info.get('current_bet', 0),
+                    "starting_stack": 100.0
+                }
+                player_pod.update_pod(pod_data)
+                
+                # Set active player highlighting
+                player_pod.set_active_player(highlight)
+        
+        # Update frame highlighting
+        if frame:
+            if highlight:
+                frame.config(bg=THEME["accent_primary"])
+            else:
+                frame.config(bg=THEME["secondary_bg"])
+    
+    def _update_action_controls(self, valid_actions):
+        """Update action controls using display state data."""
+        # This method will be implemented to update action buttons
+        # based on the valid_actions from display state
+        pass
+
+    def _draw_community_cards(self, board_cards):
+        """Draw community cards using display state data."""
+        if not board_cards:
+            return
+            
+        # Safety check for community card widgets
+        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+            for i, card_widget in enumerate(self.community_card_widgets):
+                if i < len(board_cards):
+                    card_widget.set_card(board_cards[i])
+                    # Force the card widget to update immediately
+                    card_widget.update()
+                    self._log_message(f"   Set card {i}: {board_cards[i]}")
+        
+        # Update tracking variable
+        if hasattr(self, 'last_board_cards'):
+            if board_cards != self.last_board_cards:
+                self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+                self.last_board_cards = board_cards.copy()
+        else:
+            self.last_board_cards = board_cards.copy()
 
