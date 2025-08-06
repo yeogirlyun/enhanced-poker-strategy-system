@@ -22,6 +22,7 @@ import os
 import json
 import uuid
 from datetime import datetime
+import math
 
 # Add the parent directory to the path to import sound_manager
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -32,6 +33,22 @@ from enhanced_hand_evaluation import EnhancedHandEvaluator, HandRank
 
 # Import the position mapping system for strategy integration
 from position_mapping_system import EnhancedStrategyIntegration, HandHistoryManager
+
+
+@dataclass
+class DisplayState:
+    """UI-ready display state with pre-computed visual data."""
+    valid_actions: Dict[str, Dict[str, Any]]  # Button states and labels
+    player_highlights: List[bool]  # Index-based list for highlighting
+    card_visibilities: List[bool]  # Per-player: True if cards should be shown
+    chip_representations: Dict[str, str]  # Chip symbols for stacks and pots
+    layout_positions: Dict[str, Tuple[int, int]]  # UI positions
+    community_cards: List[str]  # Current board cards (preserved during showdown)
+    pot_amount: float  # Current pot amount
+    current_bet: float  # Current bet amount
+    action_player_index: int  # Index of current action player
+    game_state: str  # Current game state string
+    last_action_details: str  # Last action for UI feedback
 
 
 class PokerState(Enum):
@@ -2613,6 +2630,203 @@ class ImprovedPokerStateMachine:
             ],
             "session_log": self.session_state.session_log[-50:]  # Last 50 entries
         }
+
+    def get_display_state(self) -> DisplayState:
+        """Get UI-ready display state with pre-computed visual data."""
+        if not self.game_state:
+            return DisplayState(
+                valid_actions={},
+                player_highlights=[],
+                card_visibilities=[],
+                chip_representations={},
+                layout_positions={},
+                community_cards=[],
+                pot_amount=0.0,
+                current_bet=0.0,
+                action_player_index=-1,
+                game_state="",
+                last_action_details=""
+            )
+        
+        action_player = self.get_action_player()
+        valid_actions_raw = self.get_valid_actions_for_player(action_player) if action_player else {}
+        call_amount = valid_actions_raw.get('call_amount', 0)
+
+        # Pre-compute UI-ready action data
+        actions_ui = {
+            'fold': {
+                'enabled': valid_actions_raw.get('fold', False), 
+                'label': 'Fold'
+            },
+            'check': {
+                'enabled': valid_actions_raw.get('check', False), 
+                'label': 'Check'
+            },
+            'call': {
+                'enabled': valid_actions_raw.get('call', False), 
+                'label': f"Call ${call_amount:.2f}" if call_amount > 0 else 'Call'
+            },
+            'bet': {
+                'enabled': valid_actions_raw.get('bet', False), 
+                'label': 'Bet'
+            },
+            'raise': {
+                'enabled': valid_actions_raw.get('raise', False), 
+                'label': 'Raise'
+            },
+            'preset_bets': valid_actions_raw.get('preset_bets', {})
+        }
+
+        # Player highlights: True for action player
+        highlights = [i == self.action_player_index for i in range(len(self.game_state.players))]
+
+        # Card visibilities: Show for human or during showdown/end
+        is_showdown_or_end = self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]
+        visibilities = [
+            p.is_human or is_showdown_or_end or (p.is_active and self.hand_completed)
+            for p in self.game_state.players
+        ]
+
+        # Chip representations (move calculations here)
+        chip_reps = {}
+        for i, p in enumerate(self.game_state.players):
+            chip_reps[f'player{i}_stack'] = self._get_chip_symbols(p.stack)
+        chip_reps['pot'] = self._get_pot_chip_symbols(self.game_state.pot)
+
+        # Layout positions (compute based on num_players)
+        layout = self._compute_layout_positions(800, 600, self.num_players)
+
+        # Community cards (preserved during showdown)
+        community_cards = self.game_state.board.copy()
+        if self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]:
+            # Use preserved board if available
+            if hasattr(self, 'preserved_board') and self.preserved_board:
+                community_cards = self.preserved_board
+
+        return DisplayState(
+            valid_actions=actions_ui,
+            player_highlights=highlights,
+            card_visibilities=visibilities,
+            chip_representations=chip_reps,
+            layout_positions=layout,
+            community_cards=community_cards,
+            pot_amount=self.game_state.pot,
+            current_bet=self.game_state.current_bet,
+            action_player_index=self.action_player_index,
+            game_state=self.current_state.value,
+            last_action_details=self.game_state.last_action_details
+        )
+
+    def _get_chip_symbols(self, amount: float) -> str:
+        """Calculate chip symbols for a given amount."""
+        chip_count = self._calculate_chip_count(amount)
+        if amount <= 25:
+            return "🟡" * chip_count
+        elif amount <= 50:
+            return "🟠" * chip_count
+        elif amount <= 100:
+            return "🔴" * chip_count
+        elif amount <= 250:
+            return "🟢" * chip_count
+        elif amount <= 500:
+            return "🔵" * chip_count
+        else:
+            return "🟣" * chip_count
+
+    def _get_pot_chip_symbols(self, amount: float) -> str:
+        """Calculate chip symbols for pot display."""
+        chip_count = self._calculate_pot_chip_count(amount)
+        if amount <= 50:
+            return "🟡" * chip_count
+        elif amount <= 100:
+            return "🟠" * chip_count
+        elif amount <= 250:
+            return "🔴" * chip_count
+        elif amount <= 500:
+            return "🟢" * chip_count
+        else:
+            return "🔵" * chip_count
+
+    def _calculate_chip_count(self, amount: float) -> int:
+        """Calculate how many chips to display for a given amount."""
+        if amount <= 0:
+            return 0
+        elif amount <= 10:
+            return 1
+        elif amount <= 25:
+            return 2
+        elif amount <= 50:
+            return 3
+        elif amount <= 100:
+            return 4
+        elif amount <= 250:
+            return 5
+        elif amount <= 500:
+            return 6
+        else:
+            return 7
+
+    def _calculate_pot_chip_count(self, amount: float) -> int:
+        """Calculate chip count for pot display."""
+        if amount <= 0:
+            return 0
+        elif amount <= 25:
+            return 1
+        elif amount <= 50:
+            return 2
+        elif amount <= 100:
+            return 3
+        elif amount <= 250:
+            return 4
+        elif amount <= 500:
+            return 5
+        else:
+            return 6
+
+    def _compute_layout_positions(self, width: int, height: int, num_players: int) -> Dict[str, Tuple[int, int]]:
+        """Compute layout positions for UI elements."""
+        positions = {}
+        
+        # Center of the table
+        center_x, center_y = width // 2, height // 2
+        
+        # Player positions around the table
+        for i in range(num_players):
+            angle = (i * 360 / num_players) * (3.14159 / 180)  # Convert to radians
+            radius = min(width, height) * 0.35
+            x = center_x + int(radius * math.cos(angle))
+            y = center_y + int(radius * math.sin(angle))
+            positions[f'player{i}'] = (x, y)
+        
+        # Pot position (center)
+        positions['pot'] = (center_x, center_y)
+        
+        # Community cards position (slightly above center)
+        positions['community_cards'] = (center_x, center_y - 40)
+        
+        return positions
+
+    def execute_action(self, player: Player, action_str: str, amount: float = 0):
+        """Execute action with string input (UI-friendly)."""
+        action_map = {
+            "fold": ActionType.FOLD,
+            "check": ActionType.CHECK,
+            "call": ActionType.CALL,
+            "bet": ActionType.BET,
+            "raise": ActionType.RAISE,
+            "bet_or_raise": ActionType.BET  # Will be converted to RAISE if needed
+        }
+        
+        action = action_map.get(action_str.lower())
+        if action is None:
+            raise ValueError(f"Invalid action: {action_str}")
+        
+        # Auto-convert bet to raise if there's a current bet
+        if action == ActionType.BET and self.game_state.current_bet > 0:
+            action = ActionType.RAISE
+        
+        # Execute the action
+        self.execute_action(player, action, amount)
 
 
 

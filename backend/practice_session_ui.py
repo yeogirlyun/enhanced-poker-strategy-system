@@ -731,12 +731,9 @@ class PracticeSessionUI(ttk.Frame):
         if not player or not player.is_human:
             return
 
-        action_map = { "fold": ActionType.FOLD, "check": ActionType.CHECK, "call": ActionType.CALL, "bet": ActionType.BET, "raise": ActionType.RAISE }
-        action = action_map.get(action_str)
-        
-        # FIX: Only get an amount for a bet or raise.
+        # Get amount for bet/raise actions
         amount = 0
-        if action in [ActionType.BET, ActionType.RAISE]:
+        if action_str in ["bet", "raise", "bet_or_raise"]:
             amount = self.bet_size_var.get()
 
         # Play industry-standard sound for the action
@@ -746,56 +743,54 @@ class PracticeSessionUI(ttk.Frame):
         self._show_game_control_buttons()
         
         # Let the state machine handle EVERYTHING from here.
-        self.state_machine.execute_action(player, action, amount)
+        # Use the new string-based execute_action method
+        self.state_machine.execute_action(player, action_str, amount)
 
     def prompt_human_action(self, player):
-        """Shows and configures the action controls for the human player."""
+        """Shows and configures the action controls for the human player using display state."""
+        display_state = self.state_machine.get_display_state()
+        actions = display_state.valid_actions
 
-        
-        game_info = self.state_machine.get_game_info()
-        if not game_info:
-            return
         self._show_action_buttons()
         
-        # --- FIXED: Use state machine's valid actions instead of duplicating logic ---
-        valid_actions = self.state_machine.get_valid_actions_for_player(player)
-
+        # Pure rendering: Set states and labels directly from display state
+        if 'fold' in actions:
+            self.human_action_controls['fold'].config(
+                state='normal' if actions['fold']['enabled'] else 'disabled',
+                text=actions['fold']['label']
+            )
         
-        # Configure fold button based on state machine's validation
-        if valid_actions.get('fold', False):
-            self.human_action_controls['fold'].config(state='normal')
-            self.human_action_controls['fold'].config(text="Fold")
-        else:
-            self.human_action_controls['fold'].config(state='disabled')
+        if 'check' in actions:
+            self.human_action_controls['check'].config(
+                state='normal' if actions['check']['enabled'] else 'disabled',
+                text=actions['check']['label']
+            )
         
-        # Get call amount from state machine
-        call_amount = valid_actions.get('call_amount', 0)
-
-        # --- FIXED: Properly handle Check vs Call based on state machine validation ---
-        if valid_actions.get('check', False):
-            # Show Check button when it's valid
-            self.human_action_controls['check'].config(state='normal')
-            self.human_action_controls['call'].config(state='disabled')
-            self.human_action_controls['bet_raise'].config(text="Bet")
-        elif call_amount > 0:
-            # Show Call button when there's a bet to call
-            self.human_action_controls['check'].config(state='disabled')
-            self.human_action_controls['call'].config(state='normal')
-            self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
-            self.human_action_controls['bet_raise'].config(text="Raise To")
+        if 'call' in actions:
+            self.human_action_controls['call'].config(
+                state='normal' if actions['call']['enabled'] else 'disabled',
+                text=actions['call']['label']
+            )
         
-        # Note: bet_raise button is already positioned with grid in _create_human_action_controls
-        # No need to repack it here
+        if 'bet' in actions:
+            self.human_action_controls['bet_raise'].config(
+                state='normal' if actions['bet']['enabled'] else 'disabled',
+                text=actions['bet']['label']
+            )
+        elif 'raise' in actions:
+            self.human_action_controls['bet_raise'].config(
+                state='normal' if actions['raise']['enabled'] else 'disabled',
+                text=actions['raise']['label']
+            )
 
-        # Use state machine's values for bet/raise slider
-        min_bet_or_raise = valid_actions.get('min_raise', self.state_machine.game_state.min_raise)
-        max_bet = valid_actions.get('max_bet', player.stack + player.current_bet)
+        # Configure bet slider using display state data
+        valid_actions_raw = self.state_machine.get_valid_actions_for_player(player)
+        min_bet_or_raise = valid_actions_raw.get('min_raise', self.state_machine.game_state.min_raise)
+        max_bet = valid_actions_raw.get('max_bet', player.stack + player.current_bet)
         
         self.bet_slider.config(from_=min_bet_or_raise, to=max_bet)
         self.bet_size_var.set(min_bet_or_raise)
         self._update_bet_size_label()
-        
-
 
     def start_new_hand(self):
         """Starts a new hand and resets the UI accordingly."""
@@ -1716,55 +1711,24 @@ class PracticeSessionUI(ttk.Frame):
                 self.canvas.itemconfig(bet_label_window, state="hidden")
     
     def update_display(self, new_state=None):
-        """Updates the UI and logs detailed debugging information."""
-        game_info = self.state_machine.get_game_info()
-        if not game_info:
-            self._log_message("DEBUG: update_display called but no game_info available.")
+        """Updates the UI using display state from the state machine."""
+        display_state = self.state_machine.get_display_state()
+        if not display_state:
+            self._log_message("DEBUG: update_display called but no display_state available.")
             return
 
-        # (Existing logging...)
-
-        # Update pot and current bet display
-        pot_amount = game_info['pot']
-        # Use preserved pot amount if hand is completed
-        if self.hand_completed and self.preserved_pot_amount > 0:
-            pot_amount = self.preserved_pot_amount
-    
-        self.update_pot_amount(pot_amount)
+        # Update pot and current bet display using display state
+        self.update_pot_amount(display_state.pot_amount)
         
         # Show current bet information in message area if there's a current bet
-        if game_info['current_bet'] > 0:
-            self.add_game_message(f"💰 Current Bet: ${game_info['current_bet']:.2f}")
+        if display_state.current_bet > 0:
+            self.add_game_message(f"💰 Current Bet: ${display_state.current_bet:.2f}")
 
-        # --- FIX: Only update community cards when they actually change ---
-        # Get current board cards
-        board_cards = game_info['board']
-        current_state = game_info.get('state', '')
+        # Update community cards using display state
+        board_cards = display_state.community_cards
         
-        # During showdown/end_hand, preserve community cards even if hand_completed not set yet
-        if self.hand_completed and self.preserved_community_cards:
-            # Use preserved cards after hand completion
-            board_cards = self.preserved_community_cards
-            self._log_message(f"🎴 Using preserved cards: {board_cards}")
-        elif current_state in ['showdown', 'end_hand'] and board_cards:
-            # During showdown/end_hand, preserve the current board
-            if not self.preserved_community_cards:
-                self.preserved_community_cards = board_cards.copy()
-                self._log_message(f"🎴 Preserving cards for showdown: {board_cards}")
-            board_cards = self.preserved_community_cards
-        else:
-            # For new hands, use the actual board from game_info
-            board_cards = game_info['board']
-            self._log_message(f"🎴 Using game board: {board_cards}")
-    
-        # Update community card display - force update during showdown/end_hand
-        should_force_update = current_state in ['showdown', 'end_hand'] and board_cards
-        
-        if board_cards != self.last_board_cards or should_force_update:
-            if should_force_update:
-                self._log_message(f"🎴 FORCING update during {current_state}: {board_cards}")
-            else:
-                self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        if board_cards != self.last_board_cards:
+            self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
             
             # Safety check for community card widgets
             if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1777,20 +1741,20 @@ class PracticeSessionUI(ttk.Frame):
                         
             # Update tracking variable
             self.last_board_cards = board_cards.copy()
-        # NEW: Only clear action indicators when the next player actually takes an action
-        # Don't clear just because highlighting changes - wait for actual action
-        current_action_player = game_info['action_player']
-        # We'll clear action indicators in _animate_player_action when a new action is taken
-        
-        # Update player info
+
+        # Update player info using display state
         if not hasattr(self, 'player_seats') or not self.player_seats:
-    
             return
             
         for i, player_seat in enumerate(self.player_seats):
             if not player_seat:
                 continue
 
+            # Get player data from state machine
+            game_info = self.state_machine.get_game_info()
+            if not game_info or i >= len(game_info['players']):
+                continue
+                
             player_info = game_info['players'][i]
             player_pod = player_seat.get("player_pod")
             
@@ -1807,17 +1771,13 @@ class PracticeSessionUI(ttk.Frame):
                 }
                 player_pod.update_pod(pod_data)
                 
-                # Set active player highlighting (no highlighting after hand completion)
-                is_active_turn = (i == game_info.get('action_player', -1)) and not self.hand_completed
+                # Set active player highlighting using display state
+                is_active_turn = display_state.player_highlights[i] and not self.hand_completed
                 player_pod.set_active_player(is_active_turn)
             
-            # FIXED: Highlight based on action_player index, not is_active status
-            # Players should be highlighted when it's their turn, even if they fold
-            # BUT: Don't highlight anyone after showdown (hand is complete)
+            # Update player highlighting using display state
             frame = player_seat["frame"]
-            action_player = game_info.get('action_player', -1)
-    
-            if i == action_player and not self.hand_completed:
+            if display_state.player_highlights[i] and not self.hand_completed:
                 frame.config(bg=THEME["accent_primary"])
             else:
                 frame.config(bg=THEME["secondary_bg"])
@@ -1836,51 +1796,27 @@ class PracticeSessionUI(ttk.Frame):
                         self.canvas.itemconfig(bet_label_window, state="normal")
                     else:
                         self.canvas.itemconfig(bet_label_window, state="hidden")
-            # Update player card display with proper card styling
-            # Check if player has folded by looking at their cards (empty cards indicate folded)
-            has_folded = not player_info.get('cards') or len(player_info['cards']) == 0 or all(card == "" for card in player_info['cards'])
             
-            if player_info['is_active'] and not has_folded:
-                # Show cards for human players (always visible) or during showdown/end_hand (all active players)
-                current_state = self.state_machine.get_current_state()
-                is_showdown_or_end = current_state in [PokerState.SHOWDOWN, "end_hand"]
-                
-                # Show cards for human players or during showdown/end_hand (all active players)
-                # Also show cards if hand is completed but player was active (for winner display)
-                if player_info['is_human'] or is_showdown_or_end or (self.hand_completed and player_info['is_active']):
-                    # Get the stored card widgets
-                    card_widgets = player_seat.get("card_widgets", [])
-                    if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
-                        # Update first card using raw card string
+            # Update player card display using display state
+            card_visible = display_state.card_visibilities[i]
+            card_widgets = player_seat.get("card_widgets", [])
+            
+            if len(card_widgets) >= 2:
+                if card_visible:
+                    # Show cards for human players or during showdown/end_hand
+                    if len(player_info['cards']) >= 2:
                         card_widgets[0].set_card(player_info['cards'][0])
-                        
-                        # Update second card using raw card string
                         card_widgets[1].set_card(player_info['cards'][1])
-                else: # Bot's cards are hidden during play - show card backs
-                    # Get the stored card widgets
-                    card_widgets = player_seat.get("card_widgets", [])
-                    if len(card_widgets) >= 2:
-                        # Show card backs for hidden cards - use set_card with empty string
-                        card_widgets[0].set_card("")  # This should show card back
-                        card_widgets[1].set_card("")  # This should show card back
-            else: # Player has folded or is inactive
-                # Get the stored card widgets
-                card_widgets = player_seat.get("card_widgets", [])
-                
-                if len(card_widgets) >= 2:
-                    # Show folded card backs (dark gray, no border)
-                    card_widgets[0].set_card("", is_folded=True)  # Dark gray card back
-                    card_widgets[1].set_card("", is_folded=True)  # Dark gray card back
+                else:
+                    # Show card backs for hidden cards
+                    card_widgets[0].set_card("")  # This should show card back
+                    card_widgets[1].set_card("")  # This should show card back
         
-        # Update last action details - preserve winning announcement until new hand
+        # Update last action details from display state
         if hasattr(self, 'last_action_label'):
             # Only update if we don't have a preserved winning message
             if not self.hand_completed:
-                last_action = game_info.get('last_action_details', '')
-                self.last_action_label.config(text=last_action)
-        
-        # Note: Winning cards are highlighted immediately when hand completes
-        # No need to highlight again here as it's already done in handle_hand_complete
+                self.last_action_label.config(text=display_state.last_action_details)
         
         # Update session information display
         self.update_session_info()
@@ -1892,27 +1828,19 @@ class PracticeSessionUI(ttk.Frame):
         self.bet_size_label.config(text=f"${self.bet_size_var.get():.2f}")
 
     def _submit_preset_bet(self, preset_type):
-        """Submit a preset bet action."""
-        game_info = self.state_machine.get_game_info()
-        if not game_info or "valid_actions" not in game_info:
-            return
-            
-        valid_actions = game_info["valid_actions"]
-        if "preset_bets" not in valid_actions:
-            return
-            
-        preset_bets = valid_actions["preset_bets"]
-        if preset_type not in preset_bets:
-            return
-            
-        amount = preset_bets[preset_type]
-        self._submit_human_action("raise", amount)
+        """Submit a preset bet action using display state."""
+        display_state = self.state_machine.get_display_state()
+        preset_bets = display_state.valid_actions.get('preset_bets', {})
+        
+        if preset_type in preset_bets:
+            amount = preset_bets[preset_type]
+            self._submit_human_action("bet_or_raise", amount)
     
     def _submit_bet_raise(self):
-        """Submits a bet or raise action based on context."""
-        game_info = self.state_machine.get_game_info()
-        if game_info and game_info.get('current_bet', 0) > 0:
-            self._submit_human_action("raise")
+        """Submits a bet or raise action - no context check needed."""
+        # No context check: Just send action and amount
+        amount = float(self.bet_size_var.get())
+        self._submit_human_action("bet_or_raise", amount)
     def _animate_player_action(self, player_index: int, action: str, amount: float = 0):
         """Animate a player's action with visual feedback that persists until next player acts."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
@@ -2168,73 +2096,32 @@ class PracticeSessionUI(ttk.Frame):
             # Update session info to reflect the change
             self.update_session_info()
     def update_stack_amount(self, player_index, new_amount):
-        """Update the stack amount for a specific player."""
-        if player_index < len(self.player_seats):
+        """Update the stack amount for a player."""
+        if player_index < len(self.player_seats) and self.player_seats[player_index]:
             player_seat = self.player_seats[player_index]
             player_pod = player_seat.get("player_pod")
-            
             if player_pod:
-                # Update the PlayerPod with new stack amount
+                # Get chip representation from display state
+                display_state = self.state_machine.get_display_state()
+                chip_symbols = display_state.chip_representations.get(f'player{player_index}_stack', '')
+                
+                # Update the stack display
                 pod_data = {
-                    "name": player_pod.name_label.cget("text"),  # Keep existing name
-                    "stack": new_amount
+                    "name": player_pod.name_label.cget("text"),
+                    "stack": new_amount,
+                    "bet": 0,  # Reset bet when updating stack
+                    "starting_stack": 100.0
                 }
                 player_pod.update_pod(pod_data)
-    
-    def _calculate_chip_count(self, amount):
-        """Calculate how many chip symbols to display based on amount."""
-        if amount <= 10:
-            return 3
-        elif amount <= 25:
-            return 4
-        elif amount <= 50:
-            return 5
-        elif amount <= 100:
-            return 6
-        elif amount <= 200:
-            return 7
-        elif amount <= 500:
-            return 8
-    def _get_chip_symbols(self, amount):
-        """Get appropriate chip symbols based on amount."""
-        chip_count = self._calculate_chip_count(amount)
-        
-        # Different chip colors based on amount ranges with better visibility
-        if amount <= 25:
-            return "🟡" * chip_count  # Yellow chips for small amounts
-        elif amount <= 100:
-            return "🟢" * chip_count  # Green chips for medium amounts
-        elif amount <= 500:
-            return "🔴" * chip_count  # Red chips for larger amounts
-    def _get_pot_chip_symbols(self, amount):
-        """Get unique pot chip symbols based on amount (different from player chips)."""
-        chip_count = self._calculate_pot_chip_count(amount)
-        
-        # Pot uses different chip colors than player stacks
-        if amount <= 25:
-            return "🟠" * chip_count  # Orange chips for small pots
-        elif amount <= 100:
-            return "🔶" * chip_count  # Dark orange chips for medium pots
-        elif amount <= 500:
-            return "🟧" * chip_count  # Light orange chips for large pots
-    def _calculate_pot_chip_count(self, amount):
-        """Calculate how many pot chip symbols to display based on amount."""
-        if amount <= 10:
-            return 2
-        elif amount <= 25:
-            return 3
-        elif amount <= 50:
-            return 4
-        elif amount <= 100:
-            return 5
-        elif amount <= 200:
-            return 6
-        elif amount <= 500:
-            return 7
+
     def update_pot_amount(self, new_amount):
-        """Updates the pot amount display with the new amount."""
-        if hasattr(self, 'pot_label') and self.pot_label is not None:
-            self.pot_label.config(text=f"${new_amount:.2f}")
+        """Update the pot amount display."""
+        if hasattr(self, 'pot_label'):
+            # Get chip representation from display state
+            display_state = self.state_machine.get_display_state()
+            chip_symbols = display_state.chip_representations.get('pot', '')
+            
+            self.pot_label.config(text=f"Pot: ${new_amount:.2f} {chip_symbols}")
     
     def _on_state_change(self, new_state):
         """Handle state changes from the state machine."""

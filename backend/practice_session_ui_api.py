@@ -401,24 +401,42 @@ class PracticeSessionUI(ttk.Frame):
             self.response_queue.put({"error": f"Connection to server failed: {e}"})
 
     def prompt_human_action(self, game_state):
-        """Shows action controls for human player."""
+        """Shows action controls for human player using display state."""
+        # Get display state from the game state
+        display_state = game_state.get('display_state', {})
+        actions = display_state.get('valid_actions', {})
+        
         self._toggle_action_controls(True)
         
-        # Show appropriate buttons based on game state
-        to_call = game_state.get('to_call', 0)
+        # Pure rendering: Set states and labels directly from display state
+        if 'fold' in actions:
+            self.human_action_controls['fold'].config(
+                state='normal' if actions['fold'].get('enabled', False) else 'disabled',
+                text=actions['fold'].get('label', 'Fold')
+            )
         
-        if to_call > 0:
-            # There's a bet to call
-            self.human_action_controls['call'].config(text=f"Call ${to_call:.2f}")
-            self.human_action_controls['call'].pack(side=tk.LEFT, padx=2)
-            self.human_action_controls['fold'].pack(side=tk.LEFT, padx=2)
-            self.human_action_controls['bet_raise'].config(text="Raise")
-            self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=2)
-        else:
-            # No bet to call
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=2)
-            self.human_action_controls['bet_raise'].config(text="Bet")
-            self.human_action_controls['bet_raise'].pack(side=tk.LEFT, padx=2)
+        if 'check' in actions:
+            self.human_action_controls['check'].config(
+                state='normal' if actions['check'].get('enabled', False) else 'disabled',
+                text=actions['check'].get('label', 'Check')
+            )
+        
+        if 'call' in actions:
+            self.human_action_controls['call'].config(
+                state='normal' if actions['call'].get('enabled', False) else 'disabled',
+                text=actions['call'].get('label', 'Call')
+            )
+        
+        if 'bet' in actions:
+            self.human_action_controls['bet_raise'].config(
+                state='normal' if actions['bet'].get('enabled', False) else 'disabled',
+                text=actions['bet'].get('label', 'Bet')
+            )
+        elif 'raise' in actions:
+            self.human_action_controls['bet_raise'].config(
+                state='normal' if actions['raise'].get('enabled', False) else 'disabled',
+                text=actions['raise'].get('label', 'Raise')
+            )
         
         # Show bet sizing controls
         if hasattr(self, 'sizing_frame'):
