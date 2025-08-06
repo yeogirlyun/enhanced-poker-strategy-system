@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 import time
 import random
 import sys
+from .session_logger import get_session_logger, SessionLogger
 import os
 import json
 import uuid
@@ -186,6 +187,14 @@ class ImprovedPokerStateMachine:
         self.num_players = num_players
         self.strategy_data = strategy_data
         self.root_tk = root_tk
+        
+        # Initialize comprehensive logging system
+        self.logger = get_session_logger()
+        self.session_id = None
+        self.hand_number = 0
+        
+        # Start logging session
+        self._start_logging_session()
         
         # Game state
         self.current_state = PokerState.START_HAND
@@ -680,6 +689,99 @@ class ImprovedPokerStateMachine:
                 # Fallback for more players than defined positions
                 self.game_state.players[i].position = f"P{seat_offset+1}"
 
+    def _start_logging_session(self):
+        """Initialize the comprehensive logging session."""
+        try:
+            self.session_id = self.logger.start_session(
+                num_players=self.num_players,
+                starting_stack=100.0  # Default starting stack
+            )
+            self.logger.log_system("INFO", "SYSTEM", "Poker state machine initialized", {
+                "num_players": self.num_players,
+                "session_id": self.session_id
+            })
+        except Exception as e:
+            print(f"Warning: Could not initialize logging: {e}")
+            self.session_id = None
+    
+    def _end_logging_session(self):
+        """End the current logging session."""
+        if self.session_id:
+            try:
+                self.logger.end_session()
+                self.logger.log_system("INFO", "SYSTEM", "Session ended")
+            except Exception as e:
+                print(f"Warning: Could not end logging session: {e}")
+    
+    def _start_hand_logging(self):
+        """Start logging for the current hand."""
+        if not self.session_id:
+            return
+            
+        try:
+            # Prepare player data for logging
+            players_data = []
+            for i, player in enumerate(self.game_state.players):
+                players_data.append({
+                    "name": player.name,
+                    "position": player.position,
+                    "stack": player.stack,
+                    "is_human": player.is_human,
+                    "is_active": player.is_active,
+                    "index": i
+                })
+            
+            # Find blind positions
+            dealer_button = 0  # Will be set properly when we implement button tracking
+            small_blind = getattr(self, 'small_blind_position', 0)
+            big_blind = getattr(self, 'big_blind_position', 1)
+            
+            hand_id = self.logger.start_hand(
+                hand_number=self.hand_number,
+                players=players_data,
+                dealer_button=dealer_button,
+                small_blind=small_blind,
+                big_blind=big_blind,
+                sb_amount=0.5,
+                bb_amount=1.0
+            )
+            
+            self.logger.log_system("INFO", "HAND", f"Hand {self.hand_number} started", {
+                "hand_id": hand_id,
+                "players": len(players_data),
+                "deck_size": len(self.game_state.deck)
+            })
+            
+        except Exception as e:
+            print(f"Warning: Could not start hand logging: {e}")
+    
+    def _log_player_action(self, player: 'Player', action: str, amount: float, 
+                          pot_before: float, pot_after: float):
+        """Log a player action to the comprehensive logging system."""
+        if not self.session_id:
+            return
+            
+        try:
+            player_index = self.game_state.players.index(player)
+            
+            self.logger.start_player_action(player.name)
+            self.logger.log_action(
+                player_name=player.name,
+                player_index=player_index,
+                action=action,
+                amount=amount,
+                stack_before=player.stack + amount if action in ["BET", "CALL", "RAISE"] else player.stack,
+                stack_after=player.stack,
+                pot_before=pot_before,
+                pot_after=pot_after,
+                current_bet=self.game_state.current_bet,
+                street=self.game_state.street,
+                position=player.position,
+                is_human=player.is_human
+            )
+        except Exception as e:
+            print(f"Warning: Could not log player action: {e}")
+
     def create_deck(self) -> List[str]:
         """Create a standard 52-card deck."""
         ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
@@ -717,6 +819,9 @@ class ImprovedPokerStateMachine:
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
         self._log_action("Starting new hand")
+        
+        # Increment hand number for logging
+        self.hand_number += 1
         
         # --- NEW: Clear the hand history ---
         self.hand_history.clear()
@@ -787,6 +892,9 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"ERROR: Invalid position '{player.position}' for {player.name}")
                 player.position = "Unknown"  # Fallback position
         # --- END POSITION VALIDATION ---
+        
+        # Start comprehensive hand logging
+        self._start_hand_logging()
 
         # FIX: Update blind positions BEFORE trying to use them
         self.update_blind_positions()
@@ -880,6 +988,15 @@ class ImprovedPokerStateMachine:
         
         self._log_action(f"🃏 After dealing, deck has {len(self.game_state.deck)} cards remaining")
         
+        # Log hole cards to comprehensive logging system
+        try:
+            hole_cards = {}
+            for player in self.game_state.players:
+                hole_cards[player.name] = player.cards
+            self.logger.log_hole_cards(hole_cards)
+        except Exception as e:
+            print(f"Warning: Could not log hole cards: {e}")
+        
         # Notify UI that dealing is complete and calculate dealing animation time
         # Total cards dealt = players × 2 cards, with delays between each card
         total_cards = len(self.game_state.players) * 2
@@ -938,6 +1055,12 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎴 FLOP COMPLETE: {' '.join(self.game_state.board)}")
         self._log_action(f"📊 Pot before flop betting: ${self.game_state.pot:.2f}")
         
+        # Log board cards to comprehensive logging system
+        try:
+            self.logger.log_board_cards(self.game_state.board, "flop")
+        except Exception as e:
+            print(f"Warning: Could not log flop cards: {e}")
+        
         # FIX: Update street before preparing new betting round
         self.game_state.street = "flop"
         self.prepare_new_betting_round()
@@ -960,6 +1083,12 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🎴 TURN COMPLETE: {' '.join(self.game_state.board)}")
         self._log_action(f"📊 Pot before turn betting: ${self.game_state.pot:.2f}")
         
+        # Log board cards to comprehensive logging system
+        try:
+            self.logger.log_board_cards(self.game_state.board, "turn")
+        except Exception as e:
+            print(f"Warning: Could not log turn cards: {e}")
+        
         # FIX: Update street before preparing new betting round
         self.game_state.street = "turn"
         self.prepare_new_betting_round()
@@ -981,6 +1110,12 @@ class ImprovedPokerStateMachine:
 
         self._log_action(f"🎴 RIVER COMPLETE: {' '.join(self.game_state.board)}")
         self._log_action(f"📊 Pot before river betting: ${self.game_state.pot:.2f}")
+        
+        # Log board cards to comprehensive logging system
+        try:
+            self.logger.log_board_cards(self.game_state.board, "river")
+        except Exception as e:
+            print(f"Warning: Could not log river cards: {e}")
         
         # FIX: Update street before preparing new betting round
         self.game_state.street = "river"
@@ -2004,6 +2139,7 @@ class ImprovedPokerStateMachine:
         
         # --- ENHANCED: Detailed Action Logging ---
         old_pot = self.game_state.pot  # Track pot changes
+        old_stack = player.stack  # Track stack changes
         self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
         self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
         self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
@@ -2154,6 +2290,29 @@ class ImprovedPokerStateMachine:
         # Mark player as acted
         player.has_acted_this_round = True
         self.game_state.players_acted.add(self.action_player_index)
+        
+        # Log action to comprehensive logging system
+        try:
+            actual_amount_used = 0
+            if action == ActionType.CALL:
+                actual_amount_used = min(self.game_state.current_bet - player.current_bet, old_stack)
+            elif action == ActionType.BET:
+                actual_amount_used = min(amount, old_stack)
+            elif action == ActionType.RAISE:
+                actual_amount_used = amount - player.current_bet if amount > player.current_bet else 0
+            
+            self._log_player_action(player, action.value, actual_amount_used, old_pot, self.game_state.pot)
+            
+            # Log system debug info
+            self.logger.log_system("DEBUG", "ACTION", f"Action completed: {player.name} {action.value}", {
+                "amount": actual_amount_used,
+                "pot_change": self.game_state.pot - old_pot,
+                "stack_change": old_stack - player.stack,
+                "street": self.game_state.street,
+                "active_players": len([p for p in self.game_state.players if p.is_active])
+            })
+        except Exception as e:
+            print(f"Warning: Could not log action: {e}")
 
         # --- CORRECTED GAME FLOW LOGIC ---
         # Check for a winner after any action that might end the hand
