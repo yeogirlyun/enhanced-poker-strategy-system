@@ -1567,11 +1567,25 @@ class PracticeSessionUI(ttk.Frame):
                 
                 cards_label = player_seat.get("cards_label")
                 if cards_label:
-                    cards_label.config(text="")
+                    # Handle different widget types safely
+                    try:
+                        if hasattr(cards_label, 'config'):
+                            cards_label.config(text="")
+                        elif hasattr(cards_label, 'set_card'):
+                            cards_label.set_card("")  # For CardWidget
+                    except Exception as e:
+                        print(f"Warning: Could not reset cards_label: {e}")
                 
                 bet_label = player_seat.get("bet_label")
                 if bet_label:
-                    bet_label.config(text="")
+                    # Handle different widget types safely
+                    try:
+                        if hasattr(bet_label, 'config'):
+                            bet_label.config(text="")
+                        elif hasattr(bet_label, 'set_text'):
+                            bet_label.set_text("")
+                    except Exception as e:
+                        print(f"Warning: Could not reset bet_label: {e}")
                 
                 # Hide prominent bet displays
                 bet_label_widget = player_seat.get("bet_label_widget")
