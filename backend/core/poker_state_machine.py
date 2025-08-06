@@ -191,6 +191,9 @@ class ImprovedPokerStateMachine:
 
     def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
         """Initialize the poker state machine."""
+        debug_print(f"🏗️ CONSTRUCTOR: PokerStateMachine created with {num_players} players")
+        debug_print(f"🏗️ CONSTRUCTOR: Object ID = {id(self)}")
+        
         self.num_players = num_players
         self.strategy_data = strategy_data
         self.root_tk = root_tk
@@ -2874,6 +2877,7 @@ class ImprovedPokerStateMachine:
     def start_hand(self, existing_players: Optional[List[Player]] = None):
         """Start a new hand, using existing players if provided."""
         debug_print(f"🌟 DEBUG: start_hand() called with existing_players={len(existing_players) if existing_players else 'None'}")
+        debug_print(f"🌟 DEBUG: start_hand() called on object ID = {id(self)}")
         
         # SESSION TRACKING - NEW!
         self._capture_hand_start()

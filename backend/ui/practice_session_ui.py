@@ -800,7 +800,9 @@ class PracticeSessionUI(ttk.Frame):
     def start_new_hand(self):
         """Starts a new hand and resets the UI accordingly."""
         
-        print("DEBUG: start_new_hand called")
+        import sys
+        print("🔥 UI DEBUG: start_new_hand() called from UI")
+        sys.stdout.flush()
         
         # Clear preserved community cards and pot amount when starting new hand
         self.preserved_community_cards = []
@@ -832,17 +834,30 @@ class PracticeSessionUI(ttk.Frame):
         
         # Start new hand in state machine
         try:
+            import sys
+            print("🔥 UI DEBUG: About to call self.state_machine.start_hand()")
+            sys.stdout.flush()
+            print(f"🔥 UI DEBUG: state_machine object = {self.state_machine}")
+            sys.stdout.flush()
+            print(f"🔥 UI DEBUG: state_machine type = {type(self.state_machine)}")
+            sys.stdout.flush()
+            
             self.state_machine.start_hand()
-            print("DEBUG: state_machine.start_hand() completed successfully")
+            
+            print("🔥 UI DEBUG: state_machine.start_hand() completed successfully")
+            sys.stdout.flush()
             
             # FIXED: Don't call update_display() immediately - let dealing animation handle it
             # The dealing animation will properly show cards at the right time
-            print("DEBUG: Skipping immediate update_display() - waiting for dealing animation")
+            print("🔥 UI DEBUG: Skipping immediate update_display() - waiting for dealing animation")
+            sys.stdout.flush()
             
         except Exception as e:
-            print(f"ERROR: Failed to start new hand: {e}")
+            print(f"❌ UI ERROR: Failed to start new hand: {e}")
             import traceback
             traceback.print_exc()
+            sys.stdout.flush()
+            sys.stderr.flush()
 
     def handle_hand_complete(self, winner_info=None):
         """
