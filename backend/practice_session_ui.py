@@ -309,7 +309,8 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_required = self.prompt_human_action
         self.state_machine.on_state_change = self._on_state_change
         self.state_machine.on_hand_complete = self.handle_hand_complete
-        self.state_machine.on_action_player_changed = self.update_display
+        self.state_machine.on_action_player_changed = self.update_action_player_highlighting
+        self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
         self.state_machine.on_log_entry = self.add_game_message
         
         # Setup UI
@@ -1492,7 +1493,8 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_hand_complete = self.handle_hand_complete
                 self.state_machine.on_state_change = self.update_display
                 self.state_machine.on_log_entry = self.add_game_message
-                self.state_machine.on_action_player_changed = self.update_display
+                self.state_machine.on_action_player_changed = self.update_action_player_highlighting
+                self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
                 
                 # Reset UI
                 self._reset_ui_for_new_hand()
@@ -1564,6 +1566,130 @@ class PracticeSessionUI(ttk.Frame):
         
         # Show game control buttons
         self._show_game_control_buttons()
+    
+    def update_single_player(self, player_index: int, game_info: dict = None):
+        """Update only a specific player's display elements efficiently."""
+        if game_info is None:
+            game_info = self.state_machine.get_game_info()
+            if not game_info:
+                return
+        
+        if not hasattr(self, 'player_seats') or not self.player_seats:
+            return
+            
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        player_info = game_info['players'][player_index]
+        player_pod = player_seat.get("player_pod")
+        
+        # Update PlayerPod with new data including bet information
+        if player_pod:
+            # Clear bet amounts after hand completion
+            bet_amount = 0 if self.hand_completed else player_info.get('current_bet', 0)
+            
+            pod_data = {
+                "name": f"{player_info['name']} ({player_info['position']})",
+                "stack": player_info['stack'],
+                "bet": bet_amount,
+                "starting_stack": 100.0  # Default starting stack for progress bar
+            }
+            player_pod.update_pod(pod_data)
+            
+            # Set active player highlighting (no highlighting after hand completion)
+            is_active_turn = (player_index == game_info.get('action_player', -1)) and not self.hand_completed
+            player_pod.set_active_player(is_active_turn)
+        
+        # Update frame highlighting
+        frame = player_seat["frame"]
+        action_player = game_info.get('action_player', -1)
+        
+        if player_index == action_player and not self.hand_completed:
+            frame.config(bg=THEME["accent_primary"])
+        else:
+            frame.config(bg=THEME["secondary_bg"])
+        
+        # Update the prominent bet display on the table
+        bet_label_widget = player_seat.get("bet_label_widget")
+        bet_label_window = player_seat.get("bet_label_window")
+        if bet_label_widget and bet_label_window:
+            # Clear bet displays after hand completion
+            if self.hand_completed:
+                self.canvas.itemconfig(bet_label_window, state="hidden")
+            else:
+                current_bet = player_info.get("current_bet", 0.0)
+                if current_bet > 0 and player_info['is_active']:
+                    bet_label_widget.config(text=f"💰 ${current_bet:.2f}")
+                    self.canvas.itemconfig(bet_label_window, state="normal")
+                else:
+                    self.canvas.itemconfig(bet_label_window, state="hidden")
+
+    def update_action_player_highlighting(self, game_info: dict = None):
+        """Update only the action player highlighting efficiently."""
+        if game_info is None:
+            game_info = self.state_machine.get_game_info()
+            if not game_info:
+                return
+        
+        if not hasattr(self, 'player_seats') or not self.player_seats:
+            return
+            
+        action_player = game_info.get('action_player', -1)
+        
+        # Update highlighting for all players (this is still needed for turn changes)
+        for i, player_seat in enumerate(self.player_seats):
+            if not player_seat:
+                continue
+                
+            frame = player_seat["frame"]
+            player_pod = player_seat.get("player_pod")
+            
+            # Update frame highlighting
+            if i == action_player and not self.hand_completed:
+                frame.config(bg=THEME["accent_primary"])
+            else:
+                frame.config(bg=THEME["secondary_bg"])
+                
+            # Update player pod highlighting
+            if player_pod:
+                is_active_turn = (i == action_player) and not self.hand_completed
+                player_pod.set_active_player(is_active_turn)
+
+    def update_pot_display_only(self, pot_amount: float = None):
+        """Update only the pot display efficiently."""
+        if pot_amount is None:
+            game_info = self.state_machine.get_game_info()
+            if not game_info:
+                return
+            pot_amount = game_info['pot']
+            
+        # Use preserved pot amount if hand is completed
+        if self.hand_completed and self.preserved_pot_amount > 0:
+            pot_amount = self.preserved_pot_amount
+        
+        self.update_pot_amount(pot_amount)
+    
+    def _handle_action_executed(self, player_index: int, action: str, amount: float):
+        """Handle when a player action is executed - use selective updates."""
+        # Get current game info once
+        game_info = self.state_machine.get_game_info()
+        if not game_info:
+            return
+            
+        # Animate the specific player's action
+        self._animate_player_action(player_index, action, amount)
+        
+        # Update only the acting player's display elements
+        self.update_single_player(player_index, game_info)
+        
+        # Update pot display (since actions can change the pot)
+        self.update_pot_display_only()
+        
+        # If action changes the action player, update highlighting
+        # (This will be handled by on_action_player_changed callback separately)
+        
+        self._log_message(f"🎯 Selective update: Player {player_index} {action} ${amount:.2f}")
     
     def update_display(self, new_state=None):
         """Updates the UI and logs detailed debugging information."""
