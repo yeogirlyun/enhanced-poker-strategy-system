@@ -1011,57 +1011,85 @@ class ImprovedPokerStateMachine:
         and have contributed the same amount to the pot in this round.
         """
         active_players = [p for p in self.game_state.players if p.is_active]
+        self._log_action(f"🔍 ROUND_COMPLETE_CHECK: {len(active_players)} active players")
+        
         if len(active_players) <= 1:
+            self._log_action("✅ Round complete: ≤1 active players")
             return True
 
         # Identify players who can still make a move
         players_who_can_act = [p for p in active_players if not p.is_all_in]
+        self._log_action(f"🔍 Players who can act: {[p.name for p in players_who_can_act]}")
+        
         if not players_who_can_act:
+            self._log_action("✅ Round complete: Everyone is all-in")
             return True # Round is over if everyone is all-in
 
         # Check if everyone who can act has had their turn
         all_have_acted = all(p.has_acted_this_round for p in players_who_can_act)
+        self._log_action(f"🔍 All have acted: {all_have_acted}")
+        for p in players_who_can_act:
+            self._log_action(f"   {p.name}: has_acted={p.has_acted_this_round}")
         
         # Find the highest bet made by any player still in the hand
         highest_bet = max(p.current_bet for p in active_players)
+        self._log_action(f"🔍 Highest bet: ${highest_bet:.2f}")
 
         # Check if all players who can act have matched the highest bet
         bets_are_equal = all(
             p.current_bet == highest_bet or (p.is_all_in and p.partial_call_amount is not None)
             for p in players_who_can_act
         )
+        self._log_action(f"🔍 Bets are equal: {bets_are_equal}")
+        for p in players_who_can_act:
+            self._log_action(f"   {p.name}: bet=${p.current_bet:.2f}, target=${highest_bet:.2f}")
         
         # Special case: If BB is the only active player and hasn't acted yet, round is not complete
         if len(active_players) == 1 and active_players[0].position == "BB" and not active_players[0].has_acted_this_round:
+            self._log_action("❌ Round not complete: BB hasn't acted yet")
             return False
         
         # The round is complete if everyone has acted and all bets are equal
-        return all_have_acted and bets_are_equal
+        is_complete = all_have_acted and bets_are_equal
+        self._log_action(f"🔍 FINAL RESULT: Round complete = {is_complete}")
+        return is_complete
 
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
+        self._log_action(f"🎯 HANDLE_CURRENT_PLAYER_ACTION: Current state = {self.current_state.value}")
+        
         if self.current_state == PokerState.END_HAND:
+            self._log_action("🚨 Current state is END_HAND, returning early")
             return
 
         current_player = self.get_action_player()
+        self._log_action(f"🎯 Action player index: {self.action_player_index}")
+        
         if not current_player:
+            self._log_action("⚠️ No current action player found")
             # This can happen if all remaining players are all-in
             if self.is_round_complete():
+                self._log_action("🔄 Round is complete, handling round completion")
                 self.handle_round_complete()
+            else:
+                self._log_action("⏸️ Round not complete but no action player - potential issue!")
             return
 
-        self._log_action(f"STATE MACHINE: It is turn for Player at index {self.action_player_index} ({current_player.name})")
+        self._log_action(f"🎯 ACTION TURN: Player at index {self.action_player_index} ({current_player.name})")
+        self._log_action(f"   👤 Human: {current_player.is_human}, Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
+        self._log_action(f"   💰 Stack: ${current_player.stack:.2f}, Current bet: ${current_player.current_bet:.2f}")
+        self._log_action(f"   🎲 Has acted this round: {current_player.has_acted_this_round}")
 
         # Call the action player changed callback for both human and bot players
         if self.on_action_player_changed:
             self.on_action_player_changed(current_player)
 
         if current_player.is_human:
-            self._log_action(f"Human turn: {current_player.name}")
+            self._log_action(f"👨 HUMAN TURN: {current_player.name}")
             if self.on_action_required:
                 self.on_action_required(current_player)
         else:
-            self._log_action(f"Bot turn: {current_player.name}")
+            self._log_action(f"🤖 BOT TURN: {current_player.name}")
             if self.root_tk:
                 # Capture all necessary state to prevent race conditions
                 bot_action_data = {
@@ -1071,28 +1099,35 @@ class ImprovedPokerStateMachine:
                     'pot': self.game_state.pot,
                     'current_bet': self.game_state.current_bet
                 }
+                self._log_action(f"⏰ Scheduling bot action in 500ms for {current_player.name}")
                 self.root_tk.after(500, lambda: self._execute_bot_action_safe(bot_action_data))  # Reduced delay to 500ms for faster bot play
             else:
+                self._log_action(f"🚀 Executing bot action immediately for {current_player.name}")
                 self.execute_bot_action(current_player)
     
     def _execute_bot_action_safe(self, action_data: dict):
         """Safely execute bot action with state validation."""
+        self._log_action(f"⏰ SAFE_BOT_ACTION: Executing scheduled action for player index {action_data['player_index']}")
+        
         # Validate state hasn't changed
         if (self.current_state != action_data['state'] or
             self.action_player_index != action_data['player_index']):
-            self._log_action("Bot action cancelled - game state changed")
+            self._log_action(f"❌ Bot action cancelled - game state changed:")
+            self._log_action(f"   Expected state: {action_data['state']}, Current: {self.current_state}")
+            self._log_action(f"   Expected player index: {action_data['player_index']}, Current: {self.action_player_index}")
             return
         
         # Validate player still exists and is active
         if action_data['player_index'] >= len(self.game_state.players):
-            self._log_action("Bot action cancelled - player no longer exists")
+            self._log_action(f"❌ Bot action cancelled - player index {action_data['player_index']} no longer exists")
             return
         
         player = self.game_state.players[action_data['player_index']]
         if not player.is_active:
-            self._log_action("Bot action cancelled - player no longer active")
+            self._log_action(f"❌ Bot action cancelled - {player.name} no longer active")
             return
         
+        self._log_action(f"✅ State validation passed, executing bot action for {player.name}")
         self.execute_bot_action(player)
 
     # FIX 5: Strategy Integration for Bots
@@ -2025,12 +2060,14 @@ class ImprovedPokerStateMachine:
             return  # End the action here since the hand is over
 
         # If the hand is not over, check if the round is complete
+        self._log_action(f"🔄 POST-ACTION: Checking if round is complete...")
         if self.is_round_complete():
-            self._log_action("🔄 Round is complete, handling round completion")
+            self._log_action("✅ Round is complete, handling round completion")
             self.handle_round_complete()
         else:
             self._log_action("⏭️ Round not complete, advancing to next player")
             self.advance_to_next_player()
+            self._log_action("🎯 Calling handle_current_player_action after advancing")
             self.handle_current_player_action()
         # --- END CORRECTION ---
 
@@ -2039,24 +2076,31 @@ class ImprovedPokerStateMachine:
         original_index = self.action_player_index
         attempts = 0
         
+        self._log_action(f"⏭️ ADVANCE_TO_NEXT_PLAYER: Starting from index {original_index}")
+        
         while attempts < self.num_players:
             self.action_player_index = (self.action_player_index + 1) % self.num_players
             current_player = self.game_state.players[self.action_player_index]
+            
+            self._log_action(f"   Checking index {self.action_player_index}: {current_player.name}")
+            self._log_action(f"     Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
+            self._log_action(f"     In players_acted: {self.action_player_index in self.game_state.players_acted}")
+            self._log_action(f"     Current bet: ${current_player.current_bet:.2f}, Game bet: ${self.game_state.current_bet:.2f}")
             
             # Found a player who can act
             if (current_player.is_active and 
                 not current_player.is_all_in and
                 (self.action_player_index not in self.game_state.players_acted or
                  current_player.current_bet < self.game_state.current_bet)):
-                # FIX: This callback was incorrect. A turn change is not a state change.
-                # The UI should check get_game_info() to see who the action_player is.
-                # if self.on_state_change:
-                #     self.on_state_change() 
+                self._log_action(f"✅ Found next player: {current_player.name} at index {self.action_player_index}")
                 return
+            else:
+                self._log_action(f"   ❌ Player {current_player.name} cannot act")
             
             attempts += 1
         
         # No one can act - round is complete
+        self._log_action("⚠️ No valid next player found, setting action_player_index to -1")
         self.action_player_index = -1
 
     def handle_round_complete(self):
