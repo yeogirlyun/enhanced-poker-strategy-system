@@ -17,7 +17,7 @@ try:
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
-from gui_models import StrategyData
+from core.gui_models import StrategyData
 
 
 class StrategyPDFExporter:
