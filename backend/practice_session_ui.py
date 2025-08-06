@@ -1757,9 +1757,14 @@ class PracticeSessionUI(ttk.Frame):
             board_cards = game_info['board']
             self._log_message(f"🎴 Using game board: {board_cards}")
     
-        # Only update community card display if the board has actually changed
-        if board_cards != self.last_board_cards:
-            self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        # Update community card display - force update during showdown/end_hand
+        should_force_update = current_state in ['showdown', 'end_hand'] and board_cards
+        
+        if board_cards != self.last_board_cards or should_force_update:
+            if should_force_update:
+                self._log_message(f"🎴 FORCING update during {current_state}: {board_cards}")
+            else:
+                self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
             
             # Safety check for community card widgets
             if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
@@ -1768,6 +1773,7 @@ class PracticeSessionUI(ttk.Frame):
                         card_widget.set_card(board_cards[i])
                         # Force the card widget to update immediately
                         card_widget.update()
+                        self._log_message(f"   Set card {i}: {board_cards[i]}")
                         
             # Update tracking variable
             self.last_board_cards = board_cards.copy()
