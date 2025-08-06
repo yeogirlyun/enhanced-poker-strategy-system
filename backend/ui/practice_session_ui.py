@@ -2075,9 +2075,28 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message("🃏 All cards dealt - starting betting round")
         self.add_game_message("🃏 All cards dealt! Betting begins...")
         
+        # Reveal human player's cards now that dealing is complete
+        self._reveal_human_cards()
+        
         # Tell state machine to start preflop betting
         if hasattr(self.state_machine, 'start_preflop_betting_after_dealing'):
             self.state_machine.start_preflop_betting_after_dealing()
+    
+    def _reveal_human_cards(self):
+        """Reveal the human player's cards after dealing animation completes."""
+        human_player_index = 0  # Human is always player 0
+        
+        if human_player_index < len(self.player_seats) and self.player_seats[human_player_index]:
+            player_seat = self.player_seats[human_player_index]
+            card_widgets = player_seat.get("card_widgets", [])
+            
+            for i, card_widget in enumerate(card_widgets):
+                if hasattr(card_widget, '_current_card') and card_widget._current_card:
+                    # Reveal the stored card
+                    card_widget.set_card(card_widget._current_card)
+                    self._log_message(f"🃏 Revealed human card {i}: {card_widget._current_card}")
+            
+            self.add_game_message("🃏 Your hole cards revealed!")
     
     def _clear_all_player_cards(self):
         """Clear all player cards at the start of dealing."""
@@ -2265,14 +2284,11 @@ class PracticeSessionUI(ttk.Frame):
         card_widgets = player_seat.get("card_widgets", [])
         
         if card_index < len(card_widgets):
-            # For non-human players, show card back initially
-            if player_index == 0:  # Human player
-                card_widgets[card_index].set_card(card)
-                card_widgets[card_index]._current_card = card
-            else:  # Bot players
-                card_widgets[card_index].set_card("")  # Show card back
-                card_widgets[card_index]._current_card = card  # Store actual card
-            self._log_message(f"🃏 Set card {card_index} for Player {player_index}: {card}")
+            # FIXED: Don't show any cards during dealing animation - store them only
+            # All players (including human) show card backs during dealing
+            card_widgets[card_index].set_card("")  # Show card back during dealing
+            card_widgets[card_index]._current_card = card  # Store actual card for later
+            self._log_message(f"🃏 Stored card {card_index} for Player {player_index}: {card} (showing back during dealing)")
     
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display with proper colors."""
