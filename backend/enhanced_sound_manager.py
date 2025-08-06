@@ -118,6 +118,11 @@ class EnhancedSoundManager:
             try:
                 pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
                 self._load_sounds()
+                
+                # Load and apply custom mappings after sounds are loaded
+                self._load_custom_mappings()
+                self._apply_custom_mappings()
+                
             except Exception as e:
                 print(f"Sound initialization error: {e}")
     
@@ -140,6 +145,28 @@ class EnhancedSoundManager:
         
         print(f"✅ Loaded {len(loaded_sounds)} sound effects")
     
+    def _load_custom_mappings(self):
+        """Load custom sound mappings from persistence."""
+        try:
+            from sound_persistence import SoundPersistence
+            persistence = SoundPersistence()
+            self.custom_mappings = persistence.get_all_custom_mappings()
+            if self.custom_mappings:
+                print(f"📂 Loaded {len(self.custom_mappings)} custom sound mappings")
+        except Exception as e:
+            print(f"❌ Error loading custom mappings: {e}")
+            self.custom_mappings = {}
+    
+    def _apply_custom_mappings(self):
+        """Apply custom mappings to sound configurations."""
+        for sound_name, filename in self.custom_mappings.items():
+            if sound_name in self.sound_configs:
+                config = self.sound_configs[sound_name]
+                # Store filename without extension
+                filename_without_ext = os.path.splitext(filename)[0]
+                config.name = filename_without_ext
+                print(f"🎵 Applied custom mapping: {sound_name} → {filename_without_ext}")
+    
     def play(self, sound_name: str, volume_override: float = None):
         """Play a sound with premium game app features."""
         if not self.sound_enabled:
@@ -147,7 +174,24 @@ class EnhancedSoundManager:
         
         config = self.sound_configs.get(sound_name)
         if not config:
+            print(f"❌ No config found for sound: {sound_name}")
             return
+        
+        # Try to load the sound if it's not already loaded
+        if config.name not in self.sounds:
+            try:
+                sound_dir = os.path.join(os.path.dirname(__file__), "sounds")
+                sound_path = os.path.join(sound_dir, config.name)
+                
+                if os.path.exists(sound_path):
+                    print(f"🔄 Loading sound: {config.name}")
+                    self.sounds[config.name] = pygame.mixer.Sound(sound_path)
+                else:
+                    print(f"❌ Sound file not found: {sound_path}")
+                    return
+            except Exception as e:
+                print(f"❌ Failed to load sound {config.name}: {e}")
+                return
         
         if config.name in self.sounds and PYGAME_AVAILABLE:
             try:
@@ -166,10 +210,13 @@ class EnhancedSoundManager:
                     # by adjusting playback speed or using multiple sounds
                     pass
                 
+                print(f"🔊 Playing sound: {sound_name} → {config.name}")
                 sound.play()
                 
             except Exception as e:
-                print(f"Error playing sound {sound_name}: {e}")
+                print(f"❌ Error playing sound {sound_name}: {e}")
+        else:
+            print(f"❌ Sound not loaded: {config.name}")
     
     def play_layered_sound(self, layer_name: str):
         """Play a layered sound effect for premium experience."""
@@ -271,6 +318,36 @@ class EnhancedSoundManager:
         """Stop all currently playing sounds."""
         if PYGAME_AVAILABLE:
             pygame.mixer.stop()
+    
+    def reload_sound(self, sound_name: str):
+        """Force reload a specific sound."""
+        config = self.sound_configs.get(sound_name)
+        if not config:
+            print(f"❌ No config found for sound: {sound_name}")
+            return False
+        
+        try:
+            # Remove from cache if exists
+            if config.name in self.sounds:
+                del self.sounds[config.name]
+            
+            # Load the sound file
+            sound_dir = os.path.join(os.path.dirname(__file__), "sounds")
+            sound_path = os.path.join(sound_dir, config.name)
+            
+            # Try to find the file with different extensions
+            for ext in ['.wav', '.mp3', '.ogg']:
+                alt_path = sound_path + ext
+                if os.path.exists(alt_path):
+                    print(f"🔄 Reloading sound: {sound_name} → {config.name}{ext}")
+                    self.sounds[config.name] = pygame.mixer.Sound(alt_path)
+                    return True
+            
+            print(f"❌ Sound file not found: {sound_path}")
+            return False
+        except Exception as e:
+            print(f"❌ Failed to reload sound {sound_name}: {e}")
+            return False
     
     def get_sound_quality_report(self) -> dict:
         """Get detailed sound system report."""

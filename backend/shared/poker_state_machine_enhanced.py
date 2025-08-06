@@ -209,8 +209,13 @@ class ImprovedPokerStateMachine:
         self.on_action_executed = None  # NEW: Callback for action animations
         self.on_action_player_changed = None  # NEW: Callback for action player changes
         
-        # Sound manager
-        self.sfx = SoundManager()
+        # Sound manager - use enhanced sound manager for custom mappings
+        from enhanced_sound_manager import sound_manager
+        self.sfx = sound_manager
+        
+        # Voice announcement system
+        from voice_announcement_system import voice_system
+        self.voice_system = voice_system
         
         # Hand history
         self.hand_history = []
@@ -304,7 +309,7 @@ class ImprovedPokerStateMachine:
         # Reset hand history and any other per-session state
         self.hand_history = []
         self.current_state = PokerState.START_HAND
-        self.action_player_index = 0
+        # FIX: Don't set action_player_index here - it will be set correctly in start_hand
         self.dealer_position = 0
         self._log_session_event("Session started")
         self._log_session_event(f"Players: {self.num_players}")
@@ -759,6 +764,9 @@ class ImprovedPokerStateMachine:
                 player.position = "Unknown"  # Fallback position
         # --- END POSITION VALIDATION ---
 
+        # FIX: Update blind positions BEFORE trying to use them
+        self.update_blind_positions()
+
         # Post blinds with proper tracking
         sb_player = self.game_state.players[self.small_blind_position]
         bb_player = self.game_state.players[self.big_blind_position]
@@ -804,14 +812,8 @@ class ImprovedPokerStateMachine:
         """Deal hole cards to all players."""
         for player in self.game_state.players:
             player.cards = [self.deal_card(), self.deal_card()]
-            # Only play sound if we're in an active game state (not during initialization)
-            if self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
-                                    PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
-                # Use authentic dealing sound if available
-                if "card_deal" in self.sfx.sounds:
-                    self.sfx.play("card_deal")  # Authentic dealing sound
-                else:
-                    self.sfx.play("card_deal")  # Generated fallback
+            # Play card dealing sound for each card dealt
+            self.sfx.play("card_deal")  # Authentic dealing sound
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
@@ -825,9 +827,11 @@ class ImprovedPokerStateMachine:
             player.has_acted_this_round = False
         # --- END NEW ---
 
-        if not self.is_round_complete():
-            self.handle_current_player_action()
-        else:
+        # FIX: Don't automatically start bot actions when the hand first starts
+        # The action player is correctly set, just wait for the first action
+        
+        # Only check if round is complete, don't start actions automatically
+        if self.is_round_complete():
             self.transition_to(PokerState.DEAL_FLOP)
 
     def reset_round_tracking(self):
@@ -1190,7 +1194,16 @@ class ImprovedPokerStateMachine:
         
         if hand_strength >= value_thresh:
             self._log_action(f"🚀 3-betting with strong hand")
-            return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
+            # FIXED: Calculate raise_to consistently and ensure minimum raise is met
+            suggested_raise_by = sizing * self.game_state.big_blind
+            min_raise_by = self.game_state.min_raise
+            actual_raise_by = max(suggested_raise_by, min_raise_by)
+            raise_to = self.game_state.current_bet + actual_raise_by
+            # Cap at player's available stack
+            max_raise_to = player.current_bet + player.stack
+            final_raise_to = min(raise_to, max_raise_to)
+            self._log_action(f"💰 Calculating 3bet: suggested_raise_by=${suggested_raise_by:.2f}, min_raise_by=${min_raise_by:.2f}, raise_to=${final_raise_to:.2f}")
+            return ActionType.RAISE, final_raise_to
         elif hand_strength >= call_thresh:
             self._log_action(f"📞 Calling with medium hand")
             return ActionType.CALL, call_amount
@@ -1208,7 +1221,20 @@ class ImprovedPokerStateMachine:
         
         if hand_strength >= threshold:
             self._log_action(f"🚀 Opening with strong hand")
-            return ActionType.RAISE, min(self.game_state.big_blind * sizing, player.stack)
+            # FIXED: Calculate raise_to consistently
+            if self.game_state.current_bet == 0:
+                # Opening bet
+                bet_amount = min(self.game_state.big_blind * sizing, player.stack)
+                return ActionType.BET, bet_amount
+            else:
+                # Raising over existing bet
+                suggested_raise_by = sizing * self.game_state.big_blind
+                min_raise_by = self.game_state.min_raise
+                actual_raise_by = max(suggested_raise_by, min_raise_by)
+                raise_to = self.game_state.current_bet + actual_raise_by
+                max_raise_to = player.current_bet + player.stack
+                final_raise_to = min(raise_to, max_raise_to)
+                return ActionType.RAISE, final_raise_to
         else:
             self._log_action(f"❌ Folding weak hand")
             return ActionType.FOLD, 0
@@ -1784,13 +1810,16 @@ class ImprovedPokerStateMachine:
                 return ActionType.FOLD, 0
 
     # FIX 2 & 3: Correct Raise Logic and All-In Detection
-    def execute_action(self, player: Player, action: ActionType, amount: float = 0):
+    def execute_action(self, player: Player, action: ActionType, amount: float = 0, _is_fallback: bool = False):
         """Execute a player action with all fixes."""
         # --- FIX: Log and play sound immediately upon receiving the action ---
         self.log_state_change(player, action, amount)
         
         # Play industry-standard sound for the action
         self.sfx.play_action_sound(action.value.lower(), amount)
+        
+        # Play voice announcement for the action
+        self.voice_system.play_action_with_voice(f"player_{action.value.lower()}", amount)
         
         # Track last action details for UI feedback
         self.game_state.last_action_details = f"{player.name} {action.value.lower()}s"
@@ -1818,7 +1847,37 @@ class ImprovedPokerStateMachine:
             error_msg = f"Invalid action: {'; '.join(errors)}"
             self._log_action(f"ERROR in execute_action: {error_msg}")
             
-            # --- NEW: Re-prompt human player for valid action ---
+            # --- NEW: Handle invalid bot actions with fallback ---
+            if not player.is_human and not _is_fallback:
+                self._log_action(f"🤖 Bot action failed, trying fallback")
+                # Try fallback actions in order: CALL -> CHECK -> FOLD
+                call_amount = self.game_state.current_bet - player.current_bet
+                
+                # Try CALL first if there's something to call
+                if call_amount > 0 and call_amount <= player.stack:
+                    fallback_errors = self.validate_action(player, ActionType.CALL, call_amount)
+                    if not fallback_errors:
+                        self._log_action(f"📞 Bot falling back to CALL ${call_amount:.2f}")
+                        return self.execute_action(player, ActionType.CALL, call_amount, _is_fallback=True)
+                
+                # Try CHECK if no bet to call
+                if call_amount == 0:
+                    fallback_errors = self.validate_action(player, ActionType.CHECK, 0)
+                    if not fallback_errors:
+                        self._log_action(f"✅ Bot falling back to CHECK")
+                        return self.execute_action(player, ActionType.CHECK, 0, _is_fallback=True)
+                
+                # Last resort: FOLD
+                fallback_errors = self.validate_action(player, ActionType.FOLD, 0)
+                if not fallback_errors:
+                    self._log_action(f"❌ Bot falling back to FOLD")
+                    return self.execute_action(player, ActionType.FOLD, 0, _is_fallback=True)
+                
+                # If even FOLD fails, something is seriously wrong
+                self._log_action(f"🚨 CRITICAL: Bot cannot make any valid action!")
+                return
+            
+            # --- Re-prompt human player for valid action ---
             if player.is_human and self.on_action_required:
                 self._log_action(f"🔄 Re-prompting human player for valid action")
                 self.on_action_required(player)
@@ -1882,6 +1941,8 @@ class ImprovedPokerStateMachine:
             if player.stack == 0:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
+                # Play all-in voice announcement
+                self.voice_system.play_voice_announcement('all_in')
 
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
@@ -1905,10 +1966,7 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
-            min_raise_total = self.game_state.current_bet + self.game_state.min_raise
-            if amount < min_raise_total and not (player.stack == 0 and amount == player.current_bet + player.stack):
-                self._log_action(f"ERROR: Minimum raise is ${min_raise_total:.2f}")
-                return
+            # Validation already done earlier, proceed with execution
             total_bet = min(amount, player.current_bet + player.stack)
             additional_amount = total_bet - player.current_bet
             

@@ -35,12 +35,58 @@ from postflop_hs_editor import PostflopHSEditor
 from strategy_optimization_panel import StrategyOptimizationPanel
 from tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
 from practice_session_ui import PracticeSessionUI
+from sound_settings_gui import create_sound_settings_window
+from app_config import get_app_full_name
 
 
 class EnhancedMainGUI:
     def __init__(self):
+        # Set process name for macOS before creating the window
+        try:
+            import platform
+            if platform.system() == "Darwin":  # macOS
+                import os
+                import sys
+                # Try to set the process name
+                try:
+                    import setproctitle
+                    setproctitle.setproctitle("PokerPro Trainer")
+                except ImportError:
+                    # Fallback: try to set argv[0]
+                    if len(sys.argv) > 0:
+                        sys.argv[0] = "PokerPro Trainer"
+        except:
+            pass
+        
         self.root = tk.Tk()
-        self.root.title("Poker Strategy Development System")
+        
+        # Set app name for macOS menu bar
+        try:
+            import platform
+            if platform.system() == "Darwin":  # macOS
+                self.root.tk.call('tk', 'scaling', 2.0)  # High DPI support
+                # Set the app name for macOS menu bar
+                self.root.createcommand('tk::mac::Quit', self.root.quit)
+                self.root.createcommand('tk::mac::OnHide', lambda: None)
+                self.root.createcommand('tk::mac::OnShow', lambda: None)
+                self.root.createcommand('tk::mac::ShowPreferences', lambda: None)
+                # Completely disable the system About dialog and use our custom one
+                self.root.createcommand('tk::mac::ShowAbout', lambda: None)
+                # Also disable the default About menu item
+                self.root.createcommand('tk::mac::ShowAbout', lambda: self._show_about())
+        except Exception as e:
+            print(f"Warning: Could not set macOS app name: {e}")
+        
+        self.root.title(get_app_full_name())
+        
+        # Force menu bar to show our app name (macOS)
+        try:
+            import platform
+            if platform.system() == "Darwin":
+                # Set the application name for the menu bar
+                self.root.tk.call('tk', 'mac::setAppName', 'PokerPro Trainer')
+        except:
+            pass
 
         # Set window size to 60% of screen
         screen_width = self.root.winfo_screenwidth()
@@ -132,6 +178,27 @@ class EnhancedMainGUI:
         tools_menu.add_command(label="Refresh All Panels", command=self._refresh_all_panels)
         tools_menu.add_command(label="Export Strategy to PDF", command=self._export_strategy_to_pdf)
         
+        # Settings menu
+        settings_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Settings", menu=settings_menu)
+        settings_menu.add_command(label="🎵 Sound Settings", command=self._show_sound_settings)
+        
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About PokerPro Trainer", command=self._show_about)
+        
+        # Remove the default About menu item from the system menu
+        try:
+            import platform
+            if platform.system() == "Darwin":
+                # This should prevent the system About dialog from appearing
+                self.root.tk.call('tk', 'mac::setAppName', 'PokerPro Trainer')
+                # Disable the system About menu
+                self.root.createcommand('tk::mac::ShowAbout', lambda: self._show_about())
+        except:
+            pass
+        
         # Table Felt menu
         felt_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Table Felt", menu=felt_menu)
@@ -212,7 +279,9 @@ class EnhancedMainGUI:
 
     def _show_about(self):
         """Show about dialog."""
-        about_text = "Poker Strategy Development System V2\n\n"
+        from app_config import get_app_full_name, get_app_name
+        
+        about_text = f"{get_app_full_name()}\n\n"
         about_text += "A comprehensive tool for developing and testing poker strategies.\n\n"
         about_text += "Features:\n"
         about_text += "• Hand strength tier management\n"
@@ -220,10 +289,12 @@ class EnhancedMainGUI:
         about_text += "• Decision table editing\n"
         about_text += "• Strategy optimization tools\n"
         about_text += "• Practice session integration\n"
-        about_text += "• Professional theme and status bar\n\n"
-        about_text += "Version 2.0 - Enhanced with Status Bar"
+        about_text += "• Professional theme and status bar\n"
+        about_text += "• Enhanced sound system\n"
+        about_text += "• Voice announcements\n\n"
+        about_text += f"Version 3.0 - {get_app_name()}"
         
-        messagebox.showinfo("About", about_text)
+        messagebox.showinfo(f"About {get_app_name()}", about_text)
 
     def _refresh_all_panels(self):
         """Refresh all panels with current strategy data."""
@@ -1121,6 +1192,15 @@ These settings can be configured in the main strategy panels."""
         
         messagebox.showinfo("Game Settings", settings_text)
         self.set_status("Game settings dialog displayed")
+    
+    def _show_sound_settings(self):
+        """Show sound settings window."""
+        try:
+            sound_window = create_sound_settings_window(self.root)
+            sound_window.grab_set()  # Make window modal
+            sound_window.focus_set()  # Focus on the new window
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open sound settings: {e}")
 
     def run(self):
         """Run the application."""
