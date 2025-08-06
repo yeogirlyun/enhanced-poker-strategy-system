@@ -279,6 +279,7 @@ class PracticeSessionUI(ttk.Frame):
         self.preserved_community_cards = []
         self.hand_completed = False
         self.preserved_pot_amount = 0.0  # Add pot preservation
+        self.last_board_cards = []  # Track board changes to prevent unnecessary refreshes
         
         # Initialize other attributes
         self.num_players = 6
@@ -801,6 +802,7 @@ class PracticeSessionUI(ttk.Frame):
         self.preserved_community_cards = []
         self.preserved_pot_amount = 0.0
         self.hand_completed = False
+        self.last_board_cards = []  # Reset board tracking for new hand
         # Clear the winning announcement message when starting new hand
         if hasattr(self, 'last_action_label'):
             self.last_action_label.config(text="")
@@ -1522,6 +1524,9 @@ class PracticeSessionUI(ttk.Frame):
         for card_widget in self.community_card_widgets:
             card_widget.set_card("")  # Clear the card
         
+        # Reset board tracking for new hand
+        self.last_board_cards = []
+        
         # Hide all folded labels when starting new hand
         for player_seat in self.player_seats:
             if player_seat and "folded_label" in player_seat:
@@ -1581,10 +1586,8 @@ class PracticeSessionUI(ttk.Frame):
         if game_info['current_bet'] > 0:
             self.add_game_message(f"💰 Current Bet: ${game_info['current_bet']:.2f}")
 
-        # --- THIS IS THE CRITICAL BUG FIX ---
-        # Always display the community cards that are available on the board.
-        # Ensure cards remain visible throughout the hand, including during winner announcement
-        # Use preserved community cards if hand is completed
+        # --- FIX: Only update community cards when they actually change ---
+        # Get current board cards
         board_cards = game_info['board']
         if self.hand_completed and self.preserved_community_cards:
             # Use preserved cards after hand completion
@@ -1593,14 +1596,20 @@ class PracticeSessionUI(ttk.Frame):
             # For new hands, use the actual board from game_info
             board_cards = game_info['board']
     
-        
-        # Safety check for community card widgets
-        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
-            for i, card_widget in enumerate(self.community_card_widgets):
-                if i < len(board_cards):
-                    card_widget.set_card(board_cards[i])
-                    # Force the card widget to update immediately
-                    card_widget.update()
+        # Only update community card display if the board has actually changed
+        if board_cards != self.last_board_cards:
+            self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+            
+            # Safety check for community card widgets
+            if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+                for i, card_widget in enumerate(self.community_card_widgets):
+                    if i < len(board_cards):
+                        card_widget.set_card(board_cards[i])
+                        # Force the card widget to update immediately
+                        card_widget.update()
+                        
+            # Update tracking variable
+            self.last_board_cards = board_cards.copy()
         # NEW: Only clear action indicators when the next player actually takes an action
         # Don't clear just because highlighting changes - wait for actual action
         current_action_player = game_info['action_player']
