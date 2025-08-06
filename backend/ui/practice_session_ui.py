@@ -1918,21 +1918,21 @@ class PracticeSessionUI(ttk.Frame):
             self._log_message(f"⚠️ Invalid coordinates for chip animation: player=({player_x}, {player_y}), pot=({pot_x}, {pot_y})")
             return
         
-        # Create chip representation
-        chip_size = 20
+        # Create chip representation - larger and more visible
+        chip_size = 30  # Larger chip for better visibility
         chip_color = "#FFD700"  # Gold color for chips
         chip_window = self.canvas.create_oval(
             player_x - chip_size//2, player_y - chip_size//2,
             player_x + chip_size//2, player_y + chip_size//2,
-            fill=chip_color, outline="#B8860B", width=2
+            fill=chip_color, outline="#B8860B", width=3
         )
         
-        # Add amount text to chip
+        # Add amount text to chip - larger font
         amount_text = self.canvas.create_text(
             player_x, player_y,
             text=f"${amount:.1f}",
             fill="black",
-            font=("Arial", 8, "bold")
+            font=("Arial", 10, "bold")
         )
         
         # Start animation
@@ -1941,7 +1941,7 @@ class PracticeSessionUI(ttk.Frame):
     
     def _move_chip_to_pot_step(self, chip_window, amount_text, start_x, start_y, end_x, end_y, step=0):
         """Animate chip movement from player to pot."""
-        total_steps = 20  # Faster animation for individual actions
+        total_steps = 40  # Slower animation for better visibility
         
         if step >= total_steps:
             # Animation complete
@@ -1958,21 +1958,23 @@ class PracticeSessionUI(ttk.Frame):
         current_y = start_y + (end_y - start_y) * ease_progress
         
         # Move chip and text
-        chip_size = 20
+        chip_size = 30  # Updated to match larger chip size
         self.canvas.coords(chip_window, 
                           current_x - chip_size//2, current_y - chip_size//2,
                           current_x + chip_size//2, current_y + chip_size//2)
         self.canvas.coords(amount_text, current_x, current_y)
         
-        # Continue animation
-        self.root.after(20, lambda: self._move_chip_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
+        # Continue animation with slower timing
+        self.root.after(50, lambda: self._move_chip_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
     
     def _animate_all_bets_to_pot(self):
         """Animate all individual bet displays consolidating into the pot at hand end."""
         if not hasattr(self, 'player_seats') or not self.player_seats:
+            self._log_message("⚠️ No player_seats available for bet consolidation")
             return
         
         self._log_message("🎰 Animating all bets consolidating into pot")
+        self.add_game_message("🎰 Consolidating all bets to pot...")
         
         # Get pot position
         pot_x = self.pot_label.winfo_rootx() - self.canvas.winfo_rootx() + self.pot_label.winfo_width() // 2
@@ -2010,8 +2012,8 @@ class PracticeSessionUI(ttk.Frame):
                     except (ValueError, IndexError):
                         self._log_message(f"⚠️ Could not parse bet amount from: {bet_text}")
         
-        # Clear all bet displays after animation
-        self.root.after(1500, self._clear_all_bet_displays)
+        # Clear all bet displays after animation - longer delay for better visibility
+        self.root.after(3000, self._clear_all_bet_displays)
     
     def _animate_bet_label_to_pot(self, bet_label_window, start_x, start_y, end_x, end_y, amount, player_index):
         """Animate a bet label moving to the pot."""
@@ -2036,12 +2038,12 @@ class PracticeSessionUI(ttk.Frame):
         self.canvas.itemconfig(bet_label_window, state="hidden")
         
         # Start animation with staggered delay based on player index
-        delay = player_index * 200  # Stagger animations
+        delay = player_index * 400  # Longer stagger for better visibility
         self.root.after(delay, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y))
     
     def _move_bet_to_pot_step(self, chip_window, amount_text, start_x, start_y, end_x, end_y, step=0):
         """Animate bet label movement to pot."""
-        total_steps = 25  # Slower animation for consolidation
+        total_steps = 50  # Much slower animation for better visibility
         
         if step >= total_steps:
             # Animation complete
@@ -2063,8 +2065,8 @@ class PracticeSessionUI(ttk.Frame):
                           current_x + chip_size//2, current_y + chip_size//2)
         self.canvas.coords(amount_text, current_x, current_y)
         
-        # Continue animation
-        self.root.after(30, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
+        # Continue animation with slower timing
+        self.root.after(60, lambda: self._move_bet_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
     
     def _clear_all_bet_displays(self):
         """Clear all bet displays after consolidation animation."""
@@ -2087,6 +2089,7 @@ class PracticeSessionUI(ttk.Frame):
     def _handle_round_complete(self):
         """Handle street completion by animating all bets consolidating into the pot."""
         self._log_message("🔄 Street complete - animating bet consolidation to pot")
+        self.add_game_message("🔄 Street complete - consolidating bets to pot")
         
         # Animate all bet displays consolidating into the pot
         self._animate_all_bets_to_pot()
