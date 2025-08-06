@@ -317,7 +317,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
         self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
         self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
-        self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
+        self.state_machine.on_single_card_dealt = self._handle_single_card_dealt  # NEW: Handle single card dealt
         self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
         self.state_machine.on_log_entry = self.add_game_message
         
@@ -1516,7 +1516,7 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
                 self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
                 self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
-                self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
+                self.state_machine.on_single_card_dealt = self._handle_single_card_dealt  # NEW: Handle single card dealt
                 self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
                 
                 # Reset UI
@@ -2050,17 +2050,27 @@ class PracticeSessionUI(ttk.Frame):
         # Clear all existing cards first
         self._clear_all_player_cards()
     
-    def _handle_card_dealt(self, player_index: int, card1: str, card2: str):
-        """Handle animation of individual cards being dealt to a player."""
+    def _handle_single_card_dealt(self, player_index: int, card_index: int, card: str):
+        """Handle animation of a single card being dealt to a player."""
         player_name = f"Player {player_index + 1}"
-        self._log_message(f"🃏 House dealer dealing cards to {player_name}: {card1} {card2}")
+        card_name = "first" if card_index == 0 else "second"
+        self._log_message(f"🃏 House dealer dealing {card_name} card to {player_name}: {card}")
         
-        # Animate cards being dealt to this player with a delay
-        delay = player_index * 500  # 500ms delay between each player
-        self.root.after(delay, lambda: self._animate_dealing_cards_to_player(player_index, card1, card2))
+        # Calculate delay for proper casino-style dealing sequence
+        # All first cards, then all second cards
+        if card_index == 0:
+            # First card round: delay based on player index
+            delay = player_index * 300  # 300ms between each player's first card
+        else:
+            # Second card round: delay includes all first cards + this player's position
+            first_round_time = len(self.state_machine.game_state.players) * 300
+            delay = first_round_time + (player_index * 300)
         
-        # Add message showing dealing progress
-        self.root.after(delay, lambda: self.add_game_message(f"🃏 Dealing to {player_name}..."))
+        # Animate single card being dealt
+        self.root.after(delay, lambda: self._animate_single_card_to_player(player_index, card_index, card))
+        
+        # Add progress message
+        self.root.after(delay, lambda: self.add_game_message(f"🃏 {card_name.title()} card to {player_name}..."))
     
     def _handle_dealing_complete(self, total_dealing_time: int):
         """Handle completion of dealing animation and start betting."""
@@ -2140,15 +2150,15 @@ class PracticeSessionUI(ttk.Frame):
         if hasattr(self, 'dealer_text'):
             self.canvas.delete(self.dealer_text)
     
-    def _animate_dealing_cards_to_player(self, player_index: int, card1: str, card2: str):
-        """Animate cards being dealt to a specific player."""
+    def _animate_single_card_to_player(self, player_index: int, card_index: int, card: str):
+        """Animate a single card being dealt to a specific player."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
             
         player_seat = self.player_seats[player_index]
         card_widgets = player_seat.get("card_widgets", [])
         
-        if len(card_widgets) >= 2:
+        if card_index < len(card_widgets):
             # Create dealer position (center of table - neutral house dealer)
             dealer_x = self.canvas.winfo_width() // 2
             dealer_y = self.canvas.winfo_height() // 2  # Center of table, not top
@@ -2159,13 +2169,9 @@ class PracticeSessionUI(ttk.Frame):
                 player_x = player_pod.winfo_x() + player_pod.winfo_width() // 2
                 player_y = player_pod.winfo_y() + player_pod.winfo_height() // 2
                 
-                # Animate first card
-                self._animate_single_card_deal(dealer_x, dealer_y, player_x, player_y, card1, 
-                                               lambda: self._set_player_card(player_index, 0, card1))
-                
-                # Animate second card with delay
-                self.root.after(300, lambda: self._animate_single_card_deal(dealer_x, dealer_y, player_x, player_y, card2,
-                                                                           lambda: self._set_player_card(player_index, 1, card2)))
+                # Animate the specific card
+                self._animate_single_card_deal(dealer_x, dealer_y, player_x, player_y, card, 
+                                               lambda: self._set_player_card(player_index, card_index, card))
     
     def _animate_single_card_deal(self, start_x, start_y, end_x, end_y, card, callback):
         """Animate a single card being dealt from dealer to player."""
