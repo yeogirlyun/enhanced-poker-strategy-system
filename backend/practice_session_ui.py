@@ -280,6 +280,8 @@ class PracticeSessionUI(ttk.Frame):
         self.hand_completed = False
         self.preserved_pot_amount = 0.0  # Add pot preservation
         self.last_board_cards = []  # Track board changes to prevent unnecessary refreshes
+        self.action_indicators = {}  # Track player action labels for animations
+        self.last_action_player = None  # Track the last player who took an action
         
         # Initialize other attributes
         self.num_players = 6
