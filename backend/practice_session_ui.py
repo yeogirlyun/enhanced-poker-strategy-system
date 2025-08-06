@@ -412,63 +412,62 @@ class PracticeSessionUI(ttk.Frame):
         
         if width > 1 and height > 1:
             self._on_resize()
-        # Initialize table felt colors
-        self.table_felt_colors = {
-            "classic_green": {
-                "outer": "#013f28",
-                "inner": "#015939", 
-                "pattern": "#014a2f",
-                "community_bg": "#015939"
-            },
-            "royal_blue": {
-                "outer": "#1a365d",
-                "inner": "#2d5aa0",
-                "pattern": "#1e4a8a",
-                "community_bg": "#2d5aa0"
-            },
-            "burgundy_red": {
-                "outer": "#4a1a1a",
-                "inner": "#8b2d2d",
-                "pattern": "#6b1e1e",
-                "community_bg": "#8b2d2d"
-            },
-            "deep_purple": {
-                "outer": "#2d1a4a",
-                "inner": "#5a2d8b",
-                "pattern": "#4a1e6b",
-                "community_bg": "#5a2d8b"
-            },
-            "golden_brown": {
-                "outer": "#4a3a1a",
-                "inner": "#8b6b2d",
-                "pattern": "#6b4a1e",
-                "community_bg": "#8b6b2d"
-            },
-            "ocean_blue": {
-                "outer": "#1a4a4a",
-                "inner": "#2d8b8b",
-                "pattern": "#1e6b6b",
-                "community_bg": "#2d8b8b"
-            },
-            "forest_green": {
-                "outer": "#1a4a1a",
-                "inner": "#2d8b2d",
-                "pattern": "#1e6b1e",
-                "community_bg": "#2d8b2d"
-            },
-            "midnight_black": {
-                "outer": "#1a1a1a",
-                "inner": "#2d2d2d",
-                "pattern": "#1e1e1e",
-                "community_bg": "#2d2d2d"
+        else:
+            # If canvas isn't ready yet, just initialize the table felt colors
+            # Initialize table felt colors
+            self.table_felt_colors = {
+                "classic_green": {
+                    "outer": "#013f28",
+                    "inner": "#015939", 
+                    "pattern": "#014a2f",
+                    "community_bg": "#015939"
+                },
+                "royal_blue": {
+                    "outer": "#1a365d",
+                    "inner": "#2d5aa0",
+                    "pattern": "#1e4a8a",
+                    "community_bg": "#2d5aa0"
+                },
+                "burgundy_red": {
+                    "outer": "#4a1a1a",
+                    "inner": "#8b2d2d",
+                    "pattern": "#6b1e1e",
+                    "community_bg": "#8b2d2d"
+                },
+                "deep_purple": {
+                    "outer": "#2d1a4a",
+                    "inner": "#5a2d8b",
+                    "pattern": "#4a1e6b",
+                    "community_bg": "#5a2d8b"
+                },
+                "golden_brown": {
+                    "outer": "#4a3a1a",
+                    "inner": "#8b6b2d",
+                    "pattern": "#6b4a1e",
+                    "community_bg": "#8b6b2d"
+                },
+                "ocean_blue": {
+                    "outer": "#1a4a4a",
+                    "inner": "#2d8b8b",
+                    "pattern": "#1e6b6b",
+                    "community_bg": "#2d8b8b"
+                },
+                "forest_green": {
+                    "outer": "#1a4a1a",
+                    "inner": "#2d8b2d",
+                    "pattern": "#1e6b1e",
+                    "community_bg": "#2d8b2d"
+                },
+                "midnight_black": {
+                    "outer": "#1a1a1a",
+                    "inner": "#2d2d2d",
+                    "pattern": "#1e1e1e",
+                    "community_bg": "#2d2d2d"
+                }
             }
-        }
-        
-        # Set default felt color
-        self.current_felt_color = "classic_green"
-        
-        # Force initial display update to show highlighting
-        self.update_display()
+            
+            # Set default felt color
+            self.current_felt_color = "classic_green"
     
     class LayoutManager:
         """Manages dynamic positioning to prevent overlays and ensure visibility."""
@@ -2116,7 +2115,7 @@ class PracticeSessionUI(ttk.Frame):
 
     def update_pot_amount(self, new_amount):
         """Update the pot amount display."""
-        if hasattr(self, 'pot_label'):
+        if hasattr(self, 'pot_label') and self.pot_label is not None:
             # Get chip representation from display state
             display_state = self.state_machine.get_display_state()
             chip_symbols = display_state.chip_representations.get('pot', '')
