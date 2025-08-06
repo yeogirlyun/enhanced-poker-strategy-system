@@ -1680,24 +1680,40 @@ class PracticeSessionUI(ttk.Frame):
     
     def _handle_action_executed(self, player_index: int, action: str, amount: float):
         """Handle when a player action is executed - use selective updates."""
-        # Get current game info once
-        game_info = self.state_machine.get_game_info()
-        if not game_info:
-            return
-            
-        # Animate the specific player's action
+        # Animate the specific player's action immediately
         self._animate_player_action(player_index, action, amount)
         
-        # Update only the acting player's display elements
-        self.update_single_player(player_index, game_info)
+        # Update betting graphics immediately using the action data we have
+        self._update_player_bet_display_immediate(player_index, action, amount)
         
         # Update pot display (since actions can change the pot)
         self.update_pot_display_only()
         
-        # If action changes the action player, update highlighting
-        # (This will be handled by on_action_player_changed callback separately)
+        # Action player highlighting will be handled by on_action_player_changed callback separately
         
         self._log_message(f"🎯 Selective update: Player {player_index} {action} ${amount:.2f}")
+    
+    def _update_player_bet_display_immediate(self, player_index: int, action: str, amount: float):
+        """Update a player's bet display immediately after their action."""
+        if not hasattr(self, 'player_seats') or not self.player_seats:
+            return
+            
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+            
+        player_seat = self.player_seats[player_index]
+        
+        # Update the prominent bet display on the table
+        bet_label_widget = player_seat.get("bet_label_widget")
+        bet_label_window = player_seat.get("bet_label_window")
+        if bet_label_widget and bet_label_window:
+            if action.upper() in ["BET", "RAISE", "CALL"] and amount > 0:
+                bet_label_widget.config(text=f"💰 ${amount:.2f}")
+                self.canvas.itemconfig(bet_label_window, state="normal")
+                self._log_message(f"💰 Updated bet display for Player {player_index}: ${amount:.2f}")
+            else:
+                # Hide bet display for non-betting actions
+                self.canvas.itemconfig(bet_label_window, state="hidden")
     
     def update_display(self, new_state=None):
         """Updates the UI and logs detailed debugging information."""
