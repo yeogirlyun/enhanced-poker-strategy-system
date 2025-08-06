@@ -298,11 +298,9 @@ class PracticeSessionUI(ttk.Frame):
         self.action_buttons = {}
         self.game_control_buttons = {}
         self.human_action_controls = {}  # Add missing initialization
-        # Create a simple sound manager replacement
-        class SimpleSoundManager:
-            def play_action_sound(self, action_str, amount=0):
-                pass  # No sound for now
-        self.sfx = SimpleSoundManager()
+        # Import and initialize sound manager
+        from utils.sound_manager import SoundManager
+        self.sfx = SoundManager()
         
         # Initialize state machine with proper root reference
         self.state_machine = ImprovedPokerStateMachine(
