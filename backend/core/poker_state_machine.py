@@ -635,6 +635,8 @@ class ImprovedPokerStateMachine:
         The main handler for all state transitions. Executes the appropriate
         logic based on the current game state.
         """
+        print(f"⭐ DEBUG: handle_state_entry() called with current_state={self.current_state}")
+        
         handlers = {
             PokerState.START_HAND: lambda: self.handle_start_hand(existing_players),
             PokerState.PREFLOP_BETTING: self.handle_preflop_betting,
@@ -648,9 +650,16 @@ class ImprovedPokerStateMachine:
             PokerState.END_HAND: self.handle_end_hand,
         }
         
+        print(f"⭐ DEBUG: Available handlers: {list(handlers.keys())}")
+        print(f"⭐ DEBUG: Looking for handler for {self.current_state}")
+        
         handler = handlers.get(self.current_state)
         if handler:
+            print(f"⭐ DEBUG: Found handler for {self.current_state}, executing...")
             handler()
+            print(f"⭐ DEBUG: Handler for {self.current_state} completed")
+        else:
+            print(f"❌ DEBUG: NO HANDLER FOUND for {self.current_state}!")
 
     # FIX 1: Dynamic Position Tracking
     def advance_dealer_position(self):
@@ -2853,11 +2862,18 @@ class ImprovedPokerStateMachine:
     # Public interface methods
     def start_hand(self, existing_players: Optional[List[Player]] = None):
         """Start a new hand, using existing players if provided."""
+        print(f"🌟 DEBUG: start_hand() called with existing_players={len(existing_players) if existing_players else 'None'}")
+        
         # SESSION TRACKING - NEW!
         self._capture_hand_start()
         
+        print(f"🌟 DEBUG: Setting current_state to START_HAND")
         self.current_state = PokerState.START_HAND
+        
+        print(f"🌟 DEBUG: About to call handle_state_entry()")
         self.handle_state_entry(existing_players)
+        
+        print(f"🌟 DEBUG: start_hand() completed")
 
     def _capture_hand_start(self):
         """Capture initial hand state for session tracking."""
