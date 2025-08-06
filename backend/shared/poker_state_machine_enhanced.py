@@ -202,6 +202,10 @@ class ImprovedPokerStateMachine:
         self.hand_completed = False  # Add hand_completed attribute
         self.preserved_board = None  # Add preserved_board attribute
         
+        # Action logging
+        self.action_log = []  # Add action_log attribute
+        self.max_log_size = 1000  # Add max_log_size attribute
+        
         # Position tracking
         self.dealer_position = 0
         self.small_blind_position = 0
@@ -232,6 +236,13 @@ class ImprovedPokerStateMachine:
         
         # Sound manager
         self.sound_manager = SoundManager()
+        
+        # Initialize voice system
+        try:
+            from voice_announcement_system import voice_system
+            self.voice_system = voice_system
+        except ImportError:
+            self.voice_system = None
         
         # Initialize players and session
         self._initialize_players()
@@ -1851,7 +1862,8 @@ class ImprovedPokerStateMachine:
         self.sound_manager.play_action_sound(action.value.lower(), amount)
         
         # Play voice announcement for the action
-        self.voice_system.play_action_with_voice(f"player_{action.value.lower()}", amount)
+        if hasattr(self, 'voice_system') and self.voice_system:
+            self.voice_system.play_action_with_voice(f"player_{action.value.lower()}", amount)
         
         # Track last action details for UI feedback
         self.game_state.last_action_details = f"{player.name} {action.value.lower()}s"
@@ -1973,8 +1985,9 @@ class ImprovedPokerStateMachine:
             if player.stack == 0:
                 player.is_all_in = True
                 self._log_action(f"{player.name} is ALL-IN!")
-                # Play all-in voice announcement
-                self.voice_system.play_voice_announcement('all_in')
+                # Play all-in voice announcement if available
+                if hasattr(self, 'voice_system') and self.voice_system:
+                    self.voice_system.play_voice_announcement('all_in')
 
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
