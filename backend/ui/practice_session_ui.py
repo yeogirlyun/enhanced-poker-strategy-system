@@ -744,12 +744,15 @@ class PracticeSessionUI(ttk.Frame):
         # Play industry-standard sound for the action
         self.sfx.play_action_sound(action_str, amount)
 
-        # Hide the controls immediately. The state machine will show them again when it's our turn.
-        self._show_game_control_buttons()
+        # Provide immediate visual feedback that action was accepted
+        self._set_action_buttons_processing()
         
         # Let the state machine handle EVERYTHING from here.
         # Use the new string-based execute_action method
         self.state_machine.execute_action_string(player, action_str, amount)
+        
+        # Hide controls after action is processed - better user experience
+        self._show_game_control_buttons()
 
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player using display state."""
@@ -1457,6 +1460,22 @@ class PracticeSessionUI(ttk.Frame):
 
         # Initially show only game control buttons
         self._show_game_control_buttons()
+
+    def _set_action_buttons_processing(self):
+        """Set action buttons to show 'processing' state with immediate visual feedback."""
+        # Change all action buttons to show "Processing..." with visual feedback
+        for button_name, widget in self.human_action_controls.items():
+            if widget['state'] != tk.DISABLED:  # Only change enabled buttons
+                widget.config(text="Processing...", state=tk.DISABLED)
+        
+        # Also update preset bet buttons
+        for button in self.preset_bet_buttons.values():
+            if button['state'] != tk.DISABLED:
+                button.config(text="Processing...", state=tk.DISABLED)
+        
+        # Disable bet slider immediately
+        if hasattr(self, 'bet_slider'):
+            self.bet_slider.config(state=tk.DISABLED)
 
     def _show_game_control_buttons(self):
         """Shows only the game control buttons (Start/Reset) - Fixed Position."""
