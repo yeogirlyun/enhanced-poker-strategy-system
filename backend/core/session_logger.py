@@ -229,7 +229,9 @@ class SessionLogger:
             big_blind=big_blind,
             sb_amount=sb_amount,
             bb_amount=bb_amount,
-            players=[dict(p) for p in players]  # Deep copy
+            players=[dict(p) for p in players],  # Deep copy
+            hole_cards={},  # Initialize empty, will be populated by log_hole_cards
+            board_cards=[]  # Initialize empty, will be populated by log_board_cards
         )
         
         print(f"✅ DEBUG: current_hand created: {self.current_hand}")

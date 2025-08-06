@@ -1545,19 +1545,19 @@ class PracticeSessionUI(ttk.Frame):
     def _reset_ui_for_new_hand(self):
         """Resets the UI for a new hand."""
         # Clear game messages
-        if hasattr(self, 'info_text'):
+        if hasattr(self, 'info_text') and self.info_text is not None:
             self.info_text.config(state=tk.NORMAL)
             self.info_text.delete(1.0, tk.END)
             self.info_text.config(state=tk.DISABLED)
         
         # Clear session info
-        if hasattr(self, 'session_text'):
+        if hasattr(self, 'session_text') and self.session_text is not None:
             self.session_text.config(state=tk.NORMAL)
             self.session_text.delete(1.0, tk.END)
             self.session_text.config(state=tk.DISABLED)
         
         # Reset pot display
-        if hasattr(self, 'pot_label'):
+        if hasattr(self, 'pot_label') and self.pot_label is not None:
             self.pot_label.config(text="Pot: $0.00", fg="yellow")
         
         # Clear community cards display when starting new hand
