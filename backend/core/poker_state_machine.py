@@ -784,12 +784,16 @@ class ImprovedPokerStateMachine:
     
     def _start_hand_logging(self):
         """Start logging for the current hand."""
+        print(f"🐛 DEBUG: _start_hand_logging called for hand {self.hand_number}")
+        print(f"🐛 DEBUG: session_id = {self.session_id}")
+        print(f"🐛 DEBUG: logger object = {self.logger}")
+        
         if not self.session_id:
-            print("DEBUG: No session_id, skipping hand logging")
+            print("❌ DEBUG: No session_id, skipping hand logging")
             return
             
         try:
-            print(f"DEBUG: Starting hand {self.hand_number} logging...")
+            print(f"✅ DEBUG: Starting hand {self.hand_number} logging...")
             # Prepare player data for logging
             players_data = []
             for i, player in enumerate(self.game_state.players):
@@ -802,11 +806,14 @@ class ImprovedPokerStateMachine:
                     "index": i
                 })
             
+            print(f"🐛 DEBUG: Player data prepared: {len(players_data)} players")
+            
             # Find blind positions
             dealer_button = 0  # Will be set properly when we implement button tracking
             small_blind = getattr(self, 'small_blind_position', 0)
             big_blind = getattr(self, 'big_blind_position', 1)
             
+            print(f"🐛 DEBUG: About to call logger.start_hand...")
             hand_id = self.logger.start_hand(
                 hand_number=self.hand_number,
                 players=players_data,
@@ -817,14 +824,20 @@ class ImprovedPokerStateMachine:
                 bb_amount=1.0
             )
             
+            print(f"✅ DEBUG: Hand started successfully with ID: {hand_id}")
+            
             self.logger.log_system("INFO", "HAND", f"Hand {self.hand_number} started", {
                 "hand_id": hand_id,
                 "players": len(players_data),
                 "deck_size": len(self.game_state.deck)
             })
             
+            print(f"✅ DEBUG: Hand logging initialization complete")
+            
         except Exception as e:
-            print(f"Warning: Could not start hand logging: {e}")
+            print(f"❌ ERROR: Could not start hand logging: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _log_player_action(self, player: 'Player', action: str, amount: float, 
                           pot_before: float, pot_after: float):
@@ -1064,9 +1077,17 @@ class ImprovedPokerStateMachine:
             hole_cards = {}
             for player in self.game_state.players:
                 hole_cards[player.name] = player.cards
+            
+            print(f"🐛 DEBUG: About to log hole cards: {hole_cards}")
+            print(f"🐛 DEBUG: Logger current_hand: {self.logger.current_hand}")
+            
             self.logger.log_hole_cards(hole_cards)
+            print(f"✅ DEBUG: Hole cards logged successfully")
+            
         except Exception as e:
-            print(f"Warning: Could not log hole cards: {e}")
+            print(f"❌ ERROR: Could not log hole cards: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Notify UI that dealing is complete and calculate dealing animation time
         # Total cards dealt = players × 2 cards, with delays between each card
