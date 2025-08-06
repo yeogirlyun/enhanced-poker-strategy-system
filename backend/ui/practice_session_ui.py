@@ -2150,24 +2150,65 @@ class PracticeSessionUI(ttk.Frame):
     
     def _animate_single_card_deal(self, start_x, start_y, end_x, end_y, card, callback):
         """Animate a single card being dealt from dealer to player."""
-        # Create card animation
+        # Create card animation with proper card back design
         card_width, card_height = 40, 60
+        
+        # Create main card background (classic red card back)
         card_rect = self.canvas.create_rectangle(
             start_x - card_width//2, start_y - card_height//2,
             start_x + card_width//2, start_y + card_height//2,
-            fill="lightblue", outline="blue", width=2
+            fill="#8B0000", outline="#000000", width=2
         )
         
+        # Add realistic card back pattern
+        pattern_items = []
+        
+        # Create decorative border
+        pattern_items.append(self.canvas.create_rectangle(
+            start_x - card_width//2 + 3, start_y - card_height//2 + 3,
+            start_x + card_width//2 - 3, start_y + card_height//2 - 3,
+            fill="", outline="#FFD700", width=1
+        ))
+        
+        # Central diamond pattern
+        diamond_size = 8
+        pattern_items.append(self.canvas.create_polygon(
+            start_x, start_y - diamond_size,  # Top
+            start_x + diamond_size, start_y,  # Right
+            start_x, start_y + diamond_size,  # Bottom
+            start_x - diamond_size, start_y,  # Left
+            fill="#FFD700", outline="#FFD700"
+        ))
+        
+        # Corner decorations (small diamonds)
+        for dx, dy in [(-card_width//3, -card_height//3), (card_width//3, -card_height//3),
+                       (-card_width//3, card_height//3), (card_width//3, card_height//3)]:
+            pattern_items.append(self.canvas.create_oval(
+                start_x + dx - 2, start_y + dy - 2,
+                start_x + dx + 2, start_y + dy + 2,
+                fill="#FFD700", outline="#FFD700"
+            ))
+        
+        # Add "POKER" text in center
+        pattern_items.append(self.canvas.create_text(
+            start_x, start_y + 8,
+            text="♠♥♣♦",
+            fill="#FFD700",
+            font=("Arial", 8, "bold")
+        ))
+        
         # Animate movement
-        self._move_card_step(card_rect, start_x, start_y, end_x, end_y, callback)
+        self._move_card_step(card_rect, pattern_items, start_x, start_y, end_x, end_y, callback)
     
-    def _move_card_step(self, card_rect, start_x, start_y, end_x, end_y, callback, step=0):
+    def _move_card_step(self, card_rect, pattern_items, start_x, start_y, end_x, end_y, callback, step=0):
         """Animate card movement step by step."""
         total_steps = 20
         
         if step >= total_steps:
-            # Animation complete
+            # Animation complete - delete all card elements
             self.canvas.delete(card_rect)
+            for item in pattern_items:
+                self.canvas.delete(item)
             callback()  # Set the actual card
             return
         
@@ -2178,14 +2219,42 @@ class PracticeSessionUI(ttk.Frame):
         current_x = start_x + (end_x - start_x) * ease_progress
         current_y = start_y + (end_y - start_y) * ease_progress
         
-        # Move card
+        # Move card background
         card_width, card_height = 40, 60
         self.canvas.coords(card_rect,
                           current_x - card_width//2, current_y - card_height//2,
                           current_x + card_width//2, current_y + card_height//2)
         
+        # Move pattern elements
+        if len(pattern_items) >= 1:
+            # Decorative border
+            self.canvas.coords(pattern_items[0],
+                              current_x - card_width//2 + 3, current_y - card_height//2 + 3,
+                              current_x + card_width//2 - 3, current_y + card_height//2 - 3)
+            
+            # Central diamond
+            if len(pattern_items) >= 2:
+                diamond_size = 8
+                self.canvas.coords(pattern_items[1],
+                                  current_x, current_y - diamond_size,  # Top
+                                  current_x + diamond_size, current_y,  # Right
+                                  current_x, current_y + diamond_size,  # Bottom
+                                  current_x - diamond_size, current_y)  # Left
+            
+            # Corner decorations
+            for i, (dx, dy) in enumerate([(-card_width//3, -card_height//3), (card_width//3, -card_height//3),
+                                        (-card_width//3, card_height//3), (card_width//3, card_height//3)]):
+                if i + 2 < len(pattern_items):
+                    self.canvas.coords(pattern_items[i + 2],
+                                      current_x + dx - 2, current_y + dy - 2,
+                                      current_x + dx + 2, current_y + dy + 2)
+            
+            # Poker symbols text
+            if len(pattern_items) >= 7:  # border + diamond + 4 corners + text
+                self.canvas.coords(pattern_items[6], current_x, current_y + 8)
+        
         # Continue animation
-        self.root.after(30, lambda: self._move_card_step(card_rect, start_x, start_y, end_x, end_y, callback, step + 1))
+        self.root.after(30, lambda: self._move_card_step(card_rect, pattern_items, start_x, start_y, end_x, end_y, callback, step + 1))
     
     def _set_player_card(self, player_index: int, card_index: int, card: str):
         """Set a specific card for a player after animation."""
