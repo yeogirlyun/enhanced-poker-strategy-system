@@ -744,7 +744,7 @@ class PracticeSessionUI(ttk.Frame):
         
         # Let the state machine handle EVERYTHING from here.
         # Use the new string-based execute_action method
-        self.state_machine.execute_action(player, action_str, amount)
+        self.state_machine.execute_action_string(player, action_str, amount)
 
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player using display state."""
