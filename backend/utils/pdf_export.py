@@ -7,12 +7,16 @@ Generates comprehensive strategy reports in PDF format.
 import os
 from datetime import datetime
 from typing import Dict, List, Any
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+try:
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 from gui_models import StrategyData
 
 
@@ -21,6 +25,9 @@ class StrategyPDFExporter:
     
     def __init__(self, strategy_data: StrategyData):
         self.strategy_data = strategy_data
+        if not REPORTLAB_AVAILABLE:
+            print("Warning: reportlab not available. PDF export disabled.")
+            return
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
     
@@ -335,5 +342,12 @@ class StrategyPDFExporter:
 
 def export_strategy_to_pdf(strategy_data: StrategyData, output_path: str) -> bool:
     """Convenience function to export strategy to PDF."""
-    exporter = StrategyPDFExporter(strategy_data)
-    return exporter.export_strategy_report(output_path) 
+    if not REPORTLAB_AVAILABLE:
+        print("Error: reportlab not available. Cannot export to PDF.")
+        return False
+    try:
+        exporter = StrategyPDFExporter(strategy_data)
+        return exporter.export_strategy_report(output_path)
+    except Exception as e:
+        print(f"Error exporting to PDF: {e}")
+        return False 
