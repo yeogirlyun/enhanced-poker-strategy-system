@@ -1762,9 +1762,10 @@ class PracticeSessionUI(ttk.Frame):
                 self.canvas.itemconfig(bet_label_window, state="normal")
                 self._log_message(f"💰 Updated bet display for Player {player_index}: ${amount:.2f}")
                 
-                # ✅ FIXED: Only update bet display, no individual animations
-                # Individual chip animations removed - will be handled at street completion
+                # ✅ FIXED: Only update bet display - money stays in front of player until street completion
+                # No individual chip animations - bet displays will consolidate to pot at street end
                 self._log_message(f"💰 Updated bet display for {action.upper()} ${amount:.2f}")
+                self.add_game_message(f"💰 {action.upper()} ${amount:.2f} - money stays in front of player")
             else:
                 # Hide bet display for non-betting actions
                 self.canvas.itemconfig(bet_label_window, state="hidden")
@@ -1888,93 +1889,31 @@ class PracticeSessionUI(ttk.Frame):
         # Action feedback is already handled by the action_label created above
         # and by the selective update system, so no additional display updates needed here
     
-    def _animate_chips_to_pot(self, player_index: int, amount: float):
-        """Animate chips moving from a player's position to the pot."""
-        if not hasattr(self, 'player_seats') or not self.player_seats:
-            return
-            
-        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
-            return
-            
-        player_seat = self.player_seats[player_index]
-        
-        # Get player position for start coordinates
-        player_pod = player_seat.get("player_pod")
-        if not player_pod:
-            return
-            
-        # Get player pod position on canvas
-        player_x = player_pod.winfo_rootx() - self.canvas.winfo_rootx()
-        player_y = player_pod.winfo_rooty() - self.canvas.winfo_rooty()
-        
-        # Get pot position for end coordinates
-        pot_x = self.pot_label.winfo_rootx() - self.canvas.winfo_rootx() + self.pot_label.winfo_width() // 2
-        pot_y = self.pot_label.winfo_rooty() - self.canvas.winfo_rooty() + self.pot_label.winfo_height() // 2
-        
-        # Validate coordinates
-        if (player_x < 0 or player_y < 0 or 
-            pot_x < 0 or pot_y < 0 or
-            pot_x > self.canvas.winfo_width() or pot_y > self.canvas.winfo_height()):
-            self._log_message(f"⚠️ Invalid coordinates for chip animation: player=({player_x}, {player_y}), pot=({pot_x}, {pot_y})")
-            return
-        
-        # Create chip representation - larger and more visible
-        chip_size = 30  # Larger chip for better visibility
-        chip_color = "#FFD700"  # Gold color for chips
-        chip_window = self.canvas.create_oval(
-            player_x - chip_size//2, player_y - chip_size//2,
-            player_x + chip_size//2, player_y + chip_size//2,
-            fill=chip_color, outline="#B8860B", width=3
-        )
-        
-        # Add amount text to chip - larger font
-        amount_text = self.canvas.create_text(
-            player_x, player_y,
-            text=f"${amount:.1f}",
-            fill="black",
-            font=("Arial", 10, "bold")
-        )
-        
-        # Start animation
-        self._log_message(f"🎰 Animating ${amount:.2f} chips from Player {player_index} to pot")
-        self.root.after(100, lambda: self._move_chip_to_pot_step(chip_window, amount_text, player_x, player_y, pot_x, pot_y))
-    
-    def _move_chip_to_pot_step(self, chip_window, amount_text, start_x, start_y, end_x, end_y, step=0):
-        """Animate chip movement from player to pot."""
-        total_steps = 40  # Slower animation for better visibility
-        
-        if step >= total_steps:
-            # Animation complete
-            self.canvas.delete(chip_window)
-            self.canvas.delete(amount_text)
-            self._log_message("✅ Chip animation to pot complete")
-            return
-        
-        # Calculate current position with easing
-        progress = step / total_steps
-        ease_progress = 1 - (1 - progress) ** 2  # Ease-out animation
-        
-        current_x = start_x + (end_x - start_x) * ease_progress
-        current_y = start_y + (end_y - start_y) * ease_progress
-        
-        # Move chip and text
-        chip_size = 30  # Updated to match larger chip size
-        self.canvas.coords(chip_window, 
-                          current_x - chip_size//2, current_y - chip_size//2,
-                          current_x + chip_size//2, current_y + chip_size//2)
-        self.canvas.coords(amount_text, current_x, current_y)
-        
-        # Continue animation with slower timing
-        self.root.after(50, lambda: self._move_chip_to_pot_step(chip_window, amount_text, start_x, start_y, end_x, end_y, step + 1))
+    # REMOVED: Individual chip animations - money stays in front of players until street completion
+    # The _animate_chips_to_pot and _move_chip_to_pot_step methods have been removed
+    # as they were causing money to move directly to pot instead of staying in front of players
     
     def _animate_all_bets_to_pot(self):
-        """Animate all individual bet displays consolidating into the pot at hand end."""
+        """Animate all individual bet displays consolidating into the pot at street completion."""
         if not hasattr(self, 'player_seats') or not self.player_seats:
             self._log_message("⚠️ No player_seats available for bet consolidation")
             return
         
         self._log_message("🎰 Animating all bets consolidating into pot")
-        self.add_game_message("🎰 Consolidating all bets to pot...")
+        self.add_game_message("🎰 Street complete - consolidating all bets to pot...")
+        
+        # Count how many players have bets to consolidate
+        bet_count = 0
+        for player_seat in self.player_seats:
+            if player_seat:
+                bet_label_widget = player_seat.get("bet_label_widget")
+                if bet_label_widget:
+                    bet_text = bet_label_widget.cget("text")
+                    if bet_text and "$" in bet_text:
+                        bet_count += 1
+        
+        self._log_message(f"🎰 Found {bet_count} players with bets to consolidate")
+        self.add_game_message(f"🎰 Consolidating {bet_count} player bets to pot...")
         
         # Get pot position
         pot_x = self.pot_label.winfo_rootx() - self.canvas.winfo_rootx() + self.pot_label.winfo_width() // 2
