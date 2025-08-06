@@ -1739,12 +1739,23 @@ class PracticeSessionUI(ttk.Frame):
         # --- FIX: Only update community cards when they actually change ---
         # Get current board cards
         board_cards = game_info['board']
+        current_state = game_info.get('state', '')
+        
+        # During showdown/end_hand, preserve community cards even if hand_completed not set yet
         if self.hand_completed and self.preserved_community_cards:
             # Use preserved cards after hand completion
+            board_cards = self.preserved_community_cards
+            self._log_message(f"🎴 Using preserved cards: {board_cards}")
+        elif current_state in ['showdown', 'end_hand'] and board_cards:
+            # During showdown/end_hand, preserve the current board
+            if not self.preserved_community_cards:
+                self.preserved_community_cards = board_cards.copy()
+                self._log_message(f"🎴 Preserving cards for showdown: {board_cards}")
             board_cards = self.preserved_community_cards
         else:
             # For new hands, use the actual board from game_info
             board_cards = game_info['board']
+            self._log_message(f"🎴 Using game board: {board_cards}")
     
         # Only update community card display if the board has actually changed
         if board_cards != self.last_board_cards:
