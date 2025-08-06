@@ -1755,7 +1755,9 @@ class PracticeSessionUI(ttk.Frame):
         
         if preset_type in preset_bets:
             amount = preset_bets[preset_type]
-            self._submit_human_action("bet_or_raise", amount)
+            # Set the bet size and then submit the action
+            self.bet_size_var.set(amount)
+            self._submit_human_action("bet_or_raise")
     
     def _submit_bet_raise(self):
         """Submits a bet or raise action - no context check needed."""
@@ -2077,6 +2079,24 @@ class PracticeSessionUI(ttk.Frame):
                 
                 # Set active player highlighting
                 player_pod.set_active_player(highlight)
+                
+                # Update card visibility using display state
+                display_state = self.state_machine.get_display_state()
+                if display_state and player_index < len(display_state.card_visibilities):
+                    card_visible = display_state.card_visibilities[player_index]
+                    card_widgets = player_seat.get("card_widgets", [])
+                    
+                    if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
+                        if card_visible:
+                            # Show actual cards for human players or during showdown
+                            card_widgets[0].set_card(player_info['cards'][0])
+                            card_widgets[1].set_card(player_info['cards'][1])
+                            self._log_message(f"🎴 Showing cards for {player_info['name']}: {player_info['cards']}")
+                        else:
+                            # Show card backs for hidden cards
+                            card_widgets[0].set_card("")  # This will show card back
+                            card_widgets[1].set_card("")  # This will show card back
+                            self._log_message(f"🎴 Hiding cards for {player_info['name']}")
         
         # Update frame highlighting
         if frame:
