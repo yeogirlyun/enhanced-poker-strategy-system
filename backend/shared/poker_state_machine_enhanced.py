@@ -827,9 +827,15 @@ class ImprovedPokerStateMachine:
             player.has_acted_this_round = False
         # --- END NEW ---
 
-        # Start the action flow - the action player was set correctly in handle_start_hand
-        self._log_action("🎯 Starting preflop action flow")
-        self.handle_current_player_action()
+        # Check if round is complete first (e.g., if all but one player folded during blinds posting)
+        # This preserves the fix for hand transition issues
+        if self.is_round_complete():
+            self._log_action("🔄 Round already complete, transitioning to flop")
+            self.transition_to(PokerState.DEAL_FLOP)
+        else:
+            # Start the action flow - the action player was set correctly in handle_start_hand
+            self._log_action("🎯 Starting preflop action flow")
+            self.handle_current_player_action()
 
     def reset_round_tracking(self):
         """Reset tracking for new betting round."""
