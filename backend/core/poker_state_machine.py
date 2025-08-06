@@ -2040,6 +2040,10 @@ class ImprovedPokerStateMachine:
                 for p in self.game_state.players:
                     if p.is_active and p != player:
                         p.has_acted_this_round = False
+                        # Also remove from players_acted set to ensure they can act again
+                        if self.game_state.players.index(p) in self.game_state.players_acted:
+                            self.game_state.players_acted.remove(self.game_state.players.index(p))
+                self._log_action(f"🔄 Reset has_acted for all other active players")
             else:
                 self._log_action(f"📉 Under-raise all-in. Action is not re-opened.")
                 
@@ -2111,6 +2115,17 @@ class ImprovedPokerStateMachine:
         # No one can act - round is complete
         self._log_action("⚠️ No valid next player found, setting action_player_index to -1")
         self.action_player_index = -1
+        
+        # Safety check: If we can't find a next player but the round isn't complete,
+        # there might be an issue with the action tracking
+        if not self.is_round_complete():
+            self._log_action("🚨 WARNING: No next player found but round is not complete!")
+            self._log_action(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")
+            self._log_action(f"   Players acted: {self.game_state.players_acted}")
+            self._log_action(f"   Current bet: ${self.game_state.current_bet:.2f}")
+            for p in self.game_state.players:
+                if p.is_active:
+                    self._log_action(f"   {p.name}: has_acted={p.has_acted_this_round}, bet=${p.current_bet:.2f}")
 
     def handle_round_complete(self):
         """
