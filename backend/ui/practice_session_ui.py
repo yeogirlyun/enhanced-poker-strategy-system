@@ -2141,6 +2141,9 @@ class PracticeSessionUI(ttk.Frame):
                     card_widgets = player_seat.get("card_widgets", [])
                     
                     if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
+                        # Check if player has folded (is not active)
+                        player_has_folded = not player_info.get('is_active', True)
+                        
                         if card_visible:
                             # Show actual cards for human players or during showdown
                             card_widgets[0].set_card(player_info['cards'][0])
@@ -2148,9 +2151,16 @@ class PracticeSessionUI(ttk.Frame):
                             self._log_message(f"🎴 Showing cards for {player_info['name']}: {player_info['cards']}")
                         else:
                             # Show card backs for hidden cards
-                            card_widgets[0].set_card("")  # This will show card back
-                            card_widgets[1].set_card("")  # This will show card back
-                            self._log_message(f"🎴 Hiding cards for {player_info['name']}")
+                            if player_has_folded:
+                                # Show folded (gray) card backs
+                                card_widgets[0].set_folded()
+                                card_widgets[1].set_folded()
+                                self._log_message(f"🎴 Showing folded cards for {player_info['name']}")
+                            else:
+                                # Show normal card backs
+                                card_widgets[0].set_card("")  # This will show card back
+                                card_widgets[1].set_card("")  # This will show card back
+                                self._log_message(f"🎴 Hiding cards for {player_info['name']}")
         
         # Update frame highlighting
         if frame:
