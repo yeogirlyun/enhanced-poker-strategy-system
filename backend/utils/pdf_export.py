@@ -109,7 +109,7 @@ class StrategyPDFExporter:
         except Exception as e:
             return False
     
-    def _create_title_page(self) -> List[Paragraph]:
+    def _create_title_page(self) -> List:
         """Create the title page."""
         story = []
         
@@ -151,7 +151,7 @@ class StrategyPDFExporter:
         
         return story
     
-    def _create_strategy_overview(self) -> List[Paragraph]:
+    def _create_strategy_overview(self) -> List:
         """Create the strategy overview section."""
         story = []
         
@@ -174,7 +174,7 @@ class StrategyPDFExporter:
         
         return story
     
-    def _create_hand_strength_section(self) -> List[Paragraph]:
+    def _create_hand_strength_section(self) -> List:
         """Create the hand strength tiers section."""
         story = []
         
@@ -201,7 +201,7 @@ class StrategyPDFExporter:
         
         return story
     
-    def _create_postflop_strategy_section(self) -> List[Paragraph]:
+    def _create_postflop_strategy_section(self) -> List:
         """Create the postflop strategy section."""
         story = []
         
@@ -241,7 +241,7 @@ class StrategyPDFExporter:
         
         return story
     
-    def _create_decision_tables_section(self) -> List[Paragraph]:
+    def _create_decision_tables_section(self) -> List:
         """Create the decision tables section."""
         story = []
         
