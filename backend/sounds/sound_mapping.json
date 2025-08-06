@@ -1,0 +1,28 @@
+{
+  "poker_actions": {
+    "check": "player_check.wav",
+    "call": "player_call.wav",
+    "bet": "chip_bet_single.wav",
+    "raise": "chip_bet_multiple.wav",
+    "fold": "card_fold.wav",
+    "all_in": "all_in_push.wav"
+  },
+  "card_actions": {
+    "deal_single": "card_deal_single.wav",
+    "deal_flop": "card_deal_flop.wav",
+    "shuffle": "card_shuffle.wav",
+    "flip": "card_flip.wav"
+  },
+  "chip_actions": {
+    "bet": "chip_bet_single.wav",
+    "stack": "chip_stack.wav",
+    "collect": "chip_collect.wav",
+    "shuffle": "chip_shuffle.wav"
+  },
+  "ui_actions": {
+    "click": "ui_click.wav",
+    "error": "ui_error.wav",
+    "success": "ui_success.wav",
+    "notification": "turn_chime.wav"
+  }
+}

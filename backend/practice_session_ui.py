@@ -761,7 +761,8 @@ class PracticeSessionUI(ttk.Frame):
         if valid_actions.get('fold', False):
             self.human_action_controls['fold'].config(state='normal')
             self.human_action_controls['fold'].config(text="Fold")
-            self.human_action_controls['fold'].pack(side=tk.LEFT, padx=5)
+        else:
+            self.human_action_controls['fold'].config(state='disabled')
         
         # Get call amount from state machine
         call_amount = valid_actions.get('call_amount', 0)
@@ -769,17 +770,18 @@ class PracticeSessionUI(ttk.Frame):
         # --- FIXED: Properly handle Check vs Call based on state machine validation ---
         if valid_actions.get('check', False):
             # Show Check button when it's valid
-            self.human_action_controls['check'].pack(side=tk.LEFT, padx=5)
-            self.human_action_controls['call'].pack_forget()
+            self.human_action_controls['check'].config(state='normal')
+            self.human_action_controls['call'].config(state='disabled')
             self.human_action_controls['bet_raise'].config(text="Bet")
         elif call_amount > 0:
             # Show Call button when there's a bet to call
-            self.human_action_controls['check'].pack_forget()
+            self.human_action_controls['check'].config(state='disabled')
+            self.human_action_controls['call'].config(state='normal')
             self.human_action_controls['call'].config(text=f"Call ${call_amount:.2f}")
-            self.human_action_controls['call'].pack(side=tk.LEFT, padx=5)
             self.human_action_controls['bet_raise'].config(text="Raise To")
         
-        self.human_action_controls['bet_raise'].pack(side=tk.RIGHT, padx=5)
+        # Note: bet_raise button is already positioned with grid in _create_human_action_controls
+        # No need to repack it here
 
         # Use state machine's values for bet/raise slider
         min_bet_or_raise = valid_actions.get('min_raise', self.state_machine.game_state.min_raise)
