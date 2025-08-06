@@ -692,16 +692,21 @@ class ImprovedPokerStateMachine:
     def _start_logging_session(self):
         """Initialize the comprehensive logging session."""
         try:
+            print("DEBUG: Starting logging session...")
             self.session_id = self.logger.start_session(
                 num_players=self.num_players,
                 starting_stack=100.0  # Default starting stack
             )
+            print(f"DEBUG: Session ID created: {self.session_id}")
             self.logger.log_system("INFO", "SYSTEM", "Poker state machine initialized", {
                 "num_players": self.num_players,
                 "session_id": self.session_id
             })
+            print("DEBUG: System log created successfully")
         except Exception as e:
             print(f"Warning: Could not initialize logging: {e}")
+            import traceback
+            traceback.print_exc()
             self.session_id = None
     
     def _end_logging_session(self):
@@ -716,9 +721,11 @@ class ImprovedPokerStateMachine:
     def _start_hand_logging(self):
         """Start logging for the current hand."""
         if not self.session_id:
+            print("DEBUG: No session_id, skipping hand logging")
             return
             
         try:
+            print(f"DEBUG: Starting hand {self.hand_number} logging...")
             # Prepare player data for logging
             players_data = []
             for i, player in enumerate(self.game_state.players):
@@ -2293,13 +2300,12 @@ class ImprovedPokerStateMachine:
         
         # Log action to comprehensive logging system
         try:
-            actual_amount_used = 0
-            if action == ActionType.CALL:
-                actual_amount_used = min(self.game_state.current_bet - player.current_bet, old_stack)
-            elif action == ActionType.BET:
-                actual_amount_used = min(amount, old_stack)
-            elif action == ActionType.RAISE:
-                actual_amount_used = amount - player.current_bet if amount > player.current_bet else 0
+            # FIXED: Calculate actual amount used based on stack change (more reliable)
+            actual_amount_used = old_stack - player.stack
+            
+            # For actions that don't involve money, set to 0
+            if action in [ActionType.FOLD, ActionType.CHECK]:
+                actual_amount_used = 0
             
             self._log_player_action(player, action.value, actual_amount_used, old_pot, self.game_state.pot)
             
