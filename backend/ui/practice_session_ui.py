@@ -1866,14 +1866,29 @@ class PracticeSessionUI(ttk.Frame):
 
     def _submit_preset_bet(self, preset_type):
         """Submit a preset bet action using display state."""
+        print(f"🎯 PRESET DEBUG: User clicked '{preset_type}' button")
+        
         display_state = self.state_machine.get_display_state()
         preset_bets = display_state.valid_actions.get('preset_bets', {})
         
+        print(f"🎯 PRESET DEBUG: Available preset_bets = {preset_bets}")
+        print(f"🎯 PRESET DEBUG: Looking for '{preset_type}' in preset_bets")
+        
         if preset_type in preset_bets:
             amount = preset_bets[preset_type]
+            print(f"🎯 PRESET DEBUG: Found {preset_type} amount = {amount}")
+            
             # Set the bet size and then submit the action
             self.bet_size_var.set(amount)
+            print(f"🎯 PRESET DEBUG: Set bet_size_var to {amount}")
+            print(f"🎯 PRESET DEBUG: About to call _submit_human_action('bet_or_raise')")
+            
             self._submit_human_action("bet_or_raise")
+            
+            print(f"🎯 PRESET DEBUG: _submit_human_action completed for {preset_type}")
+        else:
+            print(f"❌ PRESET DEBUG: '{preset_type}' NOT found in preset_bets!")
+            print(f"❌ PRESET DEBUG: Available keys: {list(preset_bets.keys())}")
     
     def _submit_bet_raise(self):
         """Submits a bet or raise action - no context check needed."""
