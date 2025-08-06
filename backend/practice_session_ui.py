@@ -1625,12 +1625,18 @@ class PracticeSessionUI(ttk.Frame):
                 else:
                     self.canvas.itemconfig(bet_label_window, state="hidden")
 
-    def update_action_player_highlighting(self, game_info: dict = None):
+    def update_action_player_highlighting(self, player_or_game_info=None):
         """Update only the action player highlighting efficiently."""
-        if game_info is None:
+        # Handle both Player object (from callback) and dict (from direct call)
+        if player_or_game_info is None or hasattr(player_or_game_info, 'name'):
+            # Either None or Player object - get fresh game info
             game_info = self.state_machine.get_game_info()
-            if not game_info:
-                return
+        else:
+            # Already a game_info dict
+            game_info = player_or_game_info
+            
+        if not game_info:
+            return
         
         if not hasattr(self, 'player_seats') or not self.player_seats:
             return
