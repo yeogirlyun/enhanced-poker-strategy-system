@@ -2040,18 +2040,25 @@ class PracticeSessionUI(ttk.Frame):
     def _handle_dealing_start(self):
         """Handle the start of card dealing animation."""
         self._log_message("🃏 Starting card dealing animation")
-        self.add_game_message("🃏 Dealer is dealing hole cards...")
+        self.add_game_message("🃏 House dealer is dealing hole cards...")
+        
+        # Show dealer indicator
+        self._show_dealer_indicator()
         
         # Clear all existing cards first
         self._clear_all_player_cards()
     
     def _handle_card_dealt(self, player_index: int, card1: str, card2: str):
         """Handle animation of individual cards being dealt to a player."""
-        self._log_message(f"🃏 Dealing cards to Player {player_index}: {card1} {card2}")
+        player_name = f"Player {player_index + 1}"
+        self._log_message(f"🃏 House dealer dealing cards to {player_name}: {card1} {card2}")
         
         # Animate cards being dealt to this player with a delay
         delay = player_index * 500  # 500ms delay between each player
         self.root.after(delay, lambda: self._animate_dealing_cards_to_player(player_index, card1, card2))
+        
+        # Add message showing dealing progress
+        self.root.after(delay, lambda: self.add_game_message(f"🃏 Dealing to {player_name}..."))
     
     def _clear_all_player_cards(self):
         """Clear all player cards at the start of dealing."""
@@ -2063,6 +2070,38 @@ class PracticeSessionUI(ttk.Frame):
                     widget._current_card = None  # Clear stored card data
         self._log_message("🃏 Cleared all player cards for new dealing")
     
+    def _show_dealer_indicator(self):
+        """Show a visual indicator for the house dealer."""
+        # Create dealer position (center of table)
+        dealer_x = self.canvas.winfo_width() // 2
+        dealer_y = self.canvas.winfo_height() // 2
+        
+        # Create dealer circle indicator
+        dealer_size = 30
+        self.dealer_indicator = self.canvas.create_oval(
+            dealer_x - dealer_size, dealer_y - dealer_size,
+            dealer_x + dealer_size, dealer_y + dealer_size,
+            fill="#4CAF50", outline="#2E7D32", width=3
+        )
+        
+        # Add "DEALER" text
+        self.dealer_text = self.canvas.create_text(
+            dealer_x, dealer_y,
+            text="DEALER",
+            fill="white",
+            font=("Arial", 8, "bold")
+        )
+        
+        # Hide dealer indicator after dealing is complete
+        self.root.after(5000, self._hide_dealer_indicator)  # Hide after 5 seconds
+    
+    def _hide_dealer_indicator(self):
+        """Hide the dealer indicator."""
+        if hasattr(self, 'dealer_indicator'):
+            self.canvas.delete(self.dealer_indicator)
+        if hasattr(self, 'dealer_text'):
+            self.canvas.delete(self.dealer_text)
+    
     def _animate_dealing_cards_to_player(self, player_index: int, card1: str, card2: str):
         """Animate cards being dealt to a specific player."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
@@ -2072,9 +2111,9 @@ class PracticeSessionUI(ttk.Frame):
         card_widgets = player_seat.get("card_widgets", [])
         
         if len(card_widgets) >= 2:
-            # Create dealer position (center top of table)
+            # Create dealer position (center of table - neutral house dealer)
             dealer_x = self.canvas.winfo_width() // 2
-            dealer_y = 50
+            dealer_y = self.canvas.winfo_height() // 2  # Center of table, not top
             
             # Get player position
             player_pod = player_seat.get("player_pod")
