@@ -827,12 +827,9 @@ class ImprovedPokerStateMachine:
             player.has_acted_this_round = False
         # --- END NEW ---
 
-        # FIX: Don't automatically start bot actions when the hand first starts
-        # The action player is correctly set, just wait for the first action
-        
-        # Only check if round is complete, don't start actions automatically
-        if self.is_round_complete():
-            self.transition_to(PokerState.DEAL_FLOP)
+        # Start the action flow - the action player was set correctly in handle_start_hand
+        self._log_action("🎯 Starting preflop action flow")
+        self.handle_current_player_action()
 
     def reset_round_tracking(self):
         """Reset tracking for new betting round."""
@@ -1036,13 +1033,15 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🔍 Highest bet: ${highest_bet:.2f}")
 
         # Check if all players who can act have matched the highest bet
-        bets_are_equal = all(
-            p.current_bet == highest_bet or (p.is_all_in and p.partial_call_amount is not None)
-            for p in players_who_can_act
-        )
-        self._log_action(f"🔍 Bets are equal: {bets_are_equal}")
+        self._log_action(f"🔍 Checking bet equality against highest bet ${highest_bet:.2f}:")
+        bet_check_results = []
         for p in players_who_can_act:
-            self._log_action(f"   {p.name}: bet=${p.current_bet:.2f}, target=${highest_bet:.2f}")
+            meets_bet = p.current_bet == highest_bet or (p.is_all_in and p.partial_call_amount is not None)
+            bet_check_results.append(meets_bet)
+            self._log_action(f"   {p.name}: bet=${p.current_bet:.2f}, meets_requirement={meets_bet}")
+        
+        bets_are_equal = all(bet_check_results)
+        self._log_action(f"🔍 Bets are equal: {bets_are_equal} (all results: {bet_check_results})")
         
         # Special case: If BB is the only active player and hasn't acted yet, round is not complete
         if len(active_players) == 1 and active_players[0].position == "BB" and not active_players[0].has_acted_this_round:
