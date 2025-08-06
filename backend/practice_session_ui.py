@@ -1941,22 +1941,8 @@ class PracticeSessionUI(ttk.Frame):
         self.action_indicators[player_index] = action_label
         self.last_action_player = player_index
         
-        # Also update the player's display immediately
-        if action.upper() == "FOLD":
-            # Show "Folded" status immediately
-            cards_label = player_seat.get("cards_label")
-            if cards_label:
-                cards_label.config(text="Folded", fg="red")
-        elif action.upper() == "CHECK":
-            # Show check text
-            cards_label = player_seat.get("cards_label")
-            if cards_label:
-                cards_label.config(text="Check", fg="green")
-        elif action.upper() in ["CALL", "BET", "RAISE"]:
-            # Show bet amount
-            cards_label = player_seat.get("cards_label")
-            if cards_label:
-                cards_label.config(text=f"${amount:.2f}", fg="blue")
+        # Action feedback is already handled by the action_label created above
+        # and by the selective update system, so no additional display updates needed here
     
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display with proper colors."""
