@@ -830,23 +830,47 @@ class ImprovedPokerStateMachine:
         if hasattr(self, 'on_dealing_cards') and self.on_dealing_cards:
             self.on_dealing_cards()
         
+        # FIXED: Deal cards one at a time around the table (proper casino style)
+        # Initialize all players with empty card lists
+        for player in self.game_state.players:
+            player.cards = []
+        
+        # Deal first card to each player (round 1)
         for i, player in enumerate(self.game_state.players):
-            card1 = self.deal_card()
-            card2 = self.deal_card()
-            player.cards = [card1, card2]
-            self._log_action(f"🃏 {player.name} ({player.position}): {card1} {card2}")
+            card = self.deal_card()
+            player.cards.append(card)
+            self._log_action(f"🃏 First card to {player.name} ({player.position}): {card}")
             
             # Trigger individual card deal callback if available
-            if hasattr(self, 'on_card_dealt') and self.on_card_dealt:
-                self.on_card_dealt(i, card1, card2)
+            if hasattr(self, 'on_single_card_dealt') and self.on_single_card_dealt:
+                self.on_single_card_dealt(i, 0, card)  # player_index, card_index, card
             
             # Play card dealing sound for each card dealt
             self.sound_manager.play("card_deal")  # Authentic dealing sound
         
+        # Deal second card to each player (round 2)
+        for i, player in enumerate(self.game_state.players):
+            card = self.deal_card()
+            player.cards.append(card)
+            self._log_action(f"🃏 Second card to {player.name} ({player.position}): {card}")
+            
+            # Trigger individual card deal callback if available
+            if hasattr(self, 'on_single_card_dealt') and self.on_single_card_dealt:
+                self.on_single_card_dealt(i, 1, card)  # player_index, card_index, card
+            
+            # Play card dealing sound for each card dealt
+            self.sound_manager.play("card_deal")  # Authentic dealing sound
+        
+        # Log final results
+        for player in self.game_state.players:
+            self._log_action(f"🃏 Final cards for {player.name}: {' '.join(player.cards)}")
+        
         self._log_action(f"🃏 After dealing, deck has {len(self.game_state.deck)} cards remaining")
         
         # Notify UI that dealing is complete and calculate dealing animation time
-        total_dealing_time = len(self.game_state.players) * 500 + 600  # Player delay + card delays
+        # Total cards dealt = players × 2 cards, with delays between each card
+        total_cards = len(self.game_state.players) * 2
+        total_dealing_time = total_cards * 300 + 1000  # 300ms per card + 1s buffer
         if hasattr(self, 'on_dealing_complete'):
             self.on_dealing_complete(total_dealing_time)
     
