@@ -24,15 +24,22 @@ import uuid
 from datetime import datetime
 import math
 
-# Add the parent directory to the path to import sound_manager
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sound_manager import SoundManager
-
 # Import the enhanced hand evaluator for accurate winner determination
-from enhanced_hand_evaluation import EnhancedHandEvaluator, HandRank
+from .hand_evaluation import EnhancedHandEvaluator, HandRank
 
 # Import the position mapping system for strategy integration
-from position_mapping_system import EnhancedStrategyIntegration, HandHistoryManager
+from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
+
+# Create a simple SoundManager class for now
+class SoundManager:
+    def __init__(self):
+        self.enabled = True
+    
+    def play(self, sound_name):
+        pass
+    
+    def play_action_sound(self, action, amount=0):
+        pass
 
 
 @dataclass

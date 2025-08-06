@@ -15,7 +15,7 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, colorchooser
 from typing import Optional, Dict, Any
-from gui_models import HandStrengthTier, FileOperations, THEME
+from core.gui_models import HandStrengthTier, FileOperations, THEME
 
 class TierEditDialog:
     """

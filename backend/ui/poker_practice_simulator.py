@@ -14,8 +14,8 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
-from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType, PokerState
-from gui_models import StrategyData, THEME
+from core.poker_state_machine import ImprovedPokerStateMachine, ActionType, PokerState
+from core.gui_models import StrategyData, THEME
 
 
 @dataclass

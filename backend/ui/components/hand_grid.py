@@ -16,7 +16,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import ttk, Canvas, Scrollbar, Frame
 from typing import Dict, Set, List, Optional, Callable, Tuple
-from gui_models import StrategyData, THEME, HandFormatHelper, GridSettings
+from core.gui_models import StrategyData, THEME, HandFormatHelper, GridSettings
 
 
 class HandGridWidget:

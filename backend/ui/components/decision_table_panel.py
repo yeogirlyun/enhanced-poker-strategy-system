@@ -16,7 +16,7 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List, Dict, Any, Optional, Callable
-from gui_models import StrategyData, THEME
+from core.gui_models import StrategyData, THEME
 
 
 class DecisionTablePanel:

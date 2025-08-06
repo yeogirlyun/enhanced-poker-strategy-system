@@ -27,16 +27,16 @@ from typing import Dict
 from datetime import datetime
 import cProfile
 
-from gui_models import StrategyData, THEME, FONTS, GridSettings
-from hand_grid import HandGridWidget
-from tier_panel import TierPanel
-from decision_table_panel import DecisionTablePanel
-from postflop_hs_editor import PostflopHSEditor
-from strategy_optimization_panel import StrategyOptimizationPanel
-from tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
-from practice_session_ui import PracticeSessionUI
-from sound_settings_gui import create_sound_settings_window
-from app_config import get_app_full_name
+from core.gui_models import StrategyData, THEME, FONTS, GridSettings
+from ui.components.hand_grid import HandGridWidget
+from ui.components.tier_panel import TierPanel
+from ui.components.decision_table_panel import DecisionTablePanel
+from ui.components.postflop_hs_editor import PostflopHSEditor
+from strategy.strategy_optimization_panel import StrategyOptimizationPanel
+from ui.components.tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
+from ui.practice_session_ui import PracticeSessionUI
+# from sound_settings_gui import create_sound_settings_window  # Removed in cleanup
+# from app_config import get_app_full_name  # Removed in cleanup
 
 
 class EnhancedMainGUI:
@@ -77,7 +77,7 @@ class EnhancedMainGUI:
         except Exception as e:
             print(f"Warning: Could not set macOS app name: {e}")
         
-        self.root.title(get_app_full_name())
+        self.root.title("Poker Strategy Practice System")
         
         # Force menu bar to show our app name (macOS)
         try:
@@ -1196,9 +1196,7 @@ These settings can be configured in the main strategy panels."""
     def _show_sound_settings(self):
         """Show sound settings window."""
         try:
-            sound_window = create_sound_settings_window(self.root)
-            sound_window.grab_set()  # Make window modal
-            sound_window.focus_set()  # Focus on the new window
+            messagebox.showinfo("Sound Settings", "Sound settings feature is currently being updated.")
         except Exception as e:
             messagebox.showerror("Error", f"Could not open sound settings: {e}")
 

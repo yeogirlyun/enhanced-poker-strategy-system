@@ -15,8 +15,8 @@ Version 1.0 (2025-07-29) - Initial Version
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List, Callable, Optional
-from gui_models import StrategyData, HandStrengthTier, THEME
-from dialogs import TierEditDialog
+from core.gui_models import StrategyData, HandStrengthTier, THEME
+from .dialogs import TierEditDialog
 
 class TierPanel:
     """
