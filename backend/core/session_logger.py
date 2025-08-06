@@ -16,6 +16,8 @@ All data is stored in structured JSON format for easy analysis.
 import json
 import time
 import uuid
+import signal
+import atexit
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -151,6 +153,10 @@ class SessionLogger:
         # File paths
         self.session_file: Optional[Path] = None
         self.system_log_file: Optional[Path] = None
+        
+        # Graceful shutdown setup
+        self._shutdown_handlers_registered = False
+        self._register_shutdown_handlers()
     
     def start_session(self, num_players: int = 6, starting_stack: float = 100.0) -> str:
         """Start a new logging session."""
@@ -405,6 +411,98 @@ class SessionLogger:
                 "system": str(self.system_log_file) if self.system_log_file else None
             }
         }
+    
+    def _register_shutdown_handlers(self):
+        """Register signal handlers for graceful shutdown."""
+        if self._shutdown_handlers_registered:
+            return
+            
+        try:
+            # Register signal handlers for Ctrl+C and other termination signals
+            signal.signal(signal.SIGINT, self._signal_handler)  # Ctrl+C
+            signal.signal(signal.SIGTERM, self._signal_handler)  # Termination
+            
+            # Register atexit handler for normal program exit
+            atexit.register(self._cleanup_on_exit)
+            
+            self._shutdown_handlers_registered = True
+            print("DEBUG: Shutdown handlers registered successfully")
+            
+        except Exception as e:
+            print(f"Warning: Could not register shutdown handlers: {e}")
+    
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals (Ctrl+C, etc.)."""
+        signal_names = {
+            signal.SIGINT: "SIGINT (Ctrl+C)",
+            signal.SIGTERM: "SIGTERM"
+        }
+        signal_name = signal_names.get(signum, f"Signal {signum}")
+        
+        print(f"\n🔄 Received {signal_name} - Gracefully shutting down...")
+        print("💾 Saving session data...")
+        
+        # Save all pending data
+        self._emergency_save()
+        
+        print("✅ Session data saved successfully!")
+        print("👋 Goodbye!")
+        
+        # Exit cleanly
+        exit(0)
+    
+    def _cleanup_on_exit(self):
+        """Cleanup function called on normal program exit."""
+        try:
+            if self.session:
+                print("🔄 Normal exit detected - saving final session data...")
+                self.end_session()
+                print("✅ Final session data saved!")
+        except Exception as e:
+            print(f"Warning: Error during exit cleanup: {e}")
+    
+    def _emergency_save(self):
+        """Emergency save of all session data."""
+        try:
+            # Complete current hand if it's in progress
+            if self.current_hand and not self.current_hand.hand_complete:
+                self.current_hand.hand_complete = True
+                self.current_hand.winner = "Unknown (Emergency Exit)"
+                self.current_hand.winning_hand = "Session terminated"
+                
+                if self.hand_start_time:
+                    self.current_hand.hand_duration_ms = int((time.time() - self.hand_start_time) * 1000)
+                
+                # Add to session if not already added
+                if self.session and self.current_hand not in self.session.hands:
+                    self.session.hands.append(self.current_hand)
+                    self.session.hands_played += 1
+            
+            # End session properly
+            if self.session:
+                self.session.end_time = time.time()
+                if self.session.start_time:
+                    self.session.session_duration_ms = int((self.session.end_time - self.session.start_time) * 1000)
+                
+                # Log emergency shutdown
+                self.log_system("WARNING", "SESSION", "Emergency shutdown - session terminated by user", {
+                    "hands_completed": self.session.hands_played,
+                    "session_duration_ms": self.session.session_duration_ms,
+                    "shutdown_reason": "SIGINT/Ctrl+C"
+                })
+                
+                # Force save
+                self._save_session()
+                self._save_system_logs()
+                
+        except Exception as e:
+            print(f"Error during emergency save: {e}")
+            # Try to at least save what we can
+            try:
+                if self.session:
+                    self._save_session()
+            except:
+                print("Failed to save session data")
 
 
 # Global logger instance

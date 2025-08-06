@@ -196,6 +196,9 @@ class ImprovedPokerStateMachine:
         # Start logging session
         self._start_logging_session()
         
+        # Register cleanup for this state machine instance
+        self._register_cleanup()
+        
         # Game state
         self.current_state = PokerState.START_HAND
         self.game_state = GameState(
@@ -717,6 +720,67 @@ class ImprovedPokerStateMachine:
                 self.logger.log_system("INFO", "SYSTEM", "Session ended")
             except Exception as e:
                 print(f"Warning: Could not end logging session: {e}")
+    
+    def _register_cleanup(self):
+        """Register cleanup handlers for graceful shutdown."""
+        import atexit
+        import signal
+        
+        # Register cleanup on normal exit
+        atexit.register(self._cleanup)
+        
+        # Override signal handlers to include state machine cleanup
+        original_signal_handler = getattr(self.logger, '_signal_handler', None)
+        if original_signal_handler:
+            def combined_signal_handler(signum, frame):
+                print("🔄 Cleaning up poker state machine...")
+                self._cleanup()
+                # Call original logger signal handler
+                original_signal_handler(signum, frame)
+            
+            try:
+                signal.signal(signal.SIGINT, combined_signal_handler)
+                signal.signal(signal.SIGTERM, combined_signal_handler)
+            except Exception as e:
+                print(f"Warning: Could not override signal handlers: {e}")
+    
+    def _cleanup(self):
+        """Cleanup method called on shutdown."""
+        try:
+            print("🧹 Cleaning up poker state machine...")
+            
+            # Complete current hand if in progress
+            if (hasattr(self, 'current_state') and 
+                self.current_state != PokerState.END_HAND and
+                hasattr(self, 'logger') and 
+                hasattr(self.logger, 'current_hand') and 
+                self.logger.current_hand):
+                
+                print("📝 Completing current hand...")
+                # End the current hand gracefully
+                try:
+                    active_players = [p for p in self.game_state.players if p.is_active]
+                    if len(active_players) == 1:
+                        winner = active_players[0].name
+                    else:
+                        winner = "Unknown (Session ended)"
+                    
+                    self.logger.end_hand(
+                        winner=winner,
+                        winning_hand="Session terminated",
+                        pot_size=self.game_state.pot,
+                        showdown=False
+                    )
+                except Exception as e:
+                    print(f"Warning: Could not complete current hand: {e}")
+            
+            # End logging session
+            self._end_logging_session()
+            
+            print("✅ Poker state machine cleanup complete")
+            
+        except Exception as e:
+            print(f"Warning: Error during state machine cleanup: {e}")
     
     def _start_hand_logging(self):
         """Start logging for the current hand."""
