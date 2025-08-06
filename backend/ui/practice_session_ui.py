@@ -318,6 +318,7 @@ class PracticeSessionUI(ttk.Frame):
         self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
         self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
         self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
+        self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
         self.state_machine.on_log_entry = self.add_game_message
         
         # Setup UI
@@ -1516,6 +1517,7 @@ class PracticeSessionUI(ttk.Frame):
                 self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
                 self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
                 self.state_machine.on_card_dealt = self._handle_card_dealt  # NEW: Handle individual card dealt
+                self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
                 
                 # Reset UI
                 self._reset_ui_for_new_hand()
@@ -2059,6 +2061,23 @@ class PracticeSessionUI(ttk.Frame):
         
         # Add message showing dealing progress
         self.root.after(delay, lambda: self.add_game_message(f"🃏 Dealing to {player_name}..."))
+    
+    def _handle_dealing_complete(self, total_dealing_time: int):
+        """Handle completion of dealing animation and start betting."""
+        self._log_message(f"🃏 Dealing will complete in {total_dealing_time}ms")
+        self.add_game_message("🃏 Dealing cards... please wait...")
+        
+        # Wait for all dealing animations to complete, then start betting
+        self.root.after(total_dealing_time, self._start_betting_after_dealing)
+    
+    def _start_betting_after_dealing(self):
+        """Start the betting round after all dealing animations are complete."""
+        self._log_message("🃏 All cards dealt - starting betting round")
+        self.add_game_message("🃏 All cards dealt! Betting begins...")
+        
+        # Tell state machine to start preflop betting
+        if hasattr(self.state_machine, 'start_preflop_betting_after_dealing'):
+            self.state_machine.start_preflop_betting_after_dealing()
     
     def _clear_all_player_cards(self):
         """Clear all player cards at the start of dealing."""
