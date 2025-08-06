@@ -1999,10 +1999,8 @@ class ImprovedPokerStateMachine:
         self._log_action(f"🃏 Board: {self.game_state.board}")
         self._log_action(f"🏆 Street: {self.game_state.street}")
 
-        # NEW: Trigger action animation callback
-        if self.on_action_executed:
-            player_index = self.game_state.players.index(player)
-            self.on_action_executed(player_index, action.value, amount)
+        # NEW: Trigger action animation callback (MOVED to after action execution for correct amounts)
+        # Will be called after each action type with the actual amount used
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
@@ -2013,6 +2011,11 @@ class ImprovedPokerStateMachine:
             # Their bet from this round is still part of the pot calculation for other players.
             # REMOVE this line: player.current_bet = 0
             # --- End of Bug Fix ---
+            
+            # FIXED: Trigger callback for fold action (amount is 0)
+            if self.on_action_executed:
+                player_index = self.game_state.players.index(player)
+                self.on_action_executed(player_index, action.value, 0)
 
         elif action == ActionType.CHECK:
             # Only valid when current_bet is 0 or player already has current bet
@@ -2022,6 +2025,11 @@ class ImprovedPokerStateMachine:
                 return
             # FIX: Do NOT reset current_bet when checking - it should remain as is
             # player.current_bet = 0  # ← REMOVED THIS BUG
+            
+            # FIXED: Trigger callback for check action (amount is 0)
+            if self.on_action_executed:
+                player_index = self.game_state.players.index(player)
+                self.on_action_executed(player_index, action.value, 0)
 
         elif action == ActionType.CALL:
             call_amount = self.game_state.current_bet - player.current_bet
@@ -2042,6 +2050,11 @@ class ImprovedPokerStateMachine:
             player.current_bet += actual_call
             player.total_invested += actual_call
             self.game_state.pot += actual_call
+            
+            # FIXED: Trigger callback with actual call amount for animation
+            if self.on_action_executed:
+                player_index = self.game_state.players.index(player)
+                self.on_action_executed(player_index, action.value, actual_call)
             
             # Check for all-in
             if player.stack == 0:
@@ -2066,6 +2079,11 @@ class ImprovedPokerStateMachine:
             # CRITICAL FIX: Set min_raise to the size of the bet
             self.game_state.min_raise = actual_bet
             self._log_action(f"💰 Bet of ${actual_bet:.2f} sets min_raise to ${self.game_state.min_raise:.2f}")
+            
+            # FIXED: Trigger callback with actual bet amount for animation
+            if self.on_action_executed:
+                player_index = self.game_state.players.index(player)
+                self.on_action_executed(player_index, action.value, actual_bet)
             
             # Check for all-in
             if player.stack == 0:
@@ -2111,6 +2129,11 @@ class ImprovedPokerStateMachine:
                 self._log_action(f"📉 Under-raise all-in. Action is not re-opened.")
                 
             # --- END REFACTOR ---
+            
+            # FIXED: Trigger callback with actual raise amount for animation
+            if self.on_action_executed:
+                player_index = self.game_state.players.index(player)
+                self.on_action_executed(player_index, action.value, additional_amount)
             
             if player.stack == 0:
                 player.is_all_in = True
