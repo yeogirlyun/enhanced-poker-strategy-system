@@ -902,10 +902,12 @@ class ImprovedPokerStateMachine:
 
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
+        print(f"🚀 DEBUG: handle_start_hand called - existing_players={len(existing_players) if existing_players else 'None'}")
         self._log_action("Starting new hand")
         
         # Increment hand number for logging
         self.hand_number += 1
+        print(f"🚀 DEBUG: hand_number incremented to {self.hand_number}")
         
         # --- NEW: Clear the hand history ---
         self.hand_history.clear()
@@ -977,8 +979,12 @@ class ImprovedPokerStateMachine:
                 player.position = "Unknown"  # Fallback position
         # --- END POSITION VALIDATION ---
         
+        print(f"🚀 DEBUG: About to call _start_hand_logging() for hand {self.hand_number}")
+        
         # Start comprehensive hand logging
         self._start_hand_logging()
+        
+        print(f"🚀 DEBUG: _start_hand_logging() completed for hand {self.hand_number}")
 
         # FIX: Update blind positions BEFORE trying to use them
         self.update_blind_positions()
@@ -1010,8 +1016,12 @@ class ImprovedPokerStateMachine:
         self.game_state.current_bet = bb_amount
         self.game_state.min_raise = bb_amount
 
+        print(f"🚀 DEBUG: About to call deal_hole_cards() for hand {self.hand_number}")
+        
         # Deal hole cards with animation
         self.deal_hole_cards()
+        
+        print(f"🚀 DEBUG: deal_hole_cards() completed for hand {self.hand_number}")
 
         # --- THIS IS THE FIX ---
         # Set action to UTG (first player after BB) AFTER all setup is complete.
