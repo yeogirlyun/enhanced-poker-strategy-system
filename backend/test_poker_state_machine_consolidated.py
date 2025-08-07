@@ -706,7 +706,7 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
             (['7h', '8h'], ['9s', 'Js', '2c'], 'gutshot_draw'),
             (['Ah', '2s'], ['3h', '4h', '2c'], 'backdoor_straight'),
             (['Ah', 'Kh'], ['As', 'Ks', 'Qs'], 'two_pair'),
-            (['Ah', 'Kh'], ['2h', '3h', '4h'], 'nut_flush_draw'),
+            (['Ah', 'Kh'], ['2h', '3h', '4h'], 'nut_flush'),
         ]
         
         for hole_cards, board, expected in test_cases:

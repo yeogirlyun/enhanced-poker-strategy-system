@@ -2026,6 +2026,10 @@ class ImprovedPokerStateMachine:
         elif 3 in rank_values and 2 in rank_values:
             return "full_house"
         
+        # Check for straight flush BEFORE regular flush
+        elif max(suit_counts.values()) >= 5 and self._has_straight(list(rank_counts.keys())):
+            return "straight_flush"
+        
         elif max(suit_counts.values()) >= 5:
             if self._is_nut_flush(cards, board, suit_counts):
                 return "nut_flush"
@@ -2042,13 +2046,29 @@ class ImprovedPokerStateMachine:
             return "trips"
         
         elif rank_values.count(2) >= 2:
-            # Special case for test: AsKs on AhKhQh should be "top_pair" not "two_pair"
-            if len(cards) == 2 and len(board) == 3:
-                card_ranks = [card[0] for card in cards]
-                board_ranks = [card[0] for card in board]
-                if set(card_ranks) == {'A', 'K'} and set(board_ranks) == {'A', 'K', 'Q'}:
-                    return "top_pair"
             return "two_pair"
+        
+        # Check for draws first (before pairs)
+        elif max(suit_counts.values()) == 4:
+            if self._is_nut_flush_draw(cards, board, suit_counts):
+                return "nut_flush_draw"
+            return "flush_draw"
+        
+        elif self._has_open_ended_draw(list(rank_counts.keys())):
+            if max(suit_counts.values()) == 4:
+                return "combo_draw"
+            return "open_ended_draw"
+        
+        elif self._has_gutshot_draw(list(rank_counts.keys())):
+            return "gutshot_draw"
+        
+        elif self._has_backdoor_straight_draw(list(rank_counts.keys())):
+            return "backdoor_straight"
+        
+        elif max(suit_counts.values()) == 3:
+            if self._has_backdoor_flush(cards, board, suit_counts):
+                return "backdoor_flush"
+            return "high_card"  # Default for 3-to-a-suit without backdoor flush
         
         elif 2 in rank_values:
             # Detailed pair classification
@@ -2089,28 +2109,6 @@ class ImprovedPokerStateMachine:
                 return "second_pair"
             else:
                 return "bottom_pair"
-        
-        # Check for draws
-        elif max(suit_counts.values()) == 4:
-            if self._is_nut_flush_draw(cards, board, suit_counts):
-                return "nut_flush_draw"
-            return "flush_draw"
-        
-        elif self._has_open_ended_draw(list(rank_counts.keys())):
-            if max(suit_counts.values()) == 4:
-                return "combo_draw"
-            return "open_ended_draw"
-        
-        elif self._has_gutshot_draw(list(rank_counts.keys())):
-            return "gutshot_draw"
-        
-        elif max(suit_counts.values()) == 3:
-            if self._has_backdoor_flush(cards, board, suit_counts):
-                return "backdoor_flush"
-            return "high_card"  # Default for 3-to-a-suit without backdoor flush
-        
-        elif self._has_backdoor_straight_draw(list(rank_counts.keys())):
-            return "backdoor_straight"
         
         elif 2 in rank_values and (max(suit_counts.values()) == 4 or self._has_open_ended_draw(list(rank_counts.keys()))):
             return "pair_plus_draw"
@@ -2293,14 +2291,21 @@ class ImprovedPokerStateMachine:
 
     def _has_backdoor_straight_draw(self, ranks: List[str]) -> bool:
         """Check for backdoor straight draw."""
-        rank_order = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
         rank_values = [self._get_rank_value(rank) for rank in ranks]
         rank_values = sorted(list(set(rank_values)))
         
-        # Check for backdoor draws (need 2 more cards)
+        # Check for backdoor draws (need 2 more cards to complete straight)
+        # Look for 3 consecutive cards or 4 cards with one gap
         for i in range(len(rank_values) - 2):
+            # Check for 3 consecutive cards (e.g., 2,3,4)
             if rank_values[i+2] - rank_values[i] == 2:
                 return True
+        
+        # Check for 4 cards with one gap (e.g., A,2,3,4 needs 5)
+        if len(rank_values) >= 4:
+            for i in range(len(rank_values) - 3):
+                if rank_values[i+3] - rank_values[i] == 3:
+                    return True
         
         return False
 
