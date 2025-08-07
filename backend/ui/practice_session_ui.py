@@ -751,8 +751,8 @@ class PracticeSessionUI(ttk.Frame):
         # Use the new string-based execute_action method
         self.state_machine.execute_action_string(player, action_str, amount)
         
-        # Hide controls after action is processed - better user experience
-        self._show_game_control_buttons()
+        # REMOVED: Don't hide controls here - let the state machine handle UI updates
+        # The state machine will call on_action_required when it's the human's turn again
 
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player using display state."""
