@@ -2354,6 +2354,7 @@ class ImprovedPokerStateMachine:
         # --- ENHANCED: Detailed Action Logging ---
         old_pot = self.game_state.pot  # Track pot changes
         old_stack = player.stack  # Track stack changes
+        pot_change = 0.0  # Track actual pot change for this action
         self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
         self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
         self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
@@ -2412,6 +2413,7 @@ class ImprovedPokerStateMachine:
             player.current_bet += actual_call
             player.total_invested += actual_call
             self.game_state.pot += actual_call
+            pot_change += actual_call  # Track pot change for this action
             
             # FIXED: Trigger callback with actual call amount for animation
             if self.on_action_executed:
@@ -2436,6 +2438,7 @@ class ImprovedPokerStateMachine:
             player.current_bet = actual_bet
             player.total_invested += actual_bet
             self.game_state.pot += actual_bet
+            pot_change += actual_bet  # Track pot change for this action
             self.game_state.current_bet = actual_bet
             
             # CRITICAL FIX: Set min_raise to the size of the bet
@@ -2461,6 +2464,7 @@ class ImprovedPokerStateMachine:
             player.current_bet = total_bet
             player.total_invested += additional_amount
             self.game_state.pot += additional_amount
+            pot_change += additional_amount  # Track pot change for this action
             
             # --- REFACTORED AND IMPROVED RAISE LOGIC ---
             
@@ -2519,7 +2523,7 @@ class ImprovedPokerStateMachine:
             # Log system debug info
             self.logger.log_system("DEBUG", "ACTION", f"Action completed: {player.name} {action.value}", {
                 "amount": actual_amount_used,
-                "pot_change": self.game_state.pot - old_pot,
+                "pot_change": pot_change,  # Use tracked pot change instead of total difference
                 "stack_change": old_stack - player.stack,
                 "street": self.game_state.street,
                 "active_players": len([p for p in self.game_state.players if p.is_active])
