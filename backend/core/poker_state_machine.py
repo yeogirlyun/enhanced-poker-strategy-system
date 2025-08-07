@@ -37,9 +37,13 @@ from utils.sound_manager import SoundManager
 # IMMEDIATE FLUSH DEBUG PRINT for critical debugging
 def debug_print(*args, **kwargs):
     """Print with immediate flush to prevent buffer loss on abrupt exits."""
-    print(*args, **kwargs)
-    sys.stdout.flush()
-    sys.stderr.flush()
+    try:
+        print(*args, **kwargs)
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except BrokenPipeError:
+        # Handle broken pipe gracefully during testing
+        pass
 
 
 @dataclass
@@ -3433,6 +3437,16 @@ class ImprovedPokerStateMachine:
         
         # Execute the action using the original execute_action method
         self.execute_action(player, action, amount)
+
+    def get_valid_actions(self, player: Player) -> dict:
+        """Get valid actions for a specific player (alias for get_valid_actions_for_player)."""
+        return self.get_valid_actions_for_player(player)
+    
+    def _signal_handler(self, signum, frame):
+        """Handle system signals for graceful shutdown."""
+        debug_print(f"🔄 Signal {signum} received, initiating cleanup...")
+        self._cleanup()
+        sys.exit(0)
 
 
 

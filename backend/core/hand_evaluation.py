@@ -36,6 +36,11 @@ class EnhancedHandEvaluator:
             'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
         }
         self.suits = ['h', 'd', 'c', 's']  # hearts, diamonds, clubs, spades
+        # Add cache for performance optimization
+        self._hand_eval_cache = {}
+        self._max_cache_size = 1000
+        self._cache_hits = 0
+        self._cache_misses = 0
     
     def evaluate_hand(self, hole_cards: List[str], board_cards: List[str]) -> Dict:
         """

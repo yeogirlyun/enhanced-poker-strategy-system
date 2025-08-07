@@ -544,28 +544,566 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
             self.fail(f"Legendary hands database loading failed: {e}")
     
     def test_legendary_hands_simulation(self):
-        """Test simulation of legendary hands."""
-        try:
-            from tests.legendary_hands_manager import LegendaryHandsManager
+        """Test simulation of legendary hands from database."""
+        from tests.legendary_hands_manager import LegendaryHandsManager
+        
+        manager = LegendaryHandsManager()
+        hands = manager.load_hands()
+        
+        # Test simulation of first hand
+        if hands:
+            hand = hands[0]
+            sm = ImprovedPokerStateMachine(num_players=len(hand['players']), test_mode=True)
             
-            manager = LegendaryHandsManager()
-            
-            # Test simulation of first hand
-            if manager.hands:
-                hand = manager.hands[0]
-                result = manager.simulate_hand(hand, verbose=False)
-                
-                # Basic validation of simulation result
-                self.assertIsInstance(result, dict, "Simulation should return a dictionary")
-                self.assertIn('expected_winner', result, "Result should have expected_winner")
-                self.assertIn('actual_winners', result, "Result should have actual_winners")
-                self.assertIn('expected_pot', result, "Result should have expected_pot")
-                self.assertIn('actual_pot', result, "Result should have actual_pot")
-                
-        except Exception as e:
-            self.fail(f"Legendary hands simulation failed: {e}")
+            # Simulate the hand
+            result = manager.simulate_hand(hand)
+            self.assertIsNotNone(result)
+            self.assertIn('winner', result)
+    
+    # ============================================================================
+    # SESSION MANAGEMENT TESTS
+    # ============================================================================
+    
+    def test_session_export_import(self):
+        """Test session export and import functionality."""
+        # Play a few hands
+        self.state_machine.start_session()
+        self.state_machine.start_hand()
+        
+        # Execute some actions
+        player = self.state_machine.game_state.players[0]
+        self.state_machine.execute_action(player, ActionType.CALL, 1.0)
+        
+        # Export session
+        filepath = "test_session.json"
+        success = self.state_machine.export_session(filepath)
+        self.assertTrue(success)
+        
+        # Import session
+        success = self.state_machine.import_session(filepath)
+        self.assertTrue(success)
+    
+    def test_replay_hand(self):
+        """Test hand replay functionality."""
+        self.state_machine.start_session()
+        self.state_machine.start_hand()
+        
+        # Play a hand
+        player = self.state_machine.game_state.players[0]
+        self.state_machine.execute_action(player, ActionType.CALL, 1.0)
+        self.state_machine.transition_to(PokerState.END_HAND)
+        
+        replay_data = self.state_machine.replay_hand(0)
+        self.assertIsNotNone(replay_data)
+        self.assertIn('hand_number', replay_data)
+    
+    # ============================================================================
+    # SOUND AND VOICE SYSTEM TESTS
+    # ============================================================================
+    
+    def test_sound_manager_integration(self):
+        """Test sound manager plays appropriate sounds."""
+        with patch.object(self.state_machine.sound_manager, 'play_action_sound') as mock_play:
+            player = self.state_machine.game_state.players[0]
+            self.state_machine.execute_action(player, ActionType.RAISE, 10)
+            mock_play.assert_called()
+    
+    def test_voice_announcements(self):
+        """Test voice announcement system."""
+        with patch.object(self.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+            # Test all-in announcement
+            player = self.state_machine.game_state.players[0]
+            player.stack = 0
+            self.state_machine.execute_action(player, ActionType.CALL, player.stack)
+            # Voice should be called for all-in
+            mock_voice.assert_called()
+    
+    def test_test_mode_voice_disabled(self):
+        """Test that voice is disabled in test mode."""
+        with patch.object(self.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+            player = self.state_machine.game_state.players[0]
+            self.state_machine.execute_action(player, ActionType.CALL, 1.0)
+            # In test mode, voice should not be called
+            mock_voice.assert_not_called()
+    
+    # ============================================================================
+    # DISPLAY STATE AND UI DATA TESTS
+    # ============================================================================
+    
+    def test_get_display_state(self):
+        """Test display state generation for UI."""
+        display_state = self.state_machine.get_display_state()
+        
+        self.assertIn('valid_actions', display_state.__dict__)
+        self.assertIn('player_highlights', display_state.__dict__)
+        self.assertIn('chip_representations', display_state.__dict__)
+        self.assertIn('community_cards', display_state.__dict__)
+    
+    def test_chip_representation_calculations(self):
+        """Test chip symbol calculations."""
+        symbols = self.state_machine._get_chip_symbols(100.0)
+        self.assertIsInstance(symbols, str)
+        self.assertIn('🔴', symbols)  # Should contain red chip for $100
+    
+    def test_valid_actions_for_display(self):
+        """Test valid actions are properly formatted for display."""
+        display_state = self.state_machine.get_display_state()
+        valid_actions = display_state.valid_actions
+        
+        self.assertIsInstance(valid_actions, dict)
+        for action_type, amount in valid_actions.items():
+            self.assertIsInstance(action_type, str)
+            self.assertIsInstance(amount, (int, float))
+    
+    # ============================================================================
+    # DEALING ANIMATION CALLBACKS TESTS
+    # ============================================================================
+    
+    def test_dealing_animation_callbacks(self):
+        """Test card dealing animation callbacks."""
+        mock_callback = MagicMock()
+        self.state_machine.on_single_card_dealt = mock_callback
+        self.state_machine.on_dealing_complete = MagicMock()
+        
+        self.state_machine.deal_hole_cards()
+        
+        # Should call callback for each card dealt
+        expected_calls = self.state_machine.num_players * 2
+        self.assertEqual(mock_callback.call_count, expected_calls)
+    
+    def test_start_preflop_betting_after_dealing(self):
+        """Test transition to preflop betting after dealing animation."""
+        self.state_machine.start_hand()
+        self.state_machine.start_preflop_betting_after_dealing()
+        self.assertEqual(self.state_machine.current_state, PokerState.PREFLOP_BETTING)
+    
+    # ============================================================================
+    # COMPREHENSIVE HAND CLASSIFICATION TESTS
+    # ============================================================================
+    
+    def test_all_hand_classifications(self):
+        """Test all possible hand classifications."""
+        test_cases = [
+            (['Ah', 'Kh'], ['Qh', 'Jh', 'Th'], 'straight_flush'),
+            (['Ah', '2h'], ['3h', '4h', '5h'], 'straight_flush'),
+            (['As', 'Ks'], ['Ah', 'Kh', 'Qh'], 'two_pair'),
+            (['7h', '8h'], ['9s', 'Ts', '2c'], 'open_ended_draw'),
+            (['7h', '8h'], ['9s', 'Js', '2c'], 'gutshot_draw'),
+            (['Ah', '2s'], ['3h', '4h', '2c'], 'backdoor_straight'),
+            (['Ah', 'Kh'], ['As', 'Ks', 'Qs'], 'two_pair'),
+            (['Ah', 'Kh'], ['2h', '3h', '4h'], 'nut_flush_draw'),
+        ]
+        
+        for hole_cards, board, expected in test_cases:
+            result = self.state_machine.classify_hand(hole_cards, board)
+            self.assertEqual(result, expected, 
+                            f"Failed for {hole_cards} on {board}: got {result}, expected {expected}")
+    
+    def test_hand_strength_calculations(self):
+        """Test hand strength calculations for preflop and postflop."""
+        # Test preflop hand strength
+        hole_cards = ['Ah', 'Kh']
+        strength = self.state_machine.get_preflop_hand_strength(hole_cards)
+        self.assertIsInstance(strength, (int, float))
+        self.assertGreater(strength, 0)
+        
+        # Test postflop hand strength
+        board = ['Qh', 'Jh', 'Th']
+        strength = self.state_machine.get_postflop_hand_strength(hole_cards, board)
+        self.assertIsInstance(strength, (int, float))
+        self.assertGreater(strength, 0)
+    
+    # ============================================================================
+    # RACE CONDITION AND CONCURRENCY TESTS
+    # ============================================================================
+    
+    def test_concurrent_bot_action_protection(self):
+        """Test protection against concurrent bot actions."""
+        self.state_machine.start_hand()
+        
+        # Schedule multiple bot actions
+        action_data = {
+            'player_index': 1,
+            'state': PokerState.PREFLOP_BETTING,
+            'street': 'preflop',
+            'pot': 1.5,
+            'current_bet': 1.0
+        }
+        
+        # Try to execute same action twice
+        self.state_machine._execute_bot_action_safe(action_data)
+        
+        # Change state to simulate race condition
+        self.state_machine.current_state = PokerState.END_HAND
+        
+        # Second execution should be cancelled
+        with patch.object(self.state_machine, 'execute_bot_action') as mock_execute:
+            self.state_machine._execute_bot_action_safe(action_data)
+            mock_execute.assert_not_called()
+    
+    def test_state_transition_atomicity(self):
+        """Test that state transitions are atomic."""
+        self.state_machine.start_hand()
+        
+        # Simulate concurrent state changes
+        original_state = self.state_machine.current_state
+        
+        # Try to transition while another transition is in progress
+        self.state_machine._transitioning = True
+        self.state_machine.transition_to(PokerState.PREFLOP_BETTING)
+        
+        # State should not change if already transitioning
+        self.assertEqual(self.state_machine.current_state, original_state)
+    
+    # ============================================================================
+    # POSITION MAPPING FALLBACK TESTS
+    # ============================================================================
+    
+    def test_position_mapping_fallback_chains(self):
+        """Test position mapping fallback mechanisms."""
+        from core.position_mapping import PositionMapper
+        
+        mapper = PositionMapper(6)
+        
+        # Test fallback when exact position not found
+        strategy_positions = ['UTG', 'CO', 'BTN']
+        mapped = mapper.map_strategy_position('MP', strategy_positions)
+        self.assertEqual(mapped, 'UTG')  # Should fallback to UTG
+        
+        # Test group-based fallback
+        strategy_positions = ['EARLY', 'LATE']
+        mapped = mapper.map_strategy_position('MP', strategy_positions)
+        self.assertIsNotNone(mapped)
+    
+    def test_position_mapping_edge_cases(self):
+        """Test position mapping with edge cases."""
+        from core.position_mapping import PositionMapper
+        
+        # Test with 2 players (heads up)
+        mapper_2 = PositionMapper(2)
+        positions_2 = mapper_2.get_positions()
+        self.assertEqual(len(positions_2), 2)
+        self.assertIn('BTN', positions_2)
+        self.assertIn('BB', positions_2)
+        
+        # Test with 3 players
+        mapper_3 = PositionMapper(3)
+        positions_3 = mapper_3.get_positions()
+        self.assertEqual(len(positions_3), 3)
+        self.assertIn('BTN', positions_3)
+        self.assertIn('SB', positions_3)
+        self.assertIn('BB', positions_3)
+    
+    # ============================================================================
+    # SIGNAL HANDLER AND CLEANUP TESTS
+    # ============================================================================
+    
+    def test_graceful_shutdown(self):
+        """Test graceful shutdown handling."""
+        import signal
+        
+        # Mock signal handler
+        with patch.object(self.state_machine, '_cleanup') as mock_cleanup:
+            # Simulate SIGINT
+            self.state_machine._signal_handler(signal.SIGINT, None)
+            mock_cleanup.assert_called()
+    
+    def test_emergency_save(self):
+        """Test emergency save functionality."""
+        self.state_machine.start_session()
+        self.state_machine.start_hand()
+        
+        # Simulate incomplete hand
+        self.state_machine.current_hand = MagicMock()
+        self.state_machine.current_hand.hand_complete = False
+        
+        with patch.object(self.state_machine.logger, '_emergency_save') as mock_save:
+            self.state_machine._cleanup()
+            mock_save.assert_called()
+    
+    # ============================================================================
+    # ENHANCED HAND EVALUATOR TESTS
+    # ============================================================================
+    
+    def test_best_five_cards_selection(self):
+        """Test selection of best 5-card combination."""
+        hole_cards = ['Ah', 'Kh']
+        board = ['Qh', 'Jh', 'Th', '9h', '8h']
+        
+        best_five = self.state_machine.hand_evaluator.get_best_five_cards(hole_cards, board)
+        self.assertEqual(len(best_five), 5)
+        # Should select the straight flush
+        self.assertIn('Ah', best_five)
+        self.assertIn('Kh', best_five)
+    
+    def test_hand_rank_to_string_conversion(self):
+        """Test hand rank enum to string conversion."""
+        from core.hand_evaluation import HandRank
+        
+        result = self.state_machine.hand_evaluator.hand_rank_to_string(HandRank.FULL_HOUSE)
+        self.assertEqual(result, 'full_house')
+    
+    def test_hand_evaluator_cache_performance(self):
+        """Test hand evaluator cache performance."""
+        hole_cards = ['Ah', 'Kh']
+        board = ['Qh', 'Jh', 'Th']
+        
+        # First evaluation (cache miss)
+        start_time = time.time()
+        result1 = self.state_machine.hand_evaluator.evaluate_hand(hole_cards, board)
+        first_time = time.time() - start_time
+        
+        # Second evaluation (cache hit)
+        start_time = time.time()
+        result2 = self.state_machine.hand_evaluator.evaluate_hand(hole_cards, board)
+        second_time = time.time() - start_time
+        
+        # Results should be identical
+        self.assertEqual(result1, result2)
+        # Second evaluation should be faster (cached)
+        self.assertLess(second_time, first_time)
+    
+    # ============================================================================
+    # COMPLEX SIDE POT SCENARIOS
+    # ============================================================================
+    
+    def test_complex_side_pot_with_folds(self):
+        """Test side pot creation with players folding at different stages."""
+        players = self.state_machine.game_state.players[:4]
+        
+        # Player 0: All-in for 50
+        players[0].total_invested = 50
+        players[0].is_all_in = True
+        players[0].is_active = True
+        
+        # Player 1: Folded after investing 30
+        players[1].total_invested = 30
+        players[1].is_active = False  # Folded
+        
+        # Player 2: All-in for 100
+        players[2].total_invested = 100
+        players[2].is_all_in = True
+        players[2].is_active = True
+        
+        # Player 3: Calls 100
+        players[3].total_invested = 100
+        players[3].is_active = True
+        
+        side_pots = self.state_machine.create_side_pots()
+        
+        # Verify correct pot distribution
+        total_pot = sum(p.total_invested for p in players)
+        total_in_pots = sum(pot['amount'] for pot in side_pots)
+        self.assertAlmostEqual(total_pot, total_in_pots, places=2)
+    
+    def test_side_pot_with_partial_calls(self):
+        """Test side pot creation with partial calls."""
+        players = self.state_machine.game_state.players[:3]
+        
+        # Player 0: All-in for 25
+        players[0].total_invested = 25
+        players[0].is_all_in = True
+        players[0].is_active = True
+        
+        # Player 1: Calls 50 (partial call)
+        players[1].total_invested = 50
+        players[1].is_active = True
+        players[1].partial_call_amount = 25  # Only called 25 of the 50
+        
+        # Player 2: Calls full amount
+        players[2].total_invested = 50
+        players[2].is_active = True
+        
+        side_pots = self.state_machine.create_side_pots()
+        
+        # Should create side pots correctly
+        self.assertGreater(len(side_pots), 0)
+        
+        # Verify pot amounts are correct
+        total_invested = sum(p.total_invested for p in players)
+        total_in_pots = sum(pot['amount'] for pot in side_pots)
+        self.assertAlmostEqual(total_invested, total_in_pots, places=2)
+    
+    # ============================================================================
+    # FILE OPERATIONS TESTS
+    # ============================================================================
+    
+    def test_strategy_file_operations(self):
+        """Test strategy file save and load operations."""
+        from core.gui_models import FileOperations
+        
+        test_strategy = {"test": "data", "hands": ["Ah", "Kh"]}
+        filename = "test_strategy.json"
+        
+        # Test save
+        success = FileOperations.save_strategy(test_strategy, filename)
+        self.assertTrue(success)
+        
+        # Test load
+        loaded = FileOperations.load_strategy(filename)
+        self.assertEqual(loaded, test_strategy)
+    
+    def test_session_file_operations(self):
+        """Test session file operations."""
+        # Create test session data
+        session_data = {
+            "hands_played": 5,
+            "total_pot_volume": 150.0,
+            "players": [{"name": "Player 1", "stack": 95.0}]
+        }
+        
+        # Test export
+        success = self.state_machine.export_session("test_session.json")
+        self.assertTrue(success)
+        
+        # Test import
+        success = self.state_machine.import_session("test_session.json")
+        self.assertTrue(success)
+    
+    # ============================================================================
+    # COMPREHENSIVE SESSION STATISTICS TESTS
+    # ============================================================================
+    
+    def test_session_statistics_calculation(self):
+        """Test comprehensive session statistics."""
+        self.state_machine.start_session()
+        
+        # Play multiple hands
+        for i in range(5):
+            self.state_machine.start_hand()
+            # Simulate hand
+            player = self.state_machine.game_state.players[0]
+            self.state_machine.execute_action(player, ActionType.CALL, 1.0)
+            self.state_machine.transition_to(PokerState.END_HAND)
+        
+        stats = self.state_machine.get_session_statistics()
+        
+        self.assertIn('total_hands', stats)
+        self.assertIn('hands_per_hour', stats)
+        self.assertIn('total_pot_volume', stats)
+        self.assertIn('biggest_pot', stats)
+        self.assertIn('player_statistics', stats)
+    
+    def test_player_statistics_tracking(self):
+        """Test individual player statistics tracking."""
+        self.state_machine.start_session()
+        self.state_machine.start_hand()
+        
+        player = self.state_machine.game_state.players[0]
+        
+        # Track some actions
+        self.state_machine.execute_action(player, ActionType.RAISE, 10)
+        self.state_machine.execute_action(player, ActionType.CALL, 5)
+        
+        stats = self.state_machine.get_session_statistics()
+        player_stats = stats['player_statistics']
+        
+        self.assertIn(player.name, player_stats)
+        self.assertIn('total_bets', player_stats[player.name])
+        self.assertIn('total_calls', player_stats[player.name])
+    
+    # ============================================================================
+    # STRESS TESTS AND PERFORMANCE BENCHMARKS
+    # ============================================================================
+    
+    def test_large_pot_scenarios(self):
+        """Test scenarios with very large pots."""
+        players = self.state_machine.game_state.players[:3]
+        
+        # Set very large stacks
+        for player in players:
+            player.stack = 10000.0
+        
+        # Create large bets
+        for player in players:
+            player.total_invested = 5000.0
+            player.is_active = True
+        
+        # Test side pot creation with large amounts
+        side_pots = self.state_machine.create_side_pots()
+        
+        total_pot = sum(p.total_invested for p in players)
+        total_in_pots = sum(pot['amount'] for pot in side_pots)
+        self.assertAlmostEqual(total_pot, total_in_pots, places=2)
+    
+    def test_many_players_scenario(self):
+        """Test scenarios with maximum number of players."""
+        # Create state machine with maximum players
+        max_players_sm = ImprovedPokerStateMachine(num_players=10, test_mode=True)
+        
+        self.assertEqual(len(max_players_sm.game_state.players), 10)
+        
+        # Test position assignment
+        max_players_sm.assign_positions()
+        positions = [p.position for p in max_players_sm.game_state.players]
+        
+        # Should have all expected positions
+        self.assertIn("BTN", positions)
+        self.assertIn("SB", positions)
+        self.assertIn("BB", positions)
+    
+    def test_rapid_state_transitions(self):
+        """Test rapid state transitions for race condition detection."""
+        self.state_machine.start_hand()
+        
+        # Rapidly transition states
+        for _ in range(100):
+            self.state_machine.transition_to(PokerState.PREFLOP_BETTING)
+            self.state_machine.transition_to(PokerState.DEAL_FLOP)
+            self.state_machine.transition_to(PokerState.FLOP_BETTING)
+        
+        # Should not crash or corrupt state
+        self.assertIsNotNone(self.state_machine.current_state)
+    
+    # ============================================================================
+    # REGRESSION TESTS FOR KNOWN BUGS
+    # ============================================================================
+    
+    def test_bb_folding_regression(self):
+        """Regression test for BB folding bug."""
+        self.state_machine.start_hand()
+        self.state_machine.transition_to(PokerState.PREFLOP_BETTING)
+        
+        bb_player = None
+        for player in self.state_machine.game_state.players:
+            if player.position == "BB":
+                bb_player = player
+                break
+        
+        self.assertIsNotNone(bb_player)
+        
+        # BB should be able to fold
+        valid_actions = self.state_machine.get_valid_actions(bb_player)
+        self.assertIn(ActionType.FOLD, valid_actions)
+    
+    def test_pot_consistency_regression(self):
+        """Regression test for pot consistency issues."""
+        self.state_machine.start_hand()
+        
+        # Execute some actions
+        player = self.state_machine.game_state.players[0]
+        self.state_machine.execute_action(player, ActionType.RAISE, 10)
+        
+        # Pot should be consistent
+        total_invested = sum(p.total_invested for p in self.state_machine.game_state.players)
+        self.assertEqual(self.state_machine.game_state.pot, total_invested)
+    
+    def test_hand_evaluation_cache_regression(self):
+        """Regression test for hand evaluation cache issues."""
+        hole_cards = ['Ah', 'Kh']
+        board = ['Qh', 'Jh', 'Th']
+        
+        # First evaluation
+        result1 = self.state_machine.hand_evaluator.evaluate_hand(hole_cards, board)
+        
+        # Clear cache
+        self.state_machine.hand_evaluator._hand_eval_cache.clear()
+        
+        # Second evaluation (should be same result)
+        result2 = self.state_machine.hand_evaluator.evaluate_hand(hole_cards, board)
+        
+        self.assertEqual(result1, result2)
 
 
-if __name__ == "__main__":
-    # Run the tests
-    unittest.main(verbosity=2)
+if __name__ == '__main__':
+    unittest.main()

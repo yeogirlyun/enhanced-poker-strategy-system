@@ -1,0 +1,31 @@
+{
+  "session_info": {
+    "session_id": "ce1af9ec-21b8-4d25-affc-fc31ddf6a998",
+    "start_time": "2025-08-07T20:13:49.537109",
+    "end_time": null,
+    "session_duration": 0.0016291141510009766,
+    "total_hands": 0,
+    "total_players": 6,
+    "big_blind_amount": 1.0,
+    "initial_stacks": {
+      "Player 1": 100.0,
+      "Player 2": 100.0,
+      "Player 3": 100.0,
+      "Player 4": 100.0,
+      "Player 5": 100.0,
+      "Player 6": 100.0
+    },
+    "final_stacks": {},
+    "session_notes": "",
+    "hands_played": 0,
+    "human_wins": 0,
+    "human_losses": 0
+  },
+  "hands_played": [],
+  "session_log": [
+    "[SESSION 20:13:49] Session started",
+    "[SESSION 20:13:49] Players: 6",
+    "[SESSION 20:13:49] Big Blind: $1.0",
+    "[SESSION 20:13:49] Starting hand 1"
+  ]
+}

@@ -99,6 +99,10 @@ class PositionMapper:
             return self.positions[offset]
         return f"SEAT{seat_index}"  # Fallback for unexpected cases
     
+    def get_positions(self) -> List[str]:
+        """Get the list of positions for the current table size."""
+        return self.positions
+    
     def map_strategy_position(self, actual_position: str, strategy_positions: List[str]) -> Optional[str]:
         """
         Map an actual table position to a strategy position.

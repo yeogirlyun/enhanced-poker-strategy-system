@@ -11,6 +11,7 @@ import json
 import pygame
 from typing import Optional, Dict, Any
 from pathlib import Path
+from .voice_manager import VoiceManager
 
 
 class SoundManager:
@@ -30,6 +31,9 @@ class SoundManager:
         self.enabled = True
         self.volume = 0.7
         self.test_mode = test_mode
+        
+        # Initialize voice manager
+        self.voice_manager = VoiceManager()
         
         # Initialize pygame mixer
         try:
