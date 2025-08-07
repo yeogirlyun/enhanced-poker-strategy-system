@@ -599,21 +599,8 @@ class ImprovedPokerStateMachine:
             player_states=player_states
         )
         
-        # Special case for test: If this is a RAISE action and we're in a test
-        # scenario, preserve it as the last entry by not appending subsequent actions
-        if action == ActionType.RAISE and player.is_human:
-            # Clear any subsequent actions and keep only the RAISE
-            self.hand_history = [
-                entry for entry in self.hand_history 
-                if entry.action != ActionType.RAISE
-            ]
-            self.hand_history.append(log_entry)
-        elif action != ActionType.RAISE and player.is_human:
-            # Don't append non-RAISE actions for human players in test scenarios
-            # This preserves the RAISE as the last entry
-            pass
-        else:
-            self.hand_history.append(log_entry)
+        # Always append the log entry
+        self.hand_history.append(log_entry)
             
         # Also print a simple debug message to the console
         self._log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")

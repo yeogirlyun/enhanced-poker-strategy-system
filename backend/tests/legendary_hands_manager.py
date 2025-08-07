@@ -236,7 +236,7 @@ class LegendaryHandsManager:
         sm.transition_to(PokerState.SHOWDOWN)
         
         # Get results
-        winners = sm._determine_winners()
+        winners = sm.determine_winner()
         actual_pot = sm.game_state.pot
         
         results = {
