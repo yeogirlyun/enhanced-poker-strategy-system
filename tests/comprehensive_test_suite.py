@@ -37,7 +37,7 @@ from dataclasses import dataclass
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))), 'backend'))
 
-from shared.poker_state_machine_enhanced import (
+from backend.core.poker_state_machine import (
     ImprovedPokerStateMachine, ActionType, PokerState, Player, GameState
 )
 from gui_models import StrategyData, HandStrengthTier

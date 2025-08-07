@@ -740,6 +740,10 @@ class PracticeSessionUI(ttk.Frame):
         amount = 0
         if action_str in ["bet", "raise", "bet_or_raise"]:
             amount = self.bet_size_var.get()
+        elif action_str == "call":
+            # Calculate the correct call amount
+            call_amount = self.state_machine.game_state.current_bet - player.current_bet
+            amount = call_amount
 
         # Play industry-standard sound for the action
         self.sfx.play_action_sound(action_str, amount)
