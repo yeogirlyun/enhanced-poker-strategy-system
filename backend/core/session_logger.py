@@ -23,6 +23,9 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict, field
 
+# Import debug_print from poker_state_machine
+from .poker_state_machine import debug_print
+
 
 @dataclass
 class ActionLog:
