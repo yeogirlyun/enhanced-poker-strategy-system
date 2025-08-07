@@ -284,7 +284,7 @@ class ImprovedPokerStateMachine:
         
         # Initialize players and session
         self._initialize_players()
-        self._initialize_session_state()
+        self.session_state = self._initialize_session_state()
 
     def _initialize_session_state(self) -> SessionState:
         """Initialize comprehensive session tracking."""
@@ -513,8 +513,25 @@ class ImprovedPokerStateMachine:
         if stats["session_duration"] > 0:
             stats["hands_per_hour"] = (stats["total_hands"] / stats["session_duration"]) * 3600
         
-        # Calculate player statistics
+        # Initialize player statistics from current game state
         player_stats = {}
+        if self.game_state:
+            for player in self.game_state.players:
+                player_stats[player.name] = {
+                    "hands_played": 0,
+                    "total_winnings": 0,
+                    "biggest_win": 0,
+                    "all_ins": 0,
+                    "total_bets": 0,
+                    "total_calls": 0,
+                    "total_raises": 0,
+                    "total_folds": 0,
+                    "total_checks": 0,
+                    "current_stack": player.stack,
+                    "total_invested": player.total_invested
+                }
+        
+        # Calculate player statistics from hands played
         for hand in self.session_state.hands_played:
             for player_end in hand.players_at_end:
                 name = player_end["name"]
@@ -523,12 +540,50 @@ class ImprovedPokerStateMachine:
                         "hands_played": 0,
                         "total_winnings": 0,
                         "biggest_win": 0,
-                        "all_ins": 0
+                        "all_ins": 0,
+                        "total_bets": 0,
+                        "total_calls": 0,
+                        "total_raises": 0,
+                        "total_folds": 0,
+                        "total_checks": 0,
+                        "current_stack": player_end.get("stack", 0),
+                        "total_invested": player_end.get("total_invested", 0)
                     }
                 
                 player_stats[name]["hands_played"] += 1
-                # Calculate winnings from stack changes
-                # This would need more detailed tracking
+        
+        # Add real-time action tracking from action log
+        for action_log in self.action_log:
+            if hasattr(action_log, 'player_name') and hasattr(action_log, 'action'):
+                player_name = action_log.player_name
+                action = action_log.action
+                amount = getattr(action_log, 'amount', 0)
+                
+                if player_name not in player_stats:
+                    player_stats[player_name] = {
+                        "hands_played": 0,
+                        "total_winnings": 0,
+                        "biggest_win": 0,
+                        "all_ins": 0,
+                        "total_bets": 0,
+                        "total_calls": 0,
+                        "total_raises": 0,
+                        "total_folds": 0,
+                        "total_checks": 0,
+                        "current_stack": 0,
+                        "total_invested": 0
+                    }
+                
+                if action == ActionType.BET:
+                    player_stats[player_name]["total_bets"] += 1
+                elif action == ActionType.CALL:
+                    player_stats[player_name]["total_calls"] += 1
+                elif action == ActionType.RAISE:
+                    player_stats[player_name]["total_raises"] += 1
+                elif action == ActionType.FOLD:
+                    player_stats[player_name]["total_folds"] += 1
+                elif action == ActionType.CHECK:
+                    player_stats[player_name]["total_checks"] += 1
         
         stats["player_statistics"] = player_stats
         
@@ -606,20 +661,35 @@ class ImprovedPokerStateMachine:
         
         # Always append the log entry
         self.hand_history.append(log_entry)
+        
+        # Also log to action_log for statistics tracking
+        self._log_action(player.name, action, amount)
             
         # Also print a simple debug message to the console
-        self._log_action(f"{player.name}: {action.value.upper()} ${amount:.2f}")
-
-    def _log_action(self, message: str):
-        """Log a simple action message to the console for debugging."""
+        debug_message = f"{player.name}: {action.value.upper()} ${amount:.2f}"
         timestamp = time.strftime("%H:%M:%S")
-        log_entry = f"[{timestamp}] {message}"
-        self.action_log.append(log_entry)
+        print(f"[{timestamp}] {debug_message}")
+
+    def _log_action(self, player_name: str, action: ActionType, amount: float):
+        """Log a structured action for statistics tracking."""
+        action_entry = {
+            'player_name': player_name,
+            'action': action,
+            'amount': amount,
+            'timestamp': time.time()
+        }
+        self.action_log.append(action_entry)
         
-        # BUG FIX: Memory leak prevention - use deque for efficient trimming
+        # BUG FIX: Memory leak prevention - use slice assignment for efficient trimming
         if len(self.action_log) > self.max_log_size:
             # Use slice assignment to avoid creating new list references
-            self.action_log[:] = self.action_log[-self.max_log_size:]
+            self.action_log = self.action_log[-self.max_log_size:]
+    
+    def _log_message(self, message: str):
+        """Log a simple message for debugging."""
+        timestamp = time.strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] {message}"
+        print(log_entry)
         
         # NEW: Call the UI callback for detailed logging
         if self.on_log_entry:
@@ -629,7 +699,7 @@ class ImprovedPokerStateMachine:
         """Transition to a new state with validation and logging."""
         # FIXED: Add transition lock to prevent concurrent transitions
         if hasattr(self, '_transitioning') and self._transitioning:
-            self._log_action(f"WARNING: Transition already in progress, ignoring transition to {new_state.value}")
+            self._log_message(f"WARNING: Transition already in progress, ignoring transition to {new_state.value}")
             return
         
         self._transitioning = True
@@ -643,7 +713,7 @@ class ImprovedPokerStateMachine:
             # Validate transition
             if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
                 debug_print(f"❌ ERROR: Invalid transition from {self.current_state.value} to {new_state.value}")
-                self._log_action(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
+                self._log_message(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
                 return
 
             # Check for active players before END_HAND transition
@@ -656,7 +726,7 @@ class ImprovedPokerStateMachine:
                     debug_print(f"🔄 DEBUG: Single active player, ending hand")
 
             # Log the transition
-            self._log_action(f"State transition: {self.current_state.value} -> {new_state.value}")
+            self._log_message(f"State transition: {self.current_state.value} -> {new_state.value}")
             
             # Update state
             old_state = self.current_state
@@ -709,19 +779,19 @@ class ImprovedPokerStateMachine:
         # Check pot consistency
         total_invested = sum(p.total_invested for p in self.game_state.players)
         if abs(self.game_state.pot - total_invested) > 0.01:
-            self._log_action(f"WARNING: Pot inconsistency - Pot: ${self.game_state.pot:.2f}, Invested: ${total_invested:.2f}")
+            self._log_message(f"WARNING: Pot inconsistency - Pot: ${self.game_state.pot:.2f}, Invested: ${total_invested:.2f}")
         
         # Check for negative stacks
         for player in self.game_state.players:
             if player.stack < 0:
-                self._log_action(f"ERROR: {player.name} has negative stack: ${player.stack:.2f}")
+                self._log_message(f"ERROR: {player.name} has negative stack: ${player.stack:.2f}")
                 player.stack = 0  # Fix it
         
         # Check action player validity
         if self.action_player_index >= 0:
             player = self.get_action_player()
             if player and (not player.is_active or player.is_all_in):
-                self._log_action(f"ERROR: Invalid action player: {player.name}")
+                self._log_message(f"ERROR: Invalid action player: {player.name}")
                 self.advance_to_next_player()
 
     def handle_state_entry(self, existing_players: Optional[List[Player]] = None):
@@ -770,7 +840,7 @@ class ImprovedPokerStateMachine:
         if len(active_players) < 2:
             # Only log this message if we're not in the middle of a hand completion
             if self.current_state not in [PokerState.END_HAND, PokerState.SHOWDOWN]:
-                self._log_action("Not enough active players for blinds")
+                self._log_message("Not enough active players for blinds")
             self.small_blind_position = -1
             self.big_blind_position = -1
             return
@@ -801,7 +871,7 @@ class ImprovedPokerStateMachine:
         for player in self.game_state.players:
             if player.position.startswith('P') and player.position[1:].isdigit():
                 # This should never happen now
-                self._log_action(f"ERROR: Generic position assigned to {player.name}")
+                self._log_message(f"ERROR: Generic position assigned to {player.name}")
                 player.position = "MP"  # Safe fallback
 
     def _start_logging_session(self):
@@ -931,6 +1001,11 @@ class ImprovedPokerStateMachine:
                         "session_duration": time.time() - getattr(self.logger.session, 'start_time', time.time()) if hasattr(self.logger, 'session') else 0
                     }
                 )
+                
+                # Call emergency save to ensure all data is saved
+                if hasattr(self.logger, '_emergency_save'):
+                    self.logger._emergency_save()
+                
                 self._end_logging_session()
                 debug_print(f"✅ DEBUG: Logging session ended successfully")
             else:
@@ -1059,15 +1134,15 @@ class ImprovedPokerStateMachine:
         for _ in range(3):  # Multiple shuffle passes for better randomization
             random.shuffle(deck)
         
-        self._log_action(f"🃏 Created and shuffled deck: {len(deck)} cards")
-        self._log_action(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
-        self._log_action(f"🃏 DEBUG: Last 5 cards in new deck: {deck[-5:]}")
+        self._log_message(f"🃏 Created and shuffled deck: {len(deck)} cards")
+        self._log_message(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
+        self._log_message(f"🃏 DEBUG: Last 5 cards in new deck: {deck[-5:]}")
         
         # Force a different random seed each call to ensure different shuffles
         import time
         random.seed(time.time())
         random.shuffle(deck)  # Extra shuffle with time-based seed
-        self._log_action(f"🃏 DEBUG: After extra shuffle, first 10 cards: {deck[:10]}")
+        self._log_message(f"🃏 DEBUG: After extra shuffle, first 10 cards: {deck[:10]}")
         
         return deck
 
@@ -1079,14 +1154,14 @@ class ImprovedPokerStateMachine:
         valid_ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
         valid_suits = ["h", "d", "c", "s"]
         if len(card) != 2 or card[0] not in valid_ranks or card[1] not in valid_suits:
-            self._log_action(f"Invalid card dealt: {card}")
+            self._log_message(f"Invalid card dealt: {card}")
             raise ValueError(f"Invalid card: {card}")
         return card
 
     def handle_start_hand(self, existing_players: Optional[List[Player]] = None):
         """Initialize a new hand with all fixes, using existing players if provided."""
         debug_print(f"🚀 DEBUG: handle_start_hand called - existing_players={len(existing_players) if existing_players else 'None'}")
-        self._log_action("Starting new hand")
+        self._log_message("Starting new hand")
         
         # FIXED: Add memory cleanup check
         self._hands_since_cleanup += 1
@@ -1102,10 +1177,10 @@ class ImprovedPokerStateMachine:
         self.hand_history.clear()
 
         # Create a fresh, properly shuffled deck
-        self._log_action("🃏 Creating fresh deck for new hand")
+        self._log_message("🃏 Creating fresh deck for new hand")
         deck = self.create_deck()
-        self._log_action(f"🃏 New deck created with {len(deck)} cards")
-        self._log_action(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
+        self._log_message(f"🃏 New deck created with {len(deck)} cards")
+        self._log_message(f"🃏 DEBUG: First 10 cards in new deck: {deck[:10]}")
 
         # Use existing players or create new ones
         if existing_players:
@@ -1150,11 +1225,11 @@ class ImprovedPokerStateMachine:
             min_raise=1.0,
             big_blind=1.0,
         )
-        self._log_action(f"🃏 New game state created with fresh board and {len(deck)} cards")
+        self._log_message(f"🃏 New game state created with fresh board and {len(deck)} cards")
         
         # DEBUG: Verify deck was properly assigned and is different 
-        self._log_action(f"🃏 DEBUG: GameState deck assigned, first 5 cards: {self.game_state.deck[:5]}")
-        self._log_action(f"🃏 DEBUG: Deck object id: {id(self.game_state.deck)}")
+        self._log_message(f"🃏 DEBUG: GameState deck assigned, first 5 cards: {self.game_state.deck[:5]}")
+        self._log_message(f"🃏 DEBUG: Deck object id: {id(self.game_state.deck)}")
 
         # Assign positions correctly
         self.assign_positions()
@@ -1164,7 +1239,7 @@ class ImprovedPokerStateMachine:
         valid_positions = self._get_position_names()
         for i, player in enumerate(self.game_state.players):
             if player.position not in valid_positions and not player.position.startswith("P"):
-                self._log_action(f"ERROR: Invalid position '{player.position}' for {player.name}")
+                self._log_message(f"ERROR: Invalid position '{player.position}' for {player.name}")
                 player.position = "Unknown"  # Fallback position
         # --- END POSITION VALIDATION ---
         
@@ -1187,7 +1262,7 @@ class ImprovedPokerStateMachine:
 
         # Check if players can post blinds
         if sb_player.stack < sb_amount or bb_player.stack < bb_amount:
-            self._log_action("Insufficient stacks for blinds; ending game")
+            self._log_message("Insufficient stacks for blinds; ending game")
             self.transition_to(PokerState.END_HAND)
             return
 
@@ -1223,15 +1298,15 @@ class ImprovedPokerStateMachine:
 
         # FIXED: Don't transition to preflop betting immediately
         # Wait for dealing animation to complete via callback
-        self._log_action("🃏 Waiting for dealing animation to complete before starting betting...")
+        self._log_message("🃏 Waiting for dealing animation to complete before starting betting...")
 
     def deal_hole_cards(self):
         """Deal hole cards to all players with casino-style one-card-at-a-time dealing."""
-        self._log_action("🃏 DEALING HOLE CARDS - Casino Style")
+        self._log_message("🃏 DEALING HOLE CARDS - Casino Style")
         
         # Create a fresh deck for this hand
         self.game_state.deck = self.create_deck()
-        self._log_action(f"🃏 Created fresh deck with {len(self.game_state.deck)} cards")
+        self._log_message(f"🃏 Created fresh deck with {len(self.game_state.deck)} cards")
         
         # Clear all player cards first
         for player in self.game_state.players:
@@ -1242,7 +1317,7 @@ class ImprovedPokerStateMachine:
         for player in self.game_state.players:
             card = self.deal_card()
             player.cards.append(card)
-            self._log_action(f"🃏 First card to {player.name}: {card}")
+            self._log_message(f"🃏 First card to {player.name}: {card}")
             
             # Notify UI of single card dealt
             if hasattr(self, 'on_single_card_dealt'):
@@ -1253,7 +1328,7 @@ class ImprovedPokerStateMachine:
         for player in self.game_state.players:
             card = self.deal_card()
             player.cards.append(card)
-            self._log_action(f"🃏 Second card to {player.name}: {card}")
+            self._log_message(f"🃏 Second card to {player.name}: {card}")
             
             # Notify UI of single card dealt
             if hasattr(self, 'on_single_card_dealt'):
@@ -1294,12 +1369,12 @@ class ImprovedPokerStateMachine:
 
     def start_preflop_betting_after_dealing(self):
         """Start preflop betting after dealing animation is complete."""
-        self._log_action("🃏 All cards dealt - starting preflop betting round")
+        self._log_message("🃏 All cards dealt - starting preflop betting round")
         self.transition_to(PokerState.PREFLOP_BETTING)
 
     def handle_preflop_betting(self):
         """Handle preflop betting round."""
-        self._log_action("Preflop betting round")
+        self._log_message("Preflop betting round")
         self.game_state.street = "preflop"
         
         # --- NEW: Only reset round tracking, NOT the action player index ---
@@ -1312,11 +1387,11 @@ class ImprovedPokerStateMachine:
         # Check if round is complete first (e.g., if all but one player folded during blinds posting)
         # This preserves the fix for hand transition issues
         if self.is_round_complete():
-            self._log_action("🔄 Round already complete, transitioning to flop")
+            self._log_message("🔄 Round already complete, transitioning to flop")
             self.transition_to(PokerState.DEAL_FLOP)
         else:
             # Start the action flow - the action player was set correctly in handle_start_hand
-            self._log_action("🎯 Starting preflop action flow")
+            self._log_message("🎯 Starting preflop action flow")
             self.handle_current_player_action()
 
     def reset_round_tracking(self):
@@ -1328,7 +1403,7 @@ class ImprovedPokerStateMachine:
     def handle_deal_flop(self):
         """Deal the flop."""
 
-        self._log_action("🎴 DEALING FLOP")
+        self._log_message("🎴 DEALING FLOP")
         
         # Burn card
         if self.game_state.deck:
@@ -1338,10 +1413,10 @@ class ImprovedPokerStateMachine:
         for i in range(3):
             card = self.deal_card()
             self.game_state.board.append(card)
-            self._log_action(f"🎴 Dealt card {i+1}: {card}")
+            self._log_message(f"🎴 Dealt card {i+1}: {card}")
 
-        self._log_action(f"🎴 FLOP COMPLETE: {' '.join(self.game_state.board)}")
-        self._log_action(f"📊 Pot before flop betting: ${self.game_state.pot:.2f}")
+        self._log_message(f"🎴 FLOP COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_message(f"📊 Pot before flop betting: ${self.game_state.pot:.2f}")
         
         # Log board cards to comprehensive logging system
         try:
@@ -1357,7 +1432,7 @@ class ImprovedPokerStateMachine:
     def handle_deal_turn(self):
         """Deal the turn."""
 
-        self._log_action("🎴 DEALING TURN")
+        self._log_message("🎴 DEALING TURN")
         
         # Burn card
         if self.game_state.deck:
@@ -1366,10 +1441,10 @@ class ImprovedPokerStateMachine:
         # Deal 1 community card (turn)
         card = self.deal_card()
         self.game_state.board.append(card)
-        self._log_action(f"🎴 Dealt turn card: {card}")
+        self._log_message(f"🎴 Dealt turn card: {card}")
 
-        self._log_action(f"🎴 TURN COMPLETE: {' '.join(self.game_state.board)}")
-        self._log_action(f"📊 Pot before turn betting: ${self.game_state.pot:.2f}")
+        self._log_message(f"🎴 TURN COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_message(f"📊 Pot before turn betting: ${self.game_state.pot:.2f}")
         
         # Log board cards to comprehensive logging system
         try:
@@ -1385,7 +1460,7 @@ class ImprovedPokerStateMachine:
     def handle_deal_river(self):
         """Deal the river."""
 
-        self._log_action("🎴 DEALING RIVER")
+        self._log_message("🎴 DEALING RIVER")
         
         # Burn card
         if self.game_state.deck:
@@ -1394,10 +1469,10 @@ class ImprovedPokerStateMachine:
         # Deal 1 community card (river)
         card = self.deal_card()
         self.game_state.board.append(card)
-        self._log_action(f"🎴 Dealt river card: {card}")
+        self._log_message(f"🎴 Dealt river card: {card}")
 
-        self._log_action(f"🎴 RIVER COMPLETE: {' '.join(self.game_state.board)}")
-        self._log_action(f"📊 Pot before river betting: ${self.game_state.pot:.2f}")
+        self._log_message(f"🎴 RIVER COMPLETE: {' '.join(self.game_state.board)}")
+        self._log_message(f"📊 Pot before river betting: ${self.game_state.pot:.2f}")
         
         # Log board cards to comprehensive logging system
         try:
@@ -1423,8 +1498,8 @@ class ImprovedPokerStateMachine:
             'river': 'RIVER'
         }
         street_name = street_names.get(self.game_state.street, self.game_state.street.upper())
-        self._log_action(f"🔄 TRANSITIONING TO {street_name} BETTING")
-        self._log_action(f"📊 Pot: ${self.game_state.pot:.2f}")
+        self._log_message(f"🔄 TRANSITIONING TO {street_name} BETTING")
+        self._log_message(f"📊 Pot: ${self.game_state.pot:.2f}")
         
         # Reset game state for new round
         self.game_state.current_bet = 0.0
@@ -1458,11 +1533,11 @@ class ImprovedPokerStateMachine:
             player_at_index = self.game_state.players[current_index]
             if player_at_index.is_active and not player_at_index.is_all_in:
                 self.action_player_index = current_index
-                self._log_action(f"🎯 Action starts with {player_at_index.name} in seat {current_index}.")
+                self._log_message(f"🎯 Action starts with {player_at_index.name} in seat {current_index}.")
                 return
 
         # If no player can act, something is wrong. Log it.
-        self._log_action("ERROR: Could not find any active player to start the betting round.")
+        self._log_message("ERROR: Could not find any active player to start the betting round.")
 
     def set_action_to_first_active_after_button(self):
         """Set action to first active player after button."""
@@ -1478,19 +1553,19 @@ class ImprovedPokerStateMachine:
 
     def handle_flop_betting(self):
         """Handle flop betting round."""
-        self._log_action("Flop betting round")
+        self._log_message("Flop betting round")
         self.game_state.street = "flop"
         self._handle_betting_round(PokerState.DEAL_TURN)
 
     def handle_turn_betting(self):
         """Handle turn betting round."""
-        self._log_action("Turn betting round")
+        self._log_message("Turn betting round")
         self.game_state.street = "turn"
         self._handle_betting_round(PokerState.DEAL_RIVER)
 
     def handle_river_betting(self):
         """Handle river betting round."""
-        self._log_action("River betting round")
+        self._log_message("River betting round")
         self.game_state.street = "river"
         self._handle_betting_round(PokerState.SHOWDOWN)
 
@@ -1514,87 +1589,87 @@ class ImprovedPokerStateMachine:
         and have contributed the same amount to the pot in this round.
         """
         active_players = [p for p in self.game_state.players if p.is_active]
-        self._log_action(f"🔍 ROUND_COMPLETE_CHECK: {len(active_players)} active players")
+        self._log_message(f"🔍 ROUND_COMPLETE_CHECK: {len(active_players)} active players")
         
         if len(active_players) <= 1:
-            self._log_action("✅ Round complete: ≤1 active players")
+            self._log_message("✅ Round complete: ≤1 active players")
             return True
 
         # Identify players who can still make a move
         players_who_can_act = [p for p in active_players if not p.is_all_in]
-        self._log_action(f"🔍 Players who can act: {[p.name for p in players_who_can_act]}")
+        self._log_message(f"🔍 Players who can act: {[p.name for p in players_who_can_act]}")
         
         if not players_who_can_act:
-            self._log_action("✅ Round complete: Everyone is all-in")
+            self._log_message("✅ Round complete: Everyone is all-in")
             return True # Round is over if everyone is all-in
 
         # Check if everyone who can act has had their turn
         all_have_acted = all(p.has_acted_this_round for p in players_who_can_act)
-        self._log_action(f"🔍 All have acted: {all_have_acted}")
+        self._log_message(f"🔍 All have acted: {all_have_acted}")
         for p in players_who_can_act:
-            self._log_action(f"   {p.name}: has_acted={p.has_acted_this_round}")
+            self._log_message(f"   {p.name}: has_acted={p.has_acted_this_round}")
         
         # Find the highest bet made by any player still in the hand
         highest_bet = max(p.current_bet for p in active_players)
-        self._log_action(f"🔍 Highest bet: ${highest_bet:.2f}")
+        self._log_message(f"🔍 Highest bet: ${highest_bet:.2f}")
 
         # Check if all players who can act have matched the highest bet
-        self._log_action(f"🔍 Checking bet equality against highest bet ${highest_bet:.2f}:")
+        self._log_message(f"🔍 Checking bet equality against highest bet ${highest_bet:.2f}:")
         bet_check_results = []
         for p in players_who_can_act:
             meets_bet = p.current_bet == highest_bet or (p.is_all_in and p.partial_call_amount is not None)
             bet_check_results.append(meets_bet)
-            self._log_action(f"   {p.name}: bet=${p.current_bet:.2f}, meets_requirement={meets_bet}")
+            self._log_message(f"   {p.name}: bet=${p.current_bet:.2f}, meets_requirement={meets_bet}")
         
         bets_are_equal = all(bet_check_results)
-        self._log_action(f"🔍 Bets are equal: {bets_are_equal} (all results: {bet_check_results})")
+        self._log_message(f"🔍 Bets are equal: {bets_are_equal} (all results: {bet_check_results})")
         
         # Special case: If BB is the only active player and hasn't acted yet, round is not complete
         if len(active_players) == 1 and active_players[0].position == "BB" and not active_players[0].has_acted_this_round:
-            self._log_action("❌ Round not complete: BB hasn't acted yet")
+            self._log_message("❌ Round not complete: BB hasn't acted yet")
             return False
         
         # The round is complete if everyone has acted and all bets are equal
         is_complete = all_have_acted and bets_are_equal
-        self._log_action(f"🔍 FINAL RESULT: Round complete = {is_complete}")
+        self._log_message(f"🔍 FINAL RESULT: Round complete = {is_complete}")
         return is_complete
 
     def handle_current_player_action(self):
         """Handle the current player's action with a delay for bots."""
-        self._log_action(f"🎯 HANDLE_CURRENT_PLAYER_ACTION: Current state = {self.current_state.value}")
+        self._log_message(f"🎯 HANDLE_CURRENT_PLAYER_ACTION: Current state = {self.current_state.value}")
         
         if self.current_state == PokerState.END_HAND:
-            self._log_action("🚨 Current state is END_HAND, returning early")
+            self._log_message("🚨 Current state is END_HAND, returning early")
             return
 
         current_player = self.get_action_player()
-        self._log_action(f"🎯 Action player index: {self.action_player_index}")
+        self._log_message(f"🎯 Action player index: {self.action_player_index}")
         
         if not current_player:
-            self._log_action("⚠️ No current action player found")
+            self._log_message("⚠️ No current action player found")
             # This can happen if all remaining players are all-in
             if self.is_round_complete():
-                self._log_action("🔄 Round is complete, handling round completion")
+                self._log_message("🔄 Round is complete, handling round completion")
                 self.handle_round_complete()
             else:
-                self._log_action("⏸️ Round not complete but no action player - potential issue!")
+                self._log_message("⏸️ Round not complete but no action player - potential issue!")
             return
 
-        self._log_action(f"🎯 ACTION TURN: Player at index {self.action_player_index} ({current_player.name})")
-        self._log_action(f"   👤 Human: {current_player.is_human}, Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
-        self._log_action(f"   💰 Stack: ${current_player.stack:.2f}, Current bet: ${current_player.current_bet:.2f}")
-        self._log_action(f"   🎲 Has acted this round: {current_player.has_acted_this_round}")
+        self._log_message(f"🎯 ACTION TURN: Player at index {self.action_player_index} ({current_player.name})")
+        self._log_message(f"   👤 Human: {current_player.is_human}, Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
+        self._log_message(f"   💰 Stack: ${current_player.stack:.2f}, Current bet: ${current_player.current_bet:.2f}")
+        self._log_message(f"   🎲 Has acted this round: {current_player.has_acted_this_round}")
 
         # Call the action player changed callback for both human and bot players
         if self.on_action_player_changed:
             self.on_action_player_changed(current_player)
 
         if current_player.is_human:
-            self._log_action(f"👨 HUMAN TURN: {current_player.name}")
+            self._log_message(f"👨 HUMAN TURN: {current_player.name}")
             if self.on_action_required:
                 self.on_action_required(current_player)
         else:
-            self._log_action(f"🤖 BOT TURN: {current_player.name}")
+            self._log_message(f"🤖 BOT TURN: {current_player.name}")
             if self.root_tk:
                 # Capture all necessary state to prevent race conditions
                 bot_action_data = {
@@ -1604,15 +1679,15 @@ class ImprovedPokerStateMachine:
                     'pot': self.game_state.pot,
                     'current_bet': self.game_state.current_bet
                 }
-                self._log_action(f"⏰ Scheduling bot action in 500ms for {current_player.name}")
+                self._log_message(f"⏰ Scheduling bot action in 500ms for {current_player.name}")
                 self.root_tk.after(500, lambda: self._execute_bot_action_safe(bot_action_data))  # Reduced delay to 500ms for faster bot play
             else:
-                self._log_action(f"🚀 Executing bot action immediately for {current_player.name}")
+                self._log_message(f"🚀 Executing bot action immediately for {current_player.name}")
                 self.execute_bot_action(current_player)
     
     def _execute_bot_action_safe(self, action_data: dict):
         """Safely execute bot action with state validation."""
-        self._log_action(f"⏰ SAFE_BOT_ACTION: Executing scheduled action for player index {action_data['player_index']}")
+        self._log_message(f"⏰ SAFE_BOT_ACTION: Executing scheduled action for player index {action_data['player_index']}")
         
         # BUG FIX: Enhanced race condition protection with atomic state check
         current_state_snapshot = {
@@ -1624,33 +1699,33 @@ class ImprovedPokerStateMachine:
         # Validate state hasn't changed since action was scheduled
         if (current_state_snapshot['state'] != action_data['state'] or
             current_state_snapshot['player_index'] != action_data['player_index']):
-            self._log_action(f"❌ Bot action cancelled - game state changed:")
-            self._log_action(f"   Expected state: {action_data['state']}, Current: {current_state_snapshot['state']}")
-            self._log_action(f"   Expected player index: {action_data['player_index']}, Current: {current_state_snapshot['player_index']}")
+            self._log_message(f"❌ Bot action cancelled - game state changed:")
+            self._log_message(f"   Expected state: {action_data['state']}, Current: {current_state_snapshot['state']}")
+            self._log_message(f"   Expected player index: {action_data['player_index']}, Current: {current_state_snapshot['player_index']}")
             return
         
         # BUG FIX: Additional validation to prevent race conditions
         if self.current_state == PokerState.END_HAND:
-            self._log_action(f"❌ Bot action cancelled - hand has ended")
+            self._log_message(f"❌ Bot action cancelled - hand has ended")
             return
         
         # Validate player still exists and is active
         if action_data['player_index'] >= len(self.game_state.players):
-            self._log_action(f"❌ Bot action cancelled - player index {action_data['player_index']} no longer exists")
+            self._log_message(f"❌ Bot action cancelled - player index {action_data['player_index']} no longer exists")
             return
         
         player = self.game_state.players[action_data['player_index']]
         if not player.is_active:
-            self._log_action(f"❌ Bot action cancelled - {player.name} no longer active")
+            self._log_message(f"❌ Bot action cancelled - {player.name} no longer active")
             return
         
         # BUG FIX: Final atomic check before execution
         if (self.current_state != current_state_snapshot['state'] or
             self.action_player_index != current_state_snapshot['player_index']):
-            self._log_action(f"❌ Bot action cancelled - state changed during validation")
+            self._log_message(f"❌ Bot action cancelled - state changed during validation")
             return
         
-        self._log_action(f"✅ State validation passed, executing bot action for {player.name}")
+        self._log_message(f"✅ State validation passed, executing bot action for {player.name}")
         self.execute_bot_action(player)
 
     # FIX 5: Strategy Integration for Bots
@@ -1658,39 +1733,39 @@ class ImprovedPokerStateMachine:
         """Execute bot action using strategy data."""
         # FIXED: Add state validation before bot action
         if self.current_state == PokerState.END_HAND:
-            self._log_action("Bot action cancelled - hand ended")
+            self._log_message("Bot action cancelled - hand ended")
             return
         
         # Validate player is still the action player
         current_action_player = self.get_action_player()
         if current_action_player != player:
-            self._log_action(f"Bot action cancelled - not {player.name}'s turn anymore")
+            self._log_message(f"Bot action cancelled - not {player.name}'s turn anymore")
             return
         
         # Validate player can still act
         if not player.is_active or player.is_all_in:
-            self._log_action(f"Bot action cancelled - {player.name} cannot act")
+            self._log_message(f"Bot action cancelled - {player.name} cannot act")
             return
         
         # --- ENHANCED DEBUG LOGGING ---
-        self._log_action(f"🤖 Bot {player.name} ({player.position}) is taking action")
-        self._log_action(f"   📊 Player state: Stack=${player.stack:.2f}, Bet=${player.current_bet:.2f}")
-        self._log_action(f"   🎴 Cards: {player.cards}")
-        self._log_action(f"   🃏 Board: {self.game_state.board}")
-        self._log_action(f"   💰 Pot: ${self.game_state.pot:.2f}, Current bet: ${self.game_state.current_bet:.2f}")
-        self._log_action(f"   🎯 Street: {self.game_state.street}")
+        self._log_message(f"🤖 Bot {player.name} ({player.position}) is taking action")
+        self._log_message(f"   📊 Player state: Stack=${player.stack:.2f}, Bet=${player.current_bet:.2f}")
+        self._log_message(f"   🎴 Cards: {player.cards}")
+        self._log_message(f"   🃏 Board: {self.game_state.board}")
+        self._log_message(f"   💰 Pot: ${self.game_state.pot:.2f}, Current bet: ${self.game_state.current_bet:.2f}")
+        self._log_message(f"   🎯 Street: {self.game_state.street}")
         
         # Log strategy data availability
         if self.strategy_data:
-            self._log_action(f"   📋 Using strategy data: {type(self.strategy_data).__name__}")
+            self._log_message(f"   📋 Using strategy data: {type(self.strategy_data).__name__}")
             action, amount = self.get_strategy_action(player)
         else:
-            self._log_action(f"   ⚠️ No strategy data available, using basic logic")
+            self._log_message(f"   ⚠️ No strategy data available, using basic logic")
             action, amount = self.get_basic_bot_action(player)
         
         # Log the decision with detailed context
-        self._log_action(f"🤖 Bot {player.name} decided: {action.value} ${amount:.2f}")
-        self._log_action(f"   ✅ Executing action: {action.value} ${amount:.2f}")
+        self._log_message(f"🤖 Bot {player.name} decided: {action.value} ${amount:.2f}")
+        self._log_message(f"   ✅ Executing action: {action.value} ${amount:.2f}")
         # --- END ENHANCED DEBUG LOGGING ---
         
         self.execute_action(player, action, amount)
@@ -1704,7 +1779,7 @@ class ImprovedPokerStateMachine:
             else:
                 return self._get_basic_strategy_action(player)
         except Exception as e:
-            self._log_action(f"❌ Strategy error: {e}, using emergency fallback")
+            self._log_message(f"❌ Strategy error: {e}, using emergency fallback")
             return self._get_emergency_fallback_action(player)
     
     def _get_enhanced_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
@@ -1713,7 +1788,7 @@ class ImprovedPokerStateMachine:
         position = player.position
         call_amount = self.game_state.current_bet - player.current_bet
         
-        self._log_action(f"🤖 Getting enhanced strategy for {player.name} ({position}) on {street}")
+        self._log_message(f"🤖 Getting enhanced strategy for {player.name} ({position}) on {street}")
         
         if street == "preflop":
             return self._get_preflop_strategy_action(player)
@@ -1730,11 +1805,11 @@ class ImprovedPokerStateMachine:
         preflop_strengths = hand_strength_tables.get("preflop", {})
         hand_strength = preflop_strengths.get(hand_notation, 1)
         
-        self._log_action(f"📊 Hand: {hand_notation}, Strength: {hand_strength}")
+        self._log_message(f"📊 Hand: {hand_notation}, Strength: {hand_strength}")
         
         # Special handling for BB when no raise has been made
         if player.position == "BB" and call_amount == 0:
-            self._log_action(f"🎯 BB with no raise, checking")
+            self._log_message(f"🎯 BB with no raise, checking")
             return ActionType.CHECK, 0
         
         if call_amount > 0:  # Facing a raise
@@ -1760,10 +1835,10 @@ class ImprovedPokerStateMachine:
         call_thresh = strategy.get("call_thresh", 65)
         sizing = strategy.get("sizing", 3.0)
         
-        self._log_action(f"📊 3bet threshold: {value_thresh}, call threshold: {call_thresh}")
+        self._log_message(f"📊 3bet threshold: {value_thresh}, call threshold: {call_thresh}")
         
         if hand_strength >= value_thresh:
-            self._log_action(f"🚀 3-betting with strong hand")
+            self._log_message(f"🚀 3-betting with strong hand")
             # FIXED: Calculate raise_to consistently and ensure minimum raise is met
             suggested_raise_by = sizing * self.game_state.big_blind
             min_raise_by = self.game_state.min_raise
@@ -1772,13 +1847,13 @@ class ImprovedPokerStateMachine:
             # Cap at player's available stack
             max_raise_to = player.current_bet + player.stack
             final_raise_to = min(raise_to, max_raise_to)
-            self._log_action(f"💰 Calculating 3bet: suggested_raise_by=${suggested_raise_by:.2f}, min_raise_by=${min_raise_by:.2f}, raise_to=${final_raise_to:.2f}")
+            self._log_message(f"💰 Calculating 3bet: suggested_raise_by=${suggested_raise_by:.2f}, min_raise_by=${min_raise_by:.2f}, raise_to=${final_raise_to:.2f}")
             return ActionType.RAISE, final_raise_to
         elif hand_strength >= call_thresh:
-            self._log_action(f"📞 Calling with medium hand")
+            self._log_message(f"📞 Calling with medium hand")
             return ActionType.CALL, call_amount
         else:
-            self._log_action(f"❌ Folding to raise")
+            self._log_message(f"❌ Folding to raise")
             return ActionType.FOLD, 0
     
     def _apply_open_strategy(self, player: Player, hand_strength: int, 
@@ -1787,10 +1862,10 @@ class ImprovedPokerStateMachine:
         threshold = strategy.get("threshold", 50)
         sizing = strategy.get("sizing", 3.0)
         
-        self._log_action(f"📊 Opening threshold: {threshold}, sizing: {sizing}")
+        self._log_message(f"📊 Opening threshold: {threshold}, sizing: {sizing}")
         
         if hand_strength >= threshold:
-            self._log_action(f"🚀 Opening with strong hand")
+            self._log_message(f"🚀 Opening with strong hand")
             # FIXED: Calculate raise_to consistently
             if self.game_state.current_bet == 0:
                 # Opening bet
@@ -1806,7 +1881,7 @@ class ImprovedPokerStateMachine:
                 final_raise_to = min(raise_to, max_raise_to)
                 return ActionType.RAISE, final_raise_to
         else:
-            self._log_action(f"❌ Folding weak hand")
+            self._log_message(f"❌ Folding weak hand")
             return ActionType.FOLD, 0
     
     def _get_basic_strategy_action(self, player: Player) -> Tuple[ActionType, float]:
@@ -1815,15 +1890,15 @@ class ImprovedPokerStateMachine:
         position = player.position
         call_amount = self.game_state.current_bet - player.current_bet
         
-        self._log_action(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
-        self._log_action(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
-        self._log_action(f"   Call amount: ${call_amount}")
-        self._log_action(f"   Street: {street}")
-        self._log_action(f"   Position: {position}")
+        self._log_message(f"🤖 BOT ACTION DEBUG for {player.name} ({position}):")
+        self._log_message(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
+        self._log_message(f"   Call amount: ${call_amount}")
+        self._log_message(f"   Street: {street}")
+        self._log_message(f"   Position: {position}")
         
         # --- HANDLE UNKNOWN POSITION ---
         if position == "Unknown" or position not in ["UTG", "MP", "CO", "BTN", "SB", "BB"]:
-            self._log_action(f"   ⚠️ Unknown position '{position}', using default logic")
+            self._log_message(f"   ⚠️ Unknown position '{position}', using default logic")
             return self.get_basic_bot_action(player)
     
     def _get_emergency_fallback_action(self, player: Player) -> Tuple[ActionType, float]:
@@ -1842,85 +1917,85 @@ class ImprovedPokerStateMachine:
             if street == "preflop":
                 # BB check logic for no raise - BB has already paid the big blind
                 if position == "BB" and call_amount == 0:
-                    self._log_action(f"BB with no raise, checking")
+                    self._log_message(f"BB with no raise, checking")
                     return ActionType.CHECK, 0
                 
                 # BB facing a raise - special handling
                 if position == "BB" and call_amount > 0:
                     player_hand_str = self.get_hand_notation(player.cards)
-                    self._log_action(f"   🎴 Hand notation: {player_hand_str}")
-                    self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
+                    self._log_message(f"   🎴 Hand notation: {player_hand_str}")
+                    self._log_message(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                     
                     # Get hand strength directly from strategy_dict
                     hand_strength = self.strategy_data.strategy_dict.get("hand_strength_tables", {}).get("preflop", {}).get(player_hand_str, 1)
-                    self._log_action(f"   💪 Hand strength: {hand_strength}")
+                    self._log_message(f"   💪 Hand strength: {hand_strength}")
                     
                     # BB vs raise rules
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get("BB", {})
                     value_3bet_thresh = vs_raise_rules.get("value_thresh", 75)
                     call_thresh = vs_raise_rules.get("call_thresh", 60)  # BB is more likely to call
                     
-                    self._log_action(f"   🎯 BB LOGIC: Facing a raise")
-                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
+                    self._log_message(f"   🎯 BB LOGIC: Facing a raise")
+                    self._log_message(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
                     
                     if hand_strength >= value_3bet_thresh:
-                        self._log_action(f"   🚀 BB 3-betting with strong hand")
+                        self._log_message(f"   🚀 BB 3-betting with strong hand")
                         return ActionType.RAISE, min(self.game_state.current_bet * 3.0, player.stack)
                     elif hand_strength >= call_thresh:
-                        self._log_action(f"   📞 BB calling with medium hand")
+                        self._log_message(f"   📞 BB calling with medium hand")
                         return ActionType.CALL, call_amount
                     else:
-                        self._log_action(f"   ❌ BB folding to raise")
+                        self._log_message(f"   ❌ BB folding to raise")
                         return ActionType.FOLD, 0
                 
                 player_hand_str = self.get_hand_notation(player.cards)
-                self._log_action(f"   🎴 Hand notation: {player_hand_str}")
-                self._log_action(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
+                self._log_message(f"   🎴 Hand notation: {player_hand_str}")
+                self._log_message(f"   🃏 Hand: {' '.join(player.cards)} ({player_hand_str})")
                 
                 # Get hand strength directly from strategy_dict
                 hand_strength = self.strategy_data.strategy_dict.get("preflop", {}).get(player_hand_str, 1)
-                self._log_action(f"   💪 Hand strength: {hand_strength}")
+                self._log_message(f"   💪 Hand strength: {hand_strength}")
                 
                 # If facing a raise (call_amount > 0)
                 if call_amount > 0:
-                    self._log_action(f"   🎯 LOGIC: Facing a raise")
+                    self._log_message(f"   🎯 LOGIC: Facing a raise")
                     vs_raise_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("vs_raise", {}).get(position, {})
                     value_3bet_thresh = vs_raise_rules.get("value_thresh", 75)
                     call_thresh = vs_raise_rules.get("call_thresh", 65)
                     sizing = vs_raise_rules.get("sizing", 3.0)
                     
-                    self._log_action(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
+                    self._log_message(f"   📊 3bet threshold: {value_3bet_thresh}, call threshold: {call_thresh}")
                     
                     if hand_strength >= value_3bet_thresh:
-                        self._log_action(f"   🚀 3-betting with strong hand")
+                        self._log_message(f"   🚀 3-betting with strong hand")
                         return ActionType.RAISE, min(self.game_state.current_bet * sizing, player.stack)
                     elif hand_strength >= call_thresh:
-                        self._log_action(f"   📞 Calling with medium hand")
+                        self._log_message(f"   📞 Calling with medium hand")
                         return ActionType.CALL, call_amount
                     else:
-                        self._log_action(f"   ❌ Folding to raise")
+                        self._log_message(f"   ❌ Folding to raise")
                         return ActionType.FOLD, 0
                 else:
                     open_rules = self.strategy_data.strategy_dict.get("preflop", {}).get("open_rules", {})
                     threshold = open_rules.get(position, {}).get("threshold", 60)
                     sizing = open_rules.get(position, {}).get("sizing", 3.0)
                     
-                    self._log_action(f"   📊 Opening threshold: {threshold}, sizing: {sizing}")
+                    self._log_message(f"   📊 Opening threshold: {threshold}, sizing: {sizing}")
                     
                     limpers = len([p for p in self.game_state.players 
                                   if p.current_bet == self.game_state.big_blind and p.position != "BB"])
                     if limpers > 0:
                         sizing += limpers
-                        self._log_action(f"   👥 Adjusted sizing for {limpers} limpers: {sizing}")
+                        self._log_message(f"   👥 Adjusted sizing for {limpers} limpers: {sizing}")
                     
                     if hand_strength >= threshold:
                         action = ActionType.RAISE if self.game_state.current_bet > 0 else ActionType.BET
-                        self._log_action(f"   🚀 {action.value} with strong hand")
+                        self._log_message(f"   🚀 {action.value} with strong hand")
                         return action, min(sizing, player.stack)
-                    self._log_action(f"   ✅ Checking with weak hand")
+                    self._log_message(f"   ✅ Checking with weak hand")
                     return ActionType.CHECK, 0
             else:  # Postflop logic
-                self._log_action(f"   🎯 POSTFLOP LOGIC: {street}")
+                self._log_message(f"   🎯 POSTFLOP LOGIC: {street}")
                 hand_type = self.classify_hand(player.cards, self.game_state.board)
                 hand_strength = self.strategy_data.strategy_dict.get("postflop", {}).get(hand_type, 5)
                 pfa_data = self.strategy_data.strategy_dict.get("postflop", {}).get("pfa", {}).get(street, {}).get(position, {})
@@ -1928,27 +2003,27 @@ class ImprovedPokerStateMachine:
                 check_thresh = pfa_data.get("check_thresh", 10)
                 sizing = pfa_data.get("sizing", 0.75)
                 
-                self._log_action(f"   📊 Postflop hand: {hand_type}, strength: {hand_strength}, val: {val_thresh}, check: {check_thresh}")
+                self._log_message(f"   📊 Postflop hand: {hand_type}, strength: {hand_strength}, val: {val_thresh}, check: {check_thresh}")
                 
                 if call_amount > 0:
                     pot_odds = self.calculate_pot_odds(call_amount)
                     if self.should_call_by_pot_odds(player, call_amount, hand_strength):
-                        self._log_action(f"   📞 Calling based on pot odds")
+                        self._log_message(f"   📞 Calling based on pot odds")
                         return ActionType.CALL, call_amount
-                    self._log_action(f"   ❌ Folding based on pot odds")
+                    self._log_message(f"   ❌ Folding based on pot odds")
                     return ActionType.FOLD, 0
                 
                 if hand_strength >= val_thresh:
                     bet_amount = min(self.game_state.pot * sizing, player.stack)
-                    self._log_action(f"   💰 Betting with strong hand: ${bet_amount}")
+                    self._log_message(f"   💰 Betting with strong hand: ${bet_amount}")
                     return ActionType.BET, bet_amount
                 elif hand_strength >= check_thresh:
-                    self._log_action(f"   ✅ Checking with medium hand")
+                    self._log_message(f"   ✅ Checking with medium hand")
                     return ActionType.CHECK, 0
-                self._log_action(f"   ✅ Checking weak hands postflop")
+                self._log_message(f"   ✅ Checking weak hands postflop")
                 return ActionType.CHECK, 0
         except (KeyError, AttributeError) as e:
-            self._log_action(f"   🤖 Strategy error: {e}, falling back to basic logic")
+            self._log_message(f"   🤖 Strategy error: {e}, falling back to basic logic")
             return self.get_basic_bot_action(player)
 
     def get_hand_notation(self, cards: List[str]) -> str:
@@ -2404,26 +2479,26 @@ class ImprovedPokerStateMachine:
         # --- NEW: Proper invalid action handling ---
         # Validate inputs
         if not player:
-            self._log_action(f"ERROR in execute_action: Player cannot be None")
+            self._log_message(f"ERROR in execute_action: Player cannot be None")
             return
         
         if not isinstance(action, ActionType):
-            self._log_action(f"ERROR in execute_action: Invalid action type: {action}")
+            self._log_message(f"ERROR in execute_action: Invalid action type: {action}")
             return
         
         if amount < 0:
-            self._log_action(f"ERROR in execute_action: Amount cannot be negative: ${amount}")
+            self._log_message(f"ERROR in execute_action: Amount cannot be negative: ${amount}")
             return
         
         # Validate action is valid for current state
         errors = self.validate_action(player, action, amount)
         if errors:
             error_msg = f"Invalid action: {'; '.join(errors)}"
-            self._log_action(f"ERROR in execute_action: {error_msg}")
+            self._log_message(f"ERROR in execute_action: {error_msg}")
             
             # --- NEW: Handle invalid bot actions with fallback ---
             if not player.is_human and not _is_fallback:
-                self._log_action(f"🤖 Bot action failed, trying fallback")
+                self._log_message(f"🤖 Bot action failed, trying fallback")
                 # Try fallback actions in order: CALL -> CHECK -> FOLD
                 call_amount = self.game_state.current_bet - player.current_bet
                 
@@ -2431,29 +2506,29 @@ class ImprovedPokerStateMachine:
                 if call_amount > 0 and call_amount <= player.stack:
                     fallback_errors = self.validate_action(player, ActionType.CALL, call_amount)
                     if not fallback_errors:
-                        self._log_action(f"📞 Bot falling back to CALL ${call_amount:.2f}")
+                        self._log_message(f"📞 Bot falling back to CALL ${call_amount:.2f}")
                         return self.execute_action(player, ActionType.CALL, call_amount, _is_fallback=True)
                 
                 # Try CHECK if no bet to call
                 if call_amount == 0:
                     fallback_errors = self.validate_action(player, ActionType.CHECK, 0)
                     if not fallback_errors:
-                        self._log_action(f"✅ Bot falling back to CHECK")
+                        self._log_message(f"✅ Bot falling back to CHECK")
                         return self.execute_action(player, ActionType.CHECK, 0, _is_fallback=True)
                 
                 # Last resort: FOLD
                 fallback_errors = self.validate_action(player, ActionType.FOLD, 0)
                 if not fallback_errors:
-                    self._log_action(f"❌ Bot falling back to FOLD")
+                    self._log_message(f"❌ Bot falling back to FOLD")
                     return self.execute_action(player, ActionType.FOLD, 0, _is_fallback=True)
                 
                 # If even FOLD fails, something is seriously wrong
-                self._log_action(f"🚨 CRITICAL: Bot cannot make any valid action!")
+                self._log_message(f"🚨 CRITICAL: Bot cannot make any valid action!")
                 return
             
             # --- Re-prompt human player for valid action ---
             if player.is_human and self.on_action_required:
-                self._log_action(f"🔄 Re-prompting human player for valid action")
+                self._log_message(f"🔄 Re-prompting human player for valid action")
                 self.on_action_required(player)
             return
         # --- END NEW ---
@@ -2462,12 +2537,12 @@ class ImprovedPokerStateMachine:
         old_pot = self.game_state.pot  # Track pot changes
         old_stack = player.stack  # Track stack changes
         pot_change = 0.0  # Track actual pot change for this action
-        self._log_action(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
-        self._log_action(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
-        self._log_action(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
-        self._log_action(f"🎴 {player.name} cards: {player.cards}")
-        self._log_action(f"🃏 Board: {self.game_state.board}")
-        self._log_action(f"🏆 Street: {self.game_state.street}")
+        self._log_message(f"🎯 {player.name} attempting {action.value.upper()} ${amount:.2f}")
+        self._log_message(f"📊 Before action - Pot: ${self.game_state.pot:.2f}, Current Bet: ${self.game_state.current_bet:.2f}")
+        self._log_message(f"💰 {player.name} stack: ${player.stack:.2f}, current bet: ${player.current_bet:.2f}")
+        self._log_message(f"🎴 {player.name} cards: {player.cards}")
+        self._log_message(f"🃏 Board: {self.game_state.board}")
+        self._log_message(f"🏆 Street: {self.game_state.street}")
 
         # NEW: Trigger action animation callback (MOVED to after action execution for correct amounts)
         # Will be called after each action type with the actual amount used
@@ -2491,7 +2566,7 @@ class ImprovedPokerStateMachine:
             # Only valid when current_bet is 0 or player already has current bet
             call_amount = self.game_state.current_bet - player.current_bet
             if call_amount > 0:
-                self._log_action(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
+                self._log_message(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
                 return
             # FIX: Do NOT reset current_bet when checking - it should remain as is
             # player.current_bet = 0  # ← REMOVED THIS BUG
@@ -2511,7 +2586,7 @@ class ImprovedPokerStateMachine:
                 player.is_all_in = True
                 player.partial_call_amount = actual_call
                 player.full_call_amount = call_amount
-                self._log_action(f"{player.name} ALL-IN for ${actual_call:.2f} (${call_amount - actual_call:.2f} short)")
+                self._log_message(f"{player.name} ALL-IN for ${actual_call:.2f} (${call_amount - actual_call:.2f} short)")
             else:
                 player.partial_call_amount = None
                 player.full_call_amount = None
@@ -2530,14 +2605,14 @@ class ImprovedPokerStateMachine:
             # Check for all-in
             if player.stack == 0:
                 player.is_all_in = True
-                self._log_action(f"{player.name} is ALL-IN!")
+                self._log_message(f"{player.name} is ALL-IN!")
                 # Play all-in voice announcement if available
                 if hasattr(self, 'voice_system') and self.voice_system:
                     self.voice_system.play_voice_announcement('all_in')
 
         elif action == ActionType.BET:
             if self.game_state.current_bet > 0:
-                self._log_action(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
+                self._log_message(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
                 return
             
             actual_bet = min(amount, player.stack)
@@ -2550,7 +2625,7 @@ class ImprovedPokerStateMachine:
             
             # CRITICAL FIX: Set min_raise to the size of the bet
             self.game_state.min_raise = actual_bet
-            self._log_action(f"💰 Bet of ${actual_bet:.2f} sets min_raise to ${self.game_state.min_raise:.2f}")
+            self._log_message(f"💰 Bet of ${actual_bet:.2f} sets min_raise to ${self.game_state.min_raise:.2f}")
             
             # FIXED: Trigger callback with actual bet amount for animation
             if self.on_action_executed:
@@ -2560,7 +2635,7 @@ class ImprovedPokerStateMachine:
             # Check for all-in
             if player.stack == 0:
                 player.is_all_in = True
-                self._log_action(f"{player.name} is ALL-IN!")
+                self._log_message(f"{player.name} is ALL-IN!")
 
         elif action == ActionType.RAISE:
             # Validation already done earlier, proceed with execution
@@ -2589,7 +2664,7 @@ class ImprovedPokerStateMachine:
             # Otherwise, the last full raise amount remains unchanged.
             if is_full_raise:
                 self.game_state.last_full_raise_amount = raise_amount
-                self._log_action(f"🔄 Full raise made. Action is re-opened.")
+                self._log_message(f"🔄 Full raise made. Action is re-opened.")
                 # Reset has_acted for other active players
                 for p in self.game_state.players:
                     if p.is_active and p != player:
@@ -2597,9 +2672,9 @@ class ImprovedPokerStateMachine:
                         # Also remove from players_acted set to ensure they can act again
                         if self.game_state.players.index(p) in self.game_state.players_acted:
                             self.game_state.players_acted.remove(self.game_state.players.index(p))
-                self._log_action(f"🔄 Reset has_acted for all other active players")
+                self._log_message(f"🔄 Reset has_acted for all other active players")
             else:
-                self._log_action(f"📉 Under-raise all-in. Action is not re-opened.")
+                self._log_message(f"📉 Under-raise all-in. Action is not re-opened.")
                 
             # --- END REFACTOR ---
             
@@ -2610,7 +2685,7 @@ class ImprovedPokerStateMachine:
             
             if player.stack == 0:
                 player.is_all_in = True
-                self._log_action(f"{player.name} is ALL-IN!")
+                self._log_message(f"{player.name} is ALL-IN!")
 
         # Mark player as acted
         player.has_acted_this_round = True
@@ -2641,12 +2716,12 @@ class ImprovedPokerStateMachine:
         # --- CORRECTED GAME FLOW LOGIC ---
         # Check for a winner after any action that might end the hand
         active_players = [p for p in self.game_state.players if p.is_active]
-        self._log_action(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
+        self._log_message(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
         
         if len(active_players) == 1:
             # CRITICAL FIX: Defer awarding to handle_end_hand to preserve pot for animation
-            self._log_action(f"🏆 {active_players[0].name} wins by default (all others folded)")
-            self._log_action(f"💰 Pot preserved for animation: ${self.game_state.pot:.2f}")
+            self._log_message(f"🏆 {active_players[0].name} wins by default (all others folded)")
+            self._log_message(f"💰 Pot preserved for animation: ${self.game_state.pot:.2f}")
             
             # Only transition if not already in END_HAND state
             if self.current_state != PokerState.END_HAND:
@@ -2654,18 +2729,18 @@ class ImprovedPokerStateMachine:
             return  # End the action here since the hand is over
 
         # If the hand is not over, check if the round is complete
-        self._log_action(f"🔄 POST-ACTION: Checking if round is complete...")
-        self._log_action(f"🔍 DEBUG: About to call is_round_complete()")
+        self._log_message(f"🔄 POST-ACTION: Checking if round is complete...")
+        self._log_message(f"🔍 DEBUG: About to call is_round_complete()")
         round_complete_result = self.is_round_complete()
-        self._log_action(f"🔍 DEBUG: is_round_complete() returned: {round_complete_result}")
+        self._log_message(f"🔍 DEBUG: is_round_complete() returned: {round_complete_result}")
         
         if round_complete_result:
-            self._log_action("✅ Round is complete, handling round completion")
+            self._log_message("✅ Round is complete, handling round completion")
             self.handle_round_complete()
         else:
-            self._log_action("⏭️ Round not complete, advancing to next player")
+            self._log_message("⏭️ Round not complete, advancing to next player")
             self.advance_to_next_player()
-            self._log_action("🎯 Calling handle_current_player_action after advancing")
+            self._log_message("🎯 Calling handle_current_player_action after advancing")
             self.handle_current_player_action()
         # --- END CORRECTION ---
 
@@ -2674,50 +2749,50 @@ class ImprovedPokerStateMachine:
         original_index = self.action_player_index
         attempts = 0
         
-        self._log_action(f"⏭️ ADVANCE_TO_NEXT_PLAYER: Starting from index {original_index}")
+        self._log_message(f"⏭️ ADVANCE_TO_NEXT_PLAYER: Starting from index {original_index}")
         
         while attempts < self.num_players:
             self.action_player_index = (self.action_player_index + 1) % self.num_players
             current_player = self.game_state.players[self.action_player_index]
             
-            self._log_action(f"   Checking index {self.action_player_index}: {current_player.name}")
-            self._log_action(f"     Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
-            self._log_action(f"     In players_acted: {self.action_player_index in self.game_state.players_acted}")
-            self._log_action(f"     Current bet: ${current_player.current_bet:.2f}, Game bet: ${self.game_state.current_bet:.2f}")
+            self._log_message(f"   Checking index {self.action_player_index}: {current_player.name}")
+            self._log_message(f"     Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
+            self._log_message(f"     In players_acted: {self.action_player_index in self.game_state.players_acted}")
+            self._log_message(f"     Current bet: ${current_player.current_bet:.2f}, Game bet: ${self.game_state.current_bet:.2f}")
             
             # Found a player who can act
             if (current_player.is_active and 
                 not current_player.is_all_in and
                 (self.action_player_index not in self.game_state.players_acted or
                  current_player.current_bet < self.game_state.current_bet)):
-                self._log_action(f"✅ Found next player: {current_player.name} at index {self.action_player_index}")
+                self._log_message(f"✅ Found next player: {current_player.name} at index {self.action_player_index}")
                 return
             else:
-                self._log_action(f"   ❌ Player {current_player.name} cannot act")
+                self._log_message(f"   ❌ Player {current_player.name} cannot act")
             
             attempts += 1
         
         # No one can act - round is complete
-        self._log_action("⚠️ No valid next player found, setting action_player_index to -1")
+        self._log_message("⚠️ No valid next player found, setting action_player_index to -1")
         self.action_player_index = -1
         
         # Safety check: If we can't find a next player but the round isn't complete,
         # there might be an issue with the action tracking
         if not self.is_round_complete():
-            self._log_action("🚨 WARNING: No next player found but round is not complete!")
-            self._log_action(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")
-            self._log_action(f"   Players acted: {self.game_state.players_acted}")
-            self._log_action(f"   Current bet: ${self.game_state.current_bet:.2f}")
+            self._log_message("🚨 WARNING: No next player found but round is not complete!")
+            self._log_message(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")
+            self._log_message(f"   Players acted: {self.game_state.players_acted}")
+            self._log_message(f"   Current bet: ${self.game_state.current_bet:.2f}")
             for p in self.game_state.players:
                 if p.is_active:
-                    self._log_action(f"   {p.name}: has_acted={p.has_acted_this_round}, bet=${p.current_bet:.2f}")
+                    self._log_message(f"   {p.name}: has_acted={p.has_acted_this_round}, bet=${p.current_bet:.2f}")
 
     def handle_round_complete(self):
         """
         Handles the completion of a betting round by advancing to the next street
         or proceeding to showdown.
         """
-        self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
+        self._log_message(f"🔄 ROUND COMPLETE for {self.game_state.street}")
         
         # FIX: Trigger the on_round_complete callback BEFORE transitioning to next state
         # This ensures pot consolidation animation happens before street advancement
@@ -2746,8 +2821,8 @@ class ImprovedPokerStateMachine:
         if len(active_players) == 1:
             return active_players
         
-        self._log_action(f"🔍 SHOWDOWN: Evaluating {len(active_players)} active players")
-        self._log_action(f"🎴 Board: {' '.join(self.game_state.board)}")
+        self._log_message(f"🔍 SHOWDOWN: Evaluating {len(active_players)} active players")
+        self._log_message(f"🎴 Board: {' '.join(self.game_state.board)}")
         
         # Collect all hand evaluations for detailed comparison
         player_hands = []
@@ -2764,7 +2839,7 @@ class ImprovedPokerStateMachine:
             
             # Log each player's hand details
             hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
-            self._log_action(f"📊 {player.name} ({' '.join(player.cards)}): {hand_rank} - {hand_info['hand_description']}")
+            self._log_message(f"📊 {player.name} ({' '.join(player.cards)}): {hand_rank} - {hand_info['hand_description']}")
         
         # Second pass: determine winner(s)
         for player_hand in player_hands:
@@ -2775,7 +2850,7 @@ class ImprovedPokerStateMachine:
                 best_hand_info = hand_info
                 winners = [player]
                 hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
-                self._log_action(f"🏆 {player.name} leads with {hand_rank}")
+                self._log_message(f"🏆 {player.name} leads with {hand_rank}")
             else:
                 # Compare current player's hand with the best so far
                 comparison = self.hand_evaluator._compare_hands(
@@ -2789,28 +2864,28 @@ class ImprovedPokerStateMachine:
                 if comparison > 0:  # Current player has a better hand
                     best_hand_info = hand_info
                     winners = [player]
-                    self._log_action(f"🏆 {player.name} wins with {current_rank} vs {best_rank}")
+                    self._log_message(f"🏆 {player.name} wins with {current_rank} vs {best_rank}")
                 elif comparison == 0:  # It's a tie
                     winners.append(player)
-                    self._log_action(f"🤝 {player.name} ties with {current_rank}")
+                    self._log_message(f"🤝 {player.name} ties with {current_rank}")
                 else:
-                    self._log_action(f"❌ {player.name} loses with {current_rank} vs {best_rank}")
+                    self._log_message(f"❌ {player.name} loses with {current_rank} vs {best_rank}")
         
         # Final showdown summary
         if len(winners) == 1:
             winner = winners[0]
             winner_hand = next(ph for ph in player_hands if ph['player'] == winner)
             hand_rank = winner_hand['hand_info']['hand_rank'].name.replace('_', ' ').title()
-            self._log_action(f"🎉 {winner.name} wins with {hand_rank}!")
+            self._log_message(f"🎉 {winner.name} wins with {hand_rank}!")
         else:
             winner_names = [w.name for w in winners]
-            self._log_action(f"🎉 Split pot between {', '.join(winner_names)}")
+            self._log_message(f"🎉 Split pot between {', '.join(winner_names)}")
         
         return winners
 
     def handle_showdown(self):
         """Handle showdown with tie handling and side pots."""
-        self._log_action("Showdown")
+        self._log_message("Showdown")
         
         # Preserve the board cards for display during showdown
         self.preserved_board = self.game_state.board.copy()
@@ -2867,7 +2942,7 @@ class ImprovedPokerStateMachine:
         total_created = sum(pot['amount'] for pot in side_pots)
         if abs(total_created - self.game_state.pot) > 0.01:
             # Log discrepancy but continue
-            self._log_action(f"⚠️ Side pot discrepancy: Created ${total_created:.2f} vs Pot ${self.game_state.pot:.2f}")
+            self._log_message(f"⚠️ Side pot discrepancy: Created ${total_created:.2f} vs Pot ${self.game_state.pot:.2f}")
         
         return side_pots if side_pots else [{'amount': self.game_state.pot, 
                                              'eligible_players': [p for p in self.game_state.players if p.is_active]}]
@@ -2881,7 +2956,7 @@ class ImprovedPokerStateMachine:
         debug_print(f"🔄 DEBUG: Current pot: ${self.game_state.pot:.2f}")
         debug_print(f"🔄 DEBUG: Active players: {[p.name for p in self.game_state.players if p.is_active]}")
 
-        self._log_action("Hand complete")
+        self._log_message("Hand complete")
 
         # FIX: Handle side pots for all-in scenarios
         side_pots = self.create_side_pots()
@@ -2902,7 +2977,7 @@ class ImprovedPokerStateMachine:
                 winner_names = ", ".join([w.name for w in winners])
                 pot_name = f"Side Pot {i+1}" if i < len(side_pots) -1 else "Main Pot"
                 
-                self._log_action(f"🏆 {pot_name} ({pot_amount:.2f}) won by {winner_names}")
+                self._log_message(f"🏆 {pot_name} ({pot_amount:.2f}) won by {winner_names}")
 
                 for winner in winners:
                     winner.stack += split_amount
@@ -2912,7 +2987,7 @@ class ImprovedPokerStateMachine:
 
         # Final check to ensure all money is awarded
         if abs(total_pot_awarded - self.game_state.pot) > 0.01:
-             self._log_action(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
+             self._log_message(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
 
         if all_winners:
             winner_names = ", ".join(sorted(all_winners))
@@ -2935,10 +3010,10 @@ class ImprovedPokerStateMachine:
                 "hand": winning_hand_rank  # Include actual hand rank
             }
             self._last_winner = winner_info
-            self._log_action(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
+            self._log_message(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
             debug_print(f"🏆 DEBUG: Winner info: {winner_info}")
         else:
-            self._log_action("No winner determined (should not happen in a normal game).")
+            self._log_message("No winner determined (should not happen in a normal game).")
             winner_info = None
             debug_print(f"❌ DEBUG: No winner determined")
 
