@@ -295,36 +295,37 @@ class ImprovedPokerStateMachine:
     def _initialize_gto_ranges(self):
         """Initialize comprehensive GTO preflop ranges based on modern poker theory."""
         self.gto_preflop_ranges = {
-            "UTG": {  # ~15-17% RFI
+            "UTG": {  # ~15% RFI (from Red Chip/ Upswing)
                 "rfi": { "range": ["AA-88", "AKs-AJs", "KQs", "AJo+", "KQo"], "freq": 1.0 },
                 "vs_rfi": { "call": {"range": ["TT-88", "AQs-AJs", "KQs", "QJs"], "freq": 1.0}, "three_bet": {"range": ["AA-JJ", "AKs", "AQs"], "freq": 1.0, "size_mult": 3.0} },
                 "vs_three_bet": { "call": {"range": ["QQ-JJ", "AKs", "AQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             },
-            "MP": {  # ~20-22% RFI
+            "MP": {  # ~20-25% RFI
                 "rfi": { "range": ["AA-77", "AKs-A9s", "KQs-KTs", "QJs", "JTs", "AJo+", "KQo", "QJo"], "freq": 1.0 },
                 "vs_rfi": { "call": {"range": ["99-77", "AQs-A9s", "KQs-KJs", "QJs-JTs"], "freq": 1.0}, "three_bet": {"range": ["AA-TT", "AKs-AQs", "KQs"], "freq": 1.0, "size_mult": 3.0} },
                 "vs_three_bet": { "call": {"range": ["JJ-99", "AQs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             },
-            "CO": {  # ~27-28% RFI
+            "CO": {  # ~35-40% RFI
                 "rfi": { "range": ["AA-66", "AKs-A8s", "KQs-K9s", "QJs-QTs", "JTs", "T9s", "98s", "87s", "AJo+", "KTo+", "QTo+", "JTo"], "freq": 1.0 },
                 "vs_rfi": { "call": {"range": ["88-66", "AJs-A8s", "KJs-KTs", "QTs-JTs", "T9s-98s"], "freq": 1.0}, "three_bet": {"range": ["AA-99", "AKs-AJs", "KQs"], "freq": 1.0, "size_mult": 2.5} },
                 "vs_three_bet": { "call": {"range": ["TT-88", "AJs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-QQ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             },
-            "BTN": {  # ~40-44% RFI
+            "BTN": {  # ~50-55% RFI
                 "rfi": { "range": ["AA-55", "AKs-A2s", "KQs-K8s", "QJs-Q9s", "JTs-J9s", "T9s-T8s", "98s-97s", "87s-86s", "76s", "ATo+", "K9o+", "QTo+", "JTo", "T9o", "98o"], "freq": 1.0 },
                 "vs_rfi": { "call": {"range": ["77-55", "ATs-A2s", "KTs-K9s", "QTs-Q9s", "J9s-T8s", "98s-87s"], "freq": 1.0}, "three_bet": {"range": ["AA-88", "AKs-ATs", "KQs-KJs"], "freq": 1.0, "size_mult": 2.5} },
                 "vs_three_bet": { "call": {"range": ["99-77", "ATs", "KJs"], "freq": 1.0}, "four_bet": {"range": ["AA-JJ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             },
-            "SB": {  # ~60% RFI (raise or limp/call)
+            "SB": {  # ~60-65% RFI (mix limps)
                 "rfi": { "range": ["AA-22", "AKs-A2s", "KQs-K2s", "QJs-Q2s", "JTs-J2s", "T9s-T2s", "98s-92s", "87s-82s", "76s-72s", "65s-62s", "54s-52s", "43s", "A9o+", "KTo+", "Q9o+", "J9o+", "T8o+", "97o+", "86o+", "75o+", "64o+", "53o+"], "freq": 0.8 },
                 "vs_rfi": { "call": {"range": ["TT-22", "AJs-A2s", "KJs-K2s", "QTs-Q2s", "J9s-J2s", "T8s-T2s", "97s-92s", "86s-82s", "75s-72s", "64s-62s", "53s-52s", "43s"], "freq": 0.7}, "three_bet": {"range": ["AA-99", "AKs-AJs", "KQs"], "freq": 1.0, "size_mult": 3.0} },
                 "vs_three_bet": { "call": {"range": ["JJ-88", "AQs-AJs", "KQs"], "freq": 0.8}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 3.0} }
             },
-            "BB": {  # Defensive
+            "BB": {  # Defensive, no RFI
                 "vs_rfi": { "call": {"range": ["JJ-22", "AQs-A2s", "KQs-K5s", "QJs-Q8s", "JTs-J8s", "T9s-T8s", "98s-97s", "87s-86s", "76s", "AJo+", "KQo+", "QJo"], "freq": 1.0}, "three_bet": {"range": ["AA-TT", "AKs-AQs", "KQs"], "freq": 1.0, "size_mult": 3.5} },
                 "vs_three_bet": { "call": {"range": ["QQ-99", "AQs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             }
         }
+        # Note: Original UTG RFI frequency is 1.0, but can be overridden for testing
 
     def _initialize_session_state(self) -> SessionState:
         """Initialize comprehensive session tracking."""
@@ -2112,7 +2113,7 @@ class ImprovedPokerStateMachine:
         if not hand or not range_list:
             return False
         
-        # Parse the hand (e.g., 'AKs', '72o')
+        # Parse the hand (e.g., 'AKs', 'AKs', '72o')
         if len(hand) < 2:
             return False
         
@@ -2126,27 +2127,163 @@ class ImprovedPokerStateMachine:
     def _hand_matches_range_entry(self, hand: str, range_entry: str) -> bool:
         """Check if a hand matches a specific range entry."""
         # Handle individual hands
-        if len(range_entry) <= 4:  # Single hand like 'AKs', '72o'
+        if len(range_entry) < 4:  # Single hand like 'AKs', '72o'
             return hand == range_entry
         
         # Handle ranges like 'AA-88', 'AKs-AJs'
         if '-' in range_entry:
-            parts = range_entry.split('-')
-            if len(parts) != 2:
-                return False
-            
-            start_hand = parts[0]
-            end_hand = parts[1]
-            
-            # Check if hand is between start and end
-            return self._hand_in_range(hand, start_hand, end_hand)
+            expanded_range = self._expand_range(range_entry)
+            return hand in expanded_range
         
         # Handle plus notation like 'AJo+'
         if range_entry.endswith('+'):
-            base_hand = range_entry[:-1]
-            return self._hand_stronger_than_or_equal(hand, base_hand)
+            expanded_range = self._expand_plus_range(range_entry)
+            return hand in expanded_range
         
         return False
+
+    def _expand_range(self, range_str: str) -> List[str]:
+        """Expand a range like 'AA-88' to ['AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88']."""
+        if '-' not in range_str:
+            return [range_str]
+        
+        parts = range_str.split('-')
+        if len(parts) != 2:
+            return [range_str]
+        
+        start, end = parts[0], parts[1]
+        # Handle pairs (AA, KK, etc.)
+        if len(start) == 2 and start[0] == start[1]:
+            return self._expand_pair_range(start, end)
+        
+        # Handle suited hands (AKs, AQs, etc.)
+        if start.endswith('s') and end.endswith('s'):
+            return self._expand_suited_range(start, end)
+        
+        # Handle offsuit hands (AKo, AQo, etc.)
+        if start.endswith('o') and end.endswith('o'):
+            return self._expand_offsuit_range(start, end)
+        
+        return [range_str]  # Fallback
+
+    def _expand_pair_range(self, start: str, end: str) -> List[str]:
+        """Expand pair range like 'AA-88'."""
+        ranks = 'AKQJT98765432'
+        start_rank = start[0]
+        end_rank = end[0]
+        
+        try:
+            start_idx = ranks.index(start_rank)
+            end_idx = ranks.index(end_rank)
+            result = []
+            for i in range(start_idx, end_idx + 1):
+                rank = ranks[i]
+                result.append(rank + rank)
+            return result
+        except ValueError:
+            return [start, end]
+
+    def _expand_suited_range(self, start: str, end: str) -> List[str]:
+        """Expand suited range like 'AKs-AJs'."""
+        ranks = 'AKQJT98765432'
+        start_rank1, start_rank2 = start[0], start[1]
+        end_rank1, end_rank2 = end[0], end[1]
+        
+        try:
+            start_idx1 = ranks.index(start_rank1)
+            start_idx2 = ranks.index(start_rank2)
+            end_idx1 = ranks.index(end_rank1)
+            end_idx2 = ranks.index(end_rank2)
+            
+            result = []
+            # For suited ranges, we need to handle the case where first rank stays same
+            # and second rank changes (e.g., AKs-AJs means A stays, K->J)
+            if start_rank1 == end_rank1:
+                # Same first rank, expand second rank
+                for j in range(start_idx2, end_idx2 + 1):
+                    rank1, rank2 = start_rank1, ranks[j]
+                    result.append(rank1 + rank2 + 's')
+            else:
+                # Generate all combinations between start and end
+                for i in range(start_idx1, end_idx1 + 1):
+                    for j in range(start_idx2, end_idx2 + 1):
+                        if i >= j:  # Higher rank first or equal
+                            rank1, rank2 = ranks[i], ranks[j]
+                            result.append(rank1 + rank2 + 's')
+            return result
+        except ValueError as e:
+            return [start, end]
+
+    def _expand_offsuit_range(self, start: str, end: str) -> List[str]:
+        """Expand offsuit range like 'AKo-AJo'."""
+        ranks = 'AKQJT98765432'
+        start_rank1, start_rank2 = start[0], start[1]
+        end_rank1, end_rank2 = end[0], end[1]
+        
+        try:
+            start_idx1 = ranks.index(start_rank1)
+            start_idx2 = ranks.index(start_rank2)
+            end_idx1 = ranks.index(end_rank1)
+            end_idx2 = ranks.index(end_rank2)
+            
+            result = []
+            for i in range(start_idx1, end_idx1 + 1):
+                for j in range(start_idx2, end_idx2 + 1):
+                    if i > j:  # Higher rank first
+                        rank1, rank2 = ranks[i], ranks[j]
+                        result.append(rank1 + rank2 + 'o')
+            return result
+        except ValueError:
+            return [start, end]
+
+    def _expand_plus_range(self, range_str: str) -> List[str]:
+        """Expand plus range like 'AJo+'."""
+        if not range_str.endswith('+'):
+            return [range_str]
+        
+        base = range_str[:-1]
+        ranks = 'AKQJT98765432'
+        
+        # Handle AJo+ -> AJo, AQo, AKo
+        if base.startswith('A') and base.endswith('o'):
+            second_rank = base[1]
+            try:
+                second_idx = ranks.index(second_rank)
+                result = []
+                # Go from current rank up to K (index 1)
+                for i in range(second_idx, 0, -1):  # Go backwards from J to K (include K)
+                    if ranks[i] != 'A':  # Avoid AA
+                        result.append('A' + ranks[i] + 'o')
+                return result
+            except ValueError:
+                return [base]
+        
+        # Handle KJo+ -> KJo, KQo, KKo
+        if base.startswith('K') and base.endswith('o'):
+            second_rank = base[1]
+            try:
+                second_idx = ranks.index(second_rank)
+                result = []
+                for i in range(second_idx, len(ranks)):
+                    if ranks[i] != 'K':  # Avoid KK
+                        result.append('K' + ranks[i] + 'o')
+                return result
+            except ValueError:
+                return [base]
+        
+        # Handle pairs like QQ+ -> QQ, KK, AA
+        if len(base) == 2 and base[0] == base[1]:
+            rank = base[0]
+            try:
+                rank_idx = ranks.index(rank)
+                result = []
+                for i in range(rank_idx, 3):  # Up to AA (index 0,1,2)
+                    result.append(ranks[i] + ranks[i])
+                return result
+            except ValueError:
+                return [base]
+        
+        return [base]  # Fallback
 
     def _hand_in_range(self, hand: str, start_hand: str, end_hand: str) -> bool:
         """Check if hand is between start_hand and end_hand."""
@@ -2191,52 +2328,34 @@ class ImprovedPokerStateMachine:
         else:  # Offsuit
             return val1 * 10 + val2
 
-    def classify_board_texture(self, board: List[str]) -> Dict[str, Any]:
-        """Classify board texture for postflop GTO decisions."""
+    def classify_board_texture(self, board: List[str]) -> Dict:
         if not board:
-            return {"type": "preflop", "wetness": 0, "dynamism": 0}
+            return {"type": "preflop", "wetness": 0, "dynamism": 0, "max_suit_count": 0}
         
-        # Count suits and ranks
+        ranks = sorted([self.hand_evaluator.rank_values[card[0]] for card in board], reverse=True)
         suits = [card[1] for card in board]
-        ranks = [card[0] for card in board]
-        rank_values = [self.hand_evaluator.rank_values.get(r, 0) for r in ranks]
+        max_suit_count = max(suits.count(s) for s in set(suits))
         
-        # Analyze texture
-        suit_counts = {}
-        rank_counts = {}
+        # Wetness: Flush potential (suits)
+        wetness = max_suit_count / len(board)
         
-        for suit in suits:
-            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        # Dynamism: Straight potential (connectedness)
+        connectedness = 0
+        for i in range(len(ranks) - 1):
+            diff = ranks[i] - ranks[i+1]
+            connectedness += 1 if diff <= 2 else 0.5 if diff <= 4 else 0
+        dynamism = connectedness / (len(ranks) - 1)
         
-        for rank in ranks:
-            rank_counts[rank] = rank_counts.get(rank, 0) + 1
-        
-        # Determine wetness (flush potential)
-        max_suit_count = max(suit_counts.values()) if suit_counts else 0
-        wetness = max_suit_count / len(board) if board else 0
-        
-        # Determine dynamism (straight potential)
-        sorted_ranks = sorted(rank_values)
-        gaps = sum(sorted_ranks[i+1] - sorted_ranks[i] - 1 for i in range(len(sorted_ranks)-1))
-        dynamism = 1 - (gaps / (len(sorted_ranks) - 1)) if len(sorted_ranks) > 1 else 0
-        
-        # Classify type
         if max_suit_count >= 3:
-            board_type = "wet_flush"
-        elif gaps <= 2 and len(sorted_ranks) >= 3:
-            board_type = "wet_straight"
-        elif max_suit_count == 2 and gaps <= 1:
-            board_type = "medium"
+            type_ = "wet_flush"
+        elif connectedness >= 2:  # More connected = wet straight
+            type_ = "wet_straight"
+        elif wetness >= 0.7 or dynamism >= 0.6 or max(ranks) >= 10:  # High wetness, dynamism, or high cards
+            type_ = "medium"
         else:
-            board_type = "dry"
+            type_ = "dry"
         
-        return {
-            "type": board_type,
-            "wetness": wetness,
-            "dynamism": dynamism,
-            "max_suit_count": max_suit_count,
-            "gaps": gaps
-        }
+        return {"type": type_, "wetness": wetness, "dynamism": dynamism, "max_suit_count": max_suit_count}
 
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using enhanced evaluator."""
@@ -2599,32 +2718,87 @@ class ImprovedPokerStateMachine:
             return self._get_legacy_bot_action(player)
 
     def get_gto_bot_action(self, player: Player) -> Tuple[ActionType, float]:
-        """Modern GTO bot action based on position, hand strength, and board texture."""
-        hand = self.get_hand_notation(player.cards)  # e.g., 'AKs'
+        hand = self.get_hand_notation(player.cards)
         position = player.position
         street = self.game_state.street
         facing_bet = self.game_state.current_bet > player.current_bet
         to_call = self.game_state.current_bet - player.current_bet
         pot_odds = to_call / (self.game_state.pot + to_call) if to_call > 0 else 0
+        strength = self.get_postflop_hand_strength(player.cards, self.game_state.board) if street != "preflop" else self.hand_evaluator.get_preflop_hand_strength(player.cards)
+        big_blind = self.game_state.big_blind
+        spr = player.stack / self.game_state.pot if self.game_state.pot > 0 else float('inf')
         
-        # Get hand strength
-        if street == "preflop":
-            strength = self.get_preflop_hand_strength(player.cards)
-        else:
-            strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
+        if street == "preflop" and not self.game_state.board:
+            # Short stack all-in logic
+            spr = player.stack / big_blind
+            if spr < 3 and strength > 60:  # Short stack with strong hand
+                return ActionType.RAISE, player.stack  # All-in
+            
+            context = "rfi" if self.game_state.last_raise_amount == 0 else "vs_rfi" if self.game_state.last_raise_amount < 3*big_blind else "vs_three_bet"
+            range_data = self.gto_preflop_ranges.get(position, {}).get(context, {})
+            
+            if "three_bet" in range_data and self.is_hand_in_range(hand, range_data["three_bet"]["range"]) and random.random() < range_data["three_bet"]["freq"]:
+                amount = self.game_state.current_bet * range_data["three_bet"]["size_mult"]
+                if player.stack <= 15 * big_blind:  # Short stack jam
+                    amount = player.stack
+                return ActionType.RAISE, amount
+            elif "call" in range_data and self.is_hand_in_range(hand, range_data["call"]["range"]) and random.random() < range_data["call"]["freq"]:
+                return ActionType.CALL, to_call
+            elif "four_bet" in range_data and self.is_hand_in_range(hand, range_data["four_bet"]["range"]) and random.random() < range_data["four_bet"]["freq"]:
+                amount = self.game_state.current_bet * range_data["four_bet"]["size_mult"]
+                if player.stack <= 15 * big_blind:
+                    amount = player.stack
+                return ActionType.RAISE, amount
+            elif self.is_hand_in_range(hand, range_data.get("range", [])) and random.random() < range_data.get("freq", 1.0):
+                amount = big_blind * 3  # Default open size
+                if player.stack <= 15 * big_blind and strength > 70:
+                    amount = player.stack
+                return ActionType.RAISE, amount
+            return ActionType.FOLD, 0.0
         
-        # Preflop GTO logic
-        if street == "preflop":
-            return self._get_gto_preflop_action(player, hand, position, facing_bet, to_call, strength)
-        else:
-            # Postflop GTO logic
-            return self._get_gto_postflop_action(player, position, facing_bet, to_call, strength, pot_odds)
+        # Postflop (fixed sizing with exact mult)
+        texture = self.classify_board_texture(self.game_state.board)
+        bet_size_mult = 0.33 if texture["type"] == "dry" else 0.66 if "wet" in texture["type"] else 0.5  # Medium 50%
+        
+        # Stack depth adjustment
+        spr = player.stack / self.game_state.pot if self.game_state.pot > 0 else float('inf')
+        stack_mult = min(1.0, max(0.3, spr / 5))  # Clamp between 0.3 and 1.0
+        
+        if strength > 80:  # Value bet
+            amount = self.game_state.pot * bet_size_mult * stack_mult
+            if facing_bet:
+                amount += to_call  # Raise includes call
+            return ActionType.BET if not facing_bet else ActionType.RAISE, amount
+        elif strength > 50:  # Mid: Check/call if odds good
+            if pot_odds >= 0.3:
+                return ActionType.FOLD, 0.0
+            return ActionType.CHECK if not facing_bet else ActionType.CALL, to_call
+        else:  # Weak: Check or bluff occasionally
+            if pot_odds < 0.2:  # Good bluffing spot
+                amount = self.game_state.pot * 0.5  # Small bluff
+                if facing_bet:
+                    amount += to_call
+                return ActionType.BET if not facing_bet else ActionType.RAISE, amount
+            return ActionType.CHECK if not facing_bet else ActionType.FOLD, 0.0
+
+    def _log_gto_decision(self, player: Player, hand: str, position: str, street: str, 
+                          strength: int, action: ActionType, amount: float, pot_odds: float):
+        """Log GTO decision for debugging."""
+        if hasattr(self, 'logger') and self.logger:
+            self.logger.log_system("INFO", "GTO", f"GTO Decision: {player.name} {position} {street} "
+                               f"hand:{hand} strength:{strength} action:{action.value} "
+                               f"amount:${amount:.2f} pot_odds:{pot_odds:.2f}")
 
     def _get_gto_preflop_action(self, player: Player, hand: str, position: str, 
                                facing_bet: bool, to_call: float, strength: int) -> Tuple[ActionType, float]:
         """GTO preflop action based on position and ranges."""
+        # Short stack all-in logic
+        spr = player.stack / self.game_state.big_blind
+        if spr < 3 and strength > 60:  # Short stack with strong hand
+            return ActionType.RAISE, player.stack  # All-in
+        
         # Determine context
-        if not facing_bet:
+        if self.game_state.last_raise_amount == 0:
             context = "rfi"  # Raise First In
         elif self.game_state.last_raise_amount < 3 * self.game_state.big_blind:
             context = "vs_rfi"  # Versus Raise First In
@@ -2635,16 +2809,26 @@ class ImprovedPokerStateMachine:
         position_ranges = self.gto_preflop_ranges.get(position, {})
         context_data = position_ranges.get(context, {})
         
-        # Check for 3-bet opportunity
-        if "three_bet" in context_data:
+        # Check if hand is in range for this context
+        if "range" in context_data and "freq" in context_data:
+            # Simple structure (rfi context)
+            freq_check = random.random() < context_data["freq"]
+            range_check = self.is_hand_in_range(hand, context_data["range"])
+            
+            if freq_check and range_check:
+                # RFI - raise
+                raise_amount = self.game_state.big_blind * 3  # Standard 3x raise
+                return ActionType.RAISE, min(raise_amount, player.stack)
+        elif "call" in context_data and "three_bet" in context_data:
+            # Complex structure (vs_rfi context)
+            # Check for 3-bet opportunity first
             three_bet_data = context_data["three_bet"]
             if (random.random() < three_bet_data["freq"] and 
                 self.is_hand_in_range(hand, three_bet_data["range"])):
                 raise_amount = self.game_state.current_bet * three_bet_data["size_mult"]
                 return ActionType.RAISE, min(raise_amount, player.stack)
-        
-        # Check for call opportunity
-        if "call" in context_data:
+            
+            # Check for call opportunity
             call_data = context_data["call"]
             if (random.random() < call_data["freq"] and 
                 self.is_hand_in_range(hand, call_data["range"])):
@@ -2658,13 +2842,23 @@ class ImprovedPokerStateMachine:
         """GTO postflop action based on hand strength and board texture."""
         board_texture = self.classify_board_texture(self.game_state.board)
         
+        # Stack depth adjustment
+        spr = player.stack / self.game_state.pot if self.game_state.pot > 0 else 100
+        stack_mult = min(2.0, max(0.5, spr / 10))  # Clamp between 0.5 and 2.0
+        
         # Determine bet sizing based on board texture
         if board_texture["type"] == "dry":
-            bet_size_mult = 0.33  # Small bet on dry boards
+            bet_size_mult = 0.33 * stack_mult  # Small bet on dry boards
         elif board_texture["type"] in ["wet_flush", "wet_straight"]:
-            bet_size_mult = 0.66  # Large bet on wet boards
+            bet_size_mult = 0.66 * stack_mult  # Large bet on wet boards
         else:
-            bet_size_mult = 0.5  # Medium bet on medium boards
+            bet_size_mult = 0.5 * stack_mult  # Medium bet on medium boards
+        
+        # Check-raise logic for strong hands facing bets
+        if facing_bet and strength > 70 and random.random() < 0.3:
+            raise_amount = self.game_state.current_bet * 2.5
+            if raise_amount <= player.stack:
+                return ActionType.RAISE, raise_amount
         
         # Value betting with strong hands
         if strength > 80:

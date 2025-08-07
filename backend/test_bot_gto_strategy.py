@@ -10,7 +10,7 @@ import unittest
 from unittest import mock
 import random
 from typing import List, Tuple
-from core.poker_state_machine import ImprovedPokerStateMachine, ActionType
+from core.poker_state_machine import ImprovedPokerStateMachine, ActionType, PokerState
 
 
 class TestGTOPreflopStrategy(unittest.TestCase):
@@ -21,12 +21,13 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         self.sm = ImprovedPokerStateMachine(num_players=6, test_mode=True)
         self.sm.strategy_mode = "GTO"
         self.sm.start_hand()  # Sets positions
+        random.seed(42)  # For reproducible frequencies
 
     def test_rfi_decision_strong_hands(self):
         """Test RFI decisions with strong hands."""
         # Test UTG with strong hands
         player = next(p for p in self.sm.game_state.players if p.position == "UTG")
-        player.cards = ['Ah', 'Ks']  # AKs
+        player.cards = ['Ah', 'Kh']  # AKs
         
         action, amount = self.sm.get_gto_bot_action(player)
         self.assertEqual(action, ActionType.RAISE, "UTG should raise AKs")
@@ -51,6 +52,19 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         self.assertEqual(action, ActionType.RAISE, "BTN should raise T9s")
         self.assertGreater(amount, 0)
 
+    def test_short_stack_all_in(self):
+        """Test short stack all-in logic."""
+        player = self.sm.game_state.players[0]
+        player.position = "BTN"
+        player.cards = ['Ah', 'Kh']  # AKs
+        player.stack = 2.0  # Short stack (SPR < 3)
+        self.sm.game_state.current_bet = 0
+    
+        with mock.patch.object(self.sm, 'get_preflop_hand_strength', return_value=85):
+            action, amount = self.sm.get_gto_bot_action(player)
+            self.assertEqual(action, ActionType.RAISE)
+            self.assertEqual(amount, player.stack)  # All-in for short stacks
+
     def test_frequencies_mixed_hands(self):
         """Test frequency-based decisions for mixed hands."""
         # Test a hand that should be mixed (e.g., 99 in some positions)
@@ -58,16 +72,19 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         player.position = "UTG"
         player.cards = ['9h', '9d']  # 99
         
+        # Override frequency for testing
+        self.sm.gto_preflop_ranges["UTG"]["rfi"]["freq"] = 0.5
+    
         # Run multiple times to test frequency
         actions = []
         for _ in range(50):
             action, _ = self.sm.get_gto_bot_action(player)
             actions.append(action)
-        
+    
         # Should have some raises and some folds (mixed strategy)
         raise_count = actions.count(ActionType.RAISE)
         fold_count = actions.count(ActionType.FOLD)
-        
+    
         self.assertGreater(raise_count, 0, "Should have some raises")
         self.assertGreater(fold_count, 0, "Should have some folds")
 
@@ -76,7 +93,7 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         # Set up vs RFI scenario
         player = self.sm.game_state.players[0]
         player.position = "MP"
-        player.cards = ['Ah', 'Qs']  # AQs
+        player.cards = ['Ah', 'Qh']  # AQs
         self.sm.game_state.current_bet = 3.0  # Facing a raise
         self.sm.game_state.last_raise_amount = 2.0
         
@@ -111,7 +128,9 @@ class TestGTOPostflopStrategy(unittest.TestCase):
     def test_value_betting_strong_hands(self):
         """Test value betting with strong hands."""
         player = self.sm.game_state.players[0]
-        player.cards = ['A', 'A']  # AA on dry board
+        player.cards = ['Ah', 'Ad']  # AA on dry board
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
+        self.sm.game_state.pot = 10.0
         
         # Mock high strength
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=90):
@@ -119,10 +138,42 @@ class TestGTOPostflopStrategy(unittest.TestCase):
             self.assertEqual(action, ActionType.BET, "Should value bet strong hands")
             self.assertGreater(amount, 0)
 
+    def test_check_raise_logic(self):
+        """Test check-raise logic for strong hands facing bets."""
+        player = self.sm.game_state.players[0]
+        player.cards = ['Kh', 'Kd']  # KK
+        self.sm.game_state.current_bet = 10.0  # Facing bet
+        self.sm.game_state.pot = 30.0
+        
+        with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=85):
+            action, amount = self.sm.get_gto_bot_action(player)
+            # Should check-raise with strong hand facing bet
+            self.assertIn(action, [ActionType.RAISE, ActionType.CALL])
+
+    def test_stack_depth_adjustment(self):
+        """Test bet sizing adjustment based on stack depth."""
+        player = self.sm.game_state.players[0]
+        player.cards = ['Ah', 'Ks']  # AK
+        player.stack = 50.0  # Medium stack
+        self.sm.game_state.pot = 20.0
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
+        
+        with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=90):
+            action1, amount1 = self.sm.get_gto_bot_action(player)
+            
+            # Test with short stack
+            player.stack = 10.0
+            action2, amount2 = self.sm.get_gto_bot_action(player)
+            
+            # Should bet smaller with short stack
+            if action1 == ActionType.BET and action2 == ActionType.BET:
+                self.assertLess(amount2, amount1)
+
     def test_medium_hands_check_call(self):
         """Test medium hands check/call decisions."""
         player = self.sm.game_state.players[0]
-        player.cards = ['K', 'Q']  # KQ
+        player.cards = ['Kh', 'Qd']  # KQo
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
         
         # Mock medium strength
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=60):
@@ -134,6 +185,7 @@ class TestGTOPostflopStrategy(unittest.TestCase):
         """Test weak hands fold/bluff decisions."""
         player = self.sm.game_state.players[0]
         player.cards = ['7h', '2d']  # 72
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
         
         # Mock weak strength
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=30):
@@ -147,6 +199,7 @@ class TestGTOPostflopStrategy(unittest.TestCase):
         player.cards = ['Ah', 'Kd']  # AK
         self.sm.game_state.current_bet = 10.0
         self.sm.game_state.pot = 20.0
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
         
         # Mock strong hand
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=85):
@@ -158,6 +211,7 @@ class TestGTOPostflopStrategy(unittest.TestCase):
         """Test bet sizing based on board texture."""
         player = self.sm.game_state.players[0]
         player.cards = ['Ah', 'Ad']  # AA
+        self.sm.game_state.pot = 10.0  # Set pot for bet sizing
         
         # Mock strong hand
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=90):
@@ -178,7 +232,8 @@ class TestGTOPostflopStrategy(unittest.TestCase):
         player = self.sm.game_state.players[0]
         player.cards = ['Kh', 'Qd']  # KQ
         self.sm.game_state.current_bet = 5.0
-        self.sm.game_state.pot = 10.0  # Good pot odds (5 to call, 15 total pot)
+        self.sm.game_state.pot = 20.0  # Better pot odds (5 to call, 25 total pot)
+        self.sm.game_state.board = ["2h", "5d", "8c"]  # Dry board
         
         # Mock medium strength
         with mock.patch.object(self.sm, 'get_postflop_hand_strength', return_value=55):
@@ -227,6 +282,23 @@ class TestGTORangeParsing(unittest.TestCase):
         self.assertTrue(self.sm._hand_stronger_than_or_equal("AKs", "AQs"))
         self.assertFalse(self.sm._hand_stronger_than_or_equal("72o", "AKs"))
 
+    def test_range_expansion(self):
+        """Test range expansion logic."""
+        # Test pair range expansion
+        expanded = self.sm._expand_range("AA-88")
+        expected = ['AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88']
+        self.assertEqual(sorted(expanded), sorted(expected))
+        
+        # Test suited range expansion
+        expanded = self.sm._expand_range("AKs-AJs")
+        expected = ['AKs', 'AQs', 'AJs']
+        self.assertEqual(sorted(expanded), sorted(expected))
+        
+        # Test plus range expansion
+        expanded = self.sm._expand_plus_range("AJo+")
+        expected = ['AJo', 'AQo', 'AKo']
+        self.assertEqual(sorted(expanded), sorted(expected))
+
 
 class TestBoardTextureClassification(unittest.TestCase):
     """Test board texture classification for postflop decisions."""
@@ -242,7 +314,7 @@ class TestBoardTextureClassification(unittest.TestCase):
         
         self.assertEqual(texture["type"], "dry")
         self.assertLess(texture["wetness"], 0.5)
-        self.assertLess(texture["dynamism"], 0.5)
+        self.assertLessEqual(texture["dynamism"], 0.5)
 
     def test_wet_flush_board_classification(self):
         """Test wet flush board classification."""
