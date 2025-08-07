@@ -650,6 +650,14 @@ class ImprovedPokerStateMachine:
         old_state = self.current_state
         self.current_state = new_state
         
+        # CRITICAL: Notify UI of state change (this was missing!)
+        if self.on_state_change:
+            debug_print(f"🔄 DEBUG: Calling on_state_change callback")
+            self.on_state_change(new_state)
+            debug_print(f"✅ DEBUG: on_state_change callback completed")
+        else:
+            debug_print(f"❌ ERROR: on_state_change callback is None!")
+        
         # Call appropriate handler based on state
         if new_state == PokerState.END_HAND:
             debug_print(f"🔄 DEBUG: Calling handle_end_hand")

@@ -1342,6 +1342,16 @@ class PracticeSessionUI(ttk.Frame):
         self.reset_button.pack(side=tk.LEFT, padx=5)
         ToolTip(self.reset_button, "Reset the entire game state")
 
+        # Add Quit Game button
+        self.quit_button = ttk.Button(
+            control_frame, 
+            text="🚪 Quit Game", 
+            style="Large.TButton",
+            command=self._quit_game_gracefully
+        )
+        self.quit_button.pack(side=tk.LEFT, padx=5)
+        ToolTip(self.quit_button, "Quit the game and save all session data")
+
         # --- Last Action Label (Center - Fixed Position) ---
         self.last_action_label = tk.Label(
             self.action_bar_frame, 
@@ -1478,11 +1488,12 @@ class PracticeSessionUI(ttk.Frame):
             self.bet_slider.config(state=tk.DISABLED)
 
     def _show_game_control_buttons(self):
-        """Shows only the game control buttons (Start/Reset) - Fixed Position."""
+        """Shows only the game control buttons (Start/Reset/Quit) - Fixed Position."""
         
         # Enable game control buttons
         self.start_button.config(state=tk.NORMAL)
         self.reset_button.config(state=tk.NORMAL)
+        self.quit_button.config(state=tk.NORMAL)
         
         # Disable all action buttons
         for widget in self.human_action_controls.values():
@@ -1505,9 +1516,10 @@ class PracticeSessionUI(ttk.Frame):
     def _show_action_buttons(self):
         """Shows the action buttons and hides game control buttons - Fixed Position."""
         
-        # Disable game control buttons
+        # Disable game control buttons (except quit - users should always be able to quit)
         self.start_button.config(state=tk.DISABLED)
         self.reset_button.config(state=tk.DISABLED)
+        self.quit_button.config(state=tk.NORMAL)  # Keep quit button enabled
         
         # Enable all action buttons
         for widget in self.human_action_controls.values():
@@ -1529,37 +1541,85 @@ class PracticeSessionUI(ttk.Frame):
 
 
     def _reset_game(self):
-        """Resets the game state and UI."""
+        """Reset the entire game state."""
         try:
-            from tkinter import messagebox
-            if messagebox.askyesno("Reset Game", "Are you sure you want to reset the game?"):
-                self._log_message("🔄 Resetting game state...")
-                
-                # Reinitialize the state machine
-                self.state_machine = ImprovedPokerStateMachine(
-                    num_players=6, 
-                    strategy_data=self.strategy_data
-                )
-                
-                # Re-assign callbacks
-                self.state_machine.on_action_required = self.prompt_human_action
-                self.state_machine.on_hand_complete = self.handle_hand_complete
-                self.state_machine.on_state_change = self.update_display
-                self.state_machine.on_log_entry = self.add_game_message
-                self.state_machine.on_action_player_changed = self.update_action_player_highlighting
-                self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
-                self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
-                self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
-                self.state_machine.on_single_card_dealt = self._handle_single_card_dealt  # NEW: Handle single card dealt
-                self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
-                
-                # Reset UI
-                self._reset_ui_for_new_hand()
-                self.add_game_message("🔄 Game has been reset!")
-                self._log_message("✅ Game reset completed")
-                self.update_session_info()
+            # Reset the state machine
+            self.state_machine = ImprovedPokerStateMachine(
+                num_players=self.num_players,
+                strategy_data=self.strategy_data,
+                root_tk=self.root
+            )
+            
+            # Set up callbacks
+            self.state_machine.on_action_required = self.prompt_human_action
+            self.state_machine.on_state_change = self._on_state_change
+            self.state_machine.on_hand_complete = self.handle_hand_complete
+            self.state_machine.on_action_player_changed = self.update_action_player_highlighting
+            self.state_machine.on_action_executed = self._handle_action_executed
+            self.state_machine.on_log_entry = self._log_message
+            self.state_machine.on_round_complete = self._handle_round_complete
+            self.state_machine.on_dealing_cards = self._handle_dealing_start
+            self.state_machine.on_single_card_dealt = self._handle_single_card_dealt
+            self.state_machine.on_dealing_complete = self._handle_dealing_complete
+            
+            # Reset UI
+            self._reset_ui_for_new_hand()
+            
+            # Start a new session
+            self.state_machine.start_session()
+            
+            # Update display
+            self.update_display()
+            
+            self._log_message("🔄 Game reset successfully")
+            
         except Exception as e:
             self._log_message(f"❌ Error resetting game: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _quit_game_gracefully(self):
+        """Quit the game gracefully, ensuring all session data is saved."""
+        try:
+            self._log_message("🚪 User requested to quit game - saving session data...")
+            
+            # Show a confirmation dialog
+            import tkinter.messagebox as messagebox
+            result = messagebox.askyesno(
+                "Quit Game", 
+                "Are you sure you want to quit?\n\nAll session data will be saved before exiting."
+            )
+            
+            if result:
+                self._log_message("✅ User confirmed quit - proceeding with graceful shutdown...")
+                
+                # Clean up the poker state machine (this will save all session data)
+                if hasattr(self, 'state_machine') and self.state_machine:
+                    self._log_message("📝 Cleaning up poker state machine...")
+                    self.state_machine._cleanup()
+                
+                # Add final session log entry
+                self._log_message("✅ Session ended by user via Quit Game button")
+                
+                # Destroy the root window and exit
+                if hasattr(self, 'root') and self.root:
+                    self._log_message("🔄 Destroying GUI window...")
+                    self.root.destroy()
+                
+                # Exit the application
+                import sys
+                sys.exit(0)
+            else:
+                self._log_message("❌ User cancelled quit - continuing game...")
+                
+        except Exception as e:
+            self._log_message(f"❌ Error during graceful quit: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Force exit even if there's an error
+            import sys
+            sys.exit(1)
 
     def _reset_ui_for_new_hand(self):
         """Resets the UI for a new hand."""
