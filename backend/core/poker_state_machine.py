@@ -3114,24 +3114,21 @@ class ImprovedPokerStateMachine:
         active_players = [p for p in self.game_state.players if p.is_active and not getattr(p, 'has_folded_this_hand', False)]
         self._log_message(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
         
-        if len(active_players) == 1:
-            # CRITICAL FIX: Defer awarding to handle_end_hand to preserve pot for animation
-            self._log_message(f"🏆 {active_players[0].name} wins by default (all others folded)")
-            self._log_message(f"💰 Pot preserved for animation: ${self.game_state.pot:.2f}")
+        # FIXED: Early END_HAND transition check - if active count <= 1 and not in showdown/end_hand, transition immediately
+        if len(active_players) <= 1 and self.current_state not in [PokerState.SHOWDOWN, PokerState.END_HAND]:
+            if len(active_players) == 1:
+                # CRITICAL FIX: Defer awarding to handle_end_hand to preserve pot for animation
+                self._log_message(f"🏆 {active_players[0].name} wins by default (all others folded)")
+                self._log_message(f"💰 Pot preserved for animation: ${self.game_state.pot:.2f}")
+            else:
+                # FIXED: All players folded - reset pot and log
+                self._log_message("🚨 All players folded - resetting pot")
+                self.game_state.pot = 0.0
+                if hasattr(self, 'logger') and self.logger:
+                    self.logger.log_system("WARNING", "HAND", "All players folded - pot reset to 0")
             
-            # Only transition if not already in END_HAND state
-            if self.current_state != PokerState.END_HAND:
-                self.transition_to(PokerState.END_HAND)
+            self.transition_to(PokerState.END_HAND)
             return  # End the action here since the hand is over
-        elif len(active_players) == 0:
-            # FIXED: All players folded - reset pot and log
-            self._log_message("🚨 All players folded - resetting pot")
-            self.game_state.pot = 0.0
-            if hasattr(self, 'logger') and self.logger:
-                self.logger.log_system("WARNING", "HAND", "All players folded - pot reset to 0")
-            if self.current_state != PokerState.END_HAND:
-                self.transition_to(PokerState.END_HAND)
-            return
 
         # If the hand is not over, check if the round is complete
         self._log_message(f"🔄 POST-ACTION: Checking if round is complete...")

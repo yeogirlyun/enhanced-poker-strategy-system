@@ -102,7 +102,7 @@ class GTOStrategyEngine:
                 },
                 "vs_rfi": {
                     "range": ["AA-33", "AKs-AJs", "AJo+", "KQo"],
-                    "freq": 0.3
+                    "freq": 0.6  # FIXED: Loosened from 0.3 to 0.6 for wider BB defense (GTO standard vs min-raise)
                 },
                 "vs_three_bet": {
                     "range": ["AA-88", "AKs", "AKo"],
