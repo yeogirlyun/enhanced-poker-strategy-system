@@ -1907,9 +1907,15 @@ class PracticeSessionUI(ttk.Frame):
         board_cards = display_state.community_cards
         if board_cards:
             # Check if we should delay community card updates (during pot consolidation)
-            if hasattr(self, 'delay_community_cards') and self.delay_community_cards:
+            # BUT: Always show community cards during showdown/end hand
+            current_state = self.state_machine.get_current_state().value if hasattr(self.state_machine, 'get_current_state') else None
+            is_showdown_or_end = current_state in ['showdown', 'end_hand']
+            
+            if hasattr(self, 'delay_community_cards') and self.delay_community_cards and not is_showdown_or_end:
                 self._log_message("⏰ Delaying community card update during pot consolidation")
             else:
+                if is_showdown_or_end:
+                    self._log_message("🃏 Showing community cards during showdown")
                 self._draw_community_cards(board_cards)
 
         # Update player positions and highlights using display state
