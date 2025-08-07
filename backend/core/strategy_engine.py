@@ -158,17 +158,17 @@ class GTOStrategyEngine:
         
         # FIXED: RFI (Raise First In) - Check if pot is unopened
         if game_state.current_bet <= game_state.big_blind:
-            if self.is_hand_in_range(hand, position_ranges["rfi"]["range"]):
+            # FIXED: For unchecked pots (call_amount == 0), always check (GTO: no limp-raise weak)
+            if call_amount == 0:
+                return ActionType.CHECK, 0.0
+            # For facing a bet, use range logic
+            elif self.is_hand_in_range(hand, position_ranges["rfi"]["range"]):
                 if random.random() <= position_ranges["rfi"]["freq"]:
                     return ActionType.RAISE, game_state.big_blind * 3
                 else:
                     return ActionType.FOLD, 0.0
             else:
-                # FIXED: When not raising and no bet to call, check instead of fold
-                if call_amount > 0:
-                    return ActionType.FOLD, 0.0
-                else:
-                    return ActionType.CHECK, 0.0
+                return ActionType.FOLD, 0.0
         
         # vs RFI
         elif (facing_bet and 
@@ -226,9 +226,9 @@ class GTOStrategyEngine:
             # Facing a bet
             if strength >= 60:
                 return ActionType.RAISE, bet_size
-            elif strength >= 40 and pot_odds <= 0.3:
+            elif strength >= 40 and pot_odds <= 0.4:  # More generous pot odds threshold
                 return ActionType.CALL, call_amount
-            elif strength >= 20 and pot_odds <= 0.2:
+            elif strength >= 20 and pot_odds <= 0.3:  # More generous pot odds threshold
                 return ActionType.CALL, call_amount
             else:
                 return ActionType.FOLD, 0.0

@@ -2824,10 +2824,10 @@ class ImprovedPokerStateMachine:
                         return ActionType.RAISE, raise_amount
                     else:
                         return ActionType.CALL, call_amount
-                elif hand_strength > 10:  # Lower threshold for calling
+                elif hand_strength > 5:  # Very low threshold for BB calling
                     return ActionType.CALL, call_amount
                 else:
-                    return ActionType.FOLD, 0  # BB can fold to a raise with very weak hands
+                    return ActionType.CALL, call_amount  # BB should call with any hand when facing a raise
         # --- End of BB folding fix ---
         
         # Regular bot logic for non-BB players
@@ -3109,7 +3109,8 @@ class ImprovedPokerStateMachine:
 
         # --- CORRECTED GAME FLOW LOGIC ---
         # Check for a winner after any action that might end the hand
-        active_players = [p for p in self.game_state.players if p.is_active]
+        # FIXED: Use explicit non-folded active players check
+        active_players = [p for p in self.game_state.players if p.is_active and not getattr(p, 'has_folded_this_hand', False)]
         self._log_message(f"🎯 After {player.name} {action.value}, active players: {[p.name for p in active_players]}")
         
         if len(active_players) == 1:
@@ -3121,6 +3122,15 @@ class ImprovedPokerStateMachine:
             if self.current_state != PokerState.END_HAND:
                 self.transition_to(PokerState.END_HAND)
             return  # End the action here since the hand is over
+        elif len(active_players) == 0:
+            # FIXED: All players folded - reset pot and log
+            self._log_message("🚨 All players folded - resetting pot")
+            self.game_state.pot = 0.0
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.log_system("WARNING", "HAND", "All players folded - pot reset to 0")
+            if self.current_state != PokerState.END_HAND:
+                self.transition_to(PokerState.END_HAND)
+            return
 
         # If the hand is not over, check if the round is complete
         self._log_message(f"🔄 POST-ACTION: Checking if round is complete...")

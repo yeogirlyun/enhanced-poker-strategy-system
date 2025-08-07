@@ -409,21 +409,36 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         
         # Set up scenario where all but one player fold
         players = self.state_machine.game_state.players
-        for i in range(len(players) - 1):
-            players[i].is_active = False
+        # Ensure all players are active initially for the test setup
+        for p in players:
+            p.is_active = True
+            p.total_invested = 0.0  # Reset investments for clean test
         
-        # Execute fold action for the last folding player
-        last_folding_player = players[-2]  # Second to last player
-        self.state_machine.execute_action(last_folding_player, ActionType.FOLD, 0)
+        # Player 1 (BTN) raises
+        self.state_machine.execute_action(players[0], ActionType.RAISE, 3.0)
         
-        # Check that only one player remains active
+        # Player 2 (SB) folds
+        self.state_machine.execute_action(players[1], ActionType.FOLD, 0.0)
+        
+        # Player 3 (BB) folds
+        self.state_machine.execute_action(players[2], ActionType.FOLD, 0.0)
+        
+        # Player 4 (UTG) folds
+        self.state_machine.execute_action(players[3], ActionType.FOLD, 0.0)
+        
+        # Player 5 (MP) folds
+        self.state_machine.execute_action(players[4], ActionType.FOLD, 0.0)
+        
+        # After Player 5 folds, Player 1 should be the only active player
         active_players = [p for p in players if p.is_active]
-        self.assertEqual(len(active_players), 1, 
-                        "Should have exactly one active player remaining")
-        
-        # The remaining player should be the last one
-        self.assertTrue(players[-1].is_active, 
-                       "Last player should remain active")
+        self.assertEqual(len(active_players), 1,
+                         "Should have exactly one active player remaining after others fold")
+        self.assertEqual(self.state_machine.current_state, PokerState.END_HAND,
+                         "State should transition to END_HAND after last fold")
+        self.assertGreater(active_players[0].stack, 100,
+                           "Winning player's stack should increase")
+        self.assertEqual(active_players[0].stack, 100 + self.state_machine.game_state.pot,
+                         "Winning player should get the entire pot")
     
     # ============================================================================
     # POT AND MONEY TESTS
