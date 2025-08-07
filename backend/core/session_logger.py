@@ -353,8 +353,11 @@ class SessionLogger:
     def end_hand(self, winner: str, winning_hand: str, pot_size: float, showdown: bool = False):
         """Complete the current hand logging."""
         if not self.current_hand:
+            debug_print(f"❌ DEBUG: No current hand to end")
             return
             
+        debug_print(f"🔄 DEBUG: Ending hand with winner={winner}, hand={winning_hand}, pot=${pot_size:.2f}")
+        
         self.current_hand.winner = winner
         self.current_hand.winning_hand = winning_hand
         self.current_hand.pot_size = pot_size
@@ -368,13 +371,17 @@ class SessionLogger:
         if self.session:
             self.session.hands.append(self.current_hand)
             self.session.hands_played += 1
+            debug_print(f"✅ DEBUG: Hand added to session, total hands = {self.session.hands_played}")
+        else:
+            debug_print(f"❌ ERROR: No session available for hand completion")
         
         self.log_system("INFO", "HAND", f"Hand completed", {
             "hand_id": self.current_hand.hand_id,
             "winner": winner,
             "pot_size": pot_size,
             "showdown": showdown,
-            "duration_ms": self.current_hand.hand_duration_ms
+            "duration_ms": self.current_hand.hand_duration_ms,
+            "hand_complete": True
         })
         
         # Save session data incrementally
@@ -382,6 +389,53 @@ class SessionLogger:
         
         self.current_hand = None
         self.hand_start_time = None
+        debug_print(f"✅ DEBUG: Hand completion successful")
+    
+    def end_session_with_termination(self, termination_reason: str = "User quit"):
+        """End session with termination note for incomplete hands."""
+        debug_print(f"🔄 DEBUG: Ending session with termination: {termination_reason}")
+        
+        # Complete current hand if it exists
+        if self.current_hand:
+            debug_print(f"🔄 DEBUG: Completing incomplete hand due to termination")
+            
+            # Mark hand as incomplete
+            self.current_hand.winner = "Session terminated"
+            self.current_hand.winning_hand = f"Session terminated - {termination_reason}"
+            self.current_hand.hand_complete = False  # Mark as incomplete
+            self.current_hand.showdown = False
+            
+            if self.hand_start_time:
+                self.current_hand.hand_duration_ms = int((time.time() - self.hand_start_time) * 1000)
+            
+            # Add to session
+            if self.session:
+                self.session.hands.append(self.current_hand)
+                self.session.hands_played += 1
+                debug_print(f"✅ DEBUG: Incomplete hand added to session")
+            
+            # Log the termination
+            self.log_system("WARNING", "SESSION", f"Session terminated: {termination_reason}", {
+                "hand_id": self.current_hand.hand_id,
+                "termination_reason": termination_reason,
+                "hand_complete": False,
+                "pot_size": self.current_hand.pot_size
+            })
+            
+            self.current_hand = None
+            self.hand_start_time = None
+        
+        # End the session
+        self.end_session()
+        
+        # Add final termination note
+        self.log_system("INFO", "SESSION", f"Session ended by user: {termination_reason}", {
+            "hands_played": self.session.hands_played if self.session else 0,
+            "session_duration": time.time() - self.session.start_time if self.session else 0,
+            "termination_reason": termination_reason
+        })
+        
+        debug_print(f"✅ DEBUG: Session terminated successfully")
     
     def log_system(self, level: str, category: str, message: str, data: Optional[Dict] = None):
         """Log system-level messages with immediate flush."""

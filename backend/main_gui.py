@@ -1203,8 +1203,63 @@ These settings can be configured in the main strategy panels."""
             messagebox.showerror("Error", f"Could not open sound settings: {e}")
 
     def run(self):
-        """Run the application."""
-        self.root.mainloop()
+        """Run the main GUI application with enhanced shutdown handling."""
+        try:
+            # Set up enhanced shutdown handling
+            def on_closing():
+                """Handle window closing (Cmd+Q on macOS, X button on other platforms)."""
+                print("🔄 Application window closing - initiating graceful shutdown...")
+                self._cleanup_and_exit()
+            
+            # Bind the window close event
+            self.root.protocol("WM_DELETE_WINDOW", on_closing)
+            
+            # Set up signal handlers for Ctrl+C
+            def signal_handler(signum, frame):
+                print(f"\n🔄 Received shutdown signal {signum} - gracefully exiting...")
+                self._cleanup_and_exit()
+            
+            signal.signal(signal.SIGINT, signal_handler)
+            signal.signal(signal.SIGTERM, signal_handler)
+            
+            # Start the main loop
+            print("🚀 Starting main GUI loop...")
+            self.root.mainloop()
+            
+        except KeyboardInterrupt:
+            print("\n🔄 Keyboard interrupt detected - shutting down gracefully...")
+            self._cleanup_and_exit()
+        except Exception as e:
+            print(f"❌ Application error: {e}")
+            import traceback
+            traceback.print_exc()
+            self._cleanup_and_exit()
+    
+    def _cleanup_and_exit(self):
+        """Clean up resources and exit gracefully."""
+        try:
+            print("🧹 Cleaning up application resources...")
+            
+            # Clean up any active poker sessions
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                if hasattr(self.practice_session_ui, 'state_machine') and self.practice_session_ui.state_machine:
+                    print("📝 Cleaning up poker state machine...")
+                    self.practice_session_ui.state_machine._cleanup()
+            
+            # Destroy the root window
+            if hasattr(self, 'root') and self.root:
+                print("🔄 Destroying GUI window...")
+                self.root.destroy()
+            
+            print("✅ Application cleanup complete")
+            
+        except Exception as e:
+            print(f"Warning: Error during application cleanup: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Exit the application
+        sys.exit(0)
 
     def _safe_set_image(self, widget, image_path):
         """
@@ -1283,12 +1338,12 @@ These settings can be configured in the main strategy panels."""
 
 
 def main():
-    """Main entry point with graceful shutdown handling."""
+    """Main entry point with enhanced graceful shutdown handling."""
     print("🚀 Starting Poker Training System...")
     
-    # Setup graceful shutdown
+    # Setup enhanced graceful shutdown
     def signal_handler(signum, frame):
-        print(f"\n🔄 Received shutdown signal - gracefully exiting...")
+        print(f"\n🔄 Received shutdown signal {signum} - gracefully exiting...")
         print("💾 Session data will be saved automatically...")
         # The SessionLogger will handle the actual cleanup
         sys.exit(0)
@@ -1299,6 +1354,8 @@ def main():
     # Register handlers
     signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
     signal.signal(signal.SIGTERM, signal_handler)  # Termination
+    
+    # Register atexit handler for final cleanup
     atexit.register(cleanup_on_exit)
     
     try:
@@ -1306,12 +1363,15 @@ def main():
         app.run()
     except KeyboardInterrupt:
         print("\n🔄 Keyboard interrupt detected - shutting down gracefully...")
+        print("💾 Saving session data...")
     except Exception as e:
         print(f"❌ Application error: {e}")
         import traceback
         traceback.print_exc()
+        print("💾 Attempting to save session data despite error...")
     finally:
         print("🔄 Application cleanup complete")
+        print("👋 Thank you for using Poker Training System!")
 
 
 if __name__ == "__main__":

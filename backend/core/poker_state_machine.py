@@ -802,39 +802,90 @@ class ImprovedPokerStateMachine:
         """Cleanup method called on shutdown."""
         try:
             print("🧹 Cleaning up poker state machine...")
+            debug_print(f"🔄 DEBUG: _cleanup() called on object ID = {id(self)}")
             
-            # Complete current hand if in progress
+            # Check if we have an active hand that needs completion
             if (hasattr(self, 'current_state') and 
                 self.current_state != PokerState.END_HAND and
                 hasattr(self, 'logger') and 
                 hasattr(self.logger, 'current_hand') and 
                 self.logger.current_hand):
                 
-                print("📝 Completing current hand...")
-                # End the current hand gracefully
+                print("📝 Completing current hand due to program termination...")
+                debug_print(f"🔄 DEBUG: Current state = {self.current_state.value}")
+                debug_print(f"🔄 DEBUG: Logger has current_hand = {self.logger.current_hand is not None}")
+                
+                # End the current hand gracefully with termination note
                 try:
                     active_players = [p for p in self.game_state.players if p.is_active]
+                    debug_print(f"🔄 DEBUG: Active players at termination: {[p.name for p in active_players]}")
+                    
                     if len(active_players) == 1:
                         winner = active_players[0].name
+                        winning_hand = "Session terminated - single active player"
                     else:
-                        winner = "Unknown (Session ended)"
+                        winner = "Session terminated - multiple active players"
+                        winning_hand = "Session terminated - hand incomplete"
                     
+                    # Log the incomplete hand with termination note
                     self.logger.end_hand(
                         winner=winner,
-                        winning_hand="Session terminated",
+                        winning_hand=winning_hand,
                         pot_size=self.game_state.pot,
                         showdown=False
                     )
+                    
+                    # Add a system log entry about the termination
+                    self.logger.log_system(
+                        "WARNING", 
+                        "SESSION", 
+                        "Program terminated before hand completion", 
+                        {
+                            "current_state": self.current_state.value,
+                            "active_players": len(active_players),
+                            "pot_size": self.game_state.pot,
+                            "board": self.game_state.board,
+                            "termination_reason": "User quit (Ctrl+C or Cmd+Q)"
+                        }
+                    )
+                    
+                    debug_print(f"✅ DEBUG: Incomplete hand logged successfully")
+                    print(f"📝 Hand terminated: {winner} wins ${self.game_state.pot:.2f} (incomplete)")
+                    
                 except Exception as e:
+                    debug_print(f"❌ ERROR: Could not complete current hand: {e}")
                     print(f"Warning: Could not complete current hand: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                debug_print(f"🔄 DEBUG: No active hand to complete")
+                print("📝 No active hand to complete")
             
-            # End logging session
-            self._end_logging_session()
+            # End logging session with termination note
+            if hasattr(self, 'logger') and self.logger:
+                debug_print(f"🔄 DEBUG: Ending logging session")
+                self.logger.log_system(
+                    "INFO", 
+                    "SESSION", 
+                    "Session ended by user (Ctrl+C or Cmd+Q)", 
+                    {
+                        "hands_played": getattr(self.logger.session, 'hands_played', 0) if hasattr(self.logger, 'session') else 0,
+                        "session_duration": time.time() - getattr(self.logger.session, 'start_time', time.time()) if hasattr(self.logger, 'session') else 0
+                    }
+                )
+                self._end_logging_session()
+                debug_print(f"✅ DEBUG: Logging session ended successfully")
+            else:
+                debug_print(f"❌ ERROR: No logger available for session cleanup")
             
             print("✅ Poker state machine cleanup complete")
+            debug_print(f"✅ DEBUG: _cleanup() completed successfully")
             
         except Exception as e:
+            debug_print(f"❌ ERROR: Error during state machine cleanup: {e}")
             print(f"Warning: Error during state machine cleanup: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _start_hand_logging(self):
         """Start logging for the current hand."""
