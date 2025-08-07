@@ -34,6 +34,11 @@ from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
 # Import the sound manager
 from utils.sound_manager import SoundManager
 
+# Import new modular components
+from .strategy_engine import GTOStrategyEngine
+from .session_manager import SessionManager
+from .ui_renderer import UIDisplayRenderer, DisplayState
+
 # IMMEDIATE FLUSH DEBUG PRINT for critical debugging
 def debug_print(*args, **kwargs):
     """Print with immediate flush to prevent buffer loss on abrupt exits."""
@@ -285,8 +290,13 @@ class ImprovedPokerStateMachine:
         # GTO Strategy Mode
         self.strategy_mode = "GTO"  # Default to GTO mode
         
-        # Initialize GTO preflop ranges
-        self._initialize_gto_ranges()
+        # Initialize modular components
+        self.strategy_engine = GTOStrategyEngine(num_players, strategy_data)
+        self.session_manager = SessionManager(num_players, self.game_state.big_blind, self.logger)
+        self.ui_renderer = UIDisplayRenderer()
+        
+        # Initialize GTO preflop ranges (now handled by strategy engine)
+        # self._initialize_gto_ranges()  # REMOVED - now in strategy engine
         
         # Initialize players and session
         self._initialize_players()
@@ -2718,68 +2728,8 @@ class ImprovedPokerStateMachine:
             return self._get_legacy_bot_action(player)
 
     def get_gto_bot_action(self, player: Player) -> Tuple[ActionType, float]:
-        hand = self.get_hand_notation(player.cards)
-        position = player.position
-        street = self.game_state.street
-        facing_bet = self.game_state.current_bet > player.current_bet
-        to_call = self.game_state.current_bet - player.current_bet
-        pot_odds = to_call / (self.game_state.pot + to_call) if to_call > 0 else 0
-        strength = self.get_postflop_hand_strength(player.cards, self.game_state.board) if street != "preflop" else self.hand_evaluator.get_preflop_hand_strength(player.cards)
-        big_blind = self.game_state.big_blind
-        spr = player.stack / self.game_state.pot if self.game_state.pot > 0 else float('inf')
-        
-        if street == "preflop" and not self.game_state.board:
-            # Short stack all-in logic
-            spr = player.stack / big_blind
-            if spr < 3 and strength > 60:  # Short stack with strong hand
-                return ActionType.RAISE, player.stack  # All-in
-            
-            context = "rfi" if self.game_state.last_raise_amount == 0 else "vs_rfi" if self.game_state.last_raise_amount < 3*big_blind else "vs_three_bet"
-            range_data = self.gto_preflop_ranges.get(position, {}).get(context, {})
-            
-            if "three_bet" in range_data and self.is_hand_in_range(hand, range_data["three_bet"]["range"]) and random.random() < range_data["three_bet"]["freq"]:
-                amount = self.game_state.current_bet * range_data["three_bet"]["size_mult"]
-                if player.stack <= 15 * big_blind:  # Short stack jam
-                    amount = player.stack
-                return ActionType.RAISE, amount
-            elif "call" in range_data and self.is_hand_in_range(hand, range_data["call"]["range"]) and random.random() < range_data["call"]["freq"]:
-                return ActionType.CALL, to_call
-            elif "four_bet" in range_data and self.is_hand_in_range(hand, range_data["four_bet"]["range"]) and random.random() < range_data["four_bet"]["freq"]:
-                amount = self.game_state.current_bet * range_data["four_bet"]["size_mult"]
-                if player.stack <= 15 * big_blind:
-                    amount = player.stack
-                return ActionType.RAISE, amount
-            elif self.is_hand_in_range(hand, range_data.get("range", [])) and random.random() < range_data.get("freq", 1.0):
-                amount = big_blind * 3  # Default open size
-                if player.stack <= 15 * big_blind and strength > 70:
-                    amount = player.stack
-                return ActionType.RAISE, amount
-            return ActionType.FOLD, 0.0
-        
-        # Postflop (fixed sizing with exact mult)
-        texture = self.classify_board_texture(self.game_state.board)
-        bet_size_mult = 0.33 if texture["type"] == "dry" else 0.66 if "wet" in texture["type"] else 0.5  # Medium 50%
-        
-        # Stack depth adjustment
-        spr = player.stack / self.game_state.pot if self.game_state.pot > 0 else float('inf')
-        stack_mult = min(1.0, max(0.3, spr / 5))  # Clamp between 0.3 and 1.0
-        
-        if strength > 80:  # Value bet
-            amount = self.game_state.pot * bet_size_mult * stack_mult
-            if facing_bet:
-                amount += to_call  # Raise includes call
-            return ActionType.BET if not facing_bet else ActionType.RAISE, amount
-        elif strength > 50:  # Mid: Check/call if odds good
-            if pot_odds >= 0.3:
-                return ActionType.FOLD, 0.0
-            return ActionType.CHECK if not facing_bet else ActionType.CALL, to_call
-        else:  # Weak: Check or bluff occasionally
-            if pot_odds < 0.2:  # Good bluffing spot
-                amount = self.game_state.pot * 0.5  # Small bluff
-                if facing_bet:
-                    amount += to_call
-                return ActionType.BET if not facing_bet else ActionType.RAISE, amount
-            return ActionType.CHECK if not facing_bet else ActionType.FOLD, 0.0
+        """Get GTO bot action using the strategy engine."""
+        return self.strategy_engine.get_gto_bot_action(player, self.game_state)
 
     def _log_gto_decision(self, player: Player, hand: str, position: str, street: str, 
                           strength: int, action: ActionType, amount: float, pot_odds: float):
@@ -3870,89 +3820,21 @@ class ImprovedPokerStateMachine:
         }
 
     def get_display_state(self) -> DisplayState:
-        """Get UI-ready display state with pre-computed visual data."""
+        """Get UI-ready display state using the UI renderer."""
         if not self.game_state:
-            return DisplayState(
-                valid_actions={},
-                player_highlights=[],
-                card_visibilities=[],
-                chip_representations={},
-                layout_positions={},
-                community_cards=[],
-                pot_amount=0.0,
-                current_bet=0.0,
-                action_player_index=-1,
-                game_state="",
-                last_action_details=""
+            return self.ui_renderer.get_display_state(
+                GameState(players=[], board=[], pot=0.0, current_bet=0.0, street=""),
+                PokerState.START_HAND,
+                -1,
+                ""
             )
         
-        action_player = self.get_action_player()
-        valid_actions_raw = self.get_valid_actions_for_player(action_player) if action_player else {}
-        call_amount = valid_actions_raw.get('call_amount', 0)
-
-        # Pre-compute UI-ready action data
-        actions_ui = {
-            'fold': {
-                'enabled': valid_actions_raw.get('fold', False), 
-                'label': 'Fold'
-            },
-            'check': {
-                'enabled': valid_actions_raw.get('check', False), 
-                'label': 'Check'
-            },
-            'call': {
-                'enabled': valid_actions_raw.get('call', False), 
-                'label': f"Call ${call_amount:.2f}" if call_amount > 0 else 'Call'
-            },
-            'bet': {
-                'enabled': valid_actions_raw.get('bet', False), 
-                'label': 'Bet'
-            },
-            'raise': {
-                'enabled': valid_actions_raw.get('raise', False), 
-                'label': 'Raise'
-            },
-            'preset_bets': valid_actions_raw.get('preset_bets', {})
-        }
-
-        # Player highlights: True for action player
-        highlights = [i == self.action_player_index for i in range(len(self.game_state.players))]
-
-        # Card visibilities: Show for human or during showdown/end (but only for active players)
-        is_showdown_or_end = self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]
-        visibilities = [
-            p.is_human or (is_showdown_or_end and p.is_active)
-            for p in self.game_state.players
-        ]
-
-        # Chip representations (move calculations here)
-        chip_reps = {}
-        for i, p in enumerate(self.game_state.players):
-            chip_reps[f'player{i}_stack'] = self._get_chip_symbols(p.stack)
-        chip_reps['pot'] = self._get_pot_chip_symbols(self.game_state.pot)
-
-        # Layout positions (compute based on num_players)
-        layout = self._compute_layout_positions(800, 600, self.num_players)
-
-        # Community cards (preserved during showdown)
-        community_cards = self.game_state.board.copy()
-        if self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]:
-            # Use preserved board if available
-            if self.preserved_board:
-                community_cards = self.preserved_board
-
-        return DisplayState(
-            valid_actions=actions_ui,
-            player_highlights=highlights,
-            card_visibilities=visibilities,
-            chip_representations=chip_reps,
-            layout_positions=layout,
-            community_cards=community_cards,
-            pot_amount=self.game_state.pot,
-            current_bet=self.game_state.current_bet,
-            action_player_index=self.action_player_index,
-            game_state=self.current_state.value,
-            last_action_details=self.game_state.last_action_details
+        # Use the UI renderer to generate display state
+        return self.ui_renderer.get_display_state(
+            self.game_state,
+            self.current_state,
+            self.action_player_index,
+            self.game_state.last_action_details
         )
 
     def _get_chip_symbols(self, amount: float) -> str:
