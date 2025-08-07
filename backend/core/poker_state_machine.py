@@ -1058,59 +1058,54 @@ class ImprovedPokerStateMachine:
         self._log_action("🃏 Waiting for dealing animation to complete before starting betting...")
 
     def deal_hole_cards(self):
-        """Deal hole cards to all players with animation callback."""
-        self._log_action(f"🃏 Dealing hole cards to {len(self.game_state.players)} players")
-        self._log_action(f"🃏 Deck has {len(self.game_state.deck)} cards remaining")
+        """Deal hole cards to all players with casino-style one-card-at-a-time dealing."""
+        self._log_action("🃏 DEALING HOLE CARDS - Casino Style")
         
-        # Trigger dealing animation callback if available
-        if hasattr(self, 'on_dealing_cards') and self.on_dealing_cards:
-            self.on_dealing_cards()
+        # Create a fresh deck for this hand
+        self.game_state.deck = self.create_deck()
+        self._log_action(f"🃏 Created fresh deck with {len(self.game_state.deck)} cards")
         
-        # FIXED: Deal cards one at a time around the table (proper casino style)
-        # Initialize all players with empty card lists
+        # Clear all player cards first
         for player in self.game_state.players:
             player.cards = []
         
-        # Deal first card to each player (round 1)
-        for i, player in enumerate(self.game_state.players):
-            card = self.deal_card()
-            player.cards.append(card)
-            self._log_action(f"🃏 First card to {player.name} ({player.position}): {card}")
-            
-            # Trigger individual card deal callback if available
-            if hasattr(self, 'on_single_card_dealt') and self.on_single_card_dealt:
-                self.on_single_card_dealt(i, 0, card)  # player_index, card_index, card
-            
-            # Play card dealing sound for each card dealt
-            self.sound_manager.play("card_deal")  # Authentic dealing sound
-        
-        # Deal second card to each player (round 2)
-        for i, player in enumerate(self.game_state.players):
-            card = self.deal_card()
-            player.cards.append(card)
-            self._log_action(f"🃏 Second card to {player.name} ({player.position}): {card}")
-            
-            # Trigger individual card deal callback if available
-            if hasattr(self, 'on_single_card_dealt') and self.on_single_card_dealt:
-                self.on_single_card_dealt(i, 1, card)  # player_index, card_index, card
-            
-            # Play card dealing sound for each card dealt
-            self.sound_manager.play("card_deal")  # Authentic dealing sound
-        
-        # Log final results
+        # Deal one card at a time to each player (casino style)
+        # First round: deal first card to each player
         for player in self.game_state.players:
-            self._log_action(f"🃏 Final cards for {player.name}: {' '.join(player.cards)}")
+            card = self.deal_card()
+            player.cards.append(card)
+            self._log_action(f"🃏 First card to {player.name}: {card}")
+            
+            # Notify UI of single card dealt
+            if hasattr(self, 'on_single_card_dealt'):
+                player_index = self.game_state.players.index(player)
+                self.on_single_card_dealt(player_index, 0, card)
         
-        self._log_action(f"🃏 After dealing, deck has {len(self.game_state.deck)} cards remaining")
+        # Second round: deal second card to each player
+        for player in self.game_state.players:
+            card = self.deal_card()
+            player.cards.append(card)
+            self._log_action(f"🃏 Second card to {player.name}: {card}")
+            
+            # Notify UI of single card dealt
+            if hasattr(self, 'on_single_card_dealt'):
+                player_index = self.game_state.players.index(player)
+                self.on_single_card_dealt(player_index, 1, card)
         
-        # Log hole cards to comprehensive logging system
+        # Log all hole cards to comprehensive logging system
         try:
             hole_cards = {}
             for player in self.game_state.players:
                 hole_cards[player.name] = player.cards
             
             debug_print(f"🐛 DEBUG: About to log hole cards: {hole_cards}")
-            debug_print(f"🐛 DEBUG: Logger current_hand: {self.logger.current_hand}")
+            debug_print(f"🐛 DEBUG: Logger object: {self.logger}")
+            debug_print(f"🐛 DEBUG: Logger type: {type(self.logger)}")
+            
+            if hasattr(self.logger, 'current_hand'):
+                debug_print(f"🐛 DEBUG: Logger current_hand: {self.logger.current_hand}")
+            else:
+                debug_print(f"❌ ERROR: Logger has no current_hand attribute!")
             
             self.logger.log_hole_cards(hole_cards)
             debug_print(f"✅ DEBUG: Hole cards logged successfully")
@@ -1128,7 +1123,7 @@ class ImprovedPokerStateMachine:
         total_dealing_time = total_cards * 300 + 1000  # 300ms per card + 1s buffer
         if hasattr(self, 'on_dealing_complete'):
             self.on_dealing_complete(total_dealing_time)
-    
+
     def start_preflop_betting_after_dealing(self):
         """Start preflop betting after dealing animation is complete."""
         self._log_action("🃏 All cards dealt - starting preflop betting round")
@@ -2515,8 +2510,14 @@ class ImprovedPokerStateMachine:
         """
         self._log_action(f"🔄 ROUND COMPLETE for {self.game_state.street}")
         
+        # FIX: Trigger the on_round_complete callback BEFORE transitioning to next state
+        # This ensures pot consolidation animation happens before street advancement
         if self.on_round_complete:
+            debug_print(f"🔄 DEBUG: Triggering on_round_complete callback")
             self.on_round_complete()
+            debug_print(f"🔄 DEBUG: on_round_complete callback completed")
+        else:
+            debug_print(f"❌ ERROR: on_round_complete callback is None!")
 
         # Determine the next state based on the current street
         if self.game_state.street == 'preflop':
@@ -2768,6 +2769,19 @@ class ImprovedPokerStateMachine:
         """Capture complete hand result for session tracking."""
         if not self.session_state:
             return
+        
+        # FIX: Call the logger's end_hand method to properly complete hand logging
+        if self.logger and hasattr(self.logger, 'end_hand'):
+            winner_name = winner_info.get('name', 'Unknown') if winner_info else 'Unknown'
+            winning_hand = winner_info.get('hand', 'Unknown') if winner_info else 'Unknown'
+            pot_size = self.game_state.pot
+            showdown = len([p for p in self.game_state.players if p.is_active]) > 1
+            
+            debug_print(f"🔄 DEBUG: Calling logger.end_hand with winner={winner_name}, hand={winning_hand}, pot=${pot_size:.2f}")
+            self.logger.end_hand(winner_name, winning_hand, pot_size, showdown)
+            debug_print(f"✅ DEBUG: logger.end_hand completed successfully")
+        else:
+            debug_print(f"❌ ERROR: Logger or end_hand method not available!")
         
         # Capture players at end of hand
         players_at_end = [self._capture_player_state(p) for p in self.game_state.players]
