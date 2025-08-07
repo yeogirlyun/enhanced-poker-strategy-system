@@ -621,24 +621,59 @@ class ImprovedPokerStateMachine:
             self.on_log_entry(message)
 
     def transition_to(self, new_state: PokerState):
-        """Transition to a new state with validation."""
-        if new_state in self.STATE_TRANSITIONS[self.current_state]:
+        """Transition to a new state with validation and logging."""
+        debug_print(f"🔄 DEBUG: Transitioning from {self.current_state.value} to {new_state.value}")
+        
+        if self.current_state == new_state:
+            debug_print(f"🔄 DEBUG: Already in {new_state.value}, no transition needed")
+            return
+
+        # Validate transition
+        if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
+            debug_print(f"❌ ERROR: Invalid transition from {self.current_state.value} to {new_state.value}")
+            self._log_action(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
+            return
+
+        # Check for active players before END_HAND transition
+        if new_state == PokerState.END_HAND:
             active_players = [p for p in self.game_state.players if p.is_active]
-            if not active_players and new_state != PokerState.END_HAND:
-                self._log_action("No active players, forcing transition to END_HAND")
-                self.current_state = PokerState.END_HAND
-                self.handle_state_entry()
-                return
-            old_state = self.current_state
-            self.current_state = new_state
-            self._log_action(f"STATE TRANSITION: {old_state.value} → {new_state.value}")
-            if self.on_state_change:
-                self.on_state_change(new_state)
-            self.handle_state_entry()
+            debug_print(f"🔄 DEBUG: END_HAND transition - {len(active_players)} active players")
+            if len(active_players) > 1:
+                debug_print(f"🔄 DEBUG: Multiple active players, proceeding to showdown")
+            else:
+                debug_print(f"🔄 DEBUG: Single active player, ending hand")
+
+        # Log the transition
+        self._log_action(f"State transition: {self.current_state.value} -> {new_state.value}")
+        
+        # Update state
+        old_state = self.current_state
+        self.current_state = new_state
+        
+        # Call appropriate handler based on state
+        if new_state == PokerState.END_HAND:
+            debug_print(f"🔄 DEBUG: Calling handle_end_hand")
+            self.handle_end_hand()
+            debug_print(f"✅ DEBUG: handle_end_hand completed")
+        elif new_state == PokerState.SHOWDOWN:
+            debug_print(f"🔄 DEBUG: Calling handle_showdown")
+            self.handle_showdown()
+            debug_print(f"✅ DEBUG: handle_showdown completed")
         else:
-            raise ValueError(
-                f"Invalid state transition: {self.current_state.value} → {new_state.value}"
-            )
+            debug_print(f"🔄 DEBUG: Calling handle_state_entry for {new_state.value}")
+            self.handle_state_entry()
+            debug_print(f"✅ DEBUG: handle_state_entry completed")
+        
+        # Special handling for END_HAND state
+        if new_state == PokerState.END_HAND:
+            debug_print(f"🔄 DEBUG: END_HAND state reached, ensuring hand completion")
+            # Ensure hand is properly completed
+            if hasattr(self, 'logger') and self.logger:
+                debug_print(f"🔄 DEBUG: Logger available, ensuring hand logging completion")
+            else:
+                debug_print(f"❌ ERROR: Logger not available for hand completion!")
+        
+        debug_print(f"✅ DEBUG: Transition to {new_state.value} completed successfully")
 
     def handle_state_entry(self, existing_players: Optional[List[Player]] = None):
         """
@@ -2680,8 +2715,10 @@ class ImprovedPokerStateMachine:
         Handles hand completion, determines winner, awards pot, and notifies UI.
         This is now the single source of truth for ending a hand.
         """
+        debug_print(f"🔄 DEBUG: handle_end_hand() called for {self.game_state.street}")
+        debug_print(f"🔄 DEBUG: Current pot: ${self.game_state.pot:.2f}")
+        debug_print(f"🔄 DEBUG: Active players: {[p.name for p in self.game_state.players if p.is_active]}")
 
-        
         self._log_action("Hand complete")
 
         # FIX: Handle side pots for all-in scenarios
@@ -2737,10 +2774,11 @@ class ImprovedPokerStateMachine:
             }
             self._last_winner = winner_info
             self._log_action(f"🏆 Winner(s): {winner_names} win ${pot_amount:.2f}")
+            debug_print(f"🏆 DEBUG: Winner info: {winner_info}")
         else:
             self._log_action("No winner determined (should not happen in a normal game).")
             winner_info = None
-    
+            debug_print(f"❌ DEBUG: No winner determined")
 
         # Reset game state for next hand
         if self.game_state:
@@ -2760,10 +2798,18 @@ class ImprovedPokerStateMachine:
         self.advance_dealer_position()
         
         # SESSION TRACKING - NEW!
+        debug_print(f"🔄 DEBUG: Calling _capture_hand_result")
         self._capture_hand_result(winner_info, side_pots)
+        debug_print(f"✅ DEBUG: _capture_hand_result completed")
         
         if self.on_hand_complete:
+            debug_print(f"🔄 DEBUG: Calling on_hand_complete callback")
             self.on_hand_complete(winner_info)
+            debug_print(f"✅ DEBUG: on_hand_complete callback completed")
+        else:
+            debug_print(f"❌ ERROR: on_hand_complete callback is None!")
+        
+        debug_print(f"✅ DEBUG: handle_end_hand() completed successfully")
 
     def _capture_hand_result(self, winner_info: Optional[Dict], side_pots: List[Dict]):
         """Capture complete hand result for session tracking."""
