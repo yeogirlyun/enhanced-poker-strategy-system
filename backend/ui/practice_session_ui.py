@@ -1906,7 +1906,11 @@ class PracticeSessionUI(ttk.Frame):
         # Update community cards using display state
         board_cards = display_state.community_cards
         if board_cards:
-            self._draw_community_cards(board_cards)
+            # Check if we should delay community card updates (during pot consolidation)
+            if hasattr(self, 'delay_community_cards') and self.delay_community_cards:
+                self._log_message("⏰ Delaying community card update during pot consolidation")
+            else:
+                self._draw_community_cards(board_cards)
 
         # Update player positions and highlights using display state
         for i, (position, highlight) in enumerate(zip(display_state.layout_positions, display_state.player_highlights)):
@@ -2162,8 +2166,25 @@ class PracticeSessionUI(ttk.Frame):
         self._log_message("🔄 Street complete - animating bet consolidation to pot")
         self.add_game_message("🔄 Street complete - consolidating bets to pot")
         
+        # Set a flag to delay community card updates
+        self.delay_community_cards = True
+        
         # Animate all bet displays consolidating into the pot
         self._animate_all_bets_to_pot()
+        
+        # Clear the delay flag after pot consolidation animation completes
+        self.root.after(1500, self._clear_community_card_delay)  # 1000ms pot animation + 500ms delay
+    
+    def _clear_community_card_delay(self):
+        """Clear the delay flag and trigger community card update."""
+        self._log_message("⏰ Pot consolidation complete - now revealing community cards")
+        self.add_game_message("🃏 Revealing community cards...")
+        
+        # Clear the delay flag
+        self.delay_community_cards = False
+        
+        # Trigger a display update to show the new community cards
+        self.update_display()
     
     def _handle_dealing_start(self):
         """Handle the start of card dealing animation."""
