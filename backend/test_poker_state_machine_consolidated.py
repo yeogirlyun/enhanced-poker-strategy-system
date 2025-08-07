@@ -161,7 +161,7 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         self.assertIsInstance(amount, (int, float), f"Amount should be numeric, got {type(amount)}")
     
     def test_bb_facing_raise(self):
-        """Test BB folds to a raise with a weak hand."""
+        """Test BB calls to a raise with a weak hand."""
         self.state_machine.start_hand()
         bb_player = next(p for p in self.state_machine.game_state.players 
                         if p.position == "BB")
@@ -174,9 +174,9 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         # Test BB action
         action, amount = self.state_machine.get_basic_bot_action(bb_player)
         
-        # BB should not fold when facing a raise
-        self.assertNotEqual(action, ActionType.FOLD, 
-                           "BB should not fold when facing a raise")
+        # BB should call when facing a raise (not fold)
+        self.assertEqual(action, ActionType.CALL, 
+                       "BB should call when facing a raise")
     
     def test_valid_actions_for_player(self):
         """Test valid actions calculation for different players."""
@@ -413,6 +413,9 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         for p in players:
             p.is_active = True
             p.total_invested = 0.0  # Reset investments for clean test
+        
+        # Set up proper betting round
+        self.state_machine.transition_to(PokerState.PREFLOP_BETTING)
         
         # Player 1 (BTN) raises
         self.state_machine.execute_action(players[0], ActionType.RAISE, 3.0)
