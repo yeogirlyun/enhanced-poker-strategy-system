@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict, field
 
-# Import debug_print from poker_state_machine
-from .poker_state_machine import debug_print
+# Define debug_print locally to avoid circular import
+def debug_print(*args, **kwargs):
+    """Debug print function that flushes immediately."""
+    print(*args, **kwargs, flush=True)
 
 
 @dataclass
