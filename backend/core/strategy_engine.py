@@ -135,10 +135,13 @@ class GTOStrategyEngine:
             return self._get_gto_postflop_action(player, game_state, call_amount, pot_odds)
 
     def _get_gto_preflop_action(self, player: Player, game_state: GameState, call_amount: float) -> Tuple[ActionType, float]:
-        """Get GTO preflop action."""
+        """Get GTO preflop action with FIXED validation."""
         hand = self.get_hand_notation(player.cards)
         position = player.position
         strength = self.get_preflop_hand_strength(player.cards)
+        
+        # FIXED: Calculate minimum raise properly
+        min_raise_total = game_state.current_bet + game_state.min_raise
         
         # Short stack all-in logic
         if player.stack <= 2.0:
@@ -164,7 +167,12 @@ class GTOStrategyEngine:
             # For facing a bet, use range logic
             elif self.is_hand_in_range(hand, position_ranges["rfi"]["range"]):
                 if random.random() <= position_ranges["rfi"]["freq"]:
-                    return ActionType.RAISE, game_state.big_blind * 3
+                    # FIXED: Ensure raise meets minimum requirement
+                    raise_amount = max(min_raise_total, game_state.big_blind * 3)
+                    if raise_amount <= player.stack:
+                        return ActionType.RAISE, raise_amount
+                    else:
+                        return ActionType.CALL, call_amount
                 else:
                     return ActionType.FOLD, 0.0
             else:
@@ -182,7 +190,12 @@ class GTOStrategyEngine:
             elif self.is_hand_in_range(hand, position_ranges["vs_rfi"]["range"]):
                 if random.random() <= position_ranges["vs_rfi"]["freq"]:
                     if strength >= 80:
-                        return ActionType.RAISE, game_state.current_bet * 3
+                        # FIXED: Ensure raise meets minimum requirement
+                        raise_amount = max(min_raise_total, game_state.current_bet * 3)
+                        if raise_amount <= player.stack:
+                            return ActionType.RAISE, raise_amount
+                        else:
+                            return ActionType.CALL, call_amount
                     else:
                         return ActionType.CALL, call_amount
                 else:
@@ -195,7 +208,12 @@ class GTOStrategyEngine:
             if self.is_hand_in_range(hand, position_ranges["vs_three_bet"]["range"]):
                 if random.random() <= position_ranges["vs_three_bet"]["freq"]:
                     if strength >= 80:  # Lower threshold for 3-bet defense
-                        return ActionType.RAISE, game_state.current_bet * 2.5
+                        # FIXED: Ensure raise meets minimum requirement
+                        raise_amount = max(min_raise_total, game_state.current_bet * 2.5)
+                        if raise_amount <= player.stack:
+                            return ActionType.RAISE, raise_amount
+                        else:
+                            return ActionType.CALL, call_amount
                     else:
                         return ActionType.CALL, call_amount
                 else:
@@ -204,10 +222,13 @@ class GTOStrategyEngine:
                 return ActionType.FOLD, 0.0
 
     def _get_gto_postflop_action(self, player: Player, game_state: GameState, call_amount: float, pot_odds: float) -> Tuple[ActionType, float]:
-        """Get GTO postflop action."""
+        """Get GTO postflop action with FIXED validation."""
         strength = self.get_postflop_hand_strength(player.cards, game_state.board)
         position = player.position
         facing_bet = call_amount > 0
+        
+        # FIXED: Calculate minimum raise properly
+        min_raise_total = game_state.current_bet + game_state.min_raise
         
         # Calculate SPR (Stack-to-Pot Ratio)
         spr = player.stack / game_state.pot if game_state.pot > 0 else float('inf')
@@ -227,13 +248,18 @@ class GTOStrategyEngine:
         stack_mult = min(1.0, max(0.3, spr / 5))
         bet_size *= stack_mult
         
-        # Action logic
+        # FIXED: Ensure bet size meets minimum requirements
         if facing_bet:
             # Facing a bet
             value_thresh = 70  # Raise nuts only
             call_thresh = pot_odds * 100
             if strength >= value_thresh:
-                return ActionType.RAISE, bet_size
+                # FIXED: Ensure raise meets minimum requirement
+                raise_amount = max(min_raise_total, bet_size)
+                if raise_amount <= player.stack:
+                    return ActionType.RAISE, raise_amount
+                else:
+                    return ActionType.CALL, call_amount
             elif strength > call_thresh and strength > 30:  # Call medium
                 return ActionType.CALL, call_amount
             elif call_amount == 0:
@@ -243,7 +269,12 @@ class GTOStrategyEngine:
         else:
             # No bet to call
             if strength >= 70:
-                return ActionType.BET, bet_size
+                # FIXED: Ensure bet meets minimum requirement
+                bet_amount = max(game_state.min_raise, bet_size)
+                if bet_amount <= player.stack:
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.CHECK, 0.0
             elif strength >= 50:
                 return ActionType.CHECK, 0.0
             else:

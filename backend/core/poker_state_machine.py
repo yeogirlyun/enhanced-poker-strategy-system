@@ -2799,10 +2799,14 @@ class ImprovedPokerStateMachine:
                 return ActionType.FOLD, 0
 
     def _get_legacy_bot_action(self, player: Player) -> Tuple[ActionType, float]:
-        """Legacy basic bot logic as fallback."""
+        """Legacy basic bot logic as fallback with FIXED validation."""
         # Use the enhanced hand evaluator instead of the old method
         hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
         hand_strength = hand_info['strength_score']  # Use the strength score from the dict
+        
+        # FIXED: Calculate minimum raise properly
+        min_raise_total = self.game_state.current_bet + self.game_state.min_raise
+        call_amount = self.game_state.current_bet - player.current_bet
         
         # --- FIXED: BB should not fold when there's no risk (no raise) ---
         if player.position == "BB":
@@ -2810,15 +2814,19 @@ class ImprovedPokerStateMachine:
             if self.game_state.current_bet <= self.game_state.big_blind:
                 # No raise has been made, BB should check or bet
                 if hand_strength > 20:
-                    return ActionType.BET, min(3.0, player.stack)
+                    bet_amount = min(3.0, player.stack)
+                    # FIXED: Ensure bet meets minimum requirement
+                    bet_amount = max(self.game_state.min_raise, bet_amount)
+                    if bet_amount <= player.stack:
+                        return ActionType.BET, bet_amount
+                    else:
+                        return ActionType.CHECK, 0
                 else:
                     return ActionType.CHECK, 0
             else:
                 # There's a raise, BB should call or raise with decent hands
-                call_amount = self.game_state.current_bet - player.current_bet
                 if hand_strength > 25:  # Lower threshold for BB
                     # BB can raise with strong hands
-                    min_raise_total = self.game_state.current_bet + self.game_state.min_raise
                     raise_amount = max(min_raise_total, min(self.game_state.current_bet * 2, player.stack))
                     if raise_amount <= player.stack:
                         return ActionType.RAISE, raise_amount
@@ -2833,14 +2841,18 @@ class ImprovedPokerStateMachine:
         # Regular bot logic for non-BB players
         if self.game_state.current_bet == 0:
             if hand_strength > 20:
-                return ActionType.BET, min(3.0, player.stack)
+                bet_amount = min(3.0, player.stack)
+                # FIXED: Ensure bet meets minimum requirement
+                bet_amount = max(self.game_state.min_raise, bet_amount)
+                if bet_amount <= player.stack:
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.CHECK, 0
             else:
                 return ActionType.CHECK, 0
         else:
-            call_amount = self.game_state.current_bet - player.current_bet
             if hand_strength > 30 and call_amount < player.stack * 0.5:
-                # --- FIX: Ensure raise meets minimum requirement ---
-                min_raise_total = self.game_state.current_bet + self.game_state.min_raise
+                # --- FIXED: Ensure raise meets minimum requirement ---
                 raise_amount = max(min_raise_total, min(self.game_state.current_bet * 2, player.stack))
                 if raise_amount <= player.stack:
                     return ActionType.RAISE, raise_amount
