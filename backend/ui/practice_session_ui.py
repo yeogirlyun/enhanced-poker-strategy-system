@@ -2681,17 +2681,22 @@ class PracticeSessionUI(ttk.Frame):
 
     def _draw_community_cards(self, board_cards):
         """Draw community cards using display state data."""
-        if not board_cards:
+        # Safety check for community card widgets
+        if not hasattr(self, 'community_card_widgets') or not self.community_card_widgets:
             return
             
-        # Safety check for community card widgets
-        if hasattr(self, 'community_card_widgets') and self.community_card_widgets:
+        # Clear all community cards first
+        for card_widget in self.community_card_widgets:
+            card_widget.set_card("")  # Show card back for empty slots
+        
+        # Now set the actual board cards
+        if board_cards:
             for i, card_widget in enumerate(self.community_card_widgets):
                 if i < len(board_cards):
                     card_widget.set_card(board_cards[i])
                     # Force the card widget to update immediately
                     card_widget.update()
-                    self._log_message(f"   Set card {i}: {board_cards[i]}")
+                    self._log_message(f"🎴 Set community card {i}: {board_cards[i]}")
         
         # Update tracking variable
         if hasattr(self, 'last_board_cards'):
