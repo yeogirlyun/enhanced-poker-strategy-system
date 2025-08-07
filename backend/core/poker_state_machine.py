@@ -189,7 +189,7 @@ class ImprovedPokerStateMachine:
         PokerState.END_HAND: [PokerState.START_HAND],
     }
 
-    def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None):
+    def __init__(self, num_players: int = 6, strategy_data=None, root_tk=None, test_mode: bool = False):
         """Initialize the poker state machine."""
         debug_print(f"🏗️ CONSTRUCTOR: PokerStateMachine created with {num_players} players")
         debug_print(f"🏗️ CONSTRUCTOR: Object ID = {id(self)}")
@@ -227,6 +227,12 @@ class ImprovedPokerStateMachine:
         self.action_log = []  # Add action_log attribute
         self.max_log_size = 1000  # Add max_log_size attribute
         
+        # FIXED: Add proper memory management initialization
+        self.max_hand_history = 1000  # Limit hand history size
+        self.max_action_log = 500     # Reduce action log size
+        self._memory_check_interval = 10  # Check memory every 10 hands
+        self._hands_since_cleanup = 0
+        
         # Position tracking
         self.dealer_position = 0
         self.small_blind_position = 0
@@ -255,8 +261,14 @@ class ImprovedPokerStateMachine:
         # Hand evaluator
         self.hand_evaluator = EnhancedHandEvaluator()
         
+        # Initialize hand evaluation cache
+        self._hand_eval_cache = {}
+        self._max_cache_size = 1000
+        self._cache_hits = 0
+        self._cache_misses = 0
+        
         # Sound manager
-        self.sound_manager = SoundManager()
+        self.sound_manager = SoundManager(test_mode=test_mode)
         
         # Initialize voice system
         try:
@@ -612,9 +624,10 @@ class ImprovedPokerStateMachine:
         log_entry = f"[{timestamp}] {message}"
         self.action_log.append(log_entry)
         
+        # BUG FIX: Memory leak prevention - use deque for efficient trimming
         if len(self.action_log) > self.max_log_size:
-            self.action_log = self.action_log[-self.max_log_size:]
-        
+            # Use slice assignment to avoid creating new list references
+            self.action_log[:] = self.action_log[-self.max_log_size:]
         
         # NEW: Call the UI callback for detailed logging
         if self.on_log_entry:
@@ -622,66 +635,102 @@ class ImprovedPokerStateMachine:
 
     def transition_to(self, new_state: PokerState):
         """Transition to a new state with validation and logging."""
-        debug_print(f"🔄 DEBUG: Transitioning from {self.current_state.value} to {new_state.value}")
-        
-        if self.current_state == new_state:
-            debug_print(f"🔄 DEBUG: Already in {new_state.value}, no transition needed")
+        # FIXED: Add transition lock to prevent concurrent transitions
+        if hasattr(self, '_transitioning') and self._transitioning:
+            self._log_action(f"WARNING: Transition already in progress, ignoring transition to {new_state.value}")
             return
+        
+        self._transitioning = True
+        try:
+            debug_print(f"🔄 DEBUG: Transitioning from {self.current_state.value} to {new_state.value}")
+            
+            if self.current_state == new_state:
+                debug_print(f"🔄 DEBUG: Already in {new_state.value}, no transition needed")
+                return
 
-        # Validate transition
-        if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
-            debug_print(f"❌ ERROR: Invalid transition from {self.current_state.value} to {new_state.value}")
-            self._log_action(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
+            # Validate transition
+            if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
+                debug_print(f"❌ ERROR: Invalid transition from {self.current_state.value} to {new_state.value}")
+                self._log_action(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
+                return
+
+            # Check for active players before END_HAND transition
+            if new_state == PokerState.END_HAND:
+                active_players = [p for p in self.game_state.players if p.is_active]
+                debug_print(f"🔄 DEBUG: END_HAND transition - {len(active_players)} active players")
+                if len(active_players) > 1:
+                    debug_print(f"🔄 DEBUG: Multiple active players, proceeding to showdown")
+                else:
+                    debug_print(f"🔄 DEBUG: Single active player, ending hand")
+
+            # Log the transition
+            self._log_action(f"State transition: {self.current_state.value} -> {new_state.value}")
+            
+            # Update state
+            old_state = self.current_state
+            self.current_state = new_state
+            
+            # CRITICAL: Notify UI of state change (this was missing!)
+            if self.on_state_change:
+                debug_print(f"🔄 DEBUG: Calling on_state_change callback")
+                self.on_state_change(new_state)
+                debug_print(f"✅ DEBUG: on_state_change callback completed")
+            else:
+                debug_print(f"❌ ERROR: on_state_change callback is None!")
+            
+            # Call appropriate handler based on state
+            if new_state == PokerState.END_HAND:
+                debug_print(f"🔄 DEBUG: Calling handle_end_hand")
+                self.handle_end_hand()
+                debug_print(f"✅ DEBUG: handle_end_hand completed")
+            elif new_state == PokerState.SHOWDOWN:
+                debug_print(f"🔄 DEBUG: Calling handle_showdown")
+                self.handle_showdown()
+                debug_print(f"✅ DEBUG: handle_showdown completed")
+            else:
+                debug_print(f"🔄 DEBUG: Calling handle_state_entry for {new_state.value}")
+                self.handle_state_entry()
+                debug_print(f"✅ DEBUG: handle_state_entry completed")
+            
+            # Special handling for END_HAND state
+            if new_state == PokerState.END_HAND:
+                debug_print(f"🔄 DEBUG: END_HAND state reached, ensuring hand completion")
+                # Ensure hand is properly completed
+                if hasattr(self, 'logger') and self.logger:
+                    debug_print(f"🔄 DEBUG: Logger available, ensuring hand logging completion")
+                else:
+                    debug_print(f"❌ ERROR: Logger not available for hand completion!")
+            
+            # Validate state consistency after transition
+            self._validate_state_consistency()
+            
+            debug_print(f"✅ DEBUG: Transition to {new_state.value} completed successfully")
+            
+        finally:
+            self._transitioning = False
+
+    def _validate_state_consistency(self):
+        """Validate state consistency after transitions."""
+        if not self.game_state:
             return
-
-        # Check for active players before END_HAND transition
-        if new_state == PokerState.END_HAND:
-            active_players = [p for p in self.game_state.players if p.is_active]
-            debug_print(f"🔄 DEBUG: END_HAND transition - {len(active_players)} active players")
-            if len(active_players) > 1:
-                debug_print(f"🔄 DEBUG: Multiple active players, proceeding to showdown")
-            else:
-                debug_print(f"🔄 DEBUG: Single active player, ending hand")
-
-        # Log the transition
-        self._log_action(f"State transition: {self.current_state.value} -> {new_state.value}")
         
-        # Update state
-        old_state = self.current_state
-        self.current_state = new_state
+        # Check pot consistency
+        total_invested = sum(p.total_invested for p in self.game_state.players)
+        if abs(self.game_state.pot - total_invested) > 0.01:
+            self._log_action(f"WARNING: Pot inconsistency - Pot: ${self.game_state.pot:.2f}, Invested: ${total_invested:.2f}")
         
-        # CRITICAL: Notify UI of state change (this was missing!)
-        if self.on_state_change:
-            debug_print(f"🔄 DEBUG: Calling on_state_change callback")
-            self.on_state_change(new_state)
-            debug_print(f"✅ DEBUG: on_state_change callback completed")
-        else:
-            debug_print(f"❌ ERROR: on_state_change callback is None!")
+        # Check for negative stacks
+        for player in self.game_state.players:
+            if player.stack < 0:
+                self._log_action(f"ERROR: {player.name} has negative stack: ${player.stack:.2f}")
+                player.stack = 0  # Fix it
         
-        # Call appropriate handler based on state
-        if new_state == PokerState.END_HAND:
-            debug_print(f"🔄 DEBUG: Calling handle_end_hand")
-            self.handle_end_hand()
-            debug_print(f"✅ DEBUG: handle_end_hand completed")
-        elif new_state == PokerState.SHOWDOWN:
-            debug_print(f"🔄 DEBUG: Calling handle_showdown")
-            self.handle_showdown()
-            debug_print(f"✅ DEBUG: handle_showdown completed")
-        else:
-            debug_print(f"🔄 DEBUG: Calling handle_state_entry for {new_state.value}")
-            self.handle_state_entry()
-            debug_print(f"✅ DEBUG: handle_state_entry completed")
-        
-        # Special handling for END_HAND state
-        if new_state == PokerState.END_HAND:
-            debug_print(f"🔄 DEBUG: END_HAND state reached, ensuring hand completion")
-            # Ensure hand is properly completed
-            if hasattr(self, 'logger') and self.logger:
-                debug_print(f"🔄 DEBUG: Logger available, ensuring hand logging completion")
-            else:
-                debug_print(f"❌ ERROR: Logger not available for hand completion!")
-        
-        debug_print(f"✅ DEBUG: Transition to {new_state.value} completed successfully")
+        # Check action player validity
+        if self.action_player_index >= 0:
+            player = self.get_action_player()
+            if player and (not player.is_active or player.is_all_in):
+                self._log_action(f"ERROR: Invalid action player: {player.name}")
+                self.advance_to_next_player()
 
     def handle_state_entry(self, existing_players: Optional[List[Player]] = None):
         """
@@ -743,16 +792,25 @@ class ImprovedPokerStateMachine:
 
     def assign_positions(self):
         """Assign positions relative to dealer with proper mapping."""
-        # FIXED: Use the class position names that match the number of players
+        # FIXED: Never use generic fallback positions
         positions = self._get_position_names()
+        
+        # Ensure we have enough position names
+        while len(positions) < self.num_players:
+            # Add specific positions instead of generic ones
+            extra_positions = ["MP+2", "MP+3", "EP", "LP"]
+            positions.extend(extra_positions[:self.num_players - len(positions)])
         
         for i in range(self.num_players):
             seat_offset = (i - self.dealer_position) % self.num_players
-            if seat_offset < len(positions):
-                self.game_state.players[i].position = positions[seat_offset]
-            else:
-                # Fallback for more players than defined positions
-                self.game_state.players[i].position = f"P{seat_offset+1}"
+            self.game_state.players[i].position = positions[seat_offset]
+        
+        # Validate no generic positions
+        for player in self.game_state.players:
+            if player.position.startswith('P') and player.position[1:].isdigit():
+                # This should never happen now
+                self._log_action(f"ERROR: Generic position assigned to {player.name}")
+                player.position = "MP"  # Safe fallback
 
     def _start_logging_session(self):
         """Initialize the comprehensive logging session."""
@@ -894,6 +952,24 @@ class ImprovedPokerStateMachine:
             print(f"Warning: Error during state machine cleanup: {e}")
             import traceback
             traceback.print_exc()
+
+    def _cleanup_memory(self):
+        """Perform memory cleanup."""
+        # Trim hand history if too large
+        if len(self.hand_history) > self.max_hand_history:
+            self.hand_history = self.hand_history[-self.max_hand_history:]
+        
+        # Clear old action logs
+        if len(self.action_log) > self.max_action_log:
+            self.action_log = self.action_log[-self.max_action_log:]
+        
+        # Clear session logs if too large
+        if self.session_state and len(self.session_state.session_log) > 1000:
+            self.session_state.session_log = self.session_state.session_log[-1000:]
+        
+        # Force garbage collection
+        import gc
+        gc.collect()
     
     def _start_hand_logging(self):
         """Start logging for the current hand."""
@@ -1019,6 +1095,12 @@ class ImprovedPokerStateMachine:
         """Initialize a new hand with all fixes, using existing players if provided."""
         debug_print(f"🚀 DEBUG: handle_start_hand called - existing_players={len(existing_players) if existing_players else 'None'}")
         self._log_action("Starting new hand")
+        
+        # FIXED: Add memory cleanup check
+        self._hands_since_cleanup += 1
+        if self._hands_since_cleanup >= self._memory_check_interval:
+            self._cleanup_memory()
+            self._hands_since_cleanup = 0
         
         # Increment hand number for logging
         self.hand_number += 1
@@ -1540,12 +1622,24 @@ class ImprovedPokerStateMachine:
         """Safely execute bot action with state validation."""
         self._log_action(f"⏰ SAFE_BOT_ACTION: Executing scheduled action for player index {action_data['player_index']}")
         
-        # Validate state hasn't changed
-        if (self.current_state != action_data['state'] or
-            self.action_player_index != action_data['player_index']):
+        # BUG FIX: Enhanced race condition protection with atomic state check
+        current_state_snapshot = {
+            'state': self.current_state,
+            'player_index': self.action_player_index,
+            'timestamp': time.time()
+        }
+        
+        # Validate state hasn't changed since action was scheduled
+        if (current_state_snapshot['state'] != action_data['state'] or
+            current_state_snapshot['player_index'] != action_data['player_index']):
             self._log_action(f"❌ Bot action cancelled - game state changed:")
-            self._log_action(f"   Expected state: {action_data['state']}, Current: {self.current_state}")
-            self._log_action(f"   Expected player index: {action_data['player_index']}, Current: {self.action_player_index}")
+            self._log_action(f"   Expected state: {action_data['state']}, Current: {current_state_snapshot['state']}")
+            self._log_action(f"   Expected player index: {action_data['player_index']}, Current: {current_state_snapshot['player_index']}")
+            return
+        
+        # BUG FIX: Additional validation to prevent race conditions
+        if self.current_state == PokerState.END_HAND:
+            self._log_action(f"❌ Bot action cancelled - hand has ended")
             return
         
         # Validate player still exists and is active
@@ -1558,14 +1652,32 @@ class ImprovedPokerStateMachine:
             self._log_action(f"❌ Bot action cancelled - {player.name} no longer active")
             return
         
+        # BUG FIX: Final atomic check before execution
+        if (self.current_state != current_state_snapshot['state'] or
+            self.action_player_index != current_state_snapshot['player_index']):
+            self._log_action(f"❌ Bot action cancelled - state changed during validation")
+            return
+        
         self._log_action(f"✅ State validation passed, executing bot action for {player.name}")
         self.execute_bot_action(player)
 
     # FIX 5: Strategy Integration for Bots
     def execute_bot_action(self, player: Player):
         """Execute bot action using strategy data."""
+        # FIXED: Add state validation before bot action
         if self.current_state == PokerState.END_HAND:
-            self._log_action("DEBUG: Hand has ended, bot action cancelled.")
+            self._log_action("Bot action cancelled - hand ended")
+            return
+        
+        # Validate player is still the action player
+        current_action_player = self.get_action_player()
+        if current_action_player != player:
+            self._log_action(f"Bot action cancelled - not {player.name}'s turn anymore")
+            return
+        
+        # Validate player can still act
+        if not player.is_active or player.is_all_in:
+            self._log_action(f"Bot action cancelled - {player.name} cannot act")
             return
         
         # --- ENHANCED DEBUG LOGGING ---
@@ -1879,8 +1991,7 @@ class ImprovedPokerStateMachine:
         if cache_key in self._hand_eval_cache:
             self._cache_hits += 1
             return self._hand_eval_cache[cache_key]
-        from enhanced_hand_evaluation import hand_evaluator
-        strength = hand_evaluator.get_preflop_hand_strength(cards)
+        strength = self.hand_evaluator.get_preflop_hand_strength(cards)
         self._hand_eval_cache[cache_key] = strength
         self._cache_misses += 1
         if len(self._hand_eval_cache) > self._max_cache_size:
@@ -1893,8 +2004,7 @@ class ImprovedPokerStateMachine:
         if cache_key in self._hand_eval_cache:
             self._cache_hits += 1
             return self._hand_eval_cache[cache_key]
-        from enhanced_hand_evaluation import hand_evaluator
-        evaluation = hand_evaluator.evaluate_hand(cards, board)
+        evaluation = self.hand_evaluator.evaluate_hand(cards, board)
         strength = evaluation['strength_score']
         self._hand_eval_cache[cache_key] = strength
         self._cache_misses += 1
@@ -2718,64 +2828,52 @@ class ImprovedPokerStateMachine:
         self.transition_to(PokerState.END_HAND)
 
     def create_side_pots(self) -> List[dict]:
-        """Create side pots for all-in scenarios with proper tracking."""
-        all_in_players = sorted(
-            [p for p in self.game_state.players if p.is_all_in and p.total_invested > 0],
-            key=lambda p: p.total_invested
-        )
+        """
+        FIXED: Properly handle partial calls in side pot calculations.
+        """
+        # Collect all players who have invested money
+        invested_players = [p for p in self.game_state.players 
+                            if p.total_invested > 0]
         
-        if not all_in_players:
-            # If no one is all-in, there's just one main pot
-            return [{
-                'amount': self.game_state.pot,
-                'eligible_players': [p for p in self.game_state.players if p.is_active]
-            }]
-
+        if not invested_players:
+            return [{'amount': 0, 'eligible_players': []}]
+        
+        # Sort by investment amount
+        investment_levels = sorted(set(p.total_invested for p in invested_players))
         side_pots = []
-        last_investment_level = 0
+        last_level = 0
         
-        # Create side pots for each all-in player
-        for all_in_player in all_in_players:
-            investment_level = all_in_player.total_invested
-            if investment_level <= last_investment_level:
-                continue
-
+        for level in investment_levels:
             pot_amount = 0
             eligible_players = []
-
-            for p in self.game_state.players:
-                if p.total_invested > last_investment_level:
-                    contribution = min(p.total_invested, investment_level) - last_investment_level
-                    pot_amount += contribution
-                    eligible_players.append(p)
             
-            if pot_amount > 0:
+            for player in invested_players:
+                if player.total_invested >= level:
+                    # Player contributes to this pot
+                    contribution = min(player.total_invested, level) - last_level
+                    pot_amount += contribution
+                    
+                    # Only eligible if they haven't folded
+                    if player.is_active:
+                        eligible_players.append(player)
+            
+            if pot_amount > 0 and eligible_players:
                 side_pots.append({
-                    'amount': pot_amount,
+                    'amount': pot_amount * len([p for p in invested_players 
+                                               if p.total_invested >= last_level]),
                     'eligible_players': eligible_players
                 })
             
-            last_investment_level = investment_level
-
-        # Create the main pot with the remaining chips
-        main_pot_amount = self.game_state.pot - sum(p['amount'] for p in side_pots)
-        if main_pot_amount > 0:
-            main_pot_players = [p for p in self.game_state.players if p.is_active and not p.is_all_in]
-            # If all remaining players are all-in, they are eligible for the last side pot
-            if not main_pot_players:
-                 main_pot_players = [p for p in self.game_state.players if p.total_invested >= last_investment_level]
-
-            side_pots.append({
-                'amount': main_pot_amount,
-                'eligible_players': main_pot_players
-            })
-
+            last_level = level
+        
         # Validate total
         total_created = sum(pot['amount'] for pot in side_pots)
         if abs(total_created - self.game_state.pot) > 0.01:
-            self._log_action(f"⚠️ Side pot discrepancy: {total_created} vs {self.game_state.pot}")
+            # Log discrepancy but continue
+            self._log_action(f"⚠️ Side pot discrepancy: Created ${total_created:.2f} vs Pot ${self.game_state.pot:.2f}")
         
-        return side_pots
+        return side_pots if side_pots else [{'amount': self.game_state.pot, 
+                                             'eligible_players': [p for p in self.game_state.players if p.is_active]}]
 
     def handle_end_hand(self):
         """

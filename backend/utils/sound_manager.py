@@ -16,11 +16,12 @@ from pathlib import Path
 class SoundManager:
     """Manages sound effects for the poker application."""
     
-    def __init__(self, sounds_dir: str = None):
+    def __init__(self, sounds_dir: str = None, test_mode: bool = False):
         """Initialize the sound manager.
         
         Args:
             sounds_dir: Directory containing sound files (defaults to ../sounds/)
+            test_mode: If True, disables voice activation to speed up testing
         """
         self.sounds_dir = sounds_dir or os.path.join(
             os.path.dirname(__file__), '..', 'sounds'
@@ -28,6 +29,7 @@ class SoundManager:
         self.sound_cache = {}
         self.enabled = True
         self.volume = 0.7
+        self.test_mode = test_mode
         
         # Initialize pygame mixer
         try:
@@ -150,14 +152,16 @@ class SoundManager:
         if not self.enabled:
             return
         
-        # Try to play voice announcement first
-        try:
-            from .voice_manager import VoiceManager
-            if not hasattr(self, 'voice_manager'):
-                self.voice_manager = VoiceManager()
-            self.voice_manager.play_action_voice(action, amount)
-        except Exception as e:
-            print(f"Warning: Could not play voice for {action}: {e}")
+        # Skip voice activation in test mode to speed up testing
+        if not self.test_mode:
+            # Try to play voice announcement first
+            try:
+                from .voice_manager import VoiceManager
+                if not hasattr(self, 'voice_manager'):
+                    self.voice_manager = VoiceManager()
+                self.voice_manager.play_action_voice(action, amount)
+            except Exception as e:
+                print(f"Warning: Could not play voice for {action}: {e}")
         
         # Also play sound effects
         action_sounds = self.sound_mapping.get("poker_actions", {})
@@ -258,6 +262,14 @@ class SoundManager:
     def disable(self):
         """Disable sound playback."""
         self.enabled = False
+    
+    def set_test_mode(self, test_mode: bool):
+        """Set test mode to disable voice activation during testing.
+        
+        Args:
+            test_mode: If True, voice activation will be skipped
+        """
+        self.test_mode = test_mode
     
     def cleanup(self):
         """Clean up resources."""
