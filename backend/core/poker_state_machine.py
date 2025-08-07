@@ -34,6 +34,9 @@ from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
 # Import the sound manager
 from utils.sound_manager import SoundManager
 
+# Import shared types
+from .types import ActionType, Player, GameState, PokerState
+
 # Import new modular components
 from .strategy_engine import GTOStrategyEngine
 from .session_manager import SessionManager
@@ -65,65 +68,6 @@ class DisplayState:
     action_player_index: int  # Index of current action player
     game_state: str  # Current game state string
     last_action_details: str  # Last action for UI feedback
-
-
-class PokerState(Enum):
-    """Poker game states following standard Texas Hold'em flow."""
-    START_HAND = "start_hand"
-    PREFLOP_BETTING = "preflop_betting"
-    DEAL_FLOP = "deal_flop"
-    FLOP_BETTING = "flop_betting"
-    DEAL_TURN = "deal_turn"
-    TURN_BETTING = "turn_betting"
-    DEAL_RIVER = "deal_river"
-    RIVER_BETTING = "river_betting"
-    SHOWDOWN = "showdown"
-    END_HAND = "end_hand"
-
-
-class ActionType(Enum):
-    """Valid poker actions."""
-    FOLD = "fold"
-    CHECK = "check"
-    CALL = "call"
-    BET = "bet"
-    RAISE = "raise"
-
-
-@dataclass
-class Player:
-    """Enhanced Player data structure with all-in tracking."""
-    name: str
-    stack: float
-    position: str
-    is_human: bool
-    is_active: bool
-    cards: List[str]
-    current_bet: float = 0.0
-    has_acted_this_round: bool = False
-    is_all_in: bool = False  # NEW: Track all-in state
-    total_invested: float = 0.0  # NEW: Track total money put in pot
-    # BUG FIX: Track partial calls for side pot calculations
-    partial_call_amount: Optional[float] = None
-    full_call_amount: Optional[float] = None
-
-
-@dataclass
-class GameState:
-    """Enhanced game state with better tracking."""
-    players: List[Player]
-    board: List[str]
-    pot: float
-    current_bet: float
-    street: str
-    players_acted: Set[int] = field(default_factory=set)
-    round_complete: bool = False
-    deck: List[str] = field(default_factory=list)
-    min_raise: float = 1.0  # NEW: Track minimum raise amount
-    big_blind: float = 1.0
-    last_raise_amount: float = 0.0  # NEW: Track the size of the last raise for under-raise validation
-    last_full_raise_amount: float = 0.0  # NEW: Track the amount of the last valid, action-reopening raise
-    last_action_details: str = ""  # NEW: Track the last action for UI feedback
 
 
 @dataclass
@@ -295,8 +239,8 @@ class ImprovedPokerStateMachine:
         self.session_manager = SessionManager(num_players, self.game_state.big_blind, self.logger)
         self.ui_renderer = UIDisplayRenderer()
         
-        # Initialize GTO preflop ranges (now handled by strategy engine)
-        # self._initialize_gto_ranges()  # REMOVED - now in strategy engine
+        # Expose strategy engine ranges for backward compatibility
+        self.gto_preflop_ranges = self.strategy_engine.gto_preflop_ranges
         
         # Initialize players and session
         self._initialize_players()
@@ -323,7 +267,7 @@ class ImprovedPokerStateMachine:
             "BTN": {  # ~50-55% RFI
                 "rfi": { "range": ["AA-55", "AKs-A2s", "KQs-K8s", "QJs-Q9s", "JTs-J9s", "T9s-T8s", "98s-97s", "87s-86s", "76s", "ATo+", "K9o+", "QTo+", "JTo", "T9o", "98o"], "freq": 1.0 },
                 "vs_rfi": { "call": {"range": ["77-55", "ATs-A2s", "KTs-K9s", "QTs-Q9s", "J9s-T8s", "98s-87s"], "freq": 1.0}, "three_bet": {"range": ["AA-88", "AKs-ATs", "KQs-KJs"], "freq": 1.0, "size_mult": 2.5} },
-                "vs_three_bet": { "call": {"range": ["99-77", "ATs", "KJs"], "freq": 1.0}, "four_bet": {"range": ["AA-JJ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+                "vs_three_bet": { "call": {"range": ["QQ-77", "ATs", "KJs"], "freq": 1.0}, "four_bet": {"range": ["AA-JJ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
             },
             "SB": {  # ~60-65% RFI (mix limps)
                 "rfi": { "range": ["AA-22", "AKs-A2s", "KQs-K2s", "QJs-Q2s", "JTs-J2s", "T9s-T2s", "98s-92s", "87s-82s", "76s-72s", "65s-62s", "54s-52s", "43s", "A9o+", "KTo+", "Q9o+", "J9o+", "T8o+", "97o+", "86o+", "75o+", "64o+", "53o+"], "freq": 0.8 },
@@ -2834,8 +2778,8 @@ class ImprovedPokerStateMachine:
                 else:
                     return ActionType.CHECK, 0
             else:
-                # Call if pot odds are good
-                if pot_odds < 0.3:
+                # Call if pot odds are good or hand is strong enough
+                if pot_odds < 0.4 or strength > 60:
                     return ActionType.CALL, to_call
                 else:
                     return ActionType.FOLD, 0
@@ -2870,9 +2814,9 @@ class ImprovedPokerStateMachine:
                 else:
                     return ActionType.CHECK, 0
             else:
-                # There's a raise, BB can fold if hand is weak
+                # There's a raise, BB should call or raise with decent hands
                 call_amount = self.game_state.current_bet - player.current_bet
-                if hand_strength > 30 and call_amount < player.stack * 0.5:
+                if hand_strength > 25:  # Lower threshold for BB
                     # BB can raise with strong hands
                     min_raise_total = self.game_state.current_bet + self.game_state.min_raise
                     raise_amount = max(min_raise_total, min(self.game_state.current_bet * 2, player.stack))
@@ -2880,10 +2824,10 @@ class ImprovedPokerStateMachine:
                         return ActionType.RAISE, raise_amount
                     else:
                         return ActionType.CALL, call_amount
-                elif hand_strength > 15 and call_amount <= player.stack * 0.2:
+                elif hand_strength > 10:  # Lower threshold for calling
                     return ActionType.CALL, call_amount
                 else:
-                    return ActionType.FOLD, 0  # BB can fold to a raise with weak hands
+                    return ActionType.FOLD, 0  # BB can fold to a raise with very weak hands
         # --- End of BB folding fix ---
         
         # Regular bot logic for non-BB players

@@ -15,6 +15,7 @@ import os
 
 # Import shared types
 from .session_logger import SessionLogger
+from .types import Player, GameState
 
 
 @dataclass

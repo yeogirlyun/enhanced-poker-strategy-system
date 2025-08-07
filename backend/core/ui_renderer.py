@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Tuple, Optional
 import math
 
 # Import shared types
-from .poker_state_machine import GameState, Player, PokerState, ActionType
+from .types import GameState, Player, PokerState, ActionType
 
 
 @dataclass

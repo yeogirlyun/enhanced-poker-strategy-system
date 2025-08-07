@@ -8,8 +8,8 @@ including preflop ranges, hand strength evaluation, and bot action logic.
 from typing import Tuple, Optional, Dict, List, Any
 import random
 
-# Import shared types from poker_state_machine
-from .poker_state_machine import ActionType, Player, GameState
+# Import shared types from types module
+from .types import ActionType, Player, GameState
 
 
 class GTOStrategyEngine:
@@ -68,7 +68,8 @@ class GTOStrategyEngine:
             },
             "BTN": {
                 "rfi": {
-                    "range": ["AA-55", "AKs-ATs", "KQs-KTs", "QJs-QTs", "JTs", "AJo+", "KQo", "KJo", "QJo"],
+                    "range": ["AA-55", "AKs-ATs", "KQs-KTs", "QJs-QTs", "JTs",
+                              "T9s", "AJo+", "KQo", "KJo", "QJo"],
                     "freq": 1.0
                 },
                 "vs_rfi": {
@@ -76,7 +77,7 @@ class GTOStrategyEngine:
                     "freq": 0.5
                 },
                 "vs_three_bet": {
-                    "range": ["AA-TT", "AKs", "AKo"],
+                    "range": ["AA-QQ", "AKs", "AKo"],
                     "freq": 0.3
                 }
             },
@@ -148,7 +149,6 @@ class GTOStrategyEngine:
         
         # Determine context
         facing_bet = call_amount > 0
-        to_call = call_amount
         
         # Get position ranges
         if position not in self.gto_preflop_ranges:
@@ -167,7 +167,8 @@ class GTOStrategyEngine:
                 return ActionType.FOLD, 0.0
         
         # vs RFI
-        elif facing_bet and game_state.current_bet <= game_state.big_blind * 3:
+        elif (facing_bet and 
+              game_state.current_bet <= game_state.big_blind * 3):
             if self.is_hand_in_range(hand, position_ranges["vs_rfi"]["range"]):
                 if random.random() <= position_ranges["vs_rfi"]["freq"]:
                     if strength >= 80:
@@ -206,9 +207,9 @@ class GTOStrategyEngine:
         
         # Bet sizing based on board texture
         if texture["type"] == "dry":
-            bet_size = game_state.pot * 0.75
-        elif texture["type"] == "wet":
             bet_size = game_state.pot * 0.6
+        elif texture["type"] == "wet":
+            bet_size = game_state.pot * 0.75
         else:  # medium
             bet_size = game_state.pot * 0.67
         
@@ -219,11 +220,11 @@ class GTOStrategyEngine:
         # Action logic
         if facing_bet:
             # Facing a bet
-            if strength >= 80:
+            if strength >= 70:
                 return ActionType.RAISE, bet_size
-            elif strength >= 60 and pot_odds <= 0.3:
+            elif strength >= 50 and pot_odds <= 0.3:
                 return ActionType.CALL, call_amount
-            elif strength >= 40 and pot_odds <= 0.2:
+            elif strength >= 30 and pot_odds <= 0.2:
                 return ActionType.CALL, call_amount
             else:
                 return ActionType.FOLD, 0.0
