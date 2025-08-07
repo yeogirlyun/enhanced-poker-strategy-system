@@ -2702,25 +2702,58 @@ class PracticeSessionUI(ttk.Frame):
                         
                         if card_visible:
                             # Show actual cards for human players or during showdown
-                            # Only update if cards have actually changed
-                            if current_card1 != new_card1:
+                            # ANTI-FLICKER: Only update if cards have actually changed AND are different from current display
+                            current_display1 = getattr(card_widgets[0], '_current_display', "")
+                            current_display2 = getattr(card_widgets[1], '_current_display', "")
+                            
+                            # Only update if the display needs to change
+                            if current_display1 != new_card1:
                                 card_widgets[0].set_card(new_card1)
                                 card_widgets[0]._current_card = new_card1
-                            if current_card2 != new_card2:
+                                card_widgets[0]._current_display = new_card1
+                                self._log_message(f"🎴 Updated card 1 for {player_info['name']}: {new_card1}")
+                            
+                            if current_display2 != new_card2:
                                 card_widgets[1].set_card(new_card2)
                                 card_widgets[1]._current_card = new_card2
+                                card_widgets[1]._current_display = new_card2
+                                self._log_message(f"🎴 Updated card 2 for {player_info['name']}: {new_card2}")
+                            
                             self._log_message(f"🎴 Showing cards for {player_info['name']}: {player_info['cards']}")
                         else:
                             # Show card backs for hidden cards
                             if player_has_folded:
-                                # Show folded (gray) card backs
-                                card_widgets[0].set_folded()
-                                card_widgets[1].set_folded()
+                                # Show folded (gray) card backs - only if not already folded
+                                current_display1 = getattr(card_widgets[0], '_current_display', "")
+                                current_display2 = getattr(card_widgets[1], '_current_display', "")
+                                
+                                if current_display1 != "folded":
+                                    card_widgets[0].set_folded()
+                                    card_widgets[0]._current_display = "folded"
+                                    self._log_message(f"🎴 Set card 1 to folded for {player_info['name']}")
+                                
+                                if current_display2 != "folded":
+                                    card_widgets[1].set_folded()
+                                    card_widgets[1]._current_display = "folded"
+                                    self._log_message(f"🎴 Set card 2 to folded for {player_info['name']}")
+                                
                                 self._log_message(f"🎴 Showing folded cards for {player_info['name']}")
                             else:
                                 # Show normal card backs - but preserve the actual card data
-                                card_widgets[0].set_card("")  # This will show card back
-                                card_widgets[1].set_card("")  # This will show card back
+                                current_display1 = getattr(card_widgets[0], '_current_display', "")
+                                current_display2 = getattr(card_widgets[1], '_current_display', "")
+                                
+                                # Only update if not already showing card back
+                                if current_display1 != "":
+                                    card_widgets[0].set_card("")  # This will show card back
+                                    card_widgets[0]._current_display = ""
+                                    self._log_message(f"🎴 Set card 1 to back for {player_info['name']}")
+                                
+                                if current_display2 != "":
+                                    card_widgets[1].set_card("")  # This will show card back
+                                    card_widgets[1]._current_display = ""
+                                    self._log_message(f"🎴 Set card 2 to back for {player_info['name']}")
+                                
                                 # Store the actual cards for later reveal
                                 card_widgets[0]._current_card = new_card1
                                 card_widgets[1]._current_card = new_card2
