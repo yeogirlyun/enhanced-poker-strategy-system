@@ -2944,6 +2944,7 @@ class ImprovedPokerStateMachine:
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
             player.is_active = False
+            player.has_folded = True  # NEW: Track folded state for accurate counting
             
             # --- THIS IS THE CRITICAL BUG FIX ---
             # DO NOT reset the player's current bet when they fold.

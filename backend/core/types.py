@@ -46,6 +46,7 @@ class Player:
     has_acted_this_round: bool = False
     is_all_in: bool = False  # NEW: Track all-in state
     total_invested: float = 0.0  # NEW: Track total money put in pot
+    has_folded: bool = False  # NEW: Track folded state for accurate counting
     # BUG FIX: Track partial calls for side pot calculations
     partial_call_amount: Optional[float] = None
     full_call_amount: Optional[float] = None

@@ -224,12 +224,14 @@ class GTOStrategyEngine:
         # Action logic
         if facing_bet:
             # Facing a bet
-            if strength >= 60:
+            value_thresh = 70  # Raise nuts only
+            call_thresh = pot_odds * 100
+            if strength >= value_thresh:
                 return ActionType.RAISE, bet_size
-            elif strength >= 40 and pot_odds <= 0.4:  # More generous pot odds threshold
+            elif strength > call_thresh and strength > 30:  # Call medium
                 return ActionType.CALL, call_amount
-            elif strength >= 20 and pot_odds <= 0.3:  # More generous pot odds threshold
-                return ActionType.CALL, call_amount
+            elif call_amount == 0:
+                return ActionType.CHECK, 0.0
             else:
                 return ActionType.FOLD, 0.0
         else:
