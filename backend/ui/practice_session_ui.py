@@ -2740,29 +2740,39 @@ class PracticeSessionUI(ttk.Frame):
         pass
 
     def _draw_community_cards(self, board_cards):
-        """Draw community cards using display state data."""
+        """Draw community cards using display state data - EFFICIENT VERSION."""
         # Safety check for community card widgets
         if not hasattr(self, 'community_card_widgets') or not self.community_card_widgets:
             return
-            
-        # Clear all community cards first
-        for card_widget in self.community_card_widgets:
-            card_widget.set_card("")  # Show card back for empty slots
         
-        # Now set the actual board cards
-        if board_cards:
-            for i, card_widget in enumerate(self.community_card_widgets):
-                if i < len(board_cards):
-                    card_widget.set_card(board_cards[i])
-                    # Force the card widget to update immediately
-                    card_widget.update()
-                    self._log_message(f"🎴 Set community card {i}: {board_cards[i]}")
+        # Initialize tracking if not exists
+        if not hasattr(self, 'last_board_cards'):
+            self.last_board_cards = []
+        
+        # Only update if board cards have actually changed
+        if board_cards == self.last_board_cards:
+            return  # No change needed
+        
+        self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        
+        # EFFICIENT UPDATE: Only change what's different
+        for i, card_widget in enumerate(self.community_card_widgets):
+            current_card = getattr(card_widget, '_current_card', "")
+            new_card = board_cards[i] if i < len(board_cards) else ""
+            
+            # Only update if the card has actually changed
+            if current_card != new_card:
+                if new_card:
+                    # Set actual card
+                    card_widget.set_card(new_card)
+                    card_widget._current_card = new_card
+                    self._log_message(f"🎴 Updated community card {i}: {new_card}")
+                else:
+                    # Clear card (show back)
+                    card_widget.set_card("")
+                    card_widget._current_card = ""
+                    self._log_message(f"🎴 Cleared community card {i}")
         
         # Update tracking variable
-        if hasattr(self, 'last_board_cards'):
-            if board_cards != self.last_board_cards:
-                self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
-                self.last_board_cards = board_cards.copy()
-        else:
-            self.last_board_cards = board_cards.copy()
+        self.last_board_cards = board_cards.copy()
 
