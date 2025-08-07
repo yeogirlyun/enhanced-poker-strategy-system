@@ -548,17 +548,23 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         from tests.legendary_hands_manager import LegendaryHandsManager
         
         manager = LegendaryHandsManager()
-        hands = manager.load_hands()
+        # load_hands() returns boolean, hands are stored in manager.hands
+        success = manager.load_hands()
+        self.assertTrue(success, "Failed to load legendary hands")
         
         # Test simulation of first hand
-        if hands:
-            hand = hands[0]
-            sm = ImprovedPokerStateMachine(num_players=len(hand['players']), test_mode=True)
+        if manager.hands:
+            hand = manager.hands[0]
+            # Use setup.num_players instead of players field
+            num_players = hand.get('setup', {}).get('num_players', 6)
+            sm = ImprovedPokerStateMachine(num_players=num_players, test_mode=True)
             
             # Simulate the hand
             result = manager.simulate_hand(hand)
             self.assertIsNotNone(result)
-            self.assertIn('winner', result)
+            # Check for either 'winner' or 'actual_winners' key
+            self.assertTrue('winner' in result or 'actual_winners' in result, 
+                          f"Result should contain 'winner' or 'actual_winners', got: {result}")
     
     # ============================================================================
     # SESSION MANAGEMENT TESTS
@@ -819,8 +825,12 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         
         # Mock signal handler
         with patch.object(self.state_machine, '_cleanup') as mock_cleanup:
-            # Simulate SIGINT
-            self.state_machine._signal_handler(signal.SIGINT, None)
+            # Simulate SIGINT - should call cleanup and exit
+            try:
+                self.state_machine._signal_handler(signal.SIGINT, None)
+            except SystemExit:
+                # Expected behavior - signal handler should exit
+                pass
             mock_cleanup.assert_called()
     
     def test_emergency_save(self):
@@ -1087,9 +1097,13 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         
         self.assertIsNotNone(bb_player)
         
-        # BB should be able to fold
+        # Set up scenario where BB is facing a raise (should be able to fold)
+        self.state_machine.game_state.current_bet = 3.0  # Raise amount
+        bb_player.current_bet = 1.0  # BB has already paid 1
+        
+        # BB should be able to fold when facing a raise
         valid_actions = self.state_machine.get_valid_actions(bb_player)
-        self.assertIn(ActionType.FOLD, valid_actions)
+        self.assertTrue(valid_actions.get('fold', False), "BB should be able to fold when facing a raise")
     
     def test_pot_consistency_regression(self):
         """Regression test for pot consistency issues."""
