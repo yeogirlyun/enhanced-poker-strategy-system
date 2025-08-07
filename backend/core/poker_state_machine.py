@@ -2544,7 +2544,11 @@ class ImprovedPokerStateMachine:
 
         # If the hand is not over, check if the round is complete
         self._log_action(f"🔄 POST-ACTION: Checking if round is complete...")
-        if self.is_round_complete():
+        self._log_action(f"🔍 DEBUG: About to call is_round_complete()")
+        round_complete_result = self.is_round_complete()
+        self._log_action(f"🔍 DEBUG: is_round_complete() returned: {round_complete_result}")
+        
+        if round_complete_result:
             self._log_action("✅ Round is complete, handling round completion")
             self.handle_round_complete()
         else:
