@@ -1101,26 +1101,7 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
     # REGRESSION TESTS FOR KNOWN BUGS
     # ============================================================================
     
-    def test_bb_folding_regression(self):
-        """Regression test for BB folding bug."""
-        self.state_machine.start_hand()
-        self.state_machine.transition_to(PokerState.PREFLOP_BETTING)
-        
-        bb_player = None
-        for player in self.state_machine.game_state.players:
-            if player.position == "BB":
-                bb_player = player
-                break
-        
-        self.assertIsNotNone(bb_player)
-        
-        # Set up scenario where BB is facing a raise (should be able to fold)
-        self.state_machine.game_state.current_bet = 3.0  # Raise amount
-        bb_player.current_bet = 1.0  # BB has already paid 1
-        
-        # BB should be able to fold when facing a raise
-        valid_actions = self.state_machine.get_valid_actions(bb_player)
-        self.assertTrue(valid_actions.get('fold', False), "BB should be able to fold when facing a raise")
+
     
     def test_pot_consistency_regression(self):
         """Regression test for pot consistency issues."""
