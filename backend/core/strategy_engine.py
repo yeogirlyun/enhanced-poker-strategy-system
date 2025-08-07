@@ -173,7 +173,13 @@ class GTOStrategyEngine:
         # vs RFI
         elif (facing_bet and 
               game_state.current_bet <= game_state.big_blind * 3):
-            if self.is_hand_in_range(hand, position_ranges["vs_rfi"]["range"]):
+            # FIXED: BB-specific defense logic - defend 60% vs raise (GTO standard)
+            if position == "BB" and call_amount > 0:
+                if random.random() < 0.6:  # Defend 60% vs raise
+                    return ActionType.CALL, call_amount
+                else:
+                    return ActionType.FOLD, 0.0
+            elif self.is_hand_in_range(hand, position_ranges["vs_rfi"]["range"]):
                 if random.random() <= position_ranges["vs_rfi"]["freq"]:
                     if strength >= 80:
                         return ActionType.RAISE, game_state.current_bet * 3
