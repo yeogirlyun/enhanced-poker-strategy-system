@@ -2803,6 +2803,7 @@ class PracticeSessionUI(ttk.Frame):
         """Draw community cards using display state data - EFFICIENT VERSION."""
         # Safety check for community card widgets
         if not hasattr(self, 'community_card_widgets') or not self.community_card_widgets:
+            self._log_message("❌ No community card widgets found")
             return
         
         # Initialize tracking if not exists
@@ -2814,11 +2815,14 @@ class PracticeSessionUI(ttk.Frame):
             return  # No change needed
         
         self._log_message(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        self._log_message(f"🎴 Board cards type: {type(board_cards)}, length: {len(board_cards) if board_cards else 0}")
         
         # EFFICIENT UPDATE: Only change what's different
         for i, card_widget in enumerate(self.community_card_widgets):
             current_card = getattr(card_widget, '_current_card', "")
             new_card = board_cards[i] if i < len(board_cards) else ""
+            
+            self._log_message(f"🎴 Community card {i}: current='{current_card}' new='{new_card}'")
             
             # Only update if the card has actually changed
             if current_card != new_card:
@@ -2832,6 +2836,8 @@ class PracticeSessionUI(ttk.Frame):
                     card_widget.set_card("")
                     card_widget._current_card = ""
                     self._log_message(f"🎴 Cleared community card {i}")
+            else:
+                self._log_message(f"🎴 Community card {i} unchanged: {new_card}")
         
         # Update tracking variable
         self.last_board_cards = board_cards.copy()
