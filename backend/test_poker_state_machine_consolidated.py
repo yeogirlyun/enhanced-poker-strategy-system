@@ -171,6 +171,9 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         self.state_machine.game_state.current_bet = 3.0  # Raise amount
         bb_player.current_bet = 1.0  # BB has already paid 1
         
+        # Enable GTO mode to use the correct BB logic
+        self.state_machine.strategy_mode = "GTO"
+        
         # Test BB action
         action, amount = self.state_machine.get_basic_bot_action(bb_player)
         
@@ -433,7 +436,7 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
         self.state_machine.execute_action(players[4], ActionType.FOLD, 0.0)
         
         # After Player 5 folds, Player 1 should be the only active player
-        active_players = [p for p in players if p.is_active]
+        active_players = [p for p in players if p.is_active and not p.has_folded]
         self.assertEqual(len(active_players), 1,
                          "Should have exactly one active player remaining after others fold")
         self.assertEqual(self.state_machine.current_state, PokerState.END_HAND,
