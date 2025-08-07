@@ -46,7 +46,7 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         """Test BTN plays wider range."""
         # Test BTN with medium hands
         player = next(p for p in self.sm.game_state.players if p.position == "BTN")
-        player.cards = ['Th', '9s']  # T9s
+        player.cards = ['Th', '9h']  # T9s (suited)
         
         action, amount = self.sm.get_gto_bot_action(player)
         self.assertEqual(action, ActionType.RAISE, "BTN should raise T9s")
@@ -106,7 +106,7 @@ class TestGTOPreflopStrategy(unittest.TestCase):
         # Set up vs 3-bet scenario
         player = self.sm.game_state.players[0]
         player.position = "BB"
-        player.cards = ['Qh', 'Qd']  # QQ
+        player.cards = ['Qh', 'Qd']  # QQ (pairs are always suited notation)
         self.sm.game_state.current_bet = 9.0  # Facing a 3-bet
         self.sm.game_state.last_raise_amount = 6.0
         

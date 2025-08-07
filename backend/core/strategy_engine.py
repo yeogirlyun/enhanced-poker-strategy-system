@@ -35,7 +35,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-JJ", "AKs", "AKo"],
-                    "freq": 0.6
+                    "freq": 0.8
                 }
             },
             "MP": {
@@ -49,7 +49,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-QQ", "AKs", "AKo"],
-                    "freq": 0.5
+                    "freq": 0.8
                 }
             },
             "CO": {
@@ -63,7 +63,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-JJ", "AKs", "AKo"],
-                    "freq": 0.4
+                    "freq": 0.8
                 }
             },
             "BTN": {
@@ -78,7 +78,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-QQ", "AKs", "AKo"],
-                    "freq": 0.3
+                    "freq": 0.8
                 }
             },
             "SB": {
@@ -92,7 +92,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-99", "AKs", "AKo"],
-                    "freq": 0.2
+                    "freq": 0.8
                 }
             },
             "BB": {
@@ -106,7 +106,7 @@ class GTOStrategyEngine:
                 },
                 "vs_three_bet": {
                     "range": ["AA-88", "AKs", "AKo"],
-                    "freq": 0.15
+                    "freq": 0.8
                 }
             }
         }
@@ -184,7 +184,7 @@ class GTOStrategyEngine:
         else:
             if self.is_hand_in_range(hand, position_ranges["vs_three_bet"]["range"]):
                 if random.random() <= position_ranges["vs_three_bet"]["freq"]:
-                    if strength >= 85:
+                    if strength >= 80:  # Lower threshold for 3-bet defense
                         return ActionType.RAISE, game_state.current_bet * 2.5
                     else:
                         return ActionType.CALL, call_amount
@@ -220,11 +220,11 @@ class GTOStrategyEngine:
         # Action logic
         if facing_bet:
             # Facing a bet
-            if strength >= 70:
+            if strength >= 60:
                 return ActionType.RAISE, bet_size
-            elif strength >= 50 and pot_odds <= 0.3:
+            elif strength >= 40 and pot_odds <= 0.3:
                 return ActionType.CALL, call_amount
-            elif strength >= 30 and pot_odds <= 0.2:
+            elif strength >= 20 and pot_odds <= 0.2:
                 return ActionType.CALL, call_amount
             else:
                 return ActionType.FOLD, 0.0
