@@ -282,9 +282,49 @@ class ImprovedPokerStateMachine:
         except ImportError:
             self.voice_system = None
         
+        # GTO Strategy Mode
+        self.strategy_mode = "GTO"  # Default to GTO mode
+        
+        # Initialize GTO preflop ranges
+        self._initialize_gto_ranges()
+        
         # Initialize players and session
         self._initialize_players()
         self.session_state = self._initialize_session_state()
+
+    def _initialize_gto_ranges(self):
+        """Initialize comprehensive GTO preflop ranges based on modern poker theory."""
+        self.gto_preflop_ranges = {
+            "UTG": {  # ~15-17% RFI
+                "rfi": { "range": ["AA-88", "AKs-AJs", "KQs", "AJo+", "KQo"], "freq": 1.0 },
+                "vs_rfi": { "call": {"range": ["TT-88", "AQs-AJs", "KQs", "QJs"], "freq": 1.0}, "three_bet": {"range": ["AA-JJ", "AKs", "AQs"], "freq": 1.0, "size_mult": 3.0} },
+                "vs_three_bet": { "call": {"range": ["QQ-JJ", "AKs", "AQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+            },
+            "MP": {  # ~20-22% RFI
+                "rfi": { "range": ["AA-77", "AKs-A9s", "KQs-KTs", "QJs", "JTs", "AJo+", "KQo", "QJo"], "freq": 1.0 },
+                "vs_rfi": { "call": {"range": ["99-77", "AQs-A9s", "KQs-KJs", "QJs-JTs"], "freq": 1.0}, "three_bet": {"range": ["AA-TT", "AKs-AQs", "KQs"], "freq": 1.0, "size_mult": 3.0} },
+                "vs_three_bet": { "call": {"range": ["JJ-99", "AQs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+            },
+            "CO": {  # ~27-28% RFI
+                "rfi": { "range": ["AA-66", "AKs-A8s", "KQs-K9s", "QJs-QTs", "JTs", "T9s", "98s", "87s", "AJo+", "KTo+", "QTo+", "JTo"], "freq": 1.0 },
+                "vs_rfi": { "call": {"range": ["88-66", "AJs-A8s", "KJs-KTs", "QTs-JTs", "T9s-98s"], "freq": 1.0}, "three_bet": {"range": ["AA-99", "AKs-AJs", "KQs"], "freq": 1.0, "size_mult": 2.5} },
+                "vs_three_bet": { "call": {"range": ["TT-88", "AJs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-QQ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+            },
+            "BTN": {  # ~40-44% RFI
+                "rfi": { "range": ["AA-55", "AKs-A2s", "KQs-K8s", "QJs-Q9s", "JTs-J9s", "T9s-T8s", "98s-97s", "87s-86s", "76s", "ATo+", "K9o+", "QTo+", "JTo", "T9o", "98o"], "freq": 1.0 },
+                "vs_rfi": { "call": {"range": ["77-55", "ATs-A2s", "KTs-K9s", "QTs-Q9s", "J9s-T8s", "98s-87s"], "freq": 1.0}, "three_bet": {"range": ["AA-88", "AKs-ATs", "KQs-KJs"], "freq": 1.0, "size_mult": 2.5} },
+                "vs_three_bet": { "call": {"range": ["99-77", "ATs", "KJs"], "freq": 1.0}, "four_bet": {"range": ["AA-JJ", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+            },
+            "SB": {  # ~60% RFI (raise or limp/call)
+                "rfi": { "range": ["AA-22", "AKs-A2s", "KQs-K2s", "QJs-Q2s", "JTs-J2s", "T9s-T2s", "98s-92s", "87s-82s", "76s-72s", "65s-62s", "54s-52s", "43s", "A9o+", "KTo+", "Q9o+", "J9o+", "T8o+", "97o+", "86o+", "75o+", "64o+", "53o+"], "freq": 0.8 },
+                "vs_rfi": { "call": {"range": ["TT-22", "AJs-A2s", "KJs-K2s", "QTs-Q2s", "J9s-J2s", "T8s-T2s", "97s-92s", "86s-82s", "75s-72s", "64s-62s", "53s-52s", "43s"], "freq": 0.7}, "three_bet": {"range": ["AA-99", "AKs-AJs", "KQs"], "freq": 1.0, "size_mult": 3.0} },
+                "vs_three_bet": { "call": {"range": ["JJ-88", "AQs-AJs", "KQs"], "freq": 0.8}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 3.0} }
+            },
+            "BB": {  # Defensive
+                "vs_rfi": { "call": {"range": ["JJ-22", "AQs-A2s", "KQs-K5s", "QJs-Q8s", "JTs-J8s", "T9s-T8s", "98s-97s", "87s-86s", "76s", "AJo+", "KQo+", "QJo"], "freq": 1.0}, "three_bet": {"range": ["AA-TT", "AKs-AQs", "KQs"], "freq": 1.0, "size_mult": 3.5} },
+                "vs_three_bet": { "call": {"range": ["QQ-99", "AQs", "KQs"], "freq": 1.0}, "four_bet": {"range": ["AA-KK", "AKs"], "freq": 1.0, "size_mult": 2.5} }
+            }
+        }
 
     def _initialize_session_state(self) -> SessionState:
         """Initialize comprehensive session tracking."""
@@ -671,19 +711,24 @@ class ImprovedPokerStateMachine:
         print(f"[{timestamp}] {debug_message}")
 
     def _log_action(self, player_name: str, action: ActionType, amount: float):
-        """Log a structured action for statistics tracking."""
+        """Log a structured action for statistics tracking - FIXED memory management."""
+        # Use a more memory-efficient structure
         action_entry = {
             'player_name': player_name,
             'action': action,
             'amount': amount,
             'timestamp': time.time()
         }
-        self.action_log.append(action_entry)
         
-        # BUG FIX: Memory leak prevention - use slice assignment for efficient trimming
-        if len(self.action_log) > self.max_log_size:
-            # Use slice assignment to avoid creating new list references
-            self.action_log = self.action_log[-self.max_log_size:]
+        # Use deque for efficient memory management
+        if not hasattr(self, '_action_deque'):
+            from collections import deque
+            self._action_deque = deque(maxlen=self.max_log_size)
+        
+        self._action_deque.append(action_entry)
+        
+        # Convert to list for compatibility
+        self.action_log = list(self._action_deque)
     
     def _log_message(self, message: str):
         """Log a simple message for debugging."""
@@ -1021,18 +1066,28 @@ class ImprovedPokerStateMachine:
             traceback.print_exc()
 
     def _cleanup_memory(self):
-        """Perform memory cleanup."""
-        # Trim hand history if too large
+        """Perform memory cleanup - ENHANCED."""
+        # More aggressive memory cleanup
+        if hasattr(self, '_action_deque'):
+            # Keep only recent actions
+            from collections import deque
+            recent_actions = list(self._action_deque)[-100:]
+            self._action_deque = deque(recent_actions, maxlen=self.max_log_size)
+            self.action_log = recent_actions
+        
+        # Trim hand history
         if len(self.hand_history) > self.max_hand_history:
             self.hand_history = self.hand_history[-self.max_hand_history:]
         
-        # Clear old action logs
-        if len(self.action_log) > self.max_action_log:
-            self.action_log = self.action_log[-self.max_action_log:]
+        # Clear old cache entries
+        if hasattr(self, '_hand_eval_cache') and len(self._hand_eval_cache) > self._max_cache_size // 2:
+            # Keep only most recent half of cache
+            cache_items = list(self._hand_eval_cache.items())
+            self._hand_eval_cache = dict(cache_items[-self._max_cache_size // 2:])
         
         # Clear session logs if too large
-        if self.session_state and len(self.session_state.session_log) > 1000:
-            self.session_state.session_log = self.session_state.session_log[-1000:]
+        if self.session_state and len(self.session_state.session_log) > 500:
+            self.session_state.session_log = self.session_state.session_log[-500:]
         
         # Force garbage collection
         import gc
@@ -2052,6 +2107,137 @@ class ImprovedPokerStateMachine:
             # Catch any other parsing errors
             return ""
 
+    def is_hand_in_range(self, hand: str, range_list: List[str]) -> bool:
+        """Check if a hand is in a given range using compact notation."""
+        if not hand or not range_list:
+            return False
+        
+        # Parse the hand (e.g., 'AKs', '72o')
+        if len(hand) < 2:
+            return False
+        
+        # Check each range entry
+        for range_entry in range_list:
+            if self._hand_matches_range_entry(hand, range_entry):
+                return True
+        
+        return False
+
+    def _hand_matches_range_entry(self, hand: str, range_entry: str) -> bool:
+        """Check if a hand matches a specific range entry."""
+        # Handle individual hands
+        if len(range_entry) <= 4:  # Single hand like 'AKs', '72o'
+            return hand == range_entry
+        
+        # Handle ranges like 'AA-88', 'AKs-AJs'
+        if '-' in range_entry:
+            parts = range_entry.split('-')
+            if len(parts) != 2:
+                return False
+            
+            start_hand = parts[0]
+            end_hand = parts[1]
+            
+            # Check if hand is between start and end
+            return self._hand_in_range(hand, start_hand, end_hand)
+        
+        # Handle plus notation like 'AJo+'
+        if range_entry.endswith('+'):
+            base_hand = range_entry[:-1]
+            return self._hand_stronger_than_or_equal(hand, base_hand)
+        
+        return False
+
+    def _hand_in_range(self, hand: str, start_hand: str, end_hand: str) -> bool:
+        """Check if hand is between start_hand and end_hand."""
+        hand_strength = self._get_hand_strength_value(hand)
+        start_strength = self._get_hand_strength_value(start_hand)
+        end_strength = self._get_hand_strength_value(end_hand)
+        
+        return start_strength >= hand_strength >= end_strength
+
+    def _hand_stronger_than_or_equal(self, hand: str, base_hand: str) -> bool:
+        """Check if hand is stronger than or equal to base_hand."""
+        hand_strength = self._get_hand_strength_value(hand)
+        base_strength = self._get_hand_strength_value(base_hand)
+        
+        return hand_strength >= base_strength
+
+    def _get_hand_strength_value(self, hand: str) -> int:
+        """Get numeric strength value for hand comparison."""
+        if len(hand) < 2:
+            return 0
+        
+        # Parse hand components
+        rank1 = hand[0]
+        rank2 = hand[1]
+        suited = hand.endswith('s')
+        
+        # Rank values
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        
+        val1 = rank_values.get(rank1, 0)
+        val2 = rank_values.get(rank2, 0)
+        
+        # Sort by rank (higher first)
+        if val1 < val2:
+            val1, val2 = val2, val1
+        
+        # Calculate strength (pairs are strongest, then suited, then offsuit)
+        if val1 == val2:  # Pair
+            return 1000 + val1 * 10
+        elif suited:  # Suited
+            return 100 + val1 * 10 + val2
+        else:  # Offsuit
+            return val1 * 10 + val2
+
+    def classify_board_texture(self, board: List[str]) -> Dict[str, Any]:
+        """Classify board texture for postflop GTO decisions."""
+        if not board:
+            return {"type": "preflop", "wetness": 0, "dynamism": 0}
+        
+        # Count suits and ranks
+        suits = [card[1] for card in board]
+        ranks = [card[0] for card in board]
+        rank_values = [self.hand_evaluator.rank_values.get(r, 0) for r in ranks]
+        
+        # Analyze texture
+        suit_counts = {}
+        rank_counts = {}
+        
+        for suit in suits:
+            suit_counts[suit] = suit_counts.get(suit, 0) + 1
+        
+        for rank in ranks:
+            rank_counts[rank] = rank_counts.get(rank, 0) + 1
+        
+        # Determine wetness (flush potential)
+        max_suit_count = max(suit_counts.values()) if suit_counts else 0
+        wetness = max_suit_count / len(board) if board else 0
+        
+        # Determine dynamism (straight potential)
+        sorted_ranks = sorted(rank_values)
+        gaps = sum(sorted_ranks[i+1] - sorted_ranks[i] - 1 for i in range(len(sorted_ranks)-1))
+        dynamism = 1 - (gaps / (len(sorted_ranks) - 1)) if len(sorted_ranks) > 1 else 0
+        
+        # Classify type
+        if max_suit_count >= 3:
+            board_type = "wet_flush"
+        elif gaps <= 2 and len(sorted_ranks) >= 3:
+            board_type = "wet_straight"
+        elif max_suit_count == 2 and gaps <= 1:
+            board_type = "medium"
+        else:
+            board_type = "dry"
+        
+        return {
+            "type": board_type,
+            "wetness": wetness,
+            "dynamism": dynamism,
+            "max_suit_count": max_suit_count,
+            "gaps": gaps
+        }
+
     def get_preflop_hand_strength(self, cards: List[str]) -> int:
         """Get preflop hand strength using enhanced evaluator."""
         cache_key = f"preflop:{':'.join(sorted(cards))}"
@@ -2405,7 +2591,127 @@ class ImprovedPokerStateMachine:
         return False
 
     def get_basic_bot_action(self, player: Player) -> Tuple[ActionType, float]:
-        """Basic bot logic as fallback."""
+        """GTO bot logic with modern poker theory."""
+        # Use GTO strategy if enabled, otherwise fall back to basic logic
+        if hasattr(self, 'strategy_mode') and self.strategy_mode == "GTO":
+            return self.get_gto_bot_action(player)
+        else:
+            return self._get_legacy_bot_action(player)
+
+    def get_gto_bot_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Modern GTO bot action based on position, hand strength, and board texture."""
+        hand = self.get_hand_notation(player.cards)  # e.g., 'AKs'
+        position = player.position
+        street = self.game_state.street
+        facing_bet = self.game_state.current_bet > player.current_bet
+        to_call = self.game_state.current_bet - player.current_bet
+        pot_odds = to_call / (self.game_state.pot + to_call) if to_call > 0 else 0
+        
+        # Get hand strength
+        if street == "preflop":
+            strength = self.get_preflop_hand_strength(player.cards)
+        else:
+            strength = self.get_postflop_hand_strength(player.cards, self.game_state.board)
+        
+        # Preflop GTO logic
+        if street == "preflop":
+            return self._get_gto_preflop_action(player, hand, position, facing_bet, to_call, strength)
+        else:
+            # Postflop GTO logic
+            return self._get_gto_postflop_action(player, position, facing_bet, to_call, strength, pot_odds)
+
+    def _get_gto_preflop_action(self, player: Player, hand: str, position: str, 
+                               facing_bet: bool, to_call: float, strength: int) -> Tuple[ActionType, float]:
+        """GTO preflop action based on position and ranges."""
+        # Determine context
+        if not facing_bet:
+            context = "rfi"  # Raise First In
+        elif self.game_state.last_raise_amount < 3 * self.game_state.big_blind:
+            context = "vs_rfi"  # Versus Raise First In
+        else:
+            context = "vs_three_bet"  # Versus 3-bet
+        
+        # Get position ranges
+        position_ranges = self.gto_preflop_ranges.get(position, {})
+        context_data = position_ranges.get(context, {})
+        
+        # Check for 3-bet opportunity
+        if "three_bet" in context_data:
+            three_bet_data = context_data["three_bet"]
+            if (random.random() < three_bet_data["freq"] and 
+                self.is_hand_in_range(hand, three_bet_data["range"])):
+                raise_amount = self.game_state.current_bet * three_bet_data["size_mult"]
+                return ActionType.RAISE, min(raise_amount, player.stack)
+        
+        # Check for call opportunity
+        if "call" in context_data:
+            call_data = context_data["call"]
+            if (random.random() < call_data["freq"] and 
+                self.is_hand_in_range(hand, call_data["range"])):
+                return ActionType.CALL, to_call
+        
+        # Default to fold if not in any range
+        return ActionType.FOLD, 0
+
+    def _get_gto_postflop_action(self, player: Player, position: str, facing_bet: bool,
+                                to_call: float, strength: int, pot_odds: float) -> Tuple[ActionType, float]:
+        """GTO postflop action based on hand strength and board texture."""
+        board_texture = self.classify_board_texture(self.game_state.board)
+        
+        # Determine bet sizing based on board texture
+        if board_texture["type"] == "dry":
+            bet_size_mult = 0.33  # Small bet on dry boards
+        elif board_texture["type"] in ["wet_flush", "wet_straight"]:
+            bet_size_mult = 0.66  # Large bet on wet boards
+        else:
+            bet_size_mult = 0.5  # Medium bet on medium boards
+        
+        # Value betting with strong hands
+        if strength > 80:
+            if random.random() < 0.7:  # 70% frequency for value betting
+                bet_amount = self.game_state.pot * bet_size_mult
+                if not facing_bet:
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.RAISE, bet_amount
+            else:
+                if not facing_bet:
+                    return ActionType.CHECK, 0
+                else:
+                    return ActionType.CALL, to_call
+        
+        # Medium strength hands
+        elif strength > 50:
+            if not facing_bet:
+                # Check or bet small for protection
+                if random.random() < 0.3:  # 30% bluff frequency
+                    bet_amount = self.game_state.pot * 0.25
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.CHECK, 0
+            else:
+                # Call if pot odds are good
+                if pot_odds < 0.3:
+                    return ActionType.CALL, to_call
+                else:
+                    return ActionType.FOLD, 0
+        
+        # Weak hands - bluff or fold
+        else:
+            if not facing_bet:
+                # Bluff with some frequency if board is favorable
+                if (random.random() < 0.25 and 
+                    board_texture["type"] in ["dry", "medium"]):
+                    bet_amount = self.game_state.pot * 1.2  # Overbet bluff
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.CHECK, 0
+            else:
+                # Fold weak hands facing bets
+                return ActionType.FOLD, 0
+
+    def _get_legacy_bot_action(self, player: Player) -> Tuple[ActionType, float]:
+        """Legacy basic bot logic as fallback."""
         # Use the enhanced hand evaluator instead of the old method
         hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
         hand_strength = hand_info['strength_score']  # Use the strength score from the dict
@@ -2901,51 +3207,86 @@ class ImprovedPokerStateMachine:
 
     def create_side_pots(self) -> List[dict]:
         """
-        FIXED: Properly handle partial calls in side pot calculations.
+        Create side pots correctly handling all edge cases including folds and partial calls.
         """
-        # Collect all players who have invested money
-        invested_players = [p for p in self.game_state.players 
-                            if p.total_invested > 0]
+        # Collect all players who have invested money (including folded players)
+        all_players = self.game_state.players
+        invested_players = [p for p in all_players if p.total_invested > 0]
         
         if not invested_players:
             return [{'amount': 0, 'eligible_players': []}]
         
-        # Sort by investment amount
+        # Create a list of unique investment levels (sorted)
         investment_levels = sorted(set(p.total_invested for p in invested_players))
+        
         side_pots = []
-        last_level = 0
+        previous_level = 0
         
         for level in investment_levels:
+            # Calculate this pot level
             pot_amount = 0
             eligible_players = []
+            contributors = []
             
-            for player in invested_players:
+            # Find all players who contributed to this pot level
+            for player in all_players:
                 if player.total_invested >= level:
-                    # Player contributes to this pot
-                    contribution = min(player.total_invested, level) - last_level
+                    # This player contributes to this pot level
+                    contribution = level - previous_level
                     pot_amount += contribution
+                    contributors.append(player)
                     
-                    # Only eligible if they haven't folded
+                    # Only active (non-folded) players are eligible to win
+                    if player.is_active:
+                        eligible_players.append(player)
+                elif player.total_invested > previous_level:
+                    # Partial contribution (player invested less than this level)
+                    contribution = player.total_invested - previous_level
+                    pot_amount += contribution
+                    contributors.append(player)
+                    
+                    # Still eligible if active
                     if player.is_active:
                         eligible_players.append(player)
             
+            # Only create a pot if there are eligible players to win it
             if pot_amount > 0 and eligible_players:
                 side_pots.append({
-                    'amount': pot_amount * len([p for p in invested_players 
-                                               if p.total_invested >= last_level]),
-                    'eligible_players': eligible_players
+                    'amount': pot_amount,
+                    'eligible_players': eligible_players,
+                    'level': level,
+                    'contributors': len(contributors)
                 })
+            elif pot_amount > 0:
+                # Dead money (from folded players) goes to the last pot
+                if side_pots:
+                    side_pots[-1]['amount'] += pot_amount
+                else:
+                    # Create a pot for the remaining active players
+                    active_players = [p for p in all_players if p.is_active]
+                    if active_players:
+                        side_pots.append({
+                            'amount': pot_amount,
+                            'eligible_players': active_players,
+                            'level': level,
+                            'contributors': len(contributors)
+                        })
             
-            last_level = level
+            previous_level = level
         
         # Validate total
         total_created = sum(pot['amount'] for pot in side_pots)
-        if abs(total_created - self.game_state.pot) > 0.01:
-            # Log discrepancy but continue
-            self._log_message(f"⚠️ Side pot discrepancy: Created ${total_created:.2f} vs Pot ${self.game_state.pot:.2f}")
+        expected_total = sum(p.total_invested for p in all_players)
+        
+        if abs(total_created - expected_total) > 0.01:
+            self._log_message(f"⚠️ Side pot discrepancy: Created ${total_created:.2f} vs Expected ${expected_total:.2f}")
+            
+            # Try to fix discrepancy by adding to main pot
+            if side_pots:
+                side_pots[-1]['amount'] += (expected_total - total_created)
         
         return side_pots if side_pots else [{'amount': self.game_state.pot, 
-                                             'eligible_players': [p for p in self.game_state.players if p.is_active]}]
+                                             'eligible_players': [p for p in all_players if p.is_active]}]
 
     def handle_end_hand(self):
         """
@@ -3117,12 +3458,15 @@ class ImprovedPokerStateMachine:
 
         call_amount = self.game_state.current_bet - player.current_bet
 
-        # --- FIXED: BB should not fold when there's no risk (no raise) ---
-        if action == ActionType.FOLD and player.position == "BB":
-            # BB should not fold when there's no risk (no raise has been made)
-            if self.game_state.current_bet <= self.game_state.big_blind:
+        # FIXED: BB folding logic - BB CAN fold when facing a raise
+        if action == ActionType.FOLD:
+            # BB can always fold if facing a raise (call_amount > 0)
+            # BB cannot fold if no raise has been made and it's preflop
+            if (player.position == "BB" and 
+                self.game_state.street == "preflop" and 
+                call_amount == 0):
                 errors.append(f"Big Blind ({player.name}) cannot fold when no raise has been made")
-        # --- End of BB folding fix ---
+            # No other restrictions on folding
 
         if action == ActionType.CHECK:
             # FIX: A player can only check if the amount to call is zero.
@@ -3265,7 +3609,8 @@ class ImprovedPokerStateMachine:
             "all_in": player.stack
         }
         
-        return {
+        # Determine valid actions with proper BB folding logic
+        valid_actions = {
             "fold": self.is_valid_action(player, ActionType.FOLD, 0),
             "check": self.is_valid_action(player, ActionType.CHECK, 0),
             "call": self.is_valid_action(player, ActionType.CALL, call_amount),
@@ -3279,6 +3624,14 @@ class ImprovedPokerStateMachine:
             "player_current_bet": player.current_bet,
             "preset_bets": preset_bets,
         }
+        
+        # Special case for BB preflop with no raise
+        if (player.position == "BB" and 
+            self.game_state.street == "preflop" and 
+            call_amount == 0):
+            valid_actions["fold"] = False  # BB cannot fold when no raise
+        
+        return valid_actions
     
     def get_hand_history(self) -> List[HandHistoryLog]:
         """Returns the structured log for the current hand."""
