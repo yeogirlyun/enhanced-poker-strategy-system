@@ -3277,6 +3277,19 @@ class ImprovedPokerStateMachine:
         
         return winners
 
+    def determine_winners_among(self, candidates: List[Player]) -> List[Player]:
+        """Determine winners among a specific set of candidates."""
+        evaluations = []
+        for player in candidates:
+            if player.cards:  # Skip if no cards (folded)
+                eval = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+                evaluations.append((player, eval))
+        if not evaluations:
+            return []
+        best_eval = max(evaluations, key=lambda x: (x[1]['hand_rank'].value, x[1]['rank_values']))
+        winners = [p for p, e in evaluations if e == best_eval[1]]
+        return winners
+
     def handle_showdown(self):
         """Handle showdown with tie handling and side pots."""
         self._log_message("Showdown")
@@ -3398,8 +3411,8 @@ class ImprovedPokerStateMachine:
             
             if not eligible_players: continue
 
-            # Determine winner(s) only from the eligible players for this specific pot
-            winners = self.determine_winner(eligible_players)
+            # FIXED: Determine winner(s) only from the eligible players for this specific pot
+            winners = self.determine_winners_among(eligible_players)
             
             if winners:
                 split_amount = pot_amount / len(winners)

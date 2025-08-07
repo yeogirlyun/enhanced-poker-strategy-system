@@ -156,15 +156,19 @@ class GTOStrategyEngine:
             
         position_ranges = self.gto_preflop_ranges[position]
         
-        # RFI (Raise First In)
-        if not facing_bet:
+        # FIXED: RFI (Raise First In) - Check if pot is unopened
+        if game_state.current_bet <= game_state.big_blind:
             if self.is_hand_in_range(hand, position_ranges["rfi"]["range"]):
                 if random.random() <= position_ranges["rfi"]["freq"]:
-                    return ActionType.RAISE, game_state.min_raise * 3
+                    return ActionType.RAISE, game_state.big_blind * 3
                 else:
                     return ActionType.FOLD, 0.0
             else:
-                return ActionType.FOLD, 0.0
+                # FIXED: When not raising and no bet to call, check instead of fold
+                if call_amount > 0:
+                    return ActionType.FOLD, 0.0
+                else:
+                    return ActionType.CHECK, 0.0
         
         # vs RFI
         elif (facing_bet and 
