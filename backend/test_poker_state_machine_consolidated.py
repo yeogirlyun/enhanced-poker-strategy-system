@@ -610,18 +610,33 @@ class ConsolidatedPokerStateMachineTest(unittest.TestCase):
     
     def test_voice_announcements(self):
         """Test voice announcement system."""
-        with patch.object(self.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+        # Create a state machine NOT in test mode for voice testing
+        from core.poker_state_machine import ImprovedPokerStateMachine
+        sm = ImprovedPokerStateMachine(num_players=6, test_mode=False)
+        sm.start_hand()
+        
+        with patch.object(sm.sound_manager.voice_manager, 'play_action_voice') as mock_voice:
             # Test all-in announcement
-            player = self.state_machine.game_state.players[0]
+            player = sm.game_state.players[0]
             player.stack = 0
-            self.state_machine.execute_action(player, ActionType.CALL, player.stack)
+            
+            # Set up game state so it's the player's turn
+            sm.game_state.current_bet = 1.0  # There's a bet to call
+            sm.action_player_index = 0  # Set action to first player
+            
+            sm.execute_action(player, ActionType.CALL, player.stack)
             # Voice should be called for all-in
             mock_voice.assert_called()
     
     def test_test_mode_voice_disabled(self):
         """Test that voice is disabled in test mode."""
-        with patch.object(self.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+        with patch.object(self.state_machine.sound_manager.voice_manager, 'play_action_voice') as mock_voice:
             player = self.state_machine.game_state.players[0]
+            
+            # Set up game state so it's the player's turn
+            self.state_machine.game_state.current_bet = 1.0  # There's a bet to call
+            self.state_machine.action_player_index = 0  # Set action to first player
+            
             self.state_machine.execute_action(player, ActionType.CALL, 1.0)
             # In test mode, voice should not be called
             mock_voice.assert_not_called()

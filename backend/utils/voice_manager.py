@@ -144,6 +144,30 @@ class VoiceManager:
         elif action == "fold":
             self.play_voice("fold")
     
+    def speak(self, message: str):
+        """Speak a message (alias for play_voice for compatibility).
+        
+        Args:
+            message: The message to speak
+        """
+        # Map common messages to voice actions
+        message_lower = message.lower()
+        if "all in" in message_lower or "all-in" in message_lower:
+            self.play_voice("all_in")
+        elif "raise" in message_lower:
+            self.play_voice("raise")
+        elif "bet" in message_lower:
+            self.play_voice("bet")
+        elif "call" in message_lower:
+            self.play_voice("call")
+        elif "check" in message_lower:
+            self.play_voice("check")
+        elif "fold" in message_lower:
+            self.play_voice("fold")
+        else:
+            # Default to a generic announcement
+            self.play_voice("your_turn")
+    
     def play_game_voice(self, game_event: str):
         """Play voice for game events.
         

@@ -273,6 +273,7 @@ class ImprovedPokerStateMachine:
         
         # Sound manager
         self.sound_manager = SoundManager(test_mode=test_mode)
+        self.test_mode = test_mode  # Store test_mode for access by other components
         
         # Initialize voice system
         try:

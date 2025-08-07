@@ -157,12 +157,9 @@ class SoundManager:
             return
         
         # Skip voice activation in test mode to speed up testing
-        if not self.test_mode:
+        if not self.test_mode and hasattr(self, 'voice_manager'):
             # Try to play voice announcement first
             try:
-                from .voice_manager import VoiceManager
-                if not hasattr(self, 'voice_manager'):
-                    self.voice_manager = VoiceManager()
                 self.voice_manager.play_action_voice(action, amount)
             except Exception as e:
                 print(f"Warning: Could not play voice for {action}: {e}")

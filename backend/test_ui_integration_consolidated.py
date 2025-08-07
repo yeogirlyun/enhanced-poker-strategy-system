@@ -474,7 +474,7 @@ class ConsolidatedUIIntegrationTest(unittest.TestCase):
     
     def test_voice_announcements_in_ui(self):
         """Test voice announcements triggered by UI actions."""
-        with patch.object(self.practice_ui.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+        with patch.object(self.practice_ui.state_machine.sound_manager.voice_manager, 'play_action_voice') as mock_voice:
             # Simulate all-in action from UI
             player = self.practice_ui.state_machine.game_state.players[0]
             player.stack = 0
@@ -483,7 +483,7 @@ class ConsolidatedUIIntegrationTest(unittest.TestCase):
     
     def test_ui_test_mode_voice_disabled(self):
         """Test that voice is disabled in UI when test mode is active."""
-        with patch.object(self.practice_ui.state_machine.sound_manager.voice_manager, 'speak') as mock_voice:
+        with patch.object(self.practice_ui.state_machine.sound_manager.voice_manager, 'play_action_voice') as mock_voice:
             # UI action in test mode
             player = self.practice_ui.state_machine.game_state.players[0]
             self.practice_ui.state_machine.execute_action(player, ActionType.CALL, 1.0)
