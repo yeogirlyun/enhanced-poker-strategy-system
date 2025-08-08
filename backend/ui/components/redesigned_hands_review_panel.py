@@ -676,7 +676,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                 })
             
             # Start a new hand in the state machine
-            self.poker_state_machine.start_new_hand()
+            self.poker_state_machine.start_hand()
             
             # Set up players with their specific cards
             for i, player in enumerate(players[:6]):
