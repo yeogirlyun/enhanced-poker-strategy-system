@@ -325,6 +325,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.load_data()
         self.update_font_size(self.font_size)
         
+        # Set initial mode
+        self.set_mode("simulation")
+        
     def setup_ui(self):
         """Setup the redesigned two-pane interface."""
         # Main container with horizontal split
@@ -632,12 +635,13 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.current_mode = mode
         if mode == "simulation":
             self.right_notebook.select(0)
-            self.simulation_btn.configure(relief="sunken")
-            self.study_btn.configure(relief="raised")
+            # Update button text to show active mode
+            self.simulation_btn.configure(text="🎮 Simulation Mode ●")
+            self.study_btn.configure(text="📚 Study Mode")
         else:
             self.right_notebook.select(1)
-            self.simulation_btn.configure(relief="raised")
-            self.study_btn.configure(relief="sunken")
+            self.simulation_btn.configure(text="🎮 Simulation Mode")
+            self.study_btn.configure(text="📚 Study Mode ●")
             
     def next_step(self):
         """Advance simulation to next step."""
