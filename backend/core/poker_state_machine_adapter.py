@@ -263,6 +263,55 @@ class PokerStateMachineAdapter(EventListener):
         action = action_map.get(action_str.lower(), ActionType.FOLD)
         self.flexible_sm.execute_action(player, action, amount)
     
+    def get_session_info(self) -> Dict[str, Any]:
+        """Get session info (backward compatibility)."""
+        return {
+            'session_id': getattr(self, 'session_id', 'unknown'),
+            'hand_number': self.hand_number,
+            'total_hands': self.hand_number,
+            'current_state': self.current_state.value if self.current_state else 'unknown'
+        }
+    
+    def start_session(self):
+        """Start session (backward compatibility)."""
+        self.session_id = f"session_{self.hand_number}"
+    
+    def get_hand_description_and_cards(self, cards: List[str], board: List[str]) -> Dict[str, Any]:
+        """Get hand description and cards (backward compatibility)."""
+        return {
+            'description': f"Hand with {len(cards)} cards",
+            'cards': cards,
+            'board': board
+        }
+    
+    def start_preflop_betting_after_dealing(self):
+        """Start preflop betting after dealing (backward compatibility)."""
+        # This is handled automatically by the flexible state machine
+        pass
+    
+    def get_basic_bot_action(self, player: Player) -> tuple:
+        """Get basic bot action (backward compatibility)."""
+        from .types import ActionType
+        
+        # Simple bot logic - just call if there's a bet, otherwise check
+        if self.game_state.current_bet > player.current_bet:
+            return ActionType.CALL, self.game_state.current_bet - player.current_bet
+        else:
+            return ActionType.CHECK, 0
+    
+    def get_postflop_hand_strength(self, cards: List[str], board: List[str]) -> int:
+        """Get postflop hand strength (backward compatibility)."""
+        # Simple hand strength calculation
+        if not cards or len(cards) < 2:
+            return 0
+        
+        # Basic strength based on card ranks
+        ranks = [card[0] for card in cards + board]
+        rank_values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        
+        total_strength = sum(rank_values.get(rank, 0) for rank in ranks)
+        return total_strength
+    
     # Property accessors for backward compatibility
     
     @property
