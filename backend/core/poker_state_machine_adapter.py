@@ -189,6 +189,80 @@ class PokerStateMachineAdapter(EventListener):
         """Set folded status for a player (simulation mode)."""
         self.flexible_sm.set_player_folded(player_index, folded)
     
+    def get_display_state(self):
+        """Get UI-ready display state (backward compatibility)."""
+        from .poker_state_machine import DisplayState
+        
+        # Get game info from flexible state machine
+        game_info = self.flexible_sm.get_game_info()
+        
+        # Create a basic display state
+        display_state = DisplayState(
+            valid_actions={},  # Will be populated by UI
+            player_highlights=[False] * len(game_info.get('players', [])),
+            card_visibilities=[True] * len(game_info.get('players', [])),  # Show all cards for simulation
+            chip_representations={},
+            layout_positions={},
+            community_cards=game_info.get('board', []),
+            pot_amount=game_info.get('pot', 0.0),
+            current_bet=game_info.get('current_bet', 0.0),
+            action_player_index=game_info.get('action_player', 0),
+            game_state=game_info.get('state', 'unknown'),
+            last_action_details=""
+        )
+        
+        # Set player highlights for current action player
+        if display_state.action_player_index < len(display_state.player_highlights):
+            display_state.player_highlights[display_state.action_player_index] = True
+        
+        return display_state
+    
+    def _cleanup(self):
+        """Cleanup method for backward compatibility."""
+        # Clean up the flexible state machine if it has cleanup
+        if hasattr(self.flexible_sm, '_cleanup'):
+            self.flexible_sm._cleanup()
+        
+        # Clean up any other resources
+        if hasattr(self, 'session_state'):
+            self.session_state = None
+        
+        if hasattr(self, 'hand_history'):
+            self.hand_history.clear()
+    
+    def get_comprehensive_session_data(self) -> Dict[str, Any]:
+        """Get comprehensive session data (backward compatibility)."""
+        return {
+            'session_id': getattr(self, 'session_id', 'unknown'),
+            'hand_number': self.hand_number,
+            'current_state': self.current_state.value if self.current_state else 'unknown',
+            'players': [p.__dict__ for p in self.game_state.players] if self.game_state else [],
+            'board': self.game_state.board if self.game_state else [],
+            'pot': self.game_state.pot if self.game_state else 0.0,
+            'current_bet': self.game_state.current_bet if self.game_state else 0.0,
+            'hand_history': self.hand_history
+        }
+    
+    def get_valid_actions(self, player: Player) -> dict:
+        """Get valid actions for a player (backward compatibility)."""
+        return self.flexible_sm.get_valid_actions_for_player(player)
+    
+    def execute_action_string(self, player: Player, action_str: str, amount: float = 0):
+        """Execute action using string (backward compatibility)."""
+        from .types import ActionType
+        
+        # Convert string to ActionType
+        action_map = {
+            'fold': ActionType.FOLD,
+            'check': ActionType.CHECK,
+            'call': ActionType.CALL,
+            'bet': ActionType.BET,
+            'raise': ActionType.RAISE
+        }
+        
+        action = action_map.get(action_str.lower(), ActionType.FOLD)
+        self.flexible_sm.execute_action(player, action, amount)
+    
     # Property accessors for backward compatibility
     
     @property
