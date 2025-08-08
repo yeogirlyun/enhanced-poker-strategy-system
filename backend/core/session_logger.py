@@ -159,9 +159,21 @@ class SessionLogger:
         self.session_file: Optional[Path] = None
         self.system_log_file: Optional[Path] = None
         
+        # PHH export functionality
+        self._setup_phh_export()
+        
         # Graceful shutdown setup
         self._shutdown_handlers_registered = False
         self._register_shutdown_handlers()
+    
+    def _setup_phh_export(self):
+        """Setup PHH export functionality."""
+        try:
+            from .phh_converter import PracticeHandsPHHManager
+            self.phh_manager = PracticeHandsPHHManager()
+        except ImportError as e:
+            print(f"Warning: PHH export not available: {e}")
+            self.phh_manager = None
     
     def start_session(self, num_players: int = 6, starting_stack: float = 100.0) -> str:
         """Start a new logging session."""
@@ -202,7 +214,38 @@ class SessionLogger:
             "duration_ms": self.session.session_duration_ms
         })
         
+        # Export to PHH format before saving
+        self._export_session_to_phh()
+        
         self._save_session()
+    
+    def _export_session_to_phh(self) -> List[str]:
+        """Export current session to PHH format."""
+        exported_files = []
+        
+        if not self.session or not self.phh_manager:
+            return exported_files
+        
+        try:
+            # Only export if we have completed hands
+            completed_hands = [h for h in self.session.hands if h.hand_complete]
+            
+            if completed_hands:
+                exported_files = self.phh_manager.export_session_hands(self.session)
+                
+                self.log_system("INFO", "PHH_EXPORT", f"Exported {len(exported_files)} PHH files", {
+                    "exported_files": exported_files,
+                    "hands_exported": len(completed_hands)
+                })
+            else:
+                self.log_system("INFO", "PHH_EXPORT", "No completed hands to export", {})
+        
+        except Exception as e:
+            self.log_system("ERROR", "PHH_EXPORT", f"Error exporting to PHH: {str(e)}", {
+                "error": str(e)
+            })
+        
+        return exported_files
     
     def start_hand(self, hand_number: int, players: List[Dict], dealer_button: int, 
                    small_blind: int, big_blind: int, sb_amount: float = 0.5, bb_amount: float = 1.0) -> str:

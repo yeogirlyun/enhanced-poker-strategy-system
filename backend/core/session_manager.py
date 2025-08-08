@@ -7,15 +7,14 @@ for the poker game sessions.
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
-from datetime import datetime
 import time
 import uuid
 import json
-import os
 
 # Import shared types
 from .session_logger import SessionLogger
-from .types import Player, GameState
+# from .types import Player, GameState  # Not used in this module
+from .phh_converter import PracticeHandsPHHManager
 
 
 @dataclass
@@ -76,13 +75,14 @@ class SessionState:
 class SessionManager:
     """Manages session tracking, logging, and statistics."""
 
-    def __init__(self, num_players: int, big_blind: float = 1.0, 
+    def __init__(self, num_players: int, big_blind: float = 1.0,
                  logger: Optional[SessionLogger] = None):
         self.logger = logger or SessionLogger()
         self.session_state: Optional[SessionState] = None
         self.num_players = num_players
         self.big_blind = big_blind
         self.session_id: Optional[str] = None
+        self.phh_manager = PracticeHandsPHHManager()
 
     def start_session(self) -> str:
         """Start a new session and return session ID."""
@@ -113,7 +113,31 @@ class SessionManager:
         
         self._log_session_event("Session ended")
         
+        # Export to PHH format if logger has session data
+        self._export_to_phh()
+        
         return self.get_session_info()
+    
+    def _export_to_phh(self) -> List[str]:
+        """Export session to PHH format for hands review."""
+        exported_files = []
+        
+        try:
+            if self.logger and hasattr(self.logger, 'session') and self.logger.session:
+                # Export the session to PHH format
+                exported_files = self.phh_manager.export_session_hands(self.logger.session)
+                
+                if exported_files:
+                    self._log_session_event(f"Exported {len(exported_files)} PHH files")
+                    print(f"✅ Practice session exported to PHH format: {exported_files}")
+                else:
+                    self._log_session_event("No hands to export to PHH")
+            
+        except Exception as e:
+            self._log_session_event(f"Error exporting to PHH: {str(e)}")
+            print(f"❌ Error exporting session to PHH: {e}")
+        
+        return exported_files
 
     def _log_session_event(self, event: str) -> None:
         """Log a session event."""
@@ -229,7 +253,7 @@ class SessionManager:
         max_pot_size = max(pot_sizes) if pot_sizes else 0
         
         # Calculate winner statistics
-        winner_counts = {}
+        winner_counts: Dict[str, int] = {}
         for hand in hands:
             for winner in hand.winners:
                 winner_name = winner["name"]

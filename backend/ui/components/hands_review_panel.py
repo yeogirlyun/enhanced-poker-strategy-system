@@ -16,6 +16,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from tests.legendary_hands_manager import LegendaryHandsManager
+from ...core.phh_converter import PracticeHandsPHHManager
 
 
 class HandsReviewPanel(ttk.Frame):
@@ -25,7 +26,9 @@ class HandsReviewPanel(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.legendary_manager = None
         self.practice_hands = []
+        self.practice_phh_files = []
         self.current_hand = None
+        self.practice_phh_manager = PracticeHandsPHHManager()
         self.setup_ui()
         self.load_data()
     
@@ -64,6 +67,11 @@ class HandsReviewPanel(ttk.Frame):
         refresh_btn = ttk.Button(control_frame, text="🔄 Refresh Practice Hands", 
                                 command=self.refresh_practice_hands)
         refresh_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Load PHH button
+        load_phh_btn = ttk.Button(control_frame, text="📂 Load PHH Files", 
+                                 command=self.load_practice_phh_files)
+        load_phh_btn.pack(side=tk.LEFT, padx=(0, 10))
         
         # Status label
         self.practice_status_label = ttk.Label(control_frame, text="No practice hands found")
@@ -161,6 +169,7 @@ class HandsReviewPanel(ttk.Frame):
     def load_data(self):
         """Load practice hands and legendary hands data."""
         self.load_practice_hands()
+        self.load_practice_phh_files()
         self.load_legendary_hands()
     
     def load_practice_hands(self):
@@ -193,6 +202,44 @@ class HandsReviewPanel(ttk.Frame):
                 
         except Exception as e:
             print(f"Error loading practice hands: {e}")
+    
+    def load_practice_phh_files(self):
+        """Load practice hands from PHH format files."""
+        try:
+            # Get available PHH files
+            self.practice_phh_files = self.practice_phh_manager.get_practice_hands_files()
+            
+            # Load metadata for hands in PHH files
+            phh_hands = []
+            for phh_file_info in self.practice_phh_files:
+                if phh_file_info["metadata_file"]:
+                    try:
+                        with open(phh_file_info["metadata_file"], 'r') as f:
+                            metadata = json.load(f)
+                            
+                            # Add each hand from the metadata
+                            for hand in metadata.get("hands", []):
+                                hand["source_type"] = "phh"
+                                hand["phh_file"] = phh_file_info["phh_file"]
+                                hand["session_date"] = phh_file_info["session_date"]
+                                phh_hands.append(hand)
+                    except Exception as e:
+                        print(f"Error loading PHH metadata {phh_file_info['metadata_file']}: {e}")
+            
+            # Merge with existing practice hands
+            self.practice_hands.extend(phh_hands)
+            self.update_practice_hands_list()
+            
+            if phh_hands:
+                current_status = self.practice_status_label.cget("text")
+                phh_count = len(phh_hands)
+                self.practice_status_label.config(
+                    text=f"{current_status} + {phh_count} PHH hands"
+                )
+            
+        except Exception as e:
+            print(f"Error loading practice PHH files: {e}")
+            self.practice_status_label.config(text=f"PHH Error: {str(e)}")
     
     def load_legendary_hands(self):
         """Load legendary hands from the database."""
@@ -231,10 +278,20 @@ class HandsReviewPanel(ttk.Frame):
         for i, hand in enumerate(self.practice_hands):
             # Create a display string for the hand
             hand_number = hand.get('hand_number', i + 1)
-            timestamp = hand.get('timestamp', 'Unknown')
-            players = len(hand.get('players', []))
             
-            display_text = f"Hand {hand_number} - {players} players - {timestamp}"
+            # Handle different source types
+            source_type = hand.get('source_type', 'json')
+            if source_type == 'phh':
+                # PHH hand display
+                session_date = hand.get('session_date', 'Unknown')
+                pot_size = hand.get('pot_size', 0)
+                display_text = f"[PHH] Hand {hand_number} - ${pot_size:.2f} pot - {session_date}"
+            else:
+                # Original JSON hand display
+                timestamp = hand.get('timestamp', 'Unknown')
+                players = len(hand.get('players_involved', hand.get('players', [])))
+                display_text = f"[JSON] Hand {hand_number} - {players} players - {timestamp}"
+            
             self.practice_hands_listbox.insert(tk.END, display_text)
         
         self.practice_status_label.config(
@@ -298,7 +355,48 @@ class HandsReviewPanel(ttk.Frame):
         """Display practice hand details."""
         self.practice_details_text.delete(1.0, tk.END)
         
-        details = f"""🎯 PRACTICE HAND DETAILS
+        source_type = hand.get('source_type', 'json')
+        
+        if source_type == 'phh':
+            # Display PHH hand details
+            details = f"""🎯 PRACTICE HAND DETAILS (PHH Format)
+{'='*50}
+
+📋 Hand Information:
+   ID: {hand.get('id', 'Unknown')}
+   Name: {hand.get('name', 'Unknown')}
+   Category: {hand.get('category', 'Unknown')}
+   Session Date: {hand.get('session_date', 'Unknown')}
+   Hand Number: {hand.get('hand_number', 'Unknown')}
+   Source: {hand.get('source', 'Unknown')}
+
+💰 Pot Information:
+   Final Pot: ${hand.get('pot_size', 0):.2f}
+   Duration: {hand.get('duration_ms', 0)}ms
+
+👥 Players Involved:
+   {', '.join(hand.get('players_involved', []))}
+
+📝 Description:
+   {hand.get('description', 'No description available')}
+
+🎓 Study Value:
+   {hand.get('study_value', 'No study value specified')}
+
+📚 Why Notable:
+   {hand.get('why_notable', 'No specific context')}
+
+📁 Files:
+   PHH File: {hand.get('phh_file', 'Unknown')}
+   Session ID: {hand.get('session_id', 'Unknown')}
+
+🏁 Hand Status:
+   Complete: {'✅' if hand.get('hand_complete', False) else '❌'}
+   Streets Reached: {', '.join(hand.get('streets_reached', []))}
+"""
+        else:
+            # Display original JSON hand details
+            details = f"""🎯 PRACTICE HAND DETAILS (JSON Format)
 {'='*50}
 
 📋 Hand Information:
@@ -312,21 +410,21 @@ class HandsReviewPanel(ttk.Frame):
 
 👥 Players:
 """
-        
-        for player in hand.get('players', []):
-            details += f"   {player.get('name', 'Unknown')}: ${player.get('stack', 0):.2f}\n"
-        
-        details += f"""
+            
+            for player in hand.get('players', []):
+                details += f"   {player.get('name', 'Unknown')}: ${player.get('stack', 0):.2f}\n"
+            
+            details += f"""
 🎲 Actions:
 """
-        
-        # Display actions by street
-        for street in ['preflop_actions', 'flop_actions', 'turn_actions', 'river_actions']:
-            actions = hand.get(street, [])
-            if actions:
-                details += f"\n{street.replace('_', ' ').title()}:\n"
-                for action in actions:
-                    details += f"   {action}\n"
+            
+            # Display actions by street
+            for street in ['preflop_actions', 'flop_actions', 'turn_actions', 'river_actions']:
+                actions = hand.get(street, [])
+                if actions:
+                    details += f"\n{street.replace('_', ' ').title()}:\n"
+                    for action in actions:
+                        details += f"   {action}\n"
         
         self.practice_details_text.insert(1.0, details)
     
@@ -394,7 +492,10 @@ class HandsReviewPanel(ttk.Frame):
     
     def refresh_practice_hands(self):
         """Refresh the practice hands list."""
+        # Clear existing hands and reload
+        self.practice_hands = []
         self.load_practice_hands()
+        self.load_practice_phh_files()
     
     def simulate_current_hand(self):
         """Simulate the currently selected legendary hand."""
