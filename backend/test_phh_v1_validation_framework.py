@@ -23,7 +23,7 @@ from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
-from core.poker_state_machine import ImprovedPokerStateMachine, ActionType
+from core.poker_state_machine import ImprovedPokerStateMachine, ActionType, PokerState
 from core.types import Player
 
 
@@ -188,7 +188,14 @@ class PHHV1Parser:
                 elif current_section == 'table':
                     table_data[key] = value
                 elif current_section == 'blinds':
-                    blinds[key] = value
+                    if key == 'antes':
+                        # Handle antes as a special case
+                        if 'antes' not in blinds:
+                            blinds['antes'] = []
+                        # This will be handled in the parsing logic
+                        continue
+                    else:
+                        blinds[key] = value
                 elif current_section == 'board':
                     if current_subsection not in board_data:
                         board_data[current_subsection] = {}
@@ -272,6 +279,22 @@ class PHHV1Parser:
             amount=self._extract_amount_from_blind(big_blind_str)
         )
         
+        # Parse antes
+        antes = []
+        if 'antes' in blinds:
+            antes_data = blinds['antes']
+            if isinstance(antes_data, str):
+                # Parse antes from string format
+                antes = self._parse_antes_from_string(antes_data)
+            elif isinstance(antes_data, list):
+                # Parse antes from list format
+                for ante_data in antes_data:
+                    if isinstance(ante_data, dict):
+                        antes.append(PHHV1Blind(
+                            seat=ante_data.get('seat', 0),
+                            amount=ante_data.get('amount', 0)
+                        ))
+        
         # Parse actions
         preflop_actions = self._parse_actions(actions.get('preflop', []))
         flop_actions = self._parse_actions(actions.get('flop', []))
@@ -283,12 +306,17 @@ class PHHV1Parser:
         turn_board = self._parse_board(board_data.get('turn', {}))
         river_board = self._parse_board(board_data.get('river', {}))
         
+        # Use site as event if event is empty (for online poker hands)
+        event = game_data.get('event', '')
+        if not event and 'site' in game_data:
+            event = game_data.get('site', '')
+        
         return PHHV1Hand(
             variant=game_data.get('variant', ''),
             stakes=game_data.get('stakes', ''),
             currency=game_data.get('currency', ''),
             format=game_data.get('format', ''),
-            event=game_data.get('event', ''),
+            event=event,
             table_name=table_data.get('table_name', ''),
             max_players=table_data.get('max_players', 0),
             button_seat=table_data.get('button_seat', 0),
@@ -345,6 +373,18 @@ class PHHV1Parser:
         """Extract amount from blind string."""
         match = re.search(r'amount\s*=\s*(\d+)', blind_str)
         return float(match.group(1)) if match else 0.0
+    
+    def _parse_antes_from_string(self, antes_str: str) -> List[PHHV1Blind]:
+        """Parse antes from string format."""
+        antes = []
+        # Extract individual ante entries
+        ante_matches = re.findall(r'\{ seat = (\d+), amount = (\d+) \}', antes_str)
+        for seat, amount in ante_matches:
+            antes.append(PHHV1Blind(
+                seat=int(seat),
+                amount=float(amount)
+            ))
+        return antes
 
 
 class PHHV1Validator:
@@ -376,8 +416,9 @@ class PHHV1Validator:
     
     def _create_state_machine_from_phh_v1(self, phh_hand: PHHV1Hand) -> ImprovedPokerStateMachine:
         """Create a state machine configured from PHH v1 data."""
-        # Create state machine with correct number of players
-        sm = ImprovedPokerStateMachine(num_players=phh_hand.max_players, test_mode=True)
+        # Always create 6-player state machine for consistency (regardless of PHH max_players)
+        # The validator will only use the active players from PHH data
+        sm = ImprovedPokerStateMachine(num_players=6, test_mode=True)
         sm.strategy_mode = "GTO"
         
         # Configure game state
@@ -390,10 +431,25 @@ class PHHV1Validator:
                 player.name = player_info.name
                 player.stack = player_info.starting_stack_chips
                 player.position = player_info.position
-                
-                # Set cards if available
+        
+        # Set up the deck with specific cards if available
+        if any(player_info.cards for player_info in phh_hand.players):
+            # Create a custom deck with the specific cards
+            all_cards = []
+            for player_info in phh_hand.players:
                 if player_info.cards:
-                    player.cards = player_info.cards
+                    all_cards.extend(player_info.cards)
+            
+            # Add board cards if available
+            if phh_hand.flop_board and phh_hand.flop_board.cards:
+                all_cards.extend(phh_hand.flop_board.cards)
+            if phh_hand.turn_board and phh_hand.turn_board.card:
+                all_cards.append(phh_hand.turn_board.card)
+            if phh_hand.river_board and phh_hand.river_board.card:
+                all_cards.append(phh_hand.river_board.card)
+            
+            # Create a deck with these cards at the top
+            sm.game_state.deck = all_cards + [card for card in sm.game_state.deck if card not in all_cards]
         
         return sm
     
@@ -409,26 +465,135 @@ class PHHV1Validator:
             'pot': sm.game_state.pot
         })
         
-        # Execute preflop actions
+        # Set the specific cards from PHH data immediately after hand starts
+        # Map PHH players to available state machine player positions
+        active_player_indices = []
+        available_indices = list(range(len(sm.game_state.players)))
+        
+        for i, player_info in enumerate(phh_hand.players):
+            if player_info.cards and i < len(available_indices):
+                # Use the next available player index (sequential mapping)
+                player_index = available_indices[i]
+                player = sm.game_state.players[player_index]
+                player.cards = player_info.cards
+                active_player_indices.append(player_index)
+                results.append({
+                    'action': f'set_cards_player_{player_index}_phh_seat_{player_info.seat}',
+                    'cards': player_info.cards,
+                    'phh_name': player_info.name,
+                    'original_seat': player_info.seat,
+                    'mapped_index': player_index,
+                    'state': sm.current_state.value
+                })
+        
+        # Set all non-PHH players as folded to prevent them from acting
+        # But ensure PHH players remain active
+        for i, player in enumerate(sm.game_state.players):
+            if i not in active_player_indices:
+                player.has_folded = True
+                player.is_active = False
+                results.append({
+                    'action': f'fold_inactive_player_{i}',
+                    'state': sm.current_state.value
+                })
+            else:
+                # Ensure PHH players are explicitly set as active
+                player.is_active = True
+                player.has_folded = False
+                results.append({
+                    'action': f'activate_phh_player_{i}',
+                    'state': sm.current_state.value
+                })
+        
+        # Set board cards if available
+        if phh_hand.flop_board and phh_hand.flop_board.cards:
+            # Ensure board is a list, not a string
+            if isinstance(phh_hand.flop_board.cards, str):
+                # Parse the string representation of the list
+                import ast
+                board_cards = ast.literal_eval(phh_hand.flop_board.cards)
+            else:
+                board_cards = phh_hand.flop_board.cards
+            sm.game_state.board = board_cards
+            results.append({
+                'action': 'set_flop_board',
+                'cards': board_cards,
+                'state': sm.current_state.value
+            })
+        
+        if phh_hand.turn_board and phh_hand.turn_board.card:
+            if isinstance(sm.game_state.board, list) and len(sm.game_state.board) >= 3:
+                sm.game_state.board.append(phh_hand.turn_board.card)
+                results.append({
+                    'action': 'set_turn_board',
+                    'card': phh_hand.turn_board.card,
+                    'state': sm.current_state.value
+                })
+        
+        if phh_hand.river_board and phh_hand.river_board.card:
+            if isinstance(sm.game_state.board, list) and len(sm.game_state.board) >= 4:
+                sm.game_state.board.append(phh_hand.river_board.card)
+                results.append({
+                    'action': 'set_river_board',
+                    'card': phh_hand.river_board.card,
+                    'state': sm.current_state.value
+                })
+        
+        # Transition to preflop betting if there are preflop actions
         if phh_hand.preflop_actions:
+            sm.transition_to(PokerState.PREFLOP_BETTING)
+            results.append({
+                'action': 'transition_to_preflop',
+                'state': sm.current_state.value,
+                'pot': sm.game_state.pot
+            })
+            
+            # Execute preflop actions
             for action in phh_hand.preflop_actions:
                 result = self._execute_single_action(sm, action, Street.PREFLOP)
                 results.append(result)
         
         # Execute flop actions
         if phh_hand.flop_actions:
+            # Only transition if we're still in preflop betting
+            if sm.current_state == PokerState.PREFLOP_BETTING:
+                sm.transition_to(PokerState.FLOP_BETTING)
+                results.append({
+                    'action': 'transition_to_flop',
+                    'state': sm.current_state.value,
+                    'pot': sm.game_state.pot
+                })
+            
             for action in phh_hand.flop_actions:
                 result = self._execute_single_action(sm, action, Street.FLOP)
                 results.append(result)
         
         # Execute turn actions
         if phh_hand.turn_actions:
+            # Only transition if we're still in flop betting
+            if sm.current_state == PokerState.FLOP_BETTING:
+                sm.transition_to(PokerState.TURN_BETTING)
+                results.append({
+                    'action': 'transition_to_turn',
+                    'state': sm.current_state.value,
+                    'pot': sm.game_state.pot
+                })
+            
             for action in phh_hand.turn_actions:
                 result = self._execute_single_action(sm, action, Street.TURN)
                 results.append(result)
         
         # Execute river actions
         if phh_hand.river_actions:
+            # Only transition if we're still in turn betting
+            if sm.current_state == PokerState.TURN_BETTING:
+                sm.transition_to(PokerState.RIVER_BETTING)
+                results.append({
+                    'action': 'transition_to_river',
+                    'state': sm.current_state.value,
+                    'pot': sm.game_state.pot
+                })
+            
             for action in phh_hand.river_actions:
                 result = self._execute_single_action(sm, action, Street.RIVER)
                 results.append(result)
