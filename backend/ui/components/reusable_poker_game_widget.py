@@ -595,8 +595,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             elif 'RIVER' in current_state or 'DEAL_RIVER' in current_state:
                 cards_to_show = 5  # Show all 5 cards during river
                 print(f"🎴 River: Showing {cards_to_show} community cards (state: {current_state})")
+            elif 'END_HAND' in current_state or 'SHOWDOWN' in current_state:
+                cards_to_show = 5  # Show only 5 community cards during showdown/end
+                print(f"🎴 Showdown/End: Showing {cards_to_show} community cards (state: {current_state})")
             else:
-                cards_to_show = len(board_cards)  # Default to all cards for other states
+                cards_to_show = min(5, len(board_cards))  # Max 5 community cards for unknown states
                 print(f"🎴 Other state: Showing {cards_to_show} community cards (state: {current_state})")
         
         # Limit board cards to only the first N cards that should be visible
