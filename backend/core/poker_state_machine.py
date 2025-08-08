@@ -1765,13 +1765,9 @@ class ImprovedPokerStateMachine:
         self._log_message(f"   💰 Pot: ${self.game_state.pot:.2f}, Current bet: ${self.game_state.current_bet:.2f}")
         self._log_message(f"   🎯 Street: {self.game_state.street}")
         
-        # Log strategy data availability
-        if self.strategy_data:
-            self._log_message(f"   📋 Using strategy data: {type(self.strategy_data).__name__}")
-            action, amount = self.get_strategy_action(player)
-        else:
-            self._log_message(f"   ⚠️ No strategy data available, using basic logic")
-            action, amount = self.get_basic_bot_action(player)
+        # Use GTO strategy by default
+        self._log_message(f"   📋 Using GTO strategy")
+        action, amount = self.get_basic_bot_action(player)
         
         # Log the decision with detailed context
         self._log_message(f"🤖 Bot {player.name} decided: {action.value} ${amount:.2f}")
