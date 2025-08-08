@@ -567,8 +567,15 @@ class FlexiblePokerStateMachine:
         player_hands = []
         for player in players:
             if len(player.cards) == 2:
-                hand_rank = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
-                player_hands.append((player, hand_rank))
+                hand_eval = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+                # Extract the hand rank value from the evaluation result
+                if isinstance(hand_eval, dict) and 'hand_rank' in hand_eval:
+                    hand_rank = hand_eval['hand_rank']
+                    # Convert HandRank enum to integer value for comparison
+                    rank_value = hand_rank.value if hasattr(hand_rank, 'value') else hand_rank
+                else:
+                    rank_value = hand_eval if isinstance(hand_eval, (int, float)) else 0
+                player_hands.append((player, rank_value))
         
         # Sort by hand rank (best first)
         player_hands.sort(key=lambda x: x[1], reverse=True)

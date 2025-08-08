@@ -2759,6 +2759,9 @@ class PracticeSessionUI(ttk.Frame):
                         # Check if player has folded (is not active)
                         player_has_folded = not player_info.get('is_active', True)
                         
+                        # Check if we're in simulation mode
+                        is_simulation_mode = hasattr(self.state_machine, 'config') and getattr(self.state_machine.config, 'show_all_cards', False)
+                        
                         # FIXED: Only set cards if they haven't been set yet or are different
                         # This prevents cards from changing during showdown
                         current_card1 = getattr(card_widgets[0], '_current_card', None)
@@ -2768,10 +2771,10 @@ class PracticeSessionUI(ttk.Frame):
                         
                         # DEBUG: Log card changes to track the persistence bug
                         if player_index == 0:  # Human player
-                            self._log_message(f"🐛 CARD DEBUG - Player {player_index}: current=({current_card1}, {current_card2}) new=({new_card1}, {new_card2})")
+                            self._log_message(f"🐛 CARD DEBUG - Player {player_index}: current=({current_card1}, {current_card2}) new=({new_card1}, {new_card2}) simulation_mode={is_simulation_mode}")
                         
-                        if card_visible:
-                            # Show actual cards for human players or during showdown
+                        if card_visible or is_simulation_mode:
+                            # Show actual cards for human players, during showdown, or in simulation mode
                             # ANTI-FLICKER: Only update if cards have actually changed AND are different from current display
                             current_display1 = getattr(card_widgets[0], '_current_display', "")
                             current_display2 = getattr(card_widgets[1], '_current_display', "")
