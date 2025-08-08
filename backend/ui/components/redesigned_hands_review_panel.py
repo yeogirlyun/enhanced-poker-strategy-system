@@ -800,7 +800,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                         elif action_type_str == 'RAISE':
                             return ActionType.RAISE, amount
                         elif action_type_str == 'ALL-IN':
-                            return ActionType.ALL_IN, amount
+                            # ALL-IN is handled as a RAISE with the player's full stack
+                            return ActionType.RAISE, amount
         
         # Fallback: Use smart action based on player and situation
         return self._get_smart_fallback_action(current_player)
