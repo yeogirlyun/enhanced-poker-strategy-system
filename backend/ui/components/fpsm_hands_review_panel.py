@@ -771,13 +771,15 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 self.fpsm.execute_action(action_player, action['type'], action['amount'])
                 print(f"✅ {action_msg}")
                 
-                # Track the action in history
+                # Track the action in history (CRITICAL: This updates the action index!)
                 self.action_history.append({
                     'player': action_player.name,
                     'action': action['type'].value,
                     'amount': action['amount'],
-                    'valid_actions': valid_actions
+                    'valid_actions': valid_actions,
+                    'action_index': len(self.action_history)  # Current index before append
                 })
+                print(f"🎯 Action history updated! Now {len(self.action_history)} actions executed")
             else:
                 self.add_log_entry("WARNING", "SIMULATION", 
                                  f"No action determined for {action_player.name}")
@@ -804,19 +806,41 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     all_actions.extend(street_actions)
             
             print(f"🎯 Found {len(all_actions)} historical actions")
+            print(f"🎯 Action history so far: {len(self.action_history)} actions executed")
             
-            # Find the next action for this player based on seat/actor mapping
+            # The next action index should be the length of our action history
             current_action_index = len(self.action_history)
             
-            # Map player names to actor IDs for legendary hands
-            player_to_actor = {}
+            # Map FPSM player positions to legendary hand actor IDs
+            # FPSM creates players in order [0,1,2,3,4,5] but legendary hand uses actor IDs [1,2,3,4,5,6]
+            fpsm_to_actor = {}
             if hasattr(self.current_hand, 'players'):
                 for i, p in enumerate(self.current_hand.players):
                     seat = p.get('seat', i+1)
-                    player_to_actor[p.get('name')] = seat
+                    # Map FPSM player index to legendary hand actor ID based on seat
+                    if seat == 2:  # Chris Moneymaker
+                        fpsm_to_actor[0] = 1  # FPSM player 0 → Actor 1 
+                    elif seat == 3:  # Sammy Farha  
+                        fpsm_to_actor[1] = 2  # FPSM player 1 → Actor 2
+                    elif seat == 4:  # Folded Player 1
+                        fpsm_to_actor[2] = 3  # FPSM player 2 → Actor 3
+                    elif seat == 5:  # Folded Player 2
+                        fpsm_to_actor[3] = 4  # FPSM player 3 → Actor 4
+                    elif seat == 6:  # Folded Player 3
+                        fpsm_to_actor[4] = 5  # FPSM player 4 → Actor 5
+                    else:  # Folded Player 4 (no seat specified)
+                        fpsm_to_actor[5] = 6  # FPSM player 5 → Actor 6
             
-            # Find the current player's actor ID
-            player_actor_id = player_to_actor.get(player.name)
+            # Find current player's actor ID based on FPSM position
+            fpsm_player_index = -1
+            if hasattr(self, 'fpsm') and self.fpsm:
+                for i, fpsm_player in enumerate(self.fpsm.game_state.players):
+                    if fpsm_player.name == player.name:
+                        fpsm_player_index = i
+                        break
+            
+            player_actor_id = fpsm_to_actor.get(fpsm_player_index)
+            print(f"🎯 Player {player.name} (FPSM index {fpsm_player_index}) → Actor {player_actor_id}")
             
             if current_action_index < len(all_actions):
                 next_action = all_actions[current_action_index]
@@ -824,8 +848,11 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 action_type_str = next_action.get('type', '').upper()
                 amount = next_action.get('amount', 0)
                 
+                print(f"🎯 Next historical action [{current_action_index}]: Actor {action_actor} {action_type_str} ${amount}")
+                print(f"🎯 Current player: {player.name} (Actor {player_actor_id})")
+                
                 # Check if this action belongs to the current player
-                if action_actor == player_actor_id or next_action.get('player') == player.name:
+                if action_actor == player_actor_id:
                     # Map action string to ActionType
                     action_type_map = {
                         'FOLD': ActionType.FOLD,
@@ -838,11 +865,14 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     }
                     
                     if action_type_str in action_type_map:
-                        print(f"🎯 Using historical action: {player.name} (actor {action_actor}) {action_type_str} ${amount:,.0f}")
+                        print(f"✅ MATCH! Using historical action: {player.name} (actor {action_actor}) {action_type_str} ${amount:,.0f}")
                         return {
                             'type': action_type_map[action_type_str],
                             'amount': amount
                         }
+                else:
+                    print(f"❌ NO MATCH: Expected actor {player_actor_id}, but next action is for actor {action_actor}")
+                    print(f"🎯 This means {player.name} should wait or use fallback action")
             
             # Fallback to simple action determination
             return self.determine_action_simple(player, valid_actions)
