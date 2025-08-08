@@ -455,6 +455,17 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.simulation_status_label = ttk.Label(controls_frame, text="Select a hand to simulate")
         self.simulation_status_label.pack(side=tk.RIGHT)
         
+        # Legendary hand notes panel
+        self.notes_frame = ttk.LabelFrame(sim_frame, text="📝 Legendary Hand Notes")
+        self.notes_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+        
+        self.notes_text = tk.Text(self.notes_frame, height=4, wrap=tk.WORD, state=tk.DISABLED)
+        notes_scrollbar = ttk.Scrollbar(self.notes_frame, orient=tk.VERTICAL, command=self.notes_text.yview)
+        self.notes_text.configure(yscrollcommand=notes_scrollbar.set)
+        
+        self.notes_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        notes_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        
         # Practice session container
         self.practice_container = ttk.Frame(sim_frame)
         self.practice_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
@@ -568,6 +579,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             self.update_hand_info()
             self.load_hand_for_simulation()
             self.study_panel.load_hand_analysis(self.current_hand)
+            # Update notes for legendary hands
+            if category == "Legendary Hands":
+                self.update_legendary_hand_notes()
             
     def update_hand_info(self):
         """Update the hand info preview."""
@@ -701,6 +715,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                     player.stack = stack
                     player.cards = cards.copy()  # Copy the cards
                     
+                    # For legendary hand simulation, show all cards by marking as human
+                    player.is_human = True
+                    
                     # Mark as folded if specified
                     if player_data.get('folded_preflop', False):
                         player.has_folded = True
@@ -733,11 +750,99 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Force a UI update
             if hasattr(self.practice_session, 'update_display'):
                 self.practice_session.update_display()
+            
+            # Update the notes panel with player information
+            self.update_legendary_hand_notes()
                 
             print(f"✅ Legendary hand setup complete: {self.current_hand.metadata.name}")
                 
         except Exception as e:
             print(f"❌ Error setting up legendary hand: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def update_legendary_hand_notes(self):
+        """Update the notes panel with legendary hand information."""
+        if not self.current_hand or not hasattr(self, 'notes_text'):
+            return
+            
+        try:
+            # Enable text widget for editing
+            self.notes_text.config(state=tk.NORMAL)
+            self.notes_text.delete(1.0, tk.END)
+            
+            # Add hand title and description
+            notes = f"🎯 {self.current_hand.metadata.name}\n"
+            notes += f"📅 {self.current_hand.metadata.date or 'Unknown date'}\n"
+            notes += f"🏆 {self.current_hand.metadata.subcategory}\n\n"
+            
+            # Add player information with cards
+            notes += "👥 PLAYERS AND THEIR CARDS:\n"
+            notes += "=" * 40 + "\n"
+            
+            if hasattr(self.current_hand, 'players') and self.current_hand.players:
+                for i, player_data in enumerate(self.current_hand.players[:6]):
+                    name = player_data.get('name', f'Player {i+1}')
+                    cards = player_data.get('cards', ['??', '??'])
+                    stack = player_data.get('starting_stack_chips', 0)
+                    position = player_data.get('position', f'Seat {i+1}')
+                    folded = player_data.get('folded_preflop', False)
+                    
+                    # Format cards nicely
+                    card_str = f"{cards[0]} {cards[1]}" if len(cards) == 2 else "?? ??"
+                    
+                    # Add player info
+                    status = "❌ FOLDED" if folded else "✅ ACTIVE"
+                    notes += f"{i+1}. {name} ({position})\n"
+                    notes += f"   Cards: {card_str} | Stack: ${stack:,} | {status}\n\n"
+            
+            # Add board information if available
+            if hasattr(self.current_hand, 'board') and self.current_hand.board:
+                notes += "🃏 BOARD CARDS:\n"
+                notes += "=" * 20 + "\n"
+                
+                if 'flop' in self.current_hand.board:
+                    flop_cards = self.current_hand.board['flop']
+                    notes += f"Flop: {' '.join(flop_cards)}\n"
+                
+                if 'turn' in self.current_hand.board:
+                    turn_card = self.current_hand.board['turn']
+                    notes += f"Turn: {turn_card}\n"
+                
+                if 'river' in self.current_hand.board:
+                    river_card = self.current_hand.board['river']
+                    notes += f"River: {river_card}\n"
+                
+                notes += "\n"
+            
+            # Add action summary if available
+            if hasattr(self.current_hand, 'actions') and self.current_hand.actions:
+                notes += "🎬 ACTION SUMMARY:\n"
+                notes += "=" * 20 + "\n"
+                
+                for street, actions in self.current_hand.actions.items():
+                    if actions:
+                        notes += f"{street.upper()}: {len(actions)} actions\n"
+                        for action in actions[:3]:  # Show first 3 actions
+                            actor = action.get('actor', 0)
+                            action_type = action.get('type', 'unknown')
+                            amount = action.get('amount', 0)
+                            notes += f"  Player {actor}: {action_type.upper()}"
+                            if amount > 0:
+                                notes += f" ${amount:,}"
+                            notes += "\n"
+                        if len(actions) > 3:
+                            notes += f"  ... and {len(actions) - 3} more actions\n"
+                        notes += "\n"
+            
+            # Insert the notes
+            self.notes_text.insert(1.0, notes)
+            
+            # Disable text widget for read-only
+            self.notes_text.config(state=tk.DISABLED)
+            
+        except Exception as e:
+            print(f"❌ Error updating legendary hand notes: {e}")
             import traceback
             traceback.print_exc()
     
