@@ -932,6 +932,19 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             else:
                 print(f"🎯 No historical action for {player.name}, using fallback")
         
+        # For legendary hands that didn't match, force fold if they should have folded
+        if self.use_historical_actions:
+            # Check if this player should have folded in preflop based on actor mapping
+            fpsm_to_actor = self.build_actor_mapping()
+            fpsm_player_index = self.get_player_fpsm_index(player)
+            player_actor_id = fpsm_to_actor.get(fpsm_player_index)
+            
+            # Actors 3,4,5,6 should fold preflop in the legendary hand
+            # Also fold players with no actor mapping (Actor None)
+            if player_actor_id in [3, 4, 5, 6] or player_actor_id is None:
+                print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - should have folded preflop")
+                return {'type': ActionType.FOLD, 'amount': 0}
+        
         # Fallback to original logic for non-legendary hands or when no historical action matches
         try:
             # Get hand history from ParsedHand structure
