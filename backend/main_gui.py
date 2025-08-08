@@ -508,12 +508,13 @@ class EnhancedMainGUI:
 
         self._create_enhanced_game_tab(enhanced_game_frame)
 
-        # Tab 8: Hands Review (NEW)
+        # Tab 8: Hands Review (NEW) - Using FPSM
         hands_review_frame = ttk.Frame(self.notebook)
-        self.notebook.add(hands_review_frame, text="🎯 Hands Review")
+        self.notebook.add(hands_review_frame, text="🎯 Hands Review (FPSM)")
         
-        # Create hands review panel (redesigned)
-        self.hands_review_panel = RedesignedHandsReviewPanel(hands_review_frame)
+        # Create FPSM hands review panel
+        from ui.components.fpsm_hands_review_panel import FPSMHandsReviewPanel
+        self.hands_review_panel = FPSMHandsReviewPanel(hands_review_frame)
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
 
         # Update strategy file display

@@ -16,7 +16,6 @@ Features:
 """
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set
@@ -107,6 +106,9 @@ class LegendaryHandsPHHLoader:
         current_hand = None
         hand_counter = 0
         current_players = []
+        current_actions = {}  # Track actions by street
+        current_board = {}    # Track board cards
+        current_street = None
         
         for line in lines:
             stripped = line.strip()
@@ -115,13 +117,21 @@ class LegendaryHandsPHHLoader:
             if stripped.startswith('# Hand ') and '—' in stripped:
                 # Save previous hand if exists (with conversion)
                 if current_hand:
-                    converted_hand = self._convert_to_6_player_format(current_hand, current_players)
+                    # Add actions and board to the hand
+                    current_hand.actions = current_actions.copy()
+                    current_hand.board = current_board.copy()
+                    converted_hand = self._convert_to_6_player_format(
+                        current_hand, current_players)
                     hands.append(converted_hand)
                 
                 # Start new hand
                 hand_counter += 1
-                hand_name = stripped.split('—', 1)[1].strip() if '—' in stripped else f"Legendary Hand {hand_counter}"
+                hand_name = (stripped.split('—', 1)[1].strip() 
+                           if '—' in stripped else f"Legendary Hand {hand_counter}")
                 current_players = []  # Reset players list
+                current_actions = {}  # Reset actions
+                current_board = {}    # Reset board
+                current_street = None
                 
                 # Extract players from name more robustly
                 players_involved = []
@@ -187,9 +197,9 @@ class LegendaryHandsPHHLoader:
                     try:
                         parts = stakes.split('/')
                         if len(parts) >= 2:
-                            big_blind = float(parts[1])
-                            current_hand.metadata.pot_size = big_blind * 15  # Rough estimate
-                    except:
+                                                    big_blind = float(parts[1])
+                        current_hand.metadata.pot_size = big_blind * 15  # Rough estimate
+                    except (ValueError, IndexError):
                         pass
             
             # Track players as we parse
@@ -213,11 +223,65 @@ class LegendaryHandsPHHLoader:
                     cards = eval(cards_str)  # Parse the list
                     if current_players:
                         current_players[-1]['cards'] = cards
-                except:
+                except (ValueError, SyntaxError):
                     pass
+            
+            # Parse board cards
+            elif stripped.startswith('[board.flop]') and current_hand:
+                current_street = 'flop'
+            elif stripped.startswith('[board.turn]') and current_hand:
+                current_street = 'turn'
+            elif stripped.startswith('[board.river]') and current_hand:
+                current_street = 'river'
+            elif stripped.startswith('cards =') and current_street and current_hand:
+                # Add board cards
+                cards_str = stripped.split('=', 1)[1].strip()
+                try:
+                    cards = eval(cards_str)  # Parse the list
+                    current_board[current_street] = cards
+                except (ValueError, SyntaxError):
+                    pass
+            
+            # Parse actions
+            elif stripped.startswith('[[actions.preflop]]') and current_hand:
+                current_street = 'preflop'
+                if 'preflop' not in current_actions:
+                    current_actions['preflop'] = []
+            elif stripped.startswith('[[actions.flop]]') and current_hand:
+                current_street = 'flop'
+                if 'flop' not in current_actions:
+                    current_actions['flop'] = []
+            elif stripped.startswith('[[actions.turn]]') and current_hand:
+                current_street = 'turn'
+                if 'turn' not in current_actions:
+                    current_actions['turn'] = []
+            elif stripped.startswith('[[actions.river]]') and current_hand:
+                current_street = 'river'
+                if 'river' not in current_actions:
+                    current_actions['river'] = []
+            elif stripped.startswith('actor =') and current_street and current_hand:
+                # Start parsing an action
+                actor = int(stripped.split('=', 1)[1].strip())
+                action_data = {'actor': actor}
+                # Store the action data for the next lines
+                if current_street in current_actions:
+                    current_actions[current_street].append(action_data)
+            elif stripped.startswith('type =') and current_street and current_hand and current_actions.get(current_street):
+                # Add action type to the last action
+                action_type = stripped.split('=', 1)[1].strip().strip('"')
+                if current_actions[current_street]:
+                    current_actions[current_street][-1]['type'] = action_type
+            elif stripped.startswith('amount =') and current_street and current_hand and current_actions.get(current_street):
+                # Add amount to the last action
+                amount = float(stripped.split('=', 1)[1].strip())
+                if current_actions[current_street]:
+                    current_actions[current_street][-1]['amount'] = amount
         
         # Add final hand (with conversion)
         if current_hand:
+            # Add actions and board to the hand
+            current_hand.actions = current_actions.copy()
+            current_hand.board = current_board.copy()
             converted_hand = self._convert_to_6_player_format(current_hand, current_players)
             hands.append(converted_hand)
         

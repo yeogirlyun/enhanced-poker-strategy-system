@@ -435,7 +435,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.setup_study_tab()
         
     def setup_simulation_tab(self):
-        """Setup the simulation tab with embedded practice session."""
+        """Setup the simulation tab with embedded reusable poker game widget."""
         sim_frame = ttk.Frame(self.right_notebook)
         self.right_notebook.add(sim_frame, text="🎮 Hand Simulation")
         
@@ -452,6 +452,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         
         self.auto_play_btn = ttk.Button(controls_frame, text="🚀 Auto Play", command=self.toggle_auto_play, state="disabled")
         self.auto_play_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.quit_simulation_btn = ttk.Button(controls_frame, text="❌ Quit Simulation", command=self.quit_simulation, state="disabled")
+        self.quit_simulation_btn.pack(side=tk.LEFT, padx=(0, 10))
         
         self.reset_simulation_btn = ttk.Button(controls_frame, text="🔄 Reset", command=self.reset_hand_simulation)
         self.reset_simulation_btn.pack(side=tk.LEFT, padx=(0, 10))
@@ -471,18 +474,18 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.notes_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         notes_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
         
-        # Practice session container
-        self.practice_container = ttk.Frame(sim_frame)
-        self.practice_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+        # Reusable poker game widget container
+        self.poker_game_container = ttk.Frame(sim_frame)
+        self.poker_game_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
         
-        # Initialize practice session (will be created when needed)
-        self.practice_session = None
+        # Initialize reusable poker game widget (will be created when needed)
+        self.poker_game_widget = None
         self.poker_state_machine = None
         self.auto_play_active = False
         
         # Create placeholder message
         self.placeholder_label = ttk.Label(
-            self.practice_container, 
+            self.poker_game_container, 
             text="🎯 Select a legendary hand from the left pane\nand click 'Start Simulation' to begin!",
             justify=tk.CENTER
         )
@@ -640,37 +643,43 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             return
             
         try:
-            # Import practice session components
-            from ui.practice_session_ui import PracticeSessionUI
+            # Import reusable poker game widget and state machine adapter
+            from ui.components.reusable_poker_game_widget import ReusablePokerGameWidget
             from core.poker_state_machine_adapter import PokerStateMachineAdapter
             
             # Clear previous session
-            if self.practice_session:
-                self.practice_session.destroy()
+            if self.poker_game_widget:
+                self.poker_game_widget.destroy()
             
             # Hide placeholder
             self.placeholder_label.pack_forget()
             
-            # Create practice session UI (it creates its own state machine)
-            self.practice_session = PracticeSessionUI(
-                self.practice_container, 
-                strategy_data={}  # Use empty strategy for simulation
+            # Create state machine for simulation
+            self.poker_state_machine = PokerStateMachineAdapter(
+                num_players=6,
+                strategy_data={},
+                root_tk=self.winfo_toplevel(),
+                test_mode=False
             )
-            self.practice_session.pack(fill=tk.BOTH, expand=True)
             
-            # Get the state machine from the practice session
-            self.poker_state_machine = self.practice_session.state_machine
+            # Create reusable poker game widget
+            self.poker_game_widget = ReusablePokerGameWidget(
+                self.poker_game_container,
+                state_machine=self.poker_state_machine
+            )
+            self.poker_game_widget.pack(fill=tk.BOTH, expand=True)
             
             # Reset action indices for new simulation
             self.current_action_indices = {}
             
-            # Setup the hand with legendary hand data
-            self.setup_legendary_hand()
+            # Wait for widget to be fully initialized before setting up the hand
+            self.after(200, self._setup_legendary_hand_after_init)
             
             # Update controls
             self.start_simulation_btn.configure(state="disabled")
             self.next_action_btn.configure(state="normal")
             self.auto_play_btn.configure(state="normal")
+            self.quit_simulation_btn.configure(state="normal")
             self.simulation_status_label.configure(text=f"Simulating: {self.current_hand.metadata.name}")
             
             print(f"✅ Started simulation: {self.current_hand.metadata.name}")
@@ -678,6 +687,15 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         except Exception as e:
             messagebox.showerror("Simulation Error", f"Failed to start simulation: {str(e)}")
             print(f"❌ Simulation start error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _setup_legendary_hand_after_init(self):
+        """Set up the legendary hand after the widget is fully initialized."""
+        try:
+            self.setup_legendary_hand()
+        except Exception as e:
+            print(f"❌ Error in delayed setup: {e}")
             import traceback
             traceback.print_exc()
     
@@ -690,119 +708,74 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         try:
             print(f"🎯 Setting up legendary hand: {self.current_hand.metadata.name}")
             
-            # Get players from the current hand
-            players = self.current_hand.players if hasattr(self.current_hand, 'players') else []
-            
             # Start a new hand in the state machine
             self.poker_state_machine.start_hand()
+            
+            # NEW: Set the UI controller so the state machine can drive the UI
+            if self.poker_game_widget:
+                self.poker_state_machine.set_ui_controller(self.poker_game_widget)
             
             # Enable simulation mode to show all cards
             if hasattr(self.poker_state_machine, 'enable_simulation_mode'):
                 self.poker_state_machine.enable_simulation_mode()
             
-            # Set up players with their specific cards from the legendary hand
-            for i, player_data in enumerate(players[:6]):
-                cards = player_data.get('cards', ['2c', '3d'])
-                name = player_data.get('name', f'Player {i+1}')
-                stack = player_data.get('starting_stack_chips', 100000)
-                
-                print(f"👤 Setting up player {i+1}: {name} with cards {cards}")
-                
-                # Get the actual player from the state machine
-                # Handle both old and new state machine structures
-                if hasattr(self.poker_state_machine, 'players'):
-                    # Old structure
-                    players_list = self.poker_state_machine.players
-                elif hasattr(self.poker_state_machine, 'game_state') and hasattr(self.poker_state_machine.game_state, 'players'):
-                    # New flexible structure
-                    players_list = self.poker_state_machine.game_state.players
-                else:
-                    print(f"❌ Cannot find players list in state machine")
-                    continue
-                
-                # Handle both real lists and mock objects
-                try:
-                    players_length = len(players_list)
-                except (TypeError, AttributeError):
-                    # If it's a mock object, assume it has 6 players
-                    players_length = 6
-                
-                if i < players_length:
-                    if hasattr(players_list, '__getitem__'):
-                        try:
-                            player = players_list[i]
-                            # If it's a mock object, configure it
-                            if hasattr(player, 'name'):
-                                player.name = name
-                                player.stack = stack
-                                player.cards = cards.copy()
-                                player.is_human = True
-                                
-                                # Mark as folded if specified
-                                if player_data.get('folded_preflop', False):
-                                    player.has_folded = True
-                                    player.is_active = False
-                                    print(f"❌ Player {name} marked as folded")
-                                else:
-                                    player.has_folded = False
-                                    player.is_active = True
-                                    print(f"✅ Player {name} is active")
-                                
-                                # Set cards in the UI immediately for simulation mode
-                                if hasattr(self.practice_session, '_set_player_card'):
-                                    for card_index, card in enumerate(cards):
-                                        self.practice_session._set_player_card(i, card_index, card)
-                        except (IndexError, TypeError):
-                            # If we can't access the player, skip
-                            print(f"⚠️ Could not access player {i}")
-                            continue
-                    else:
-                        # If it's a mock object, create a new mock player
-                        player = Mock()
-                        player.name = name
-                        player.stack = stack
-                        player.cards = cards.copy()
-                        player.is_human = True
-                        player.has_folded = player_data.get('folded_preflop', False)
-                        player.is_active = not player_data.get('folded_preflop', False)
-                        print(f"✅ Created mock player {name}")
+            # Get the game data from the hand (ParsedHand format)
+            game_info = getattr(self.current_hand, 'game_info', {})
+            players_data = getattr(self.current_hand, 'players', [])
             
-            # Load the board cards if available
-            if hasattr(self.current_hand, 'board') and self.current_hand.board:
-                board_cards = []
-                # Only load flop cards initially - turn and river will be added as the hand progresses
-                if 'flop' in self.current_hand.board:
-                    board_cards.extend(self.current_hand.board['flop'])
+            if not game_info and not players_data:
+                print("⚠️ No game data found in legendary hand")
+                return
+            
+            print(f"📊 Hand setup: {len(players_data)} players")
+            
+            # Set up players with their cards and stacks
+            for i, player_data in enumerate(players_data):
+                player_name = player_data.get('name', f'Player {i+1}')
+                player_stack = player_data.get('starting_stack_chips', 1000.0)
+                player_cards = player_data.get('cards', ['2c', '3d'])
                 
-                if board_cards:
-                    print(f"🃏 Loading flop cards: {board_cards}")
-                    # Handle both old and new state machine structures
+                print(f"👤 Setting up {player_name}: cards {player_cards}, stack ${player_stack}")
+                
+                # Set player cards in the UI
+                if self.poker_game_widget:
+                    self.poker_game_widget.set_player_cards(i, player_cards)
+                
+                # Set player stack in the state machine
+                if hasattr(self.poker_state_machine, 'game_state') and i < len(self.poker_state_machine.game_state.players):
+                    self.poker_state_machine.game_state.players[i].stack = player_stack
+                    self.poker_state_machine.game_state.players[i].name = player_name
+                    # Ensure cards are set in the state machine as well
+                    self.poker_state_machine.game_state.players[i].cards = player_cards.copy()
+                
+                # Mark player as folded if they don't have data or are marked as folded
+                if not player_data.get('active', True) or player_name.startswith('Folded'):
+                    print(f"❌ Player {player_name} marked as folded")
+                    if hasattr(self.poker_state_machine, 'game_state') and i < len(self.poker_state_machine.game_state.players):
+                        self.poker_state_machine.game_state.players[i].has_folded = True
+                        self.poker_state_machine.game_state.players[i].is_active = False
+            
+            # Set board cards if available
+            board_data = getattr(self.current_hand, 'board', {})
+            if board_data:
+                flop_cards = board_data.get('flop', {}).get('cards', [])
+                if flop_cards:
+                    print(f"🃏 Setting board cards: {flop_cards}")
+                    if self.poker_game_widget:
+                        self.poker_game_widget.set_board_cards(flop_cards)
                     if hasattr(self.poker_state_machine, 'game_state'):
-                        self.poker_state_machine.game_state.board = board_cards.copy()
-                    elif hasattr(self.poker_state_machine, 'set_board_cards'):
-                        self.poker_state_machine.set_board_cards(board_cards)
+                        self.poker_state_machine.game_state.board = flop_cards
             
-            # Force a UI update
-            if hasattr(self.practice_session, 'update_display'):
-                self.practice_session.update_display()
+            # Force reveal all cards for simulation mode
+            if self.poker_game_widget:
+                print("🎴 Forcing reveal of all cards for simulation mode")
+                self.poker_game_widget.reveal_all_cards()
             
-            # Reveal all cards for simulation mode
-            if hasattr(self.practice_session, 'reveal_all_cards_for_simulation'):
-                self.practice_session.reveal_all_cards_for_simulation()
+            # Reset action indices for new hand
+            self.current_action_indices = {}
             
-            # Also force reveal cards by setting them again with simulation mode
-            if hasattr(self.practice_session, '_set_player_card'):
-                for i, player_data in enumerate(players[:6]):
-                    cards = player_data.get('cards', ['2c', '3d'])
-                    for card_index, card in enumerate(cards):
-                        # Force reveal the card in simulation mode
-                        self.practice_session._set_player_card(i, card_index, card)
-            
-            # Update the notes panel with player information
-            self.update_legendary_hand_notes()
-                
             print(f"✅ Legendary hand setup complete: {self.current_hand.metadata.name}")
-                
+            
         except Exception as e:
             print(f"❌ Error setting up legendary hand: {e}")
             import traceback
@@ -903,6 +876,10 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Check if game is still active
             if hasattr(self.poker_state_machine, 'current_state'):
                 if self.poker_state_machine.current_state.value == "END_HAND":
+                    # Game is complete - disable the Next button and show completion message
+                    self.next_action_btn.configure(state="disabled")
+                    self.auto_play_btn.configure(state="disabled")
+                    self.simulation_status_label.configure(text="✅ Hand simulation completed!")
                     messagebox.showinfo("Game Complete", "Hand simulation finished!")
                     return
             
@@ -915,23 +892,83 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                 print("❌ No current player found")
                 return
             
+            # Check if current player has already folded
+            if hasattr(current_player, 'has_folded') and current_player.has_folded:
+                print(f"🎯 Player {current_player.name} has already folded, moving to next player")
+                # Force the state machine to move to the next player
+                if hasattr(self.poker_state_machine, 'advance_to_next_player'):
+                    self.poker_state_machine.advance_to_next_player()
+                else:
+                    # Try to get the next player manually
+                    game_info = self.poker_state_machine.get_game_info()
+                    players = game_info.get('players', [])
+                    current_index = game_info.get('action_player', 0)
+                    
+                    # Find the next active player
+                    next_index = (current_index + 1) % len(players)
+                    attempts = 0
+                    while attempts < len(players):
+                        if (players[next_index].get('is_active', True) and 
+                            not players[next_index].get('has_folded', False) and
+                            not players[next_index].get('is_all_in', False)):
+                            break
+                        next_index = (next_index + 1) % len(players)
+                        attempts += 1
+                    
+                    # Update the action player index
+                    if hasattr(self.poker_state_machine, 'game_state'):
+                        self.poker_state_machine.game_state.action_player_index = next_index
+                    elif hasattr(self.poker_state_machine, 'flexible_sm'):
+                        self.poker_state_machine.flexible_sm.action_player_index = next_index
+                
+                # Get the new current player
+                current_player = self.poker_state_machine.get_action_player()
+                if not current_player:
+                    print("❌ No next player found")
+                    return
+            
             # Use actual legendary hand actions if available
             action_type, amount = self._get_legendary_hand_action(current_player)
             
-            # Execute the action using the correct method
+            # Execute the action using the state machine - this will drive the UI automatically
             self.poker_state_machine.execute_action(current_player, action_type, amount)
             
-            # Update the practice session display
-            if self.practice_session and hasattr(self.practice_session, 'update_display'):
-                self.practice_session.update_display()
-            
             print(f"✅ Action executed: {current_player.name} -> {action_type.name} (${amount})")
+            
+            # Force advance to next player after action
+            if hasattr(self.poker_state_machine, 'advance_to_next_player'):
+                self.poker_state_machine.advance_to_next_player()
+            elif hasattr(self.poker_state_machine, 'flexible_sm'):
+                self.poker_state_machine.flexible_sm.advance_to_next_player()
+            
+            # Check again if the game ended after this action
+            if hasattr(self.poker_state_machine, 'current_state'):
+                if self.poker_state_machine.current_state.value == "END_HAND":
+                    # Game just ended - disable the Next button and show completion message
+                    self.next_action_btn.configure(state="disabled")
+                    self.auto_play_btn.configure(state="disabled")
+                    self.simulation_status_label.configure(text="✅ Hand simulation completed!")
+                    messagebox.showinfo("Game Complete", "Hand simulation finished!")
+                    return
+                    
+            # Check if hand is complete (showdown or all but one folded)
+            if self.poker_state_machine.is_hand_complete():
+                # Animate pot distribution to winners
+                game_info = self.poker_state_machine.get_game_info()
+                pot_amount = game_info.get('pot', 0.0)
+                
+                # Get winners (this would need to be implemented in the state machine)
+                # For now, we'll just animate to the last active player
+                active_players = [i for i, player in enumerate(game_info.get('players', [])) 
+                                if player.get('is_active', False)]
+                
+                if active_players and self.poker_game_widget:
+                    self.poker_game_widget.animate_pot_distribution(active_players, pot_amount)
                     
         except Exception as e:
-            print(f"❌ Error in next action: {e}")
+            print(f"❌ Error executing next action: {e}")
             import traceback
             traceback.print_exc()
-            messagebox.showerror("Simulation Error", f"Error advancing simulation: {str(e)}")
     
     def _progress_board_cards(self):
         """Progress board cards as the hand advances."""
@@ -1057,6 +1094,10 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                     except (IndexError, TypeError, AttributeError):
                         # If we can't access the player, continue to fallback
                         pass
+                else:
+                    print(f"🎯 Actor index {actor_index} out of range for {len(players_list)} players")
+            else:
+                print(f"🎯 No more actions for street {current_street}")
         
         print(f"🎯 No legendary hand action found for {current_player.name}, using fallback")
         # Fallback: Use smart action based on player and situation
@@ -1066,6 +1107,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         """Get a smart fallback action when legendary hand data is not available."""
         from core.types import ActionType
         
+        print(f"🎯 Using fallback action for {current_player.name}")
+        
         # Get main players from the current hand
         main_players = []
         if hasattr(self.current_hand, 'players') and self.current_hand.players:
@@ -1074,30 +1117,31 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         # If this is a main player, make them call/check
         if current_player.name in main_players:
             # Check if there's a bet to call
+            current_bet = 0
             if hasattr(self.poker_state_machine, 'game_state') and hasattr(self.poker_state_machine.game_state, 'current_bet'):
                 current_bet = self.poker_state_machine.game_state.current_bet
                 # Handle mock objects
                 if hasattr(current_bet, '__class__') and 'Mock' in str(current_bet.__class__):
                     current_bet = 0
-            else:
-                current_bet = 0
                 
+            player_bet = 0
             if hasattr(current_player, 'current_bet'):
                 player_bet = current_player.current_bet
                 # Handle mock objects
                 if hasattr(player_bet, '__class__') and 'Mock' in str(player_bet.__class__):
                     player_bet = 0
-            else:
-                player_bet = 0
                 
             call_amount = current_bet - player_bet
             
             if call_amount > 0:
+                print(f"🎯 Fallback: {current_player.name} CALL ${call_amount}")
                 return ActionType.CALL, call_amount
             else:
+                print(f"🎯 Fallback: {current_player.name} CHECK")
                 return ActionType.CHECK, 0
         else:
             # For other players, fold
+            print(f"🎯 Fallback: {current_player.name} FOLD")
             return ActionType.FOLD, 0
     
     def toggle_auto_play(self):
@@ -1122,10 +1166,10 @@ class RedesignedHandsReviewPanel(ttk.Frame):
     def reset_hand_simulation(self):
         """Reset the current hand simulation."""
         try:
-            # Clear the practice session
-            if self.practice_session:
-                self.practice_session.destroy()
-                self.practice_session = None
+            # Clear the reusable poker game widget
+            if self.poker_game_widget:
+                self.poker_game_widget.destroy()
+                self.poker_game_widget = None
             
             # Clear state machine
             self.poker_state_machine = None
@@ -1138,6 +1182,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             self.start_simulation_btn.configure(state="normal")
             self.next_action_btn.configure(state="disabled") 
             self.auto_play_btn.configure(state="disabled", text="🚀 Auto Play")
+            self.quit_simulation_btn.configure(state="disabled")
             self.simulation_status_label.configure(text="Select a hand to simulate")
             
             print("✅ Simulation reset")
@@ -1146,6 +1191,13 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             print(f"❌ Error resetting simulation: {e}")
             import traceback
             traceback.print_exc()
+
+    def quit_simulation(self):
+        """Quit the current simulation."""
+        if messagebox.askyesno("Quit Simulation", "Are you sure you want to quit the current simulation?"):
+            self.reset_hand_simulation()
+            self.set_mode("study") # Return to study mode
+            print("✅ Simulation quit")
 
         
     def update_font_size(self, new_size):
@@ -1171,6 +1223,6 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             self.study_panel.decisions_text.config(font=study_font)
             
         # Update practice session fonts if it exists
-        if hasattr(self, 'practice_session') and self.practice_session:
-            if hasattr(self.practice_session, 'update_font_size'):
-                self.practice_session.update_font_size(new_size)
+        if hasattr(self, 'poker_game_widget') and self.poker_game_widget:
+            if hasattr(self.poker_game_widget, 'update_font_size'):
+                self.poker_game_widget.update_font_size(new_size)

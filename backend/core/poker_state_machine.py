@@ -200,6 +200,9 @@ class ImprovedPokerStateMachine:
         self.on_action_executed = None
         self.on_action_player_changed = None
         
+        # UI Controller - NEW: State machine drives UI through this controller
+        self.ui_controller = None
+        
         # Session tracking
         self.session_state = None
         self.hand_history = []
@@ -696,80 +699,39 @@ class ImprovedPokerStateMachine:
             self.on_log_entry(message)
 
     def transition_to(self, new_state: PokerState):
-        """Transition to a new state with validation and logging."""
-        # FIXED: Add transition lock to prevent concurrent transitions
-        if hasattr(self, '_transitioning') and self._transitioning:
-            self._log_message(f"WARNING: Transition already in progress, ignoring transition to {new_state.value}")
-            return
+        """Transition to a new state with proper validation and logging."""
+        if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
+            self._log_message(f"❌ INVALID TRANSITION: {self.current_state.value} -> {new_state.value}")
+            return False
         
-        self._transitioning = True
-        try:
-            debug_print(f"🔄 DEBUG: Transitioning from {self.current_state.value} to {new_state.value}")
-            
-            if self.current_state == new_state:
-                debug_print(f"🔄 DEBUG: Already in {new_state.value}, no transition needed")
-                return
-
-            # Validate transition
-            if new_state not in self.STATE_TRANSITIONS.get(self.current_state, []):
-                debug_print(f"❌ ERROR: Invalid transition from {self.current_state.value} to {new_state.value}")
-                self._log_message(f"Invalid state transition: {self.current_state.value} -> {new_state.value}")
-                return
-
-            # Check for active players before END_HAND transition
-            if new_state == PokerState.END_HAND:
-                active_players = [p for p in self.game_state.players if p.is_active]
-                debug_print(f"🔄 DEBUG: END_HAND transition - {len(active_players)} active players")
-                if len(active_players) > 1:
-                    debug_print(f"🔄 DEBUG: Multiple active players, proceeding to showdown")
-                else:
-                    debug_print(f"🔄 DEBUG: Single active player, ending hand")
-
-            # Log the transition
-            self._log_message(f"State transition: {self.current_state.value} -> {new_state.value}")
-            
-            # Update state
-            old_state = self.current_state
-            self.current_state = new_state
-            
-            # CRITICAL: Notify UI of state change (this was missing!)
-            if self.on_state_change:
-                debug_print(f"🔄 DEBUG: Calling on_state_change callback")
-                self.on_state_change(new_state)
-                debug_print(f"✅ DEBUG: on_state_change callback completed")
-            else:
-                debug_print(f"❌ ERROR: on_state_change callback is None!")
-            
-            # Call appropriate handler based on state
-            if new_state == PokerState.END_HAND:
-                debug_print(f"🔄 DEBUG: Calling handle_end_hand")
-                self.handle_end_hand()
-                debug_print(f"✅ DEBUG: handle_end_hand completed")
-            elif new_state == PokerState.SHOWDOWN:
-                debug_print(f"🔄 DEBUG: Calling handle_showdown")
-                self.handle_showdown()
-                debug_print(f"✅ DEBUG: handle_showdown completed")
-            else:
-                debug_print(f"🔄 DEBUG: Calling handle_state_entry for {new_state.value}")
-                self.handle_state_entry()
-                debug_print(f"✅ DEBUG: handle_state_entry completed")
-            
-            # Special handling for END_HAND state
-            if new_state == PokerState.END_HAND:
-                debug_print(f"🔄 DEBUG: END_HAND state reached, ensuring hand completion")
-                # Ensure hand is properly completed
-                if hasattr(self, 'logger') and self.logger:
-                    debug_print(f"🔄 DEBUG: Logger available, ensuring hand logging completion")
-                else:
-                    debug_print(f"❌ ERROR: Logger not available for hand completion!")
-            
-            # Validate state consistency after transition
-            self._validate_state_consistency()
-            
-            debug_print(f"✅ DEBUG: Transition to {new_state.value} completed successfully")
-            
-        finally:
-            self._transitioning = False
+        old_state = self.current_state
+        self.current_state = new_state
+        
+        self._log_message(f"🔄 STATE TRANSITION: {old_state.value} -> {new_state.value}")
+        
+        # NEW: Drive UI updates for state transition
+        self._drive_ui_update("state_transition", old_state=old_state.value, new_state=new_state.value)
+        
+        # Handle state-specific UI updates
+        if new_state == PokerState.DEAL_FLOP:
+            self._drive_ui_animation("street_progression", street="flop", cards=self.game_state.board[:3])
+        elif new_state == PokerState.DEAL_TURN:
+            self._drive_ui_animation("street_progression", street="turn", cards=self.game_state.board[:4])
+        elif new_state == PokerState.DEAL_RIVER:
+            self._drive_ui_animation("street_progression", street="river", cards=self.game_state.board[:5])
+        elif new_state == PokerState.SHOWDOWN:
+            self._drive_ui_animation("showdown_start")
+        elif new_state == PokerState.END_HAND:
+            self._drive_ui_animation("hand_end")
+        
+        # Call state change callback if set
+        if self.on_state_change:
+            self.on_state_change(old_state, new_state)
+        
+        # Handle state entry logic
+        self.handle_state_entry()
+        
+        return True
 
     def _validate_state_consistency(self):
         """Validate state consistency after transitions."""
@@ -2503,8 +2465,8 @@ class ImprovedPokerStateMachine:
         self._log_message(f"🃏 Board: {self.game_state.board}")
         self._log_message(f"🏆 Street: {self.game_state.street}")
 
-        # NEW: Trigger action animation callback (MOVED to after action execution for correct amounts)
-        # Will be called after each action type with the actual amount used
+        # NEW: Drive UI updates through controller
+        self._drive_ui_update("action_start", player_name=player.name, action=action.value, amount=amount)
 
         # Play sound effects based on action (prioritize authentic sounds)
         if action == ActionType.FOLD:
@@ -2517,86 +2479,31 @@ class ImprovedPokerStateMachine:
             # REMOVE this line: player.current_bet = 0
             # --- End of Bug Fix ---
             
-            # FIXED: Trigger callback for fold action (amount is 0)
-            if self.on_action_executed:
-                player_index = self.game_state.players.index(player)
-                self.on_action_executed(player_index, action.value, 0)
-
-        elif action == ActionType.CHECK:
-            # Only valid when current_bet is 0 or player already has current bet
-            call_amount = self.game_state.current_bet - player.current_bet
-            if call_amount > 0:
-                self._log_message(f"ERROR: {player.name} cannot check when bet is ${self.game_state.current_bet}")
-                return
-            # FIX: Do NOT reset current_bet when checking - it should remain as is
-            # player.current_bet = 0  # ← REMOVED THIS BUG
+            # NEW: Drive UI updates for fold action
+            self._drive_ui_update("player_fold", player_index=self.action_player_index, player_name=player.name)
+            self._drive_ui_animation("fold_animation", player_index=self.action_player_index)
+            self._drive_ui_sound("fold_sound")
             
-            # FIXED: Trigger callback for check action (amount is 0)
-            if self.on_action_executed:
-                player_index = self.game_state.players.index(player)
-                self.on_action_executed(player_index, action.value, 0)
-
         elif action == ActionType.CALL:
             call_amount = self.game_state.current_bet - player.current_bet
-            actual_call = min(call_amount, player.stack)
+            if call_amount > 0:
+                player.stack -= call_amount
+                player.current_bet = self.game_state.current_bet
+                player.total_invested += call_amount
+                self.game_state.pot += call_amount
+                pot_change += call_amount
+                
+                # NEW: Drive UI updates for call action
+                self._drive_ui_update("player_call", player_index=self.action_player_index, player_name=player.name, amount=call_amount)
+                self._drive_ui_animation("call_animation", player_index=self.action_player_index, amount=call_amount)
+                self._drive_ui_sound("call_sound", amount=call_amount)
+                
+        elif action == ActionType.CHECK:
+            # NEW: Drive UI updates for check action
+            self._drive_ui_update("player_check", player_index=self.action_player_index, player_name=player.name)
+            self._drive_ui_animation("check_animation", player_index=self.action_player_index)
+            self._drive_ui_sound("check_sound")
             
-            # BUG FIX: Track partial calls for side pot calculations
-            if actual_call < call_amount:
-                # Player can't make full call - this creates a side pot situation
-                player.is_all_in = True
-                player.partial_call_amount = actual_call
-                player.full_call_amount = call_amount
-                self._log_message(f"{player.name} ALL-IN for ${actual_call:.2f} (${call_amount - actual_call:.2f} short)")
-            else:
-                player.partial_call_amount = None
-                player.full_call_amount = None
-            
-            player.stack -= actual_call
-            player.current_bet += actual_call
-            player.total_invested += actual_call
-            self.game_state.pot += actual_call
-            pot_change += actual_call  # Track pot change for this action
-            
-            # FIXED: Trigger callback with actual call amount for animation
-            if self.on_action_executed:
-                player_index = self.game_state.players.index(player)
-                self.on_action_executed(player_index, action.value, actual_call)
-            
-            # Check for all-in
-            if player.stack == 0:
-                player.is_all_in = True
-                self._log_message(f"{player.name} is ALL-IN!")
-                # Play all-in voice announcement if available
-                if hasattr(self, 'voice_system') and self.voice_system:
-                    self.voice_system.play_voice_announcement('all_in')
-
-        elif action == ActionType.BET:
-            if self.game_state.current_bet > 0:
-                self._log_message(f"ERROR: {player.name} cannot bet when current bet is ${self.game_state.current_bet}")
-                return
-            
-            actual_bet = min(amount, player.stack)
-            player.stack -= actual_bet
-            player.current_bet = actual_bet
-            player.total_invested += actual_bet
-            self.game_state.pot += actual_bet
-            pot_change += actual_bet  # Track pot change for this action
-            self.game_state.current_bet = actual_bet
-            
-            # CRITICAL FIX: Set min_raise to the size of the bet
-            self.game_state.min_raise = actual_bet
-            self._log_message(f"💰 Bet of ${actual_bet:.2f} sets min_raise to ${self.game_state.min_raise:.2f}")
-            
-            # FIXED: Trigger callback with actual bet amount for animation
-            if self.on_action_executed:
-                player_index = self.game_state.players.index(player)
-                self.on_action_executed(player_index, action.value, actual_bet)
-            
-            # Check for all-in
-            if player.stack == 0:
-                player.is_all_in = True
-                self._log_message(f"{player.name} is ALL-IN!")
-
         elif action == ActionType.RAISE:
             # Validation already done earlier, proceed with execution
             total_bet = min(amount, player.current_bet + player.stack)
@@ -2636,16 +2543,18 @@ class ImprovedPokerStateMachine:
             else:
                 self._log_message(f"📉 Under-raise all-in. Action is not re-opened.")
                 
-            # --- END REFACTOR ---
-            
-            # FIXED: Trigger callback with actual raise amount for animation
-            if self.on_action_executed:
-                player_index = self.game_state.players.index(player)
-                self.on_action_executed(player_index, action.value, additional_amount)
+            # NEW: Drive UI updates for raise action
+            self._drive_ui_update("player_raise", player_index=self.action_player_index, player_name=player.name, amount=additional_amount)
+            self._drive_ui_animation("raise_animation", player_index=self.action_player_index, amount=additional_amount)
+            self._drive_ui_sound("raise_sound", amount=additional_amount)
             
             if player.stack == 0:
                 player.is_all_in = True
                 self._log_message(f"{player.name} is ALL-IN!")
+                # NEW: Drive UI updates for all-in
+                self._drive_ui_update("player_all_in", player_index=self.action_player_index, player_name=player.name)
+                self._drive_ui_animation("all_in_animation", player_index=self.action_player_index)
+                self._drive_ui_sound("all_in_sound")
 
         # Mark player as acted
         player.has_acted_this_round = True
@@ -2724,12 +2633,14 @@ class ImprovedPokerStateMachine:
             
             self._log_message(f"   Checking index {self.action_player_index}: {current_player.name}")
             self._log_message(f"     Active: {current_player.is_active}, All-in: {current_player.is_all_in}")
+            self._log_message(f"     Folded: {getattr(current_player, 'has_folded', False)}")
             self._log_message(f"     In players_acted: {self.action_player_index in self.game_state.players_acted}")
             self._log_message(f"     Current bet: ${current_player.current_bet:.2f}, Game bet: ${self.game_state.current_bet:.2f}")
             
-            # Found a player who can act
+            # Found a player who can act - check for active, not all-in, and not folded
             if (current_player.is_active and 
                 not current_player.is_all_in and
+                not getattr(current_player, 'has_folded', False) and
                 (self.action_player_index not in self.game_state.players_acted or
                  current_player.current_bet < self.game_state.current_bet)):
                 self._log_message(f"✅ Found next player: {current_player.name} at index {self.action_player_index}")
@@ -2743,15 +2654,27 @@ class ImprovedPokerStateMachine:
         self._log_message("⚠️ No valid next player found, setting action_player_index to -1")
         self.action_player_index = -1
         
+        # Check if all players are folded
+        active_players = [p for p in self.game_state.players if p.is_active and not getattr(p, 'has_folded', False)]
+        if len(active_players) <= 1:
+            self._log_message(f"🏆 Only {len(active_players)} active player(s) remaining - hand should end")
+            if len(active_players) == 1:
+                self._log_message(f"🏆 {active_players[0].name} wins by default (all others folded)")
+            else:
+                self._log_message("🚨 All players folded - hand should end")
+            # Force transition to END_HAND
+            self.transition_to(PokerState.END_HAND)
+            return
+        
         # Safety check: If we can't find a next player but the round isn't complete,
         # there might be an issue with the action tracking
         if not self.is_round_complete():
             self._log_message("🚨 WARNING: No next player found but round is not complete!")
-            self._log_message(f"   Active players: {[p.name for p in self.game_state.players if p.is_active]}")
+            self._log_message(f"   Active players: {[p.name for p in self.game_state.players if p.is_active and not getattr(p, 'has_folded', False)]}")
             self._log_message(f"   Players acted: {self.game_state.players_acted}")
             self._log_message(f"   Current bet: ${self.game_state.current_bet:.2f}")
             for p in self.game_state.players:
-                if p.is_active:
+                if p.is_active and not getattr(p, 'has_folded', False):
                     self._log_message(f"   {p.name}: has_acted={p.has_acted_this_round}, bet=${p.current_bet:.2f}")
 
     def handle_round_complete(self):
@@ -3492,6 +3415,35 @@ class ImprovedPokerStateMachine:
         debug_print(f"🔄 Signal {signum} received, initiating cleanup...")
         self._cleanup()
         sys.exit(0)
+
+    def set_ui_controller(self, ui_controller):
+        """Set the UI controller that the state machine will use to drive the UI."""
+        self.ui_controller = ui_controller
+        self._log_message(f"🎮 UI Controller set: {type(ui_controller).__name__}")
+    
+    def _drive_ui_update(self, update_type: str, **kwargs):
+        """Drive UI updates through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'update_display'):
+            try:
+                self.ui_controller.update_display(update_type, **kwargs)
+            except Exception as e:
+                self._log_message(f"❌ Error driving UI update {update_type}: {e}")
+    
+    def _drive_ui_animation(self, animation_type: str, **kwargs):
+        """Drive UI animations through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'play_animation'):
+            try:
+                self.ui_controller.play_animation(animation_type, **kwargs)
+            except Exception as e:
+                self._log_message(f"❌ Error driving UI animation {animation_type}: {e}")
+    
+    def _drive_ui_sound(self, sound_type: str, **kwargs):
+        """Drive UI sounds through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'play_sound'):
+            try:
+                self.ui_controller.play_sound(sound_type, **kwargs)
+            except Exception as e:
+                self._log_message(f"❌ Error driving UI sound {sound_type}: {e}")
 
 
 

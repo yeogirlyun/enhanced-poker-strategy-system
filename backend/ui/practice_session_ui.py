@@ -42,6 +42,8 @@ class CardWidget(tk.Canvas):
         # Store the current card string
         self.current_card_str = card_str
         
+        print(f"🎴 CardWidget.set_card called with: '{card_str}', is_folded={is_folded}")
+        
         self.delete("all") # Clear previous drawing
         if not card_str or card_str == "**" or is_folded:
             self._draw_card_back(is_folded=is_folded)
@@ -60,12 +62,15 @@ class CardWidget(tk.Canvas):
     def _draw_card_content(self, card_str):
         """Draw the card content (rank and suit) on the canvas."""
         if not card_str or len(card_str) < 2:
+            print(f"🎴 Invalid card string: '{card_str}'")
             return
             
         rank, suit = card_str[0], card_str[1]
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
         suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
         color = suit_colors.get(suit, "black")
+        
+        print(f"🎴 Drawing card: rank='{rank}', suit='{suit}', color='{color}'")
         
         # Use larger, clearer fonts
         self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)
@@ -120,18 +125,27 @@ class CardWidget(tk.Canvas):
 
 class PlayerPod(tk.Frame):
     """A modern widget for a player's area with enhanced stack display and active player highlighting."""
-    def __init__(self, parent):
+    def __init__(self, parent, initialize_cards=True):
         # The main pod frame with highlightable border for active player indication
-        super().__init__(parent, bg="#1a1a1a", highlightthickness=2, highlightbackground="#006400")
+        super().__init__(parent, bg="#1a1a1a", highlightbackground="#006400", highlightthickness=2)
         
-        # This frame holds the name and cards with a visible background
-        self.info_frame = tk.Frame(self, bg="gray15", highlightthickness=2)
-        self.info_frame.pack(pady=(0, 5))
+        # --- MAIN INFO FRAME ---
+        # This frame contains the player name and cards
+        self.info_frame = tk.Frame(self, bg="#1a1a1a")
+        self.info_frame.pack(pady=(5, 0), padx=10)
         
-        self.name_label = tk.Label(self.info_frame, text="", font=("Helvetica", 14, "bold"), bg="gray15", fg="white")
-        self.name_label.pack(pady=5)
-
-        self.cards_frame = tk.Frame(self.info_frame, bg="gray15")
+        # Player name label
+        self.name_label = tk.Label(
+            self.info_frame, 
+            text="", 
+            font=("Helvetica", 10, "bold"), 
+            bg="#1a1a1a", 
+            fg="white"
+        )
+        self.name_label.pack(fill='x')
+        
+        # Cards frame
+        self.cards_frame = tk.Frame(self.info_frame, bg="#1a1a1a")
         self.cards_frame.pack(pady=(5, 10), padx=10)
         
         self.card1 = CardWidget(self.cards_frame, width=50, height=70)
@@ -139,9 +153,11 @@ class PlayerPod(tk.Frame):
         self.card2 = CardWidget(self.cards_frame, width=50, height=70)
         self.card2.pack(side="left", padx=3)
         
-        # Ensure cards show card backs initially
-        self.card1.set_card("")  # This will trigger card back drawing
-        self.card2.set_card("")  # This will trigger card back drawing
+        # Only initialize cards if requested (for FPSM-driven architecture)
+        if initialize_cards:
+            # Ensure cards show card backs initially
+            self.card1.set_card("")  # This will trigger card back drawing
+            self.card2.set_card("")  # This will trigger card back drawing
 
         # --- ENHANCED: Modern Stack Display ---
         # This frame sits below the main info_frame
@@ -1901,14 +1917,29 @@ class PracticeSessionUI(ttk.Frame):
     
     def update_display(self, new_state=None):
         """Updates the UI using display state from the state machine."""
+        print(f"🐛 update_display called!")
+        
         # Safety check: Don't update if UI isn't ready yet
         if not hasattr(self, 'pot_label') or self.pot_label is None:
+            print(f"🐛 update_display: UI not ready, forcing initial draw")
+            # Force the initial draw to set up the UI
+            self._force_initial_draw()
+            # Try to draw the table and pot display
+            if hasattr(self, 'canvas') and self.canvas.winfo_width() > 1:
+                self._draw_table()
+                self._draw_pot_display()
             return
             
         display_state = self.state_machine.get_display_state()
         if not display_state:
             self._log_message("DEBUG: update_display called but no display_state available.")
             return
+
+        # DEBUG: Log display state information
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state.card_visibilities={display_state.card_visibilities}")
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state.player_highlights={display_state.player_highlights}")
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state.layout_positions={display_state.layout_positions}")
+        self._log_message(f"🐛 DISPLAY DEBUG: Number of players={len(display_state.card_visibilities)}")
 
         # Update pot and current bet display using display state
         self.update_pot_amount(display_state.pot_amount)
@@ -2726,6 +2757,9 @@ class PracticeSessionUI(ttk.Frame):
 
     def _update_player_position(self, player_index, position, highlight):
         """Update player position and highlighting using display state data."""
+        print(f"🐛 _update_player_position called for player {player_index}")
+        self._log_message(f"🐛 _update_player_position called for player {player_index}")
+        
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
             
@@ -2762,18 +2796,30 @@ class PracticeSessionUI(ttk.Frame):
                         # Check if we're in simulation mode
                         is_simulation_mode = hasattr(self.state_machine, 'config') and getattr(self.state_machine.config, 'show_all_cards', False)
                         
-                        # FIXED: Only set cards if they haven't been set yet or are different
-                        # This prevents cards from changing during showdown
-                        current_card1 = getattr(card_widgets[0], '_current_card', None)
-                        current_card2 = getattr(card_widgets[1], '_current_card', None)
+                        # DEBUG: Add more detailed logging
+                        self._log_message(f"🐛 DEBUG - Player {player_index} ({player_info['name']}): card_visible={card_visible}, is_simulation_mode={is_simulation_mode}, cards={player_info['cards']}")
+                        self._log_message(f"🐛 DEBUG - state_machine has config: {hasattr(self.state_machine, 'config')}")
+                        if hasattr(self.state_machine, 'config'):
+                            config = self.state_machine.config
+                            self._log_message(f"🐛 DEBUG - config object: {config}")
+                            self._log_message(f"🐛 DEBUG - config.show_all_cards: {getattr(config, 'show_all_cards', 'NOT_FOUND')}")
+                            self._log_message(f"🐛 DEBUG - config type: {type(config)}")
+                        
+                        # Get the card values
                         new_card1 = player_info['cards'][0] if len(player_info['cards']) > 0 else ""
                         new_card2 = player_info['cards'][1] if len(player_info['cards']) > 1 else ""
                         
-                        # DEBUG: Log card changes to track the persistence bug
-                        if player_index == 0:  # Human player
-                            self._log_message(f"🐛 CARD DEBUG - Player {player_index}: current=({current_card1}, {current_card2}) new=({new_card1}, {new_card2}) simulation_mode={is_simulation_mode}")
-                        
-                        if card_visible or is_simulation_mode:
+                        # FIXED: Force show cards in simulation mode
+                        if is_simulation_mode:
+                            # In simulation mode, always show cards
+                            card_widgets[0].set_card(new_card1)
+                            card_widgets[0]._current_card = new_card1
+                            card_widgets[0]._current_display = new_card1
+                            card_widgets[1].set_card(new_card2)
+                            card_widgets[1]._current_card = new_card2
+                            card_widgets[1]._current_display = new_card2
+                            self._log_message(f"🎴 FORCED SHOW cards for {player_info['name']}: {new_card1}, {new_card2}")
+                        elif card_visible:
                             # Show actual cards for human players, during showdown, or in simulation mode
                             # ANTI-FLICKER: Only update if cards have actually changed AND are different from current display
                             current_display1 = getattr(card_widgets[0], '_current_display', "")

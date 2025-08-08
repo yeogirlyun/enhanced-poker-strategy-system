@@ -1,33 +1,27 @@
 #!/usr/bin/env python3
 """
-Flexible Poker State Machine - Modular and Reusable Design
+Flexible Poker State Machine (FPSM)
 
-This version is designed to be:
-1. Modular - Separate concerns into different components
-2. Flexible - Can be used for practice sessions, simulations, and other contexts
-3. Reusable - Clean interfaces that work with different UI components
-4. Extensible - Easy to add new features and modes
+A modular and extensible poker state machine that can be used for:
+- Practice sessions (interactive play)
+- Simulations (replaying hands)
+- Analysis (studying hands)
+- Testing (automated scenarios)
+
+This implementation uses an event-driven architecture and integrates with
+the existing SessionLogger for comprehensive JSON logging.
 """
 
-from enum import Enum
-from typing import List, Optional, Set, Tuple, Dict, Any, Callable
-from dataclasses import dataclass, field
-import time
 import random
-import sys
-import uuid
-from datetime import datetime
-import math
+import time
+from typing import List, Dict, Any, Optional, Callable
+from dataclasses import dataclass, field
 
-# Import shared types
 from .types import ActionType, Player, GameState, PokerState
-
-# Import utilities
 from .hand_evaluation import EnhancedHandEvaluator
-from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
-
-# Import sound manager
+from .position_mapping import HandHistoryManager
 from utils.sound_manager import SoundManager
+from .session_logger import get_session_logger
 
 
 @dataclass
@@ -106,7 +100,7 @@ class FlexiblePokerStateMachine:
         self.sound_manager = SoundManager(test_mode=self.config.test_mode)
         
         # Strategy integration (optional)
-        self.strategy_integration = None
+        self.strategy_integration = self._create_basic_strategy_integration()
         self.hand_history_manager = HandHistoryManager()
         
         # Callbacks (for backward compatibility)
@@ -116,8 +110,20 @@ class FlexiblePokerStateMachine:
         self.on_action_executed: Optional[Callable] = None
         self.on_round_complete: Optional[Callable] = None
         
+        # Round tracking
+        self.actions_this_round = 0
+        self.players_acted_this_round = set()
+        
         # Initialize players
         self._initialize_players()
+        
+        # Initialize session logger
+        self.session_logger = get_session_logger()
+        self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                     "FPSM initialized", {
+                                         "num_players": self.config.num_players,
+                                         "test_mode": self.config.test_mode
+                                     })
     
     def _initialize_players(self):
         """Initialize players for the game."""
@@ -144,16 +150,16 @@ class FlexiblePokerStateMachine:
     
     def _get_position_names(self) -> List[str]:
         """Get position names for the current number of players."""
-        if self.config.num_players == 2:
-            return ["BB", "SB"]
-        elif self.config.num_players == 3:
-            return ["BB", "SB", "BTN"]
-        elif self.config.num_players == 4:
-            return ["BB", "SB", "BTN", "UTG"]
-        elif self.config.num_players == 5:
-            return ["BB", "SB", "BTN", "UTG", "MP"]
-        else:  # 6+ players
-            return ["BB", "SB", "BTN", "UTG", "MP", "CO"]
+        base_positions = ["BB", "SB", "BTN", "UTG", "MP", "CO"]
+        
+        if self.config.num_players <= 6:
+            return base_positions[:self.config.num_players]
+        else:
+            # For 7+ players, cycle through positions
+            positions = []
+            for i in range(self.config.num_players):
+                positions.append(base_positions[i % len(base_positions)])
+            return positions
     
     def add_event_listener(self, listener: EventListener):
         """Add an event listener."""
@@ -164,6 +170,17 @@ class FlexiblePokerStateMachine:
         if listener in self.event_listeners:
             self.event_listeners.remove(listener)
     
+    def _emit_display_state_event(self):
+        """Emit a display state event with complete game information."""
+        import time
+        display_state = self.get_game_info()
+        event = GameEvent(
+            event_type="display_state_update",
+            timestamp=time.time(),
+            data={"display_state": display_state}
+        )
+        self._emit_event(event)
+    
     def _emit_event(self, event: GameEvent):
         """Emit an event to all listeners."""
         self.event_history.append(event)
@@ -173,371 +190,441 @@ class FlexiblePokerStateMachine:
             try:
                 listener.on_event(event)
             except Exception as e:
-                print(f"Error in event listener: {e}")
+                self._safe_print(f"Error in event listener: {e}")
         
         # Call legacy callbacks for backward compatibility
         self._call_legacy_callbacks(event)
     
     def _call_legacy_callbacks(self, event: GameEvent):
         """Call legacy callbacks for backward compatibility."""
+        if event.event_type == "action_required" and self.on_action_required:
+            self.on_action_required(event.player_name)
+        
+        if event.event_type == "hand_complete" and self.on_hand_complete:
+            self.on_hand_complete(event.data)
+        
+        if event.event_type == "state_change" and self.on_state_change:
+            self.on_state_change(self.current_state)
+        
         if event.event_type == "action_executed" and self.on_action_executed:
-            try:
-                self.on_action_executed(event.data.get('player_index', 0), 
-                                      event.action.value if event.action else "unknown", 
-                                      event.amount)
-            except Exception as e:
-                print(f"Error in legacy callback: {e}")
+            self.on_action_executed(event.action, event.amount)
         
-        elif event.event_type == "state_change" and self.on_state_change:
-            try:
-                self.on_state_change(event.data.get('new_state'))
-            except Exception as e:
-                print(f"Error in legacy callback: {e}")
-        
-        elif event.event_type == "hand_complete" and self.on_hand_complete:
-            try:
-                self.on_hand_complete(event.data.get('winner_info'))
-            except Exception as e:
-                print(f"Error in legacy callback: {e}")
+        if event.event_type == "round_complete" and self.on_round_complete:
+            self.on_round_complete(event.data.get("street"))
     
     def start_hand(self, existing_players: Optional[List[Player]] = None):
         """Start a new hand."""
         self.hand_number += 1
         self.current_state = PokerState.START_HAND
         
-        # Use existing players if provided (for simulation mode)
-        if existing_players:
-            self.game_state.players = existing_players.copy()
-            # Ensure all players have the required attributes
-            for player in self.game_state.players:
-                if not hasattr(player, 'is_human'):
-                    player.is_human = self.config.show_all_cards
-                if not hasattr(player, 'has_folded'):
-                    player.has_folded = False
-                if not hasattr(player, 'is_active'):
-                    player.is_active = True
-        else:
-            # Reset players for new hand
-            for player in self.game_state.players:
-                player.cards = []
-                player.current_bet = 0.0
-                player.has_folded = False
-                player.is_active = True
-                player.is_all_in = False
-                player.total_invested = 0.0
-        
         # Reset game state
         self.game_state.board = []
         self.game_state.pot = 0.0
         self.game_state.current_bet = 0.0
         self.game_state.street = "preflop"
-        self.game_state.deck = self.create_deck()
         
-        # Assign positions
-        self.assign_positions()
+        # Use existing players if provided (for simulation)
+        if existing_players:
+            self.game_state.players = existing_players
+        else:
+            # Reset player states
+            for player in self.game_state.players:
+                player.cards = []
+                player.current_bet = 0.0
+                player.has_folded = False
+                player.is_all_in = False
+                player.is_active = True
         
-        # Emit event
-        self._emit_event(GameEvent(
-            event_type="hand_started",
-            timestamp=time.time(),
-            data={"hand_number": self.hand_number}
-        ))
+        # Advance dealer position
+        if self.hand_number > 1:
+            self.dealer_position = (self.dealer_position + 1) % self.config.num_players
+        else:
+            self.dealer_position = random.randint(0, self.config.num_players - 1)
+        
+        # Set blind positions
+        self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
+        self.big_blind_position = (self.small_blind_position + 1) % self.config.num_players
+        
+        # Initialize deck if not in test mode
+        if not self.config.test_mode:
+            self.game_state.deck = self._create_deck()
+            random.shuffle(self.game_state.deck)
+        
+        # Deal cards - but preserve existing cards in test mode
+        for player in self.game_state.players:
+            if not player.cards or (self.config.test_mode and (player.cards == ['**', '**'] or player.cards == [])):
+                # Only deal new cards if player doesn't have cards or has placeholder cards
+                player.cards = self._deal_cards(2)
+        
+        # Post blinds
+        sb_player = self.game_state.players[self.small_blind_position]
+        bb_player = self.game_state.players[self.big_blind_position]
+        
+        sb_amount = min(self.config.small_blind, sb_player.stack)
+        bb_amount = min(self.config.big_blind, bb_player.stack)
+        
+        sb_player.current_bet = sb_amount
+        sb_player.stack -= sb_amount
+        bb_player.current_bet = bb_amount
+        bb_player.stack -= bb_amount
+        
+        # Add blinds to pot
+        self.game_state.pot = sb_amount + bb_amount
+        
+        self.game_state.current_bet = bb_amount
+        
+        # Set first action player (after big blind)
+        self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
         
         # Transition to preflop betting
         self.transition_to(PokerState.PREFLOP_BETTING)
+        
+        # Emit display state event
+        self._emit_display_state_event()
     
-    def create_deck(self) -> List[str]:
+    def _create_deck(self) -> List[str]:
         """Create a standard 52-card deck."""
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
         suits = ['h', 'd', 'c', 's']
-        deck = [f"{rank}{suit}" for rank in ranks for suit in suits]
-        random.shuffle(deck)
-        return deck
+        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+        return [rank + suit for suit in suits for rank in ranks]
     
-    def deal_card(self) -> str:
-        """Deal a card from the deck."""
-        if not self.game_state.deck:
-            return None
-        return self.game_state.deck.pop()
+    def _deal_cards(self, num_cards: int) -> List[str]:
+        """Deal cards from the deck."""
+        if self.config.test_mode:
+            return ['**'] * num_cards  # Placeholder for test mode
+        
+        cards = self.game_state.deck[:num_cards]
+        self.game_state.deck = self.game_state.deck[num_cards:]
+        return cards
     
+    # Valid state transitions
+    STATE_TRANSITIONS = {
+        PokerState.START_HAND: [PokerState.PREFLOP_BETTING],
+        PokerState.PREFLOP_BETTING: [PokerState.DEAL_FLOP, PokerState.END_HAND],
+        PokerState.DEAL_FLOP: [PokerState.FLOP_BETTING],
+        PokerState.FLOP_BETTING: [PokerState.DEAL_TURN, PokerState.END_HAND],
+        PokerState.DEAL_TURN: [PokerState.TURN_BETTING],
+        PokerState.TURN_BETTING: [PokerState.DEAL_RIVER, PokerState.END_HAND],
+        PokerState.DEAL_RIVER: [PokerState.RIVER_BETTING],
+        PokerState.RIVER_BETTING: [PokerState.SHOWDOWN, PokerState.END_HAND],
+        PokerState.SHOWDOWN: [PokerState.END_HAND],
+        PokerState.END_HAND: [PokerState.START_HAND],
+    }
+
     def transition_to(self, new_state: PokerState):
-        """Transition to a new state."""
+        """Transition to a new state if valid."""
+        if new_state not in PokerState.__members__.values():
+            raise ValueError(f"Invalid state: {new_state}")
+        
+        valid_transitions = self.STATE_TRANSITIONS.get(self.current_state, [])
+        if new_state not in valid_transitions and new_state != self.current_state:
+            raise ValueError(f"Invalid transition from {self.current_state} to {new_state}")
+        
         old_state = self.current_state
         self.current_state = new_state
+        
+        self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                     f"State transition: {old_state} → {new_state}")
+        
+        # Handle state-specific logic
+        if new_state == PokerState.DEAL_FLOP:
+            self.game_state.board.extend(self._deal_cards(3))
+            self.game_state.street = "flop"
+            self._reset_bets_for_new_round()
+            self.actions_this_round = 0
+            self.players_acted_this_round.clear()
+            self.action_player_index = self._find_first_active_after_dealer()
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         "Flop dealt", {"board": self.game_state.board})
+            # Auto-advance to FLOP_BETTING if auto_advance is enabled or for simulation
+            if self.config.auto_advance or self.config.test_mode:
+                self.transition_to(PokerState.FLOP_BETTING)
+        
+        elif new_state == PokerState.DEAL_TURN:
+            self.game_state.board.append(self._deal_cards(1)[0])
+            self.game_state.street = "turn"
+            self._reset_bets_for_new_round()
+            self.actions_this_round = 0
+            self.players_acted_this_round.clear()
+            self.action_player_index = self._find_first_active_after_dealer()
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         "Turn dealt", {"board": self.game_state.board})
+            # Auto-advance to TURN_BETTING if auto_advance is enabled or for simulation
+            if self.config.auto_advance or self.config.test_mode:
+                self.transition_to(PokerState.TURN_BETTING)
+        
+        elif new_state == PokerState.DEAL_RIVER:
+            self.game_state.board.append(self._deal_cards(1)[0])
+            self.game_state.street = "river"
+            self._reset_bets_for_new_round()
+            self.actions_this_round = 0
+            self.players_acted_this_round.clear()
+            self.action_player_index = self._find_first_active_after_dealer()
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         "River dealt", {"board": self.game_state.board})
+            # Auto-advance to RIVER_BETTING if auto_advance is enabled or for simulation
+            if self.config.auto_advance or self.config.test_mode:
+                self.transition_to(PokerState.RIVER_BETTING)
+        
+        elif new_state == PokerState.SHOWDOWN:
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         "Showdown reached", {"board": self.game_state.board})
+            self.transition_to(PokerState.END_HAND)
+        
+        elif new_state == PokerState.END_HAND:
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         f"Hand {self.hand_number} ended")
+            # Determine winners
+            active_players = [p for p in self.game_state.players 
+                            if not p.has_folded]
+            if active_players:
+                if len(active_players) == 1:
+                    winners = active_players
+                else:
+                    winners = self.determine_winners(active_players)
+            else:
+                winners = []
+
+            # Award pot to winners
+            if winners:
+                pot_per_winner = self.game_state.pot / len(winners)
+                for winner in winners:
+                    winner.stack += pot_per_winner
+                self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                             "Winners determined", {
+                                                 "winners": [w.name for w in winners],
+                                                 "pot": self.game_state.pot
+                                             })
+            else:
+                self.session_logger.log_system("WARNING", "STATE_MACHINE", 
+                                             "No winners - pot returned")
+            
+            # Reset current bet and player bets
+            self.game_state.current_bet = 0.0
+            for player in self.game_state.players:
+                player.current_bet = 0.0
+
+            self._emit_event(GameEvent(
+                event_type="hand_complete",
+                timestamp=time.time(),
+                data={
+                    "hand_number": self.hand_number,
+                    "winners": [w.name for w in winners]
+                }
+            ))
+            
+            # Reset pot after emitting the event (for validation purposes)
+            self.game_state.pot = 0.0
+        
+        # For betting states, ensure actions_this_round is reset if not already
+        betting_states = [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
+                         PokerState.TURN_BETTING, PokerState.RIVER_BETTING]
+        if new_state in betting_states:
+            self.actions_this_round = 0
+            self.players_acted_this_round.clear()
+            if new_state != PokerState.PREFLOP_BETTING:
+                self._reset_bets_for_new_round()
+            # Set first action player for preflop if not set
+            if new_state == PokerState.PREFLOP_BETTING:
+                self.action_player_index = self._find_first_active_after_dealer()
+            else:
+                self.action_player_index = self._find_first_active_after_dealer()
+            first_player = self.game_state.players[self.action_player_index].name
+            self.session_logger.log_system("INFO", "STATE_MACHINE", 
+                                         f"{new_state} betting started", 
+                                         {"first_action_player": first_player})
         
         # Emit state change event
         self._emit_event(GameEvent(
             event_type="state_change",
             timestamp=time.time(),
-            data={"old_state": old_state.value, "new_state": new_state.value}
-        ))
-        
-        # Handle state-specific logic
-        if new_state == PokerState.PREFLOP_BETTING:
-            self._handle_preflop_start()
-        elif new_state == PokerState.DEAL_FLOP:
-            self._handle_deal_flop()
-        elif new_state == PokerState.DEAL_TURN:
-            self._handle_deal_turn()
-        elif new_state == PokerState.DEAL_RIVER:
-            self._handle_deal_river()
-        elif new_state == PokerState.SHOWDOWN:
-            self._handle_showdown()
-        elif new_state == PokerState.END_HAND:
-            self._handle_end_hand()
-    
-    def _handle_preflop_start(self):
-        """Handle the start of preflop betting."""
-        # Deal hole cards
-        for player in self.game_state.players:
-            if not player.cards:  # Only deal if cards not already set (for simulation)
-                player.cards = [self.deal_card(), self.deal_card()]
-        
-        # Set blinds
-        self._set_blinds()
-        
-        # Set action to first player after big blind
-        self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
-        
-        # Emit dealing event
-        self._emit_event(GameEvent(
-            event_type="cards_dealt",
-            timestamp=time.time(),
-            data={"street": "preflop"}
+            data={"new_state": str(new_state), "old_state": str(old_state)}
         ))
     
-    def _set_blinds(self):
-        """Set the small and big blinds."""
-        # Small blind
-        sb_player = self.game_state.players[self.small_blind_position]
-        sb_amount = min(self.config.small_blind, sb_player.stack)
-        sb_player.current_bet = sb_amount
-        sb_player.stack -= sb_amount
-        self.game_state.pot += sb_amount
-        
-        # Big blind
-        bb_player = self.game_state.players[self.big_blind_position]
-        bb_amount = min(self.config.big_blind, bb_player.stack)
-        bb_player.current_bet = bb_amount
-        bb_player.stack -= bb_amount
-        self.game_state.pot += bb_amount
-        self.game_state.current_bet = bb_amount
-    
-    def _handle_deal_flop(self):
-        """Handle dealing the flop."""
-        self.game_state.board = [self.deal_card(), self.deal_card(), self.deal_card()]
-        self.game_state.street = "flop"
-        self.game_state.current_bet = 0.0
-        
-        # Reset player bets for new street
+    def _reset_bets_for_new_round(self):
+        """Reset bets for a new betting round."""
         for player in self.game_state.players:
+            self.game_state.pot += player.current_bet
             player.current_bet = 0.0
-        
-        # Set action to first active player after button
-        self.action_player_index = (self.dealer_position + 1) % self.config.num_players
-        
-        self._emit_event(GameEvent(
-            event_type="flop_dealt",
-            timestamp=time.time(),
-            data={"board": self.game_state.board.copy()}
-        ))
-    
-    def _handle_deal_turn(self):
-        """Handle dealing the turn."""
-        self.game_state.board.append(self.deal_card())
-        self.game_state.street = "turn"
         self.game_state.current_bet = 0.0
-        
-        # Reset player bets for new street
-        for player in self.game_state.players:
-            player.current_bet = 0.0
-        
-        # Set action to first active player after button
-        self.action_player_index = (self.dealer_position + 1) % self.config.num_players
-        
-        self._emit_event(GameEvent(
-            event_type="turn_dealt",
-            timestamp=time.time(),
-            data={"board": self.game_state.board.copy()}
-        ))
     
-    def _handle_deal_river(self):
-        """Handle dealing the river."""
-        self.game_state.board.append(self.deal_card())
-        self.game_state.street = "river"
-        self.game_state.current_bet = 0.0
-        
-        # Reset player bets for new street
-        for player in self.game_state.players:
-            player.current_bet = 0.0
-        
-        # Set action to first active player after button
-        self.action_player_index = (self.dealer_position + 1) % self.config.num_players
-        
-        self._emit_event(GameEvent(
-            event_type="river_dealt",
-            timestamp=time.time(),
-            data={"board": self.game_state.board.copy()}
-        ))
+    def _find_first_active_after_dealer(self) -> int:
+        """Find the first active player after the dealer (for postflop)."""
+        start = (self.dealer_position + 1) % len(self.game_state.players)
+        return self._find_next_active_player(start - 1)  # Start from dealer to find next
     
-    def _handle_showdown(self):
-        """Handle showdown."""
-        # Determine winners
-        active_players = [p for p in self.game_state.players if not p.has_folded]
-        winners = self.determine_winners(active_players)
+    def _find_next_active_player(self, current_index: int) -> int:
+        """Find the next active player after the given index."""
+        n = len(self.game_state.players)
+        for i in range(1, n + 1):
+            idx = (current_index + i) % n
+            player = self.game_state.players[idx]
+            if not player.has_folded and player.is_active and player.stack > 0:
+                return idx
+        return -1  # No active players
+    
+    def _is_action_valid(self, action: ActionType, amount: float, valid_actions: Dict[str, Any]) -> bool:
+        """Check if an action is valid for the current game state."""
+        if not valid_actions.get(action.value, False):
+            return False
         
-        # Emit showdown event
-        self._emit_event(GameEvent(
-            event_type="showdown",
-            timestamp=time.time(),
-            data={"winners": [w.name for w in winners], "board": self.game_state.board.copy()}
-        ))
+        # Additional validation based on action type
+        if action == ActionType.CALL:
+            call_amount = self.game_state.current_bet - valid_actions.get('current_bet', 0)
+            return call_amount >= 0
+        
+        elif action == ActionType.BET:
+            return amount > 0 and amount <= valid_actions.get('max_bet', 0)
+        
+        elif action == ActionType.RAISE:
+            min_raise = valid_actions.get('min_bet', self.config.big_blind)
+            max_raise = valid_actions.get('max_bet', float('inf'))
+            return amount >= min_raise and amount <= max_raise
+        
+        return True
     
-    def _handle_end_hand(self):
-        """Handle end of hand."""
-        self._emit_event(GameEvent(
-            event_type="hand_complete",
-            timestamp=time.time(),
-            data={"hand_number": self.hand_number}
-        ))
+    def _safe_print(self, message: str):
+        """Safely print a message, handling BrokenPipeError."""
+        try:
+            print(message, flush=True)
+        except (BrokenPipeError, OSError):
+            # Ignore broken pipe errors when output is piped
+            pass
     
-    def execute_action(self, player: Player, action: ActionType, amount: float = 0):
+    def execute_action(self, player: Player, action: ActionType, amount: float = 0.0):
         """Execute a player action."""
+        if not player.is_active or player.has_folded:
+            return False
+        
         # Validate action
-        errors = self.validate_action(player, action, amount)
-        if errors:
-            raise ValueError(f"Invalid action: {'; '.join(errors)}")
+        valid_actions = self.get_valid_actions_for_player(player)
+        if not self._is_action_valid(action, amount, valid_actions):
+            return False
+        
+        # Log current state
+        self._safe_print(f"   Current state: {self.current_state}, Street: {self.game_state.street}")
+        self._safe_print(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
         
         # Execute the action
-        old_pot = self.game_state.pot
-        old_stack = player.stack
-        
         if action == ActionType.FOLD:
             player.has_folded = True
             player.is_active = False
-        
+            self._safe_print(f"   {player.name} folds")
+            
         elif action == ActionType.CHECK:
-            # Check is only valid if no bet to call
-            if self.game_state.current_bet > player.current_bet:
-                raise ValueError("Cannot check when there is a bet to call")
-        
+            self._safe_print(f"   {player.name} checks")
+            
         elif action == ActionType.CALL:
             call_amount = self.game_state.current_bet - player.current_bet
             if call_amount > 0:
                 actual_call = min(call_amount, player.stack)
-                player.stack -= actual_call
                 player.current_bet += actual_call
+                player.stack -= actual_call
                 self.game_state.pot += actual_call
-        
+                self._safe_print(f"   {player.name} calls ${actual_call}")
+            
         elif action == ActionType.BET:
-            if amount <= 0:
-                raise ValueError("Bet amount must be positive")
-            if amount > player.stack:
-                raise ValueError("Cannot bet more than stack")
-            player.stack -= amount
-            player.current_bet += amount
-            self.game_state.pot += amount
-            self.game_state.current_bet = player.current_bet
-        
+            if amount > 0 and amount <= player.stack:
+                player.current_bet += amount
+                player.stack -= amount
+                self.game_state.pot += amount
+                self.game_state.current_bet = player.current_bet
+                self._safe_print(f"   {player.name} bets ${amount}")
+            
         elif action == ActionType.RAISE:
-            if amount <= self.game_state.current_bet:
-                raise ValueError("Raise must be more than current bet")
-            if amount > player.stack:
-                raise ValueError("Cannot raise more than stack")
-            player.stack -= amount
-            player.current_bet += amount
-            self.game_state.pot += amount
-            self.game_state.current_bet = player.current_bet
+            if amount >= self.game_state.current_bet and amount <= player.stack:
+                total_amount = amount - player.current_bet
+                player.current_bet = amount
+                player.stack -= total_amount
+                self.game_state.pot += total_amount
+                self.game_state.current_bet = amount
+                self._safe_print(f"   {player.name} raises to ${amount}")
+        
+        # Mark player as acted this round
+        self.players_acted_this_round.add(player.name)
+        self.actions_this_round += 1
+        
+        self._safe_print(f"   Actions this round: {self.actions_this_round}")
+        self._safe_print(f"   Players acted: {len(self.players_acted_this_round)}")
         
         # Emit action event
-        self._emit_event(GameEvent(
+        import time
+        action_event = GameEvent(
             event_type="action_executed",
             timestamp=time.time(),
             player_name=player.name,
             action=action,
-            amount=amount,
-            data={
-                "player_index": self.game_state.players.index(player),
-                "old_pot": old_pot,
-                "new_pot": self.game_state.pot,
-                "old_stack": old_stack,
-                "new_stack": player.stack
-            }
-        ))
+            amount=amount
+        )
+        self._emit_event(action_event)
         
         # Advance to next player
-        self.advance_to_next_player()
+        self._advance_action_player()
         
         # Check if round is complete
-        if self.is_round_complete():
+        if self._is_round_complete():
+            self._safe_print(f"🎯 Round complete detected on {self.game_state.street}")
             self._handle_round_complete()
+        
+        # Emit display state event after action
+        self._emit_display_state_event()
+        
+        return True
     
-    def validate_action(self, player: Player, action: ActionType, amount: float = 0) -> List[str]:
-        """Validate a player action."""
-        errors = []
-        
-        # Check if player is active
-        if player.has_folded:
-            errors.append("Player has already folded")
-        
-        # Check if it's player's turn
-        if self.game_state.players[self.action_player_index] != player:
-            errors.append("Not player's turn")
-        
-        # Action-specific validation
-        if action == ActionType.CALL:
-            call_amount = self.game_state.current_bet - player.current_bet
-            if call_amount > player.stack:
-                errors.append("Cannot call: insufficient stack")
-        
-        elif action == ActionType.BET:
-            if amount <= 0:
-                errors.append("Bet amount must be positive")
-            if amount > player.stack:
-                errors.append("Cannot bet more than stack")
-            if amount < self.game_state.current_bet:
-                errors.append("Bet must be at least current bet")
-        
-        elif action == ActionType.RAISE:
-            if amount <= self.game_state.current_bet:
-                errors.append("Raise must be more than current bet")
-            if amount > player.stack:
-                errors.append("Cannot raise more than stack")
-        
-        return errors
+    def _advance_action_player(self):
+        """Advance to the next action player."""
+        next_index = self._find_next_active_player(self.action_player_index)
+        if next_index == -1:
+            self.transition_to(PokerState.END_HAND)
+            return
+        self.action_player_index = next_index
+        self._emit_event(GameEvent(
+            event_type="action_required",
+            timestamp=time.time(),
+            player_name=self.game_state.players[next_index].name
+        ))
     
-    def advance_to_next_player(self):
-        """Advance to the next active player."""
-        start_index = self.action_player_index
-        
-        while True:
-            self.action_player_index = (self.action_player_index + 1) % self.config.num_players
-            
-            # If we've gone around the table, we're done
-            if self.action_player_index == start_index:
-                break
-            
-            # Check if this player is active
-            player = self.game_state.players[self.action_player_index]
-            if not player.has_folded and player.is_active:
-                break
-    
-    def is_round_complete(self) -> bool:
+    def _is_round_complete(self) -> bool:
         """Check if the current betting round is complete."""
-        active_players = [p for p in self.game_state.players if not p.has_folded]
+        active_players = [p for p in self.game_state.players 
+                         if not p.has_folded and p.is_active]
         
         if len(active_players) <= 1:
             return True
         
-        # Check if all active players have acted and bets are equal
-        for player in active_players:
-            if player.current_bet != self.game_state.current_bet:
-                return False
+        # Check if all active players have acted
+        acted_count = sum(1 for p in active_players 
+                         if p.name in self.players_acted_this_round)
+        if acted_count < len(active_players):
+            return False
         
-        return True
+        # Check if bets are equalized
+        max_bet = max(p.current_bet for p in active_players)
+        all_equal = all(p.current_bet == max_bet or p.is_all_in 
+                       for p in active_players)
+        
+        return all_equal
     
     def _handle_round_complete(self):
         """Handle completion of a betting round."""
+        self._safe_print(f"🎯 Round complete on {self.game_state.street} street")
+        self._safe_print(f"   Current state: {self.current_state}")
+        self._safe_print(f"   Actions this round: {self.actions_this_round}")
+        self._safe_print(f"   Players acted: {len(self.players_acted_this_round)}")
+        
+        self._reset_bets_for_new_round()
+        self.actions_this_round = 0
+        self.players_acted_this_round.clear()
+        
+        # Check active players after reset
+        active_players = [p for p in self.game_state.players 
+                         if not p.has_folded and p.is_active]
+        
+        if len(active_players) <= 1:
+            self._safe_print(f"🏁 Only {len(active_players)} active players, ending hand")
+            self.transition_to(PokerState.END_HAND)
+            return
+        
         # Emit round complete event
         self._emit_event(GameEvent(
             event_type="round_complete",
@@ -545,15 +632,22 @@ class FlexiblePokerStateMachine:
             data={"street": self.game_state.street}
         ))
         
-        # Transition to next state
-        if self.game_state.street == "preflop":
+        # Transition to next state based on current state
+        if self.current_state == PokerState.PREFLOP_BETTING:
+            self._safe_print("🔄 Preflop betting complete, transitioning to DEAL_FLOP")
             self.transition_to(PokerState.DEAL_FLOP)
-        elif self.game_state.street == "flop":
+        elif self.current_state == PokerState.FLOP_BETTING:
+            self._safe_print("🔄 Flop betting complete, transitioning to DEAL_TURN")
             self.transition_to(PokerState.DEAL_TURN)
-        elif self.game_state.street == "turn":
+        elif self.current_state == PokerState.TURN_BETTING:
+            self._safe_print("🔄 Turn betting complete, transitioning to DEAL_RIVER")
             self.transition_to(PokerState.DEAL_RIVER)
-        elif self.game_state.street == "river":
+        elif self.current_state == PokerState.RIVER_BETTING:
+            self._safe_print("🔄 River betting complete, transitioning to SHOWDOWN")
             self.transition_to(PokerState.SHOWDOWN)
+        
+        # Emit display state event after street transition to update UI
+        self._emit_display_state_event()
     
     def determine_winners(self, players: List[Player]) -> List[Player]:
         """Determine the winners among the given players."""
@@ -567,7 +661,8 @@ class FlexiblePokerStateMachine:
         player_hands = []
         for player in players:
             if len(player.cards) == 2:
-                hand_eval = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+                hand_eval = self.hand_evaluator.evaluate_hand(
+                    player.cards, self.game_state.board)
                 # Extract the hand rank value from the evaluation result
                 if isinstance(hand_eval, dict) and 'hand_rank' in hand_eval:
                     hand_rank = hand_eval['hand_rank']
@@ -576,6 +671,10 @@ class FlexiblePokerStateMachine:
                 else:
                     rank_value = hand_eval if isinstance(hand_eval, (int, float)) else 0
                 player_hands.append((player, rank_value))
+        
+        # Handle case where no valid hands are evaluated
+        if not player_hands:
+            return players  # Return all players if no hands can be evaluated
         
         # Sort by hand rank (best first)
         player_hands.sort(key=lambda x: x[1], reverse=True)
@@ -610,9 +709,12 @@ class FlexiblePokerStateMachine:
                     "is_active": p.is_active,
                     "has_folded": p.has_folded,
                     "is_human": p.is_human,
-                    "cards": p.cards if (p.is_human or self.config.show_all_cards or 
-                                       self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]) 
-                           else ["**", "**"],
+                    "cards": p.cards if (
+                        self.config.show_all_cards or 
+                        p.is_human or 
+                        self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND] or
+                        (len(p.cards) > 0 and p.cards[0] != "**" and p.cards[0] != "")
+                    ) else ["**", "**"],
                 }
                 for p in self.game_state.players
             ],
@@ -650,9 +752,32 @@ class FlexiblePokerStateMachine:
     def set_board_cards(self, cards: List[str]):
         """Set board cards (for simulation mode)."""
         self.game_state.board = cards.copy()
+        # Emit display state event to update UI immediately
+        self._emit_display_state_event()
     
     def set_player_folded(self, player_index: int, folded: bool):
         """Set folded status for a player (for simulation mode)."""
         if 0 <= player_index < len(self.game_state.players):
             self.game_state.players[player_index].has_folded = folded
             self.game_state.players[player_index].is_active = not folded
+
+    def _create_basic_strategy_integration(self):
+        """Create a basic strategy integration for testing."""
+        class BasicStrategyIntegration:
+            def __init__(self):
+                self.name = "Basic Strategy Integration"
+                self.version = "1.0"
+            
+            def get_action(self, player, game_state, valid_actions):
+                """Get action for a player based on basic strategy."""
+                return "check"  # Default action
+            
+            def load_strategy(self, strategy_file):
+                """Load strategy from file."""
+                return True
+            
+            def save_strategy(self, strategy_file):
+                """Save strategy to file."""
+                return True
+        
+        return BasicStrategyIntegration()

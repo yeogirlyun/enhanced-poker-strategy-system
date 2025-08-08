@@ -6,11 +6,10 @@ This adapter provides backward compatibility with the existing ImprovedPokerStat
 interface while using the new FlexiblePokerStateMachine internally.
 """
 
-from typing import List, Optional, Dict, Any, Callable
-from dataclasses import dataclass
+from typing import List, Optional, Dict, Any
 
 from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig, GameEvent, EventListener
-from .types import ActionType, Player, GameState, PokerState
+from .types import ActionType, Player, PokerState
 
 
 class PokerStateMachineAdapter(EventListener):
@@ -58,6 +57,9 @@ class PokerStateMachineAdapter(EventListener):
         self.on_dealing_cards = None
         self.on_single_card_dealt = None
         self.on_dealing_complete = None
+        
+        # UI Controller - NEW: State machine drives UI through this controller
+        self.ui_controller = None
         
         # Session tracking (simplified)
         self.session_state = None
@@ -117,16 +119,62 @@ class PokerStateMachineAdapter(EventListener):
         self.flexible_sm.config.show_all_cards = True
         self.simulation_mode = True
     
+    def set_ui_controller(self, ui_controller):
+        """Set the UI controller that the state machine will use to drive the UI."""
+        self.ui_controller = ui_controller
+        print(f"🎮 UI Controller set: {type(ui_controller).__name__}")
+    
+    def _drive_ui_update(self, update_type: str, **kwargs):
+        """Drive UI updates through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'update_display'):
+            try:
+                self.ui_controller.update_display(update_type, **kwargs)
+            except Exception as e:
+                print(f"❌ Error driving UI update {update_type}: {e}")
+    
+    def _drive_ui_animation(self, animation_type: str, **kwargs):
+        """Drive UI animations through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'play_animation'):
+            try:
+                self.ui_controller.play_animation(animation_type, **kwargs)
+            except Exception as e:
+                print(f"❌ Error driving UI animation {animation_type}: {e}")
+    
+    def _drive_ui_sound(self, sound_type: str, **kwargs):
+        """Drive UI sounds through the UI controller."""
+        if self.ui_controller and hasattr(self.ui_controller, 'play_sound'):
+            try:
+                self.ui_controller.play_sound(sound_type, **kwargs)
+            except Exception as e:
+                print(f"❌ Error driving UI sound {sound_type}: {e}")
+    
     def execute_action(self, player: Player, action: ActionType, amount: float = 0, _is_fallback: bool = False):
-        """Execute a player action (legacy compatibility)."""
-        try:
-            self.flexible_sm.execute_action(player, action, amount)
-        except ValueError as e:
-            if _is_fallback:
-                raise e
-            # Try fallback actions for bots
-            if not player.is_human:
-                self._try_fallback_actions(player)
+        """Execute an action with UI updates."""
+        # NEW: Drive UI updates for action start
+        self._drive_ui_update("action_start", player_name=player.name, action=action.value, amount=amount)
+        
+        # Execute the action in the flexible state machine
+        result = self.flexible_sm.execute_action(player, action, amount)
+        
+        # NEW: Drive UI updates based on action type
+        if action == ActionType.FOLD:
+            self._drive_ui_update("player_fold", player_index=self.action_player_index, player_name=player.name)
+            self._drive_ui_animation("fold_animation", player_index=self.action_player_index)
+            self._drive_ui_sound("fold_sound")
+        elif action == ActionType.CALL:
+            self._drive_ui_update("player_call", player_index=self.action_player_index, player_name=player.name, amount=amount)
+            self._drive_ui_animation("call_animation", player_index=self.action_player_index, amount=amount)
+            self._drive_ui_sound("call_sound", amount=amount)
+        elif action == ActionType.CHECK:
+            self._drive_ui_update("player_check", player_index=self.action_player_index, player_name=player.name)
+            self._drive_ui_animation("check_animation", player_index=self.action_player_index)
+            self._drive_ui_sound("check_sound")
+        elif action == ActionType.RAISE:
+            self._drive_ui_update("player_raise", player_index=self.action_player_index, player_name=player.name, amount=amount)
+            self._drive_ui_animation("raise_animation", player_index=self.action_player_index, amount=amount)
+            self._drive_ui_sound("raise_sound", amount=amount)
+        
+        return result
     
     def _try_fallback_actions(self, player: Player):
         """Try fallback actions for bot players."""
@@ -176,8 +224,12 @@ class PokerStateMachineAdapter(EventListener):
         return len(errors) == 0
     
     def get_current_state(self) -> PokerState:
-        """Get current state (legacy compatibility)."""
+        """Get the current state."""
         return self.flexible_sm.current_state
+    
+    def is_hand_complete(self) -> bool:
+        """Check if the current hand is complete."""
+        return self.flexible_sm.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]
     
     def get_hand_history(self) -> List[Dict[str, Any]]:
         """Get hand history (legacy compatibility)."""
@@ -321,6 +373,11 @@ class PokerStateMachineAdapter(EventListener):
         return total_strength
     
     # Property accessors for backward compatibility
+    
+    @property
+    def config(self):
+        """Get the configuration from the flexible state machine."""
+        return self.flexible_sm.config
     
     @property
     def state(self) -> str:

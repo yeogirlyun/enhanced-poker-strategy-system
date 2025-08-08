@@ -9,15 +9,14 @@ Uses pygame for cross-platform audio support.
 import os
 import json
 import pygame
-from typing import Optional, Dict, Any
-from pathlib import Path
+from typing import Optional
 from .voice_manager import VoiceManager
 
 
 class SoundManager:
     """Manages sound effects for the poker application."""
     
-    def __init__(self, sounds_dir: str = None, test_mode: bool = False):
+    def __init__(self, sounds_dir: Optional[str] = None, test_mode: bool = False):
         """Initialize the sound manager.
         
         Args:
@@ -27,7 +26,7 @@ class SoundManager:
         self.sounds_dir = sounds_dir or os.path.join(
             os.path.dirname(__file__), '..', 'sounds'
         )
-        self.sound_cache = {}
+        self.sound_cache: dict[str, pygame.mixer.Sound] = {}
         self.enabled = True
         self.volume = 0.7
         self.test_mode = test_mode
@@ -37,9 +36,12 @@ class SoundManager:
         
         # Initialize pygame mixer
         try:
-            pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+            pygame.mixer.init(
+                frequency=44100, size=-16, channels=2, buffer=512
+            )
+            print("🔊 Sound system initialized successfully")
             self._load_sound_mapping()
-        except Exception as e:
+        except (pygame.error, OSError) as e:
             print(f"Warning: Could not initialize sound system: {e}")
             self.enabled = False
     
@@ -276,5 +278,5 @@ class SoundManager:
         """Clean up resources."""
         try:
             pygame.mixer.quit()
-        except:
+        except (pygame.error, OSError):
             pass 
