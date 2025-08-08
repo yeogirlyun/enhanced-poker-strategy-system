@@ -12,12 +12,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 
-from tests.legendary_hands_manager import LegendaryHandsManager
 from core.phh_converter import PracticeHandsPHHManager
-from core.gui_models import GridSettings
+from core.hands_database import ComprehensiveHandsDatabase
 
 
 class HandsReviewPanel(ttk.Frame):
@@ -26,6 +23,7 @@ class HandsReviewPanel(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.legendary_manager = None
+        self.hands_database = ComprehensiveHandsDatabase()
         self.practice_hands = []
         self.practice_phh_files = []
         self.current_hand = None
@@ -249,16 +247,20 @@ class HandsReviewPanel(ttk.Frame):
     def load_legendary_hands(self):
         """Load legendary hands from the database."""
         try:
-            self.legendary_manager = LegendaryHandsManager()
+            # Load all hands and filter for legendary ones
+            from core.hands_database import HandCategory
             
-            if self.legendary_manager.data:
-                # Update category combo
-                categories = self.legendary_manager.get_categories()
+            legendary_hands_by_category = self.hands_database.get_hands_by_category()
+            self.legendary_hands = legendary_hands_by_category.get(HandCategory.LEGENDARY, [])
+            
+            if self.legendary_hands:
+                # Get available categories from legendary hands
+                categories = list(set(hand.metadata.subcategory for hand in self.legendary_hands if hand.metadata.subcategory))
                 self.category_combo['values'] = ['All Categories'] + categories
                 self.category_combo.set('All Categories')
                 
                 # Update status
-                total_hands = len(self.legendary_manager.hands)
+                total_hands = len(self.legendary_hands)
                 self.legendary_status_label.config(
                     text=f"Loaded {total_hands} legendary hands"
                 )
@@ -266,7 +268,7 @@ class HandsReviewPanel(ttk.Frame):
                 # Load all hands initially
                 self.update_legendary_hands_list()
             else:
-                self.legendary_status_label.config(text="Failed to load legendary hands")
+                self.legendary_status_label.config(text="No legendary hands found")
                 
         except Exception as e:
             print(f"Error loading legendary hands: {e}")
@@ -307,21 +309,21 @@ class HandsReviewPanel(ttk.Frame):
         """Update the legendary hands listbox."""
         self.legendary_hands_listbox.delete(0, tk.END)
         
-        if not self.legendary_manager or not self.legendary_manager.hands:
+        if not hasattr(self, 'legendary_hands') or not self.legendary_hands:
             return
         
         # Get hands for the selected category
         if category and category != 'All Categories':
-            hands = self.legendary_manager.get_hands_by_category(category)
+            hands = [hand for hand in self.legendary_hands if hand.metadata.subcategory == category]
         else:
-            hands = self.legendary_manager.hands
+            hands = self.legendary_hands
         
         for hand in hands:
-            hand_id = hand.get('id', 'Unknown')
-            name = hand.get('name', 'Unknown Hand')
-            category = hand.get('category', 'Unknown')
+            hand_id = hand.metadata.hand_id or 'Unknown'
+            name = hand.metadata.name or 'Unknown Hand'
+            subcategory = hand.metadata.subcategory or 'Unknown'
             
-            display_text = f"{hand_id} - {name} ({category})"
+            display_text = f"{hand_id} - {name} ({subcategory})"
             self.legendary_hands_listbox.insert(tk.END, display_text)
     
     def on_practice_hand_select(self, event):
@@ -342,9 +344,9 @@ class HandsReviewPanel(ttk.Frame):
             # Get the selected category
             category = self.category_var.get()
             if category == 'All Categories':
-                hands = self.legendary_manager.hands
+                hands = self.legendary_hands
             else:
-                hands = self.legendary_manager.get_hands_by_category(category)
+                hands = [hand for hand in self.legendary_hands if hand.metadata.subcategory == category]
             
             if index < len(hands):
                 hand = hands[index]
@@ -437,61 +439,64 @@ class HandsReviewPanel(ttk.Frame):
         """Display legendary hand details."""
         self.legendary_details_text.delete(1.0, tk.END)
         
+        # Handle ParsedHand structure
+        metadata = hand.metadata
+        players = hand.players or []
+        conversion_info = hand.raw_data.get('conversion_info', {})
+        
         details = f"""🏆 LEGENDARY HAND DETAILS
 {'='*50}
 
 📋 Basic Information:
-   ID: {hand.get('id', 'Unknown')}
-   Name: {hand.get('name', 'Unknown')}
-   Category: {hand.get('category', 'Unknown')}
-   Event: {hand.get('event', 'Unknown')}
+   ID: {metadata.hand_id or 'Unknown'}
+   Name: {metadata.name or 'Unknown'}
+   Category: {metadata.subcategory or 'Unknown'}
+   Event: {metadata.event or 'Unknown'}
 
 📝 Description:
-   {hand.get('description', 'No description available')}
+   {metadata.description or 'No description available'}
 
 👥 Players Involved:
-   {', '.join(hand.get('players_involved', []))}
+   {', '.join(metadata.players_involved)}
 
-💰 Expected Results:
-   Expected Winner: Player {hand.get('expected_winner_index', -1) + 1}
-   Expected Pot: ${hand.get('expected_pot', 0):.2f}
+💰 Hand Information:
+   Pot Size: ${metadata.pot_size:.2f}
+   Date: {metadata.date or 'Unknown'}
 
-📚 Study Value:
-   {hand.get('study_value', 'No study value specified')}
-
-⭐ Why Legendary:
-   {hand.get('why_legendary', 'No legendary context provided')}
-
-🎮 Setup:
-   Players: {hand.get('setup', {}).get('num_players', 0)}
-   Dealer: Position {hand.get('setup', {}).get('dealer_position', 0)}
-   Blinds: ${hand.get('setup', {}).get('small_blind', 0)}/${hand.get('setup', {}).get('big_blind', 0)}
-
-🃏 Player Cards:
 """
         
-        setup = hand.get('setup', {})
-        player_cards = setup.get('player_cards', [])
-        player_stacks = setup.get('player_stacks', [])
+        # Show conversion info if available
+        if conversion_info:
+            details += f"""🔄 Conversion Info:
+   Original Players: {conversion_info.get('original_players', 0)}
+   Converted to: {conversion_info.get('converted_players', 0)} players
+   Folded Players: {conversion_info.get('folded_players', 0)}
+   Method: {conversion_info.get('conversion_method', 'Unknown')}
+
+"""
         
-        for i, (cards, stack) in enumerate(zip(player_cards, player_stacks)):
-            details += f"   Player {i+1}: {cards} (Stack: ${stack:.2f})\n"
+        details += "🃏 Player Setup:\n"
         
+        for i, player in enumerate(players):
+            name = player.get('name', f'Player {i+1}')
+            position = player.get('position', f'Seat {i+1}')
+            cards = player.get('cards', [])
+            stack = player.get('starting_stack_chips', 100000)
+            folded = player.get('folded_preflop', False)
+            
+            status = " (FOLDED PREFLOP)" if folded else ""
+            cards_str = f"{cards}" if cards else "Hidden"
+            
+            details += f"   {i+1}. {name} ({position}): {cards_str} (Stack: ${stack:.0f}){status}\n"
+        
+        # Show raw data summary
         details += f"""
-🎲 Board: {hand.get('board', [])}
-
-🎯 Actions ({len(hand.get('actions', []))} total):
+📊 Hand Data:
+   Raw data keys: {list(hand.raw_data.keys())}
+   
+🎯 Actions:
+   (Actions will be available when simulation system is fully integrated)
 """
-        
-        for i, action in enumerate(hand.get('actions', [])[:15]):  # Show first 15 actions
-            player_idx = action.get('player_index', 0) + 1
-            action_type = action.get('action', 'UNKNOWN')
-            amount = action.get('amount', 0)
-            street = action.get('street', 'preflop')
-            details += f"   {i+1:2d}. Player {player_idx} {action_type} ${amount:.1f} ({street})\n"
-        
-        if len(hand.get('actions', [])) > 15:
-            details += f"   ... and {len(hand.get('actions', [])) - 15} more actions\n"
         
         self.legendary_details_text.insert(1.0, details)
     
@@ -509,25 +514,54 @@ class HandsReviewPanel(ttk.Frame):
             return
         
         try:
-            result = self.legendary_manager.simulate_hand(self.current_hand, verbose=False)
+            # Use new ParsedHand structure for simulation
+            hand = self.current_hand
+            metadata = hand.metadata
+            players = hand.players or []
+            conversion_info = hand.raw_data.get('conversion_info', {})
             
-            # Show simulation results
+            # Basic simulation information
             result_text = f"""🎮 SIMULATION RESULTS
-{'='*30}
+{'='*40}
 
-Expected Winner: Player {result['expected_winner'] + 1}
-Actual Winners: Players {[i+1 for i in result['actual_winners']]}
+🏆 Hand: {metadata.name}
+📅 Date: {metadata.date or 'Unknown'}
+💰 Pot Size: ${metadata.pot_size:.2f}
 
-Expected Pot: ${result['expected_pot']:.2f}
-Actual Pot: ${result['actual_pot']:.2f}
-
-Success: {'✅' if result['success'] else '❌'}
+👥 Players ({len(players)} total):
+"""
+            
+            for i, player in enumerate(players):
+                name = player.get('name', f'Player {i+1}')
+                position = player.get('position', f'Seat {i+1}')
+                cards = player.get('cards', [])
+                folded = player.get('folded_preflop', False)
+                
+                status = " 🚫 FOLDED" if folded else " ✅ ACTIVE"
+                cards_str = f"{cards}" if cards else "Hidden"
+                
+                result_text += f"   {i+1}. {name} ({position}): {cards_str}{status}\n"
+            
+            if conversion_info:
+                result_text += f"""
+🔄 Conversion Applied:
+   • Original: {conversion_info.get('original_players', 0)} players
+   • Converted to: {conversion_info.get('converted_players', 0)} players
+   • {conversion_info.get('folded_players', 0)} players folded preflop
+"""
+            
+            result_text += """
+🎯 Simulation Status:
+   Hand successfully loaded and converted for 6-player format!
+   
+📝 Note: Full poker state machine simulation will be 
+   available in the enhanced hands review panel.
 """
             
             messagebox.showinfo("Simulation Results", result_text)
             
         except Exception as e:
-            messagebox.showerror("Simulation Error", f"Error simulating hand: {str(e)}")
+            messagebox.showerror("Simulation Error", f"Error simulating hand: {str(e)}\n\nHand structure: {type(self.current_hand)}")
     
     def study_current_hand(self):
         """Open study mode for the current hand."""

@@ -37,7 +37,7 @@ from ui.components.postflop_hs_editor import PostflopHSEditor
 from strategy.strategy_optimization_panel import StrategyOptimizationPanel
 from ui.components.tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
 from ui.practice_session_ui import PracticeSessionUI
-from ui.components.hands_review_panel import HandsReviewPanel
+from ui.components.redesigned_hands_review_panel import RedesignedHandsReviewPanel
 # from sound_settings_gui import create_sound_settings_window  # Removed in cleanup
 # from app_config import get_app_full_name  # Removed in cleanup
 
@@ -512,8 +512,8 @@ class EnhancedMainGUI:
         hands_review_frame = ttk.Frame(self.notebook)
         self.notebook.add(hands_review_frame, text="🎯 Hands Review")
         
-        # Create hands review panel
-        self.hands_review_panel = HandsReviewPanel(hands_review_frame)
+        # Create hands review panel (redesigned)
+        self.hands_review_panel = RedesignedHandsReviewPanel(hands_review_frame)
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
 
         # Update strategy file display
