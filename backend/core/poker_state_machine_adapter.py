@@ -55,6 +55,9 @@ class PokerStateMachineAdapter(EventListener):
         self.on_round_complete = None
         self.on_action_player_changed = None
         self.on_log_entry = None
+        self.on_dealing_cards = None
+        self.on_single_card_dealt = None
+        self.on_dealing_complete = None
         
         # Session tracking (simplified)
         self.session_state = None
