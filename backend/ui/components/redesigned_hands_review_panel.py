@@ -723,7 +723,12 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             from core.poker_state_machine import ActionType
             
             # Determine action based on player position
-            if current_player.name in ["Player 0", "Player 1"] or current_player.name in [p.get('name', '') for p in self.current_hand.get('players', [])[:2]]:
+            # Get main players from the current hand
+            main_players = []
+            if hasattr(self.current_hand, 'players') and self.current_hand.players:
+                main_players = [p.get('name', '') for p in self.current_hand.players[:2]]
+            
+            if current_player.name in ["Player 0", "Player 1"] or current_player.name in main_players:
                 # Main players (from legendary hand) - usually call or raise
                 action_type = ActionType.CALL
                 amount = 0  # Call amount
