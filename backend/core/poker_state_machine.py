@@ -1780,30 +1780,6 @@ class ImprovedPokerStateMachine:
         
         self.execute_action(player, action, amount)
 
-
-
-                
-                if call_amount > 0:
-                    pot_odds = self.calculate_pot_odds(call_amount)
-                    if self.should_call_by_pot_odds(player, call_amount, hand_strength):
-                        self._log_message(f"   📞 Calling based on pot odds")
-                        return ActionType.CALL, call_amount
-                    self._log_message(f"   ❌ Folding based on pot odds")
-                    return ActionType.FOLD, 0
-                
-                if hand_strength >= val_thresh:
-                    bet_amount = min(self.game_state.pot * sizing, player.stack)
-                    self._log_message(f"   💰 Betting with strong hand: ${bet_amount}")
-                    return ActionType.BET, bet_amount
-                elif hand_strength >= check_thresh:
-                    self._log_message(f"   ✅ Checking with medium hand")
-                    return ActionType.CHECK, 0
-                self._log_message(f"   ✅ Checking weak hands postflop")
-                return ActionType.CHECK, 0
-        except (KeyError, AttributeError) as e:
-            self._log_message(f"   🤖 Strategy error: {e}, falling back to basic logic")
-            return self.get_basic_bot_action(player)
-
     def get_hand_notation(self, cards: List[str]) -> str:
         """Converts two cards into standard poker notation (e.g., AKs, T9o, 77)."""
         if len(cards) != 2:
