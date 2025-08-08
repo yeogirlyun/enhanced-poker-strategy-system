@@ -17,6 +17,7 @@ from datetime import datetime
 
 from tests.legendary_hands_manager import LegendaryHandsManager
 from core.phh_converter import PracticeHandsPHHManager
+from core.gui_models import GridSettings
 
 
 class HandsReviewPanel(ttk.Frame):
@@ -29,8 +30,15 @@ class HandsReviewPanel(ttk.Frame):
         self.practice_phh_files = []
         self.current_hand = None
         self.practice_phh_manager = PracticeHandsPHHManager()
+        
+        # Font configuration
+        self.font_size = 16  # Default size, will be updated by main GUI
+        
         self.setup_ui()
         self.load_data()
+        
+        # Apply initial font size
+        self.update_font_size(self.font_size)
     
     def setup_ui(self):
         """Setup the user interface."""
@@ -39,9 +47,8 @@ class HandsReviewPanel(ttk.Frame):
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Title
-        title_label = ttk.Label(main_frame, text="🎯 Hands Review", 
-                               font=("Arial", 16, "bold"))
-        title_label.pack(pady=(0, 20))
+        self.title_label = ttk.Label(main_frame, text="🎯 Hands Review")
+        self.title_label.pack(pady=(0, 20))
         
         # Create notebook for tabs
         self.notebook = ttk.Notebook(main_frame)
@@ -82,7 +89,7 @@ class HandsReviewPanel(ttk.Frame):
         list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Hands list
-        self.practice_hands_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        self.practice_hands_listbox = tk.Listbox(list_frame)
         self.practice_hands_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         # Scrollbar
@@ -99,8 +106,7 @@ class HandsReviewPanel(ttk.Frame):
         self.practice_details_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Details text
-        self.practice_details_text = tk.Text(self.practice_details_frame, 
-                                           font=("Courier", 9), wrap=tk.WORD)
+        self.practice_details_text = tk.Text(self.practice_details_frame, wrap=tk.WORD)
         self.practice_details_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     
     def setup_legendary_hands_tab(self):
@@ -131,7 +137,7 @@ class HandsReviewPanel(ttk.Frame):
         list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Hands list
-        self.legendary_hands_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        self.legendary_hands_listbox = tk.Listbox(list_frame)
         self.legendary_hands_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         # Scrollbar
@@ -148,8 +154,7 @@ class HandsReviewPanel(ttk.Frame):
         self.legendary_details_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Details text
-        self.legendary_details_text = tk.Text(self.legendary_details_frame, 
-                                            font=("Courier", 9), wrap=tk.WORD)
+        self.legendary_details_text = tk.Text(self.legendary_details_frame, wrap=tk.WORD)
         self.legendary_details_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Action buttons frame
@@ -547,3 +552,21 @@ Future study features will include:
 """
         
         messagebox.showinfo("Study Mode", study_text)
+    
+    def update_font_size(self, new_size: int):
+        """Update font size for all components."""
+        self.font_size = new_size
+        
+        # Main title (larger, bold)
+        title_font = ("Arial", int(new_size * 1.2), "bold")
+        self.title_label.config(font=title_font)
+        
+        # Listboxes
+        listbox_font = ("Arial", int(new_size * 0.9))
+        self.practice_hands_listbox.config(font=listbox_font)
+        self.legendary_hands_listbox.config(font=listbox_font)
+        
+        # Details text areas (monospace for better readability)
+        details_font = ("Courier", int(new_size * 0.8))
+        self.practice_details_text.config(font=details_font)
+        self.legendary_details_text.config(font=details_font)

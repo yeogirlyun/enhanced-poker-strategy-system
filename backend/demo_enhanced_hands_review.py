@@ -57,6 +57,24 @@ def demo_hands_database():
             print(f"      Pot: ${hand.metadata.pot_size:.0f}")
             if hand.metadata.event:
                 print(f"      Event: {hand.metadata.event}")
+            
+            # Show conversion info if available
+            if 'conversion_info' in hand.raw_data:
+                conv_info = hand.raw_data['conversion_info']
+                print(f"      🔄 Converted: {conv_info['original_players']} → {conv_info['converted_players']} players")
+                print(f"         ({conv_info['folded_players']} players folded preflop)")
+            
+            # Show player details
+            if hand.players:
+                print(f"      👥 Final Player Setup:")
+                for j, player in enumerate(hand.players[:6]):
+                    name = player.get('name', f'Player {j+1}')
+                    position = player.get('position', f'Seat {j+1}')
+                    cards = player.get('cards', [])
+                    folded = player.get('folded_preflop', False)
+                    status = " (FOLDED PREFLOP)" if folded else ""
+                    cards_str = f"{cards}" if cards else "Hidden"
+                    print(f"         {j+1}. {name} ({position}): {cards_str}{status}")
             print()
     
     # Show practice hands if any

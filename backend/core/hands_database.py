@@ -100,25 +100,28 @@ class LegendaryHandsPHHLoader:
         return hands
     
     def _create_simplified_hands_from_phh(self, content: str) -> List[ParsedHand]:
-        """Create simplified hands from PHH content."""
+        """Create simplified hands from PHH content with 6+ player conversion."""
         hands = []
         lines = content.split('\n')
         
         current_hand = None
         hand_counter = 0
+        current_players = []
         
         for line in lines:
             stripped = line.strip()
             
             # Detect start of new hand
             if stripped.startswith('# Hand ') and '—' in stripped:
-                # Save previous hand if exists
+                # Save previous hand if exists (with conversion)
                 if current_hand:
-                    hands.append(current_hand)
+                    converted_hand = self._convert_to_6_player_format(current_hand, current_players)
+                    hands.append(converted_hand)
                 
                 # Start new hand
                 hand_counter += 1
                 hand_name = stripped.split('—', 1)[1].strip() if '—' in stripped else f"Legendary Hand {hand_counter}"
+                current_players = []  # Reset players list
                 
                 # Extract players from name more robustly
                 players_involved = []
@@ -188,12 +191,108 @@ class LegendaryHandsPHHLoader:
                             current_hand.metadata.pot_size = big_blind * 15  # Rough estimate
                     except:
                         pass
+            
+            # Track players as we parse
+            elif stripped.startswith('[[players]]') and current_hand:
+                # Start tracking a new player
+                pass
+            elif stripped.startswith('name =') and current_hand:
+                # Extract player name
+                player_name = stripped.split('=', 1)[1].strip().strip('"')
+                if player_name and player_name not in [p.get('name', '') for p in current_players]:
+                    current_players.append({'name': player_name})
+            elif stripped.startswith('seat =') and current_hand and current_players:
+                # Add seat to last player
+                seat_num = int(stripped.split('=', 1)[1].strip())
+                if current_players:
+                    current_players[-1]['seat'] = seat_num
+            elif stripped.startswith('cards =') and current_hand and current_players:
+                # Add cards to last player
+                cards_str = stripped.split('=', 1)[1].strip()
+                try:
+                    cards = eval(cards_str)  # Parse the list
+                    if current_players:
+                        current_players[-1]['cards'] = cards
+                except:
+                    pass
         
-        # Add final hand
+        # Add final hand (with conversion)
         if current_hand:
-            hands.append(current_hand)
+            converted_hand = self._convert_to_6_player_format(current_hand, current_players)
+            hands.append(converted_hand)
         
         return hands
+    
+    def _convert_to_6_player_format(self, hand: ParsedHand, original_players: List[Dict]) -> ParsedHand:
+        """Convert a hand to 6+ player format by adding folded players."""
+        if len(original_players) >= 6:
+            # Already 6+ players, no conversion needed
+            hand.players = original_players
+            return hand
+        
+        # Create 6-player format
+        converted_players = []
+        
+        # Add original players (first N seats)
+        for i, player in enumerate(original_players):
+            player_data = {
+                'seat': i + 1,
+                'name': player.get('name', f'Player {i+1}'),
+                'cards': player.get('cards', []),
+                'starting_stack_chips': 100000,  # Default stack
+                'position': self._get_position_name(i, 6)
+            }
+            converted_players.append(player_data)
+        
+        # Add folded players with weak cards
+        weak_cards = [
+            ['2c', '3d'], ['2h', '4s'], ['2s', '5c'], ['3h', '6d']
+        ]
+        
+        for i in range(len(original_players), 6):
+            folded_player = {
+                'seat': i + 1,
+                'name': f'Folded Player {i+1}',
+                'cards': weak_cards[i - len(original_players)] if i - len(original_players) < len(weak_cards) else ['2d', '7c'],
+                'starting_stack_chips': 100000,
+                'position': self._get_position_name(i, 6),
+                'folded_preflop': True  # Mark as folded preflop
+            }
+            converted_players.append(folded_player)
+        
+        # Update hand with converted players
+        hand.players = converted_players
+        
+        # Update metadata
+        hand.metadata.description += f" (Converted from {len(original_players)} to 6 players)"
+        
+        # Add conversion note to raw data
+        hand.raw_data['conversion_info'] = {
+            'original_players': len(original_players),
+            'converted_players': 6,
+            'folded_players': 6 - len(original_players),
+            'conversion_method': 'preflop_fold'
+        }
+        
+        return hand
+    
+    def _get_position_name(self, seat_index: int, total_players: int) -> str:
+        """Get position name for a seat."""
+        if total_players == 6:
+            positions = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB']
+            return positions[seat_index % 6]
+        elif total_players == 2:
+            return 'BTN/SB' if seat_index == 0 else 'BB'
+        else:
+            # Generic positions
+            if seat_index == total_players - 1:
+                return 'BB'
+            elif seat_index == total_players - 2:
+                return 'SB'
+            elif seat_index == total_players - 3:
+                return 'BTN'
+            else:
+                return f'EP{seat_index + 1}'
     
     def _split_into_hand_blocks(self, content: str) -> List[str]:
         """Split PHH content into individual hand blocks."""

@@ -871,6 +871,10 @@ class EnhancedMainGUI:
         # Update strategy optimization panel fonts
         if hasattr(self, "optimization_panel"):
             self.optimization_panel.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
+        
+        # Update hands review panel fonts
+        if hasattr(self, "hands_review_panel"):
+            self.hands_review_panel.update_font_size(GridSettings.get_size_config(new_size)["font"][1])
 
     def _on_tier_data_change(self):
         """Handle tier data changes."""

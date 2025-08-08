@@ -18,6 +18,7 @@ from datetime import datetime
 from core.hands_database import (
     ComprehensiveHandsDatabase, HandCategory, ParsedHand, UserTaggedHandsManager
 )
+from core.gui_models import GridSettings
 
 
 class HandSimulationPanel(ttk.Frame):
@@ -31,21 +32,21 @@ class HandSimulationPanel(ttk.Frame):
             'action_index': 0,
             'is_playing': False
         }
+        # Font configuration
+        self.font_size = 16  # Default size, will be updated by main GUI
         self.setup_ui()
     
     def setup_ui(self):
         """Setup the simulation panel UI."""
         # Title
-        title_label = ttk.Label(self, text="🎮 Hand Simulation & Analysis", 
-                               font=("Arial", 14, "bold"))
-        title_label.pack(pady=(0, 10))
+        self.title_label = ttk.Label(self, text="🎮 Hand Simulation & Analysis")
+        self.title_label.pack(pady=(0, 10))
         
         # Hand info frame
         self.info_frame = ttk.LabelFrame(self, text="Hand Information")
         self.info_frame.pack(fill=tk.X, padx=5, pady=5)
         
-        self.hand_title_label = ttk.Label(self.info_frame, text="No hand selected",
-                                         font=("Arial", 12, "bold"))
+        self.hand_title_label = ttk.Label(self.info_frame, text="No hand selected")
         self.hand_title_label.pack(pady=5)
         
         # Players and positions frame
@@ -61,12 +62,11 @@ class HandSimulationPanel(ttk.Frame):
         board_display_frame.pack(fill=tk.X, pady=5)
         
         ttk.Label(board_display_frame, text="Board:").pack(side=tk.LEFT)
-        self.board_label = ttk.Label(board_display_frame, text="", 
-                                    font=("Courier", 12, "bold"))
+        self.board_label = ttk.Label(board_display_frame, text="")
         self.board_label.pack(side=tk.LEFT, padx=(10, 0))
         
         # Actions display
-        self.actions_text = tk.Text(self.board_frame, height=8, font=("Courier", 10))
+        self.actions_text = tk.Text(self.board_frame, height=8)
         actions_scrollbar = ttk.Scrollbar(self.board_frame, orient=tk.VERTICAL,
                                          command=self.actions_text.yview)
         self.actions_text.config(yscrollcommand=actions_scrollbar.set)
@@ -94,6 +94,34 @@ class HandSimulationPanel(ttk.Frame):
         self.analyze_btn = ttk.Button(controls_frame, text="📊 Analyze",
                                      command=self.analyze_hand)
         self.analyze_btn.pack(side=tk.RIGHT)
+        
+        # Apply initial font size
+        self.update_font_size(self.font_size)
+    
+    def update_font_size(self, new_size: int):
+        """Update font size for all components."""
+        self.font_size = new_size
+        
+        # Title (larger, bold)
+        title_font = ("Arial", int(new_size * 1.2), "bold")
+        self.title_label.config(font=title_font)
+        
+        # Hand title (medium, bold)
+        hand_title_font = ("Arial", new_size, "bold") 
+        self.hand_title_label.config(font=hand_title_font)
+        
+        # Board label (monospace, bold)
+        board_font = ("Courier", new_size, "bold")
+        self.board_label.config(font=board_font)
+        
+        # Actions text (monospace)
+        actions_font = ("Courier", int(new_size * 0.9))
+        self.actions_text.config(font=actions_font)
+        
+        # Update info label if it exists
+        if hasattr(self, 'hand_info_label'):
+            info_font = ("Arial", int(new_size * 0.9))
+            self.hand_info_label.config(font=info_font)
     
     def load_hand(self, hand: ParsedHand):
         """Load a hand for simulation."""
@@ -384,6 +412,9 @@ class EnhancedHandsReviewPanel(ttk.Frame):
         self.selected_hand: Optional[ParsedHand] = None
         self.current_filter_tag = ""
         
+        # Font configuration
+        self.font_size = 16  # Default size, will be updated by main GUI
+        
         self.setup_ui()
         self.load_all_hands()
     
@@ -403,13 +434,15 @@ class EnhancedHandsReviewPanel(ttk.Frame):
         
         self.setup_left_panel(left_panel)
         self.setup_right_panel(right_panel)
+        
+        # Apply initial font size
+        self.update_font_size(self.font_size)
     
     def setup_left_panel(self, parent):
         """Setup the left panel with categories and hands list."""
         # Title
-        title_label = ttk.Label(parent, text="🎯 Hands Review Center", 
-                               font=("Arial", 16, "bold"))
-        title_label.pack(pady=(0, 15))
+        self.title_label = ttk.Label(parent, text="🎯 Hands Review Center")
+        self.title_label.pack(pady=(0, 15))
         
         # Categories frame
         categories_frame = ttk.LabelFrame(parent, text="📂 Categories")
@@ -432,7 +465,7 @@ class EnhancedHandsReviewPanel(ttk.Frame):
         self.tagged_btn.pack(fill=tk.X, pady=2)
         
         # Stats display
-        self.stats_label = ttk.Label(categories_frame, text="", font=("Arial", 9))
+        self.stats_label = ttk.Label(categories_frame, text="")
         self.stats_label.pack(pady=5)
         
         # Search and filter frame
@@ -476,7 +509,7 @@ class EnhancedHandsReviewPanel(ttk.Frame):
         list_frame = ttk.Frame(hands_frame)
         list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        self.hands_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        self.hands_listbox = tk.Listbox(list_frame)
         hands_scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL,
                                        command=self.hands_listbox.yview)
         self.hands_listbox.config(yscrollcommand=hands_scrollbar.set)
@@ -805,3 +838,23 @@ class EnhancedHandsReviewPanel(ttk.Frame):
     def refresh_hands(self):
         """Refresh all hands data."""
         self.load_all_hands()
+    
+    def update_font_size(self, new_size: int):
+        """Update font size for all components."""
+        self.font_size = new_size
+        
+        # Main title (larger, bold)
+        title_font = ("Arial", int(new_size * 1.2), "bold")
+        self.title_label.config(font=title_font)
+        
+        # Stats label (smaller)
+        stats_font = ("Arial", int(new_size * 0.8))
+        self.stats_label.config(font=stats_font)
+        
+        # Hands listbox
+        listbox_font = ("Arial", int(new_size * 0.9))
+        self.hands_listbox.config(font=listbox_font)
+        
+        # Update simulation panel font size
+        if hasattr(self, 'simulation_panel'):
+            self.simulation_panel.update_font_size(new_size)
