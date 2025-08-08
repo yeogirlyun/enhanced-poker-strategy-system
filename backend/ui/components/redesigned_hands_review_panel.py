@@ -662,13 +662,15 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             return
             
         try:
+            print(f"🎯 Setting up legendary hand: {self.current_hand.metadata.name}")
+            
             # Configure players based on hand data
             players = self.current_hand.players or []
             
             # Ensure we have 6 players
             while len(players) < 6:
                 players.append({
-                    'name': f'Player {len(players) + 1}',
+                    'name': f'Folded Player {len(players) + 1}',
                     'cards': ['2c', '3d'],
                     'folded_preflop': True,
                     'position': f'Seat {len(players) + 1}',
@@ -678,20 +680,50 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Start a new hand in the state machine
             self.poker_state_machine.start_hand()
             
-            # Set up players with their specific cards
-            for i, player in enumerate(players[:6]):
-                cards = player.get('cards', ['2c', '3d'])
-                name = player.get('name', f'Player {i+1}')
+            # Set up players with their specific cards from the legendary hand
+            for i, player_data in enumerate(players[:6]):
+                cards = player_data.get('cards', ['2c', '3d'])
+                name = player_data.get('name', f'Player {i+1}')
+                stack = player_data.get('starting_stack_chips', 100000)
                 
-                # Deal cards to player (this will be mocked)
-                # The practice session will handle the visual display
+                print(f"👤 Setting up player {i+1}: {name} with cards {cards}")
                 
-            # The practice session already has its own state machine
-            # No need to assign it separately
+                # Get the actual player from the state machine
+                if i < len(self.poker_state_machine.players):
+                    player = self.poker_state_machine.players[i]
+                    player.name = name
+                    player.stack = stack
+                    player.cards = cards.copy()  # Copy the cards
+                    
+                    # Mark as folded if specified
+                    if player_data.get('folded_preflop', False):
+                        player.has_folded = True
+                        player.is_active = False
+                        print(f"❌ Player {name} marked as folded")
+                    else:
+                        player.has_folded = False
+                        player.is_active = True
+                        print(f"✅ Player {name} is active")
+            
+            # Load the board cards if available
+            if hasattr(self.current_hand, 'board') and self.current_hand.board:
+                board_cards = []
+                if 'flop' in self.current_hand.board:
+                    board_cards.extend(self.current_hand.board['flop'])
+                if 'turn' in self.current_hand.board:
+                    board_cards.append(self.current_hand.board['turn'])
+                if 'river' in self.current_hand.board:
+                    board_cards.append(self.current_hand.board['river'])
+                
+                if board_cards:
+                    print(f"🃏 Loading board cards: {board_cards}")
+                    self.poker_state_machine.game_state.board = board_cards.copy()
             
             # Force a UI update
             if hasattr(self.practice_session, 'update_display'):
                 self.practice_session.update_display()
+                
+            print(f"✅ Legendary hand setup complete: {self.current_hand.metadata.name}")
                 
         except Exception as e:
             print(f"❌ Error setting up legendary hand: {e}")
@@ -717,24 +749,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                 print("❌ No current player found")
                 return
             
-            # Mock action: for simplicity, players will mostly call or fold
-            # In a real implementation, we'd use the actual hand history
-            from core.poker_state_machine import ActionType
-            
-            # Determine action based on player position
-            # Get main players from the current hand
-            main_players = []
-            if hasattr(self.current_hand, 'players') and self.current_hand.players:
-                main_players = [p.get('name', '') for p in self.current_hand.players[:2]]
-            
-            if current_player.name in ["Player 0", "Player 1"] or current_player.name in main_players:
-                # Main players (from legendary hand) - usually call or raise
-                action_type = ActionType.CALL
-                amount = 0  # Call amount
-            else:
-                # Other players fold
-                action_type = ActionType.FOLD
-                amount = 0
+            # Use actual legendary hand actions if available
+            action_type, amount = self._get_legendary_hand_action(current_player)
             
             # Execute the action using the correct method
             self.poker_state_machine.execute_action(current_player, action_type, amount)
@@ -743,13 +759,71 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             if self.practice_session and hasattr(self.practice_session, 'update_display'):
                 self.practice_session.update_display()
             
-            print(f"✅ Action executed: {current_player.name} -> {action_type.name}")
+            print(f"✅ Action executed: {current_player.name} -> {action_type.name} (${amount})")
                     
         except Exception as e:
             print(f"❌ Error in next action: {e}")
             import traceback
             traceback.print_exc()
             messagebox.showerror("Simulation Error", f"Error advancing simulation: {str(e)}")
+    
+    def _get_legendary_hand_action(self, current_player):
+        """Get the next action from the legendary hand data."""
+        from core.poker_state_machine import ActionType
+        
+        # If we have legendary hand data with actions, use it
+        if hasattr(self.current_hand, 'actions') and self.current_hand.actions:
+            # Get current street
+            current_street = self.poker_state_machine.game_state.street.lower()
+            
+            # Get actions for current street
+            street_actions = self.current_hand.actions.get(current_street, [])
+            
+            # Find the next action for this player
+            for action in street_actions:
+                actor_index = action.get('actor', 0) - 1  # Convert to 0-based index
+                if actor_index < len(self.poker_state_machine.players):
+                    actor_player = self.poker_state_machine.players[actor_index]
+                    if actor_player.name == current_player.name:
+                        action_type_str = action.get('type', 'fold').upper()
+                        amount = action.get('amount', 0)
+                        
+                        # Convert action type string to ActionType enum
+                        if action_type_str == 'FOLD':
+                            return ActionType.FOLD, 0
+                        elif action_type_str == 'CALL':
+                            return ActionType.CALL, amount
+                        elif action_type_str == 'CHECK':
+                            return ActionType.CHECK, 0
+                        elif action_type_str == 'BET':
+                            return ActionType.BET, amount
+                        elif action_type_str == 'RAISE':
+                            return ActionType.RAISE, amount
+                        elif action_type_str == 'ALL-IN':
+                            return ActionType.ALL_IN, amount
+        
+        # Fallback: Use smart action based on player and situation
+        return self._get_smart_fallback_action(current_player)
+    
+    def _get_smart_fallback_action(self, current_player):
+        """Get a smart fallback action when legendary hand data is not available."""
+        from core.poker_state_machine import ActionType
+        
+        # Get main players from the current hand
+        main_players = []
+        if hasattr(self.current_hand, 'players') and self.current_hand.players:
+            main_players = [p.get('name', '') for p in self.current_hand.players[:2]]
+        
+        # Determine action based on player position
+        if current_player.name in main_players or current_player.name in ["Chris Moneymaker", "Sammy Farha", "Phil Ivey", "Tom Dwan"]:
+            # Main players (from legendary hand) - usually call or raise
+            if self.poker_state_machine.game_state.current_bet > current_player.current_bet:
+                return ActionType.CALL, 0
+            else:
+                return ActionType.CHECK, 0
+        else:
+            # Other players fold
+            return ActionType.FOLD, 0
     
     def toggle_auto_play(self):
         """Toggle automatic play mode."""
