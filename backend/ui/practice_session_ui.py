@@ -303,10 +303,12 @@ class PracticeSessionUI(ttk.Frame):
         self.sfx = SoundManager()
         
         # Initialize state machine with proper root reference
-        self.state_machine = ImprovedPokerStateMachine(
+        from core.poker_state_machine_adapter import PokerStateMachineAdapter
+        self.state_machine = PokerStateMachineAdapter(
             num_players=6,
             strategy_data=strategy_data,
-            root_tk=self.root  # Use the actual root window
+            root_tk=self.root,  # Use the actual root window
+            test_mode=False
         )
         
         # Set up callbacks after initialization

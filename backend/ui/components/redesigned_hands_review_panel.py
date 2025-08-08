@@ -637,7 +637,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         try:
             # Import practice session components
             from ui.practice_session_ui import PracticeSessionUI
-            from core.poker_state_machine import ImprovedPokerStateMachine
+            from core.poker_state_machine_adapter import PokerStateMachineAdapter
             
             # Clear previous session
             if self.practice_session:
