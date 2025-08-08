@@ -506,12 +506,16 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         amount = event.amount
         player_name = event.player_name
         
-        # Find player index
+        # Find player index by matching names more flexibly
         player_index = -1
         for i, player_seat in enumerate(self.player_seats):
             if player_seat and player_seat.get("name_label"):
-                if player_name in player_seat["name_label"].cget("text"):
+                seat_text = player_seat["name_label"].cget("text")
+                # Extract just the player name part (before position)
+                seat_name = seat_text.split(' (')[0]
+                if player_name == seat_name or player_name in seat_text:
                     player_index = i
+                    print(f"🎯 Found player {player_name} at index {i} (seat text: {seat_text})")
                     break
         
         if player_index >= 0:
@@ -578,16 +582,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             display_state = self.state_machine.get_game_info()
             players = display_state.get("players", [])
             
-            # Animate each player's current bet to the pot
-            for i, player in enumerate(players):
-                if player.get("current_bet", 0) > 0:
-                    print(f"💰 Animating {player.get('name')}'s ${player.get('current_bet')} to pot")
-                    self.play_animation("bet_to_pot", player_index=i, 
-                                     amount=player.get("current_bet"))
+            print(f"🎯 Round complete on {street} - animating {len(players)} player bets to pot")
             
-            # Clear all bet displays after animation
-            for i in range(len(players)):
-                self._remove_bet_display(i)
+            # Animate each player's current bet to the pot
+            animation_delay = 0
+            for i, player in enumerate(players):
+                current_bet = player.get("current_bet", 0)
+                if current_bet > 0:
+                    player_name = player.get('name', f'Player {i+1}')
+                    print(f"💰 Scheduling animation: {player_name}'s ${current_bet:,.0f} to pot (delay: {animation_delay}ms)")
+                    
+                    # Schedule staggered animations
+                    self.after(animation_delay, lambda idx=i, amt=current_bet: 
+                             self._animate_bet_to_pot(idx, amt))
+                    animation_delay += 150  # 150ms between each animation
+            
+            # Clear all bet displays after all animations complete
+            total_delay = animation_delay + 500  # Extra delay for last animation
+            self.after(total_delay, self._clear_all_bet_displays)
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -756,6 +768,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bet_window = self.bet_labels[player_index]
             self.canvas.delete(bet_window)
             del self.bet_labels[player_index]
+    
+    def _clear_all_bet_displays(self):
+        """Clear all bet displays at once."""
+        print("🧹 Clearing all bet displays")
+        for player_index in list(self.bet_labels.keys()):
+            self._remove_bet_display(player_index)
     
     def update_pot_amount(self, amount):
         """Update the pot amount display."""
