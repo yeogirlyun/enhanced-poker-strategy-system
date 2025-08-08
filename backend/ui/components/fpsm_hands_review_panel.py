@@ -582,7 +582,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 starting_stack=1000.0,
                 test_mode=False,  # Disable test mode to allow real card dealing
                 show_all_cards=True,  # Show all cards in simulation mode
-                auto_advance=False
+                auto_advance=True  # Enable auto-advance for smooth street progression
             )
             
             self.fpsm = FlexiblePokerStateMachine(config)
