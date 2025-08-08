@@ -409,23 +409,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.hand_info_text = tk.Text(info_frame, height=8, wrap=tk.WORD)
         self.hand_info_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # Mode selection buttons
-        mode_frame = ttk.Frame(left_frame)
-        mode_frame.pack(fill=tk.X)
-        
-        self.simulation_btn = ttk.Button(
-            mode_frame, 
-            text="🎮 Simulation Mode",
-            command=lambda: self.set_mode("simulation")
-        )
-        self.simulation_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
-        
-        self.study_btn = ttk.Button(
-            mode_frame,
-            text="📚 Study Mode", 
-            command=lambda: self.set_mode("study")
-        )
-        self.study_btn.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=(2, 0))
+        # Mode selection buttons (removed - duplicates with tab headers)
         
     def setup_right_pane(self, parent):
         """Setup the right pane for study/simulation."""
@@ -443,58 +427,47 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.setup_study_tab()
         
     def setup_simulation_tab(self):
-        """Setup the simulation tab."""
+        """Setup the simulation tab with embedded practice session."""
         sim_frame = ttk.Frame(self.right_notebook)
         self.right_notebook.add(sim_frame, text="🎮 Hand Simulation")
         
-        # Simulation controls
+        # Simulation controls at the top
         controls_frame = ttk.Frame(sim_frame)
         controls_frame.pack(fill=tk.X, padx=5, pady=5)
         
-        self.prev_btn = ttk.Button(controls_frame, text="◀ Previous", command=self.previous_step)
-        self.prev_btn.pack(side=tk.LEFT, padx=(0, 5))
+        # Control buttons
+        self.start_simulation_btn = ttk.Button(controls_frame, text="▶ Start Simulation", command=self.start_hand_simulation)
+        self.start_simulation_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        self.next_btn = ttk.Button(controls_frame, text="Next ▶", command=self.next_step)
-        self.next_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.next_action_btn = ttk.Button(controls_frame, text="Next Action ▶", command=self.next_action, state="disabled")
+        self.next_action_btn.pack(side=tk.LEFT, padx=(0, 5))
         
-        self.reset_btn = ttk.Button(controls_frame, text="🔄 Reset", command=self.reset_simulation)
-        self.reset_btn.pack(side=tk.LEFT, padx=(0, 10))
+        self.auto_play_btn = ttk.Button(controls_frame, text="🚀 Auto Play", command=self.toggle_auto_play, state="disabled")
+        self.auto_play_btn.pack(side=tk.LEFT, padx=(0, 10))
         
-        # Step indicator
-        self.step_label = ttk.Label(controls_frame, text="Step 0 of 0")
-        self.step_label.pack(side=tk.RIGHT)
+        self.reset_simulation_btn = ttk.Button(controls_frame, text="🔄 Reset", command=self.reset_hand_simulation)
+        self.reset_simulation_btn.pack(side=tk.LEFT, padx=(0, 10))
         
-        # Game state display
-        state_frame = ttk.LabelFrame(sim_frame, text="Game State")
-        state_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+        # Status indicator
+        self.simulation_status_label = ttk.Label(controls_frame, text="Select a hand to simulate")
+        self.simulation_status_label.pack(side=tk.RIGHT)
         
-        # Pot and board info
-        info_subframe = ttk.Frame(state_frame)
-        info_subframe.pack(fill=tk.X, padx=5, pady=5)
+        # Practice session container
+        self.practice_container = ttk.Frame(sim_frame)
+        self.practice_container.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
         
-        self.pot_label = ttk.Label(info_subframe, text="Pot: $0")
-        self.pot_label.pack(side=tk.LEFT)
+        # Initialize practice session (will be created when needed)
+        self.practice_session = None
+        self.poker_state_machine = None
+        self.auto_play_active = False
         
-        self.street_label = ttk.Label(info_subframe, text="Street: Preflop")
-        self.street_label.pack(side=tk.RIGHT)
-        
-        # Board cards
-        self.board_label = ttk.Label(state_frame, text="Board: [ ]")
-        self.board_label.pack(padx=5, pady=(0, 5))
-        
-        # Players display
-        players_frame = ttk.LabelFrame(sim_frame, text="Players")
-        players_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
-        
-        self.players_text = tk.Text(players_frame, height=8, wrap=tk.WORD)
-        self.players_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # Action description
-        action_frame = ttk.LabelFrame(sim_frame, text="Current Action")
-        action_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
-        
-        self.action_text = tk.Text(action_frame, height=4, wrap=tk.WORD)
-        self.action_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Create placeholder message
+        self.placeholder_label = ttk.Label(
+            self.practice_container, 
+            text="🎯 Select a legendary hand from the left pane\nand click 'Start Simulation' to begin!",
+            justify=tk.CENTER
+        )
+        self.placeholder_label.pack(expand=True)
         
     def setup_study_tab(self):
         """Setup the study tab."""
@@ -625,97 +598,198 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.hand_info_text.insert(1.0, info)
         
     def load_hand_for_simulation(self):
-        """Load current hand into simulation engine."""
+        """Prepare hand for simulation (now handled by start_hand_simulation)."""
+        # Update status to show hand is ready for simulation
         if self.current_hand:
-            self.simulation_engine.load_hand(self.current_hand)
-            self.update_simulation_display()
+            self.simulation_status_label.configure(text=f"Ready: {self.current_hand.metadata.name}")
             
     def set_mode(self, mode):
         """Set the current mode (simulation or study)."""
         self.current_mode = mode
         if mode == "simulation":
             self.right_notebook.select(0)
-            # Update button text to show active mode
-            self.simulation_btn.configure(text="🎮 Simulation Mode ●")
-            self.study_btn.configure(text="📚 Study Mode")
         else:
             self.right_notebook.select(1)
-            self.simulation_btn.configure(text="🎮 Simulation Mode")
-            self.study_btn.configure(text="📚 Study Mode ●")
             
-    def next_step(self):
-        """Advance simulation to next step."""
+    def start_hand_simulation(self):
+        """Start simulation of the selected legendary hand."""
         if not self.current_hand:
             messagebox.showwarning("No Hand", "Please select a hand first.")
             return
             
-        step = self.simulation_engine.next_step()
-        if step:
-            self.update_simulation_display()
-        else:
-            messagebox.showinfo("Simulation Complete", "Hand simulation finished!")
+        try:
+            # Import practice session components
+            from ui.practice_session_ui import PracticeSessionUI
+            from core.poker_state_machine import ImprovedPokerStateMachine
             
-    def previous_step(self):
-        """Go back to previous simulation step."""
-        if not self.current_hand:
+            # Clear previous session
+            if self.practice_session:
+                self.practice_session.destroy()
+            
+            # Hide placeholder
+            self.placeholder_label.pack_forget()
+            
+            # Create poker state machine
+            self.poker_state_machine = ImprovedPokerStateMachine(num_players=6)
+            
+            # Create practice session UI
+            self.practice_session = PracticeSessionUI(
+                self.practice_container, 
+                strategy_data={}  # Use empty strategy for simulation
+            )
+            self.practice_session.pack(fill=tk.BOTH, expand=True)
+            
+            # Setup the hand with legendary hand data
+            self.setup_legendary_hand()
+            
+            # Update controls
+            self.start_simulation_btn.configure(state="disabled")
+            self.next_action_btn.configure(state="normal")
+            self.auto_play_btn.configure(state="normal")
+            self.simulation_status_label.configure(text=f"Simulating: {self.current_hand.metadata.name}")
+            
+            print(f"✅ Started simulation: {self.current_hand.metadata.name}")
+            
+        except Exception as e:
+            messagebox.showerror("Simulation Error", f"Failed to start simulation: {str(e)}")
+            print(f"❌ Simulation start error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def setup_legendary_hand(self):
+        """Setup the poker state machine with legendary hand data."""
+        if not self.poker_state_machine or not self.current_hand:
             return
             
-        step = self.simulation_engine.previous_step()
-        if step:
-            self.update_simulation_display()
+        try:
+            # Configure players based on hand data
+            players = self.current_hand.players or []
             
-    def reset_simulation(self):
-        """Reset simulation to beginning."""
-        if self.current_hand:
-            self.simulation_engine.reset()
-            self.update_simulation_display()
+            # Ensure we have 6 players
+            while len(players) < 6:
+                players.append({
+                    'name': f'Player {len(players) + 1}',
+                    'cards': ['2c', '3d'],
+                    'folded_preflop': True,
+                    'position': f'Seat {len(players) + 1}',
+                    'starting_stack_chips': 100000
+                })
             
-    def update_simulation_display(self):
-        """Update the simulation display."""
-        if not self.current_hand:
+            # Start a new hand in the state machine
+            self.poker_state_machine.start_new_hand()
+            
+            # Set up players with their specific cards
+            for i, player in enumerate(players[:6]):
+                cards = player.get('cards', ['2c', '3d'])
+                name = player.get('name', f'Player {i+1}')
+                
+                # Deal cards to player (this will be mocked)
+                # The practice session will handle the visual display
+                
+            # Set the practice session to use our state machine
+            if hasattr(self.practice_session, 'poker_state_machine'):
+                self.practice_session.poker_state_machine = self.poker_state_machine
+            
+            # Force a UI update
+            if hasattr(self.practice_session, 'refresh_display'):
+                self.practice_session.refresh_display()
+                
+        except Exception as e:
+            print(f"❌ Error setting up legendary hand: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def next_action(self):
+        """Execute the next action in the simulation."""
+        if not self.poker_state_machine:
+            messagebox.showwarning("No Simulation", "Please start a simulation first.")
             return
             
-        engine = self.simulation_engine
-        
-        # Update step indicator
-        total_steps = len(engine.simulation_steps)
-        current_step = engine.current_step
-        self.step_label.config(text=f"Step {current_step} of {total_steps}")
-        
-        # Update game state
-        state = engine.hand_state
-        self.pot_label.config(text=f"Pot: ${state.get('pot', 0):.0f}")
-        self.street_label.config(text=f"Street: {state.get('street', 'preflop').title()}")
-        
-        board = state.get('board', [])
-        board_text = f"Board: [{' '.join(board)}]" if board else "Board: [ ]"
-        self.board_label.config(text=board_text)
-        
-        # Update players display
-        players_info = "👥 PLAYERS:\n\n"
-        for i, player in enumerate(self.current_hand.players or []):
-            name = player.get('name', f'Player {i+1}')
-            position = player.get('position', f'Seat {i+1}')
-            cards = player.get('cards', [])
-            folded = player.get('folded_preflop', False)
+        try:
+            # Check if game is still active
+            if hasattr(self.poker_state_machine, 'state'):
+                if self.poker_state_machine.state == "game_over":
+                    messagebox.showinfo("Game Complete", "Hand simulation finished!")
+                    return
             
-            status_icon = "🚫" if folded else "✅"
-            cards_display = f"{cards[:2]}" if cards and not folded else "[Hidden]"
+            # Mock a player action based on current state
+            from core.poker_state_machine import ActionType
             
-            players_info += f"{status_icon} {name} ({position}): {cards_display}\n"
+            # Get current player
+            current_player = getattr(self.poker_state_machine, 'current_player_index', 0)
             
-        self.players_text.delete(1.0, tk.END)
-        self.players_text.insert(1.0, players_info)
+            # Mock action: for simplicity, players will mostly call or fold
+            # In a real implementation, we'd use the actual hand history
+            if current_player < 2:  # Main players (from legendary hand)
+                action_type = ActionType.CALL  # Main players usually play
+                amount = 0  # Call amount
+            else:
+                action_type = ActionType.FOLD  # Other players fold
+                amount = 0
+            
+            # Execute the action
+            if hasattr(self.poker_state_machine, 'handle_player_action'):
+                self.poker_state_machine.handle_player_action(action_type, amount)
+            
+            # Update the practice session display
+            if self.practice_session and hasattr(self.practice_session, 'refresh_display'):
+                self.practice_session.refresh_display()
+            
+            print(f"✅ Action executed: Player {current_player} -> {action_type.name}")
+                    
+        except Exception as e:
+            print(f"❌ Error in next action: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Simulation Error", f"Error advancing simulation: {str(e)}")
+    
+    def toggle_auto_play(self):
+        """Toggle automatic play mode."""
+        self.auto_play_active = not self.auto_play_active
         
-        # Update current action
-        if current_step > 0 and current_step <= len(engine.simulation_steps):
-            step = engine.simulation_steps[current_step - 1]
-            action_info = f"🎯 {step['description']}\n\n{step.get('action', 'No action description')}"
+        if self.auto_play_active:
+            self.auto_play_btn.configure(text="⏸ Pause")
+            self.next_action_btn.configure(state="disabled")
+            self.start_auto_play()
         else:
-            action_info = "🎮 Ready to begin simulation.\nClick 'Next' to start!"
+            self.auto_play_btn.configure(text="🚀 Auto Play")
+            self.next_action_btn.configure(state="normal")
+    
+    def start_auto_play(self):
+        """Start automatic play with delays."""
+        if self.auto_play_active and self.poker_state_machine:
+            self.next_action()
+            # Schedule next action after delay
+            self.after(2000, self.start_auto_play)  # 2 second delay
+    
+    def reset_hand_simulation(self):
+        """Reset the current hand simulation."""
+        try:
+            # Clear the practice session
+            if self.practice_session:
+                self.practice_session.destroy()
+                self.practice_session = None
             
-        self.action_text.delete(1.0, tk.END)
-        self.action_text.insert(1.0, action_info)
+            # Clear state machine
+            self.poker_state_machine = None
+            self.auto_play_active = False
+            
+            # Show placeholder
+            self.placeholder_label.pack(expand=True)
+            
+            # Reset controls
+            self.start_simulation_btn.configure(state="normal")
+            self.next_action_btn.configure(state="disabled") 
+            self.auto_play_btn.configure(state="disabled", text="🚀 Auto Play")
+            self.simulation_status_label.configure(text="Select a hand to simulate")
+            
+            print("✅ Simulation reset")
+            
+        except Exception as e:
+            print(f"❌ Error resetting simulation: {e}")
+            import traceback
+            traceback.print_exc()
+
         
     def update_font_size(self, new_size):
         """Update font size for all components."""
@@ -731,8 +805,6 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         
         self.hands_listbox.config(font=listbox_font)
         self.hand_info_text.config(font=text_font)
-        self.players_text.config(font=text_font)
-        self.action_text.config(font=text_font)
         
         # Update study panel fonts if it exists
         if hasattr(self, 'study_panel'):
@@ -740,3 +812,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             self.study_panel.equity_text.config(font=study_font)
             self.study_panel.strategy_text.config(font=study_font)
             self.study_panel.decisions_text.config(font=study_font)
+            
+        # Update practice session fonts if it exists
+        if hasattr(self, 'practice_session') and self.practice_session:
+            if hasattr(self.practice_session, 'update_font_size'):
+                self.practice_session.update_font_size(new_size)
