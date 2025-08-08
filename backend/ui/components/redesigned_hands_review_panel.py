@@ -761,15 +761,12 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Load the board cards if available
             if hasattr(self.current_hand, 'board') and self.current_hand.board:
                 board_cards = []
+                # Only load flop cards initially - turn and river will be added as the hand progresses
                 if 'flop' in self.current_hand.board:
                     board_cards.extend(self.current_hand.board['flop'])
-                if 'turn' in self.current_hand.board:
-                    board_cards.append(self.current_hand.board['turn'])
-                if 'river' in self.current_hand.board:
-                    board_cards.append(self.current_hand.board['river'])
                 
                 if board_cards:
-                    print(f"🃏 Loading board cards: {board_cards}")
+                    print(f"🃏 Loading flop cards: {board_cards}")
                     # Handle both old and new state machine structures
                     if hasattr(self.poker_state_machine, 'game_state'):
                         self.poker_state_machine.game_state.board = board_cards.copy()
@@ -779,6 +776,10 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Force a UI update
             if hasattr(self.practice_session, 'update_display'):
                 self.practice_session.update_display()
+            
+            # Reveal all cards for simulation mode
+            if hasattr(self.practice_session, 'reveal_all_cards_for_simulation'):
+                self.practice_session.reveal_all_cards_for_simulation()
             
             # Update the notes panel with player information
             self.update_legendary_hand_notes()
@@ -888,6 +889,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                     messagebox.showinfo("Game Complete", "Hand simulation finished!")
                     return
             
+            # Check if we need to progress to the next street and add board cards
+            self._progress_board_cards()
+            
             # Get current player
             current_player = self.poker_state_machine.get_action_player()
             if not current_player:
@@ -911,6 +915,49 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             import traceback
             traceback.print_exc()
             messagebox.showerror("Simulation Error", f"Error advancing simulation: {str(e)}")
+    
+    def _progress_board_cards(self):
+        """Progress board cards as the hand advances."""
+        if not hasattr(self.current_hand, 'board') or not self.current_hand.board:
+            return
+        
+        # Get current street
+        if hasattr(self.poker_state_machine, 'game_state') and hasattr(self.poker_state_machine.game_state, 'street'):
+            current_street = self.poker_state_machine.game_state.street.lower()
+        elif hasattr(self.poker_state_machine, 'current_state'):
+            # Map state to street
+            state_to_street = {
+                'PREFLOP_BETTING': 'preflop',
+                'FLOP_BETTING': 'flop', 
+                'TURN_BETTING': 'turn',
+                'RIVER_BETTING': 'river'
+            }
+            current_street = state_to_street.get(self.poker_state_machine.current_state.value, 'preflop')
+        else:
+            current_street = 'preflop'
+        
+        # Get current board
+        current_board = []
+        if hasattr(self.poker_state_machine, 'game_state') and hasattr(self.poker_state_machine.game_state, 'board'):
+            current_board = self.poker_state_machine.game_state.board
+        
+        # Check if we need to add turn card
+        if current_street == 'turn' and len(current_board) == 3 and 'turn' in self.current_hand.board:
+            turn_card = self.current_hand.board['turn']
+            if turn_card not in current_board:
+                current_board.append(turn_card)
+                print(f"🃏 Adding turn card: {turn_card}")
+                if hasattr(self.poker_state_machine, 'game_state'):
+                    self.poker_state_machine.game_state.board = current_board.copy()
+        
+        # Check if we need to add river card
+        elif current_street == 'river' and len(current_board) == 4 and 'river' in self.current_hand.board:
+            river_card = self.current_hand.board['river']
+            if river_card not in current_board:
+                current_board.append(river_card)
+                print(f"🃏 Adding river card: {river_card}")
+                if hasattr(self.poker_state_machine, 'game_state'):
+                    self.poker_state_machine.game_state.board = current_board.copy()
     
     def _get_legendary_hand_action(self, current_player):
         """Get the next action from the legendary hand data."""

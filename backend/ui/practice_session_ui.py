@@ -2451,14 +2451,43 @@ class PracticeSessionUI(ttk.Frame):
         card_widgets = player_seat.get("card_widgets", [])
         
         if card_index < len(card_widgets):
-            # FIXED: Don't show any cards during dealing animation - store them only
-            # All players (including human) show card backs during dealing
-            card_widgets[card_index].set_card("")  # Show card back during dealing
-            card_widgets[card_index]._current_card = card  # Store actual card for later
-            # DEBUG: Extra logging for human player
-            if player_index == 0:
-                self._log_message(f"🐛 DEAL DEBUG - Player 0 card {card_index}: stored {card}")
-            self._log_message(f"🃏 Stored card {card_index} for Player {player_index}: {card} (showing back during dealing)")
+            # Check if we're in simulation mode (show all cards)
+            is_simulation_mode = hasattr(self, 'state_machine') and hasattr(self.state_machine, 'config') and getattr(self.state_machine.config, 'show_all_cards', False)
+            
+            if is_simulation_mode:
+                # In simulation mode, reveal cards immediately
+                card_widgets[card_index].set_card(card)
+                self._log_message(f"🃏 Revealed card {card_index} for Player {player_index}: {card} (simulation mode)")
+            else:
+                # Normal mode: store cards but show backs during dealing
+                card_widgets[card_index].set_card("")  # Show card back during dealing
+                card_widgets[card_index]._current_card = card  # Store actual card for later
+                # DEBUG: Extra logging for human player
+                if player_index == 0:
+                    self._log_message(f"🐛 DEAL DEBUG - Player 0 card {card_index}: stored {card}")
+                self._log_message(f"🃏 Stored card {card_index} for Player {player_index}: {card} (showing back during dealing)")
+    
+    def reveal_all_cards_for_simulation(self):
+        """Reveal all cards for simulation mode."""
+        for player_index, player_seat in enumerate(self.player_seats):
+            if player_seat:
+                card_widgets = player_seat.get("card_widgets", [])
+                for card_index, card_widget in enumerate(card_widgets):
+                    if hasattr(card_widget, '_current_card') and card_widget._current_card:
+                        # Reveal the stored card
+                        card_widget.set_card(card_widget._current_card)
+                        self._log_message(f"🃏 Revealed card {card_index} for Player {player_index}: {card_widget._current_card}")
+                    elif hasattr(self, 'state_machine') and hasattr(self.state_machine, 'game_state'):
+                        # Try to get cards from state machine
+                        try:
+                            if player_index < len(self.state_machine.game_state.players):
+                                player = self.state_machine.game_state.players[player_index]
+                                if hasattr(player, 'cards') and card_index < len(player.cards):
+                                    card = player.cards[card_index]
+                                    card_widget.set_card(card)
+                                    self._log_message(f"🃏 Revealed card {card_index} for Player {player_index}: {card}")
+                        except (IndexError, AttributeError):
+                            pass
     
     def _format_card(self, card_str: str) -> str:
         """Formats a card string for display with proper colors."""
