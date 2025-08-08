@@ -15,7 +15,7 @@ import json
 from typing import List, Dict, Any, Optional, Set
 from datetime import datetime
 
-from ...core.hands_database import (
+from core.hands_database import (
     ComprehensiveHandsDatabase, HandCategory, ParsedHand, UserTaggedHandsManager
 )
 

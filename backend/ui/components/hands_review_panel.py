@@ -16,7 +16,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from tests.legendary_hands_manager import LegendaryHandsManager
-from ...core.phh_converter import PracticeHandsPHHManager
+from core.phh_converter import PracticeHandsPHHManager
 
 
 class HandsReviewPanel(ttk.Frame):
