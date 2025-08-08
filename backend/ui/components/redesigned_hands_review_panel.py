@@ -629,15 +629,15 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Hide placeholder
             self.placeholder_label.pack_forget()
             
-            # Create poker state machine
-            self.poker_state_machine = ImprovedPokerStateMachine(num_players=6)
-            
-            # Create practice session UI
+            # Create practice session UI (it creates its own state machine)
             self.practice_session = PracticeSessionUI(
                 self.practice_container, 
                 strategy_data={}  # Use empty strategy for simulation
             )
             self.practice_session.pack(fill=tk.BOTH, expand=True)
+            
+            # Get the state machine from the practice session
+            self.poker_state_machine = self.practice_session.state_machine
             
             # Setup the hand with legendary hand data
             self.setup_legendary_hand()
@@ -686,13 +686,12 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                 # Deal cards to player (this will be mocked)
                 # The practice session will handle the visual display
                 
-            # Set the practice session to use our state machine
-            if hasattr(self.practice_session, 'poker_state_machine'):
-                self.practice_session.poker_state_machine = self.poker_state_machine
+            # The practice session already has its own state machine
+            # No need to assign it separately
             
             # Force a UI update
-            if hasattr(self.practice_session, 'refresh_display'):
-                self.practice_session.refresh_display()
+            if hasattr(self.practice_session, 'update_display'):
+                self.practice_session.update_display()
                 
         except Exception as e:
             print(f"❌ Error setting up legendary hand: {e}")
@@ -741,8 +740,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             self.poker_state_machine.execute_action(current_player, action_type, amount)
             
             # Update the practice session display
-            if self.practice_session and hasattr(self.practice_session, 'refresh_display'):
-                self.practice_session.refresh_display()
+            if self.practice_session and hasattr(self.practice_session, 'update_display'):
+                self.practice_session.update_display()
             
             print(f"✅ Action executed: {current_player.name} -> {action_type.name}")
                     
