@@ -712,30 +712,34 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                     messagebox.showinfo("Game Complete", "Hand simulation finished!")
                     return
             
-            # Mock a player action based on current state
-            from core.poker_state_machine import ActionType
-            
             # Get current player
-            current_player = getattr(self.poker_state_machine, 'current_player_index', 0)
+            current_player = self.poker_state_machine.get_action_player()
+            if not current_player:
+                print("❌ No current player found")
+                return
             
             # Mock action: for simplicity, players will mostly call or fold
             # In a real implementation, we'd use the actual hand history
-            if current_player < 2:  # Main players (from legendary hand)
-                action_type = ActionType.CALL  # Main players usually play
+            from core.poker_state_machine import ActionType
+            
+            # Determine action based on player position
+            if current_player.name in ["Player 0", "Player 1"] or current_player.name in [p.get('name', '') for p in self.current_hand.get('players', [])[:2]]:
+                # Main players (from legendary hand) - usually call or raise
+                action_type = ActionType.CALL
                 amount = 0  # Call amount
             else:
-                action_type = ActionType.FOLD  # Other players fold
+                # Other players fold
+                action_type = ActionType.FOLD
                 amount = 0
             
-            # Execute the action
-            if hasattr(self.poker_state_machine, 'handle_player_action'):
-                self.poker_state_machine.handle_player_action(action_type, amount)
+            # Execute the action using the correct method
+            self.poker_state_machine.execute_action(current_player, action_type, amount)
             
             # Update the practice session display
             if self.practice_session and hasattr(self.practice_session, 'refresh_display'):
                 self.practice_session.refresh_display()
             
-            print(f"✅ Action executed: Player {current_player} -> {action_type.name}")
+            print(f"✅ Action executed: {current_player.name} -> {action_type.name}")
                     
         except Exception as e:
             print(f"❌ Error in next action: {e}")
