@@ -704,6 +704,11 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                         player.has_folded = False
                         player.is_active = True
                         print(f"✅ Player {name} is active")
+                    
+                    # Update the game state to reflect the player changes
+                    if hasattr(self.poker_state_machine, 'game_state') and self.poker_state_machine.game_state:
+                        if i < len(self.poker_state_machine.game_state.players):
+                            self.poker_state_machine.game_state.players[i] = player
             
             # Load the board cards if available
             if hasattr(self.current_hand, 'board') and self.current_hand.board:
@@ -776,8 +781,12 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Get current street
             current_street = self.poker_state_machine.game_state.street.lower()
             
+            print(f"🎯 Looking for actions on street: {current_street}")
+            print(f"🎯 Current player: {current_player.name}")
+            
             # Get actions for current street
             street_actions = self.current_hand.actions.get(current_street, [])
+            print(f"🎯 Found {len(street_actions)} actions for {current_street}")
             
             # Find the next action for this player
             for action in street_actions:
@@ -787,6 +796,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                     if actor_player.name == current_player.name:
                         action_type_str = action.get('type', 'fold').upper()
                         amount = action.get('amount', 0)
+                        
+                        print(f"🎯 Found action for {current_player.name}: {action_type_str} (${amount})")
                         
                         # Convert action type string to ActionType enum
                         if action_type_str == 'FOLD':
@@ -803,6 +814,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                             # ALL-IN is handled as a RAISE with the player's full stack
                             return ActionType.RAISE, amount
         
+        print(f"🎯 No legendary hand action found for {current_player.name}, using fallback")
         # Fallback: Use smart action based on player and situation
         return self._get_smart_fallback_action(current_player)
     
