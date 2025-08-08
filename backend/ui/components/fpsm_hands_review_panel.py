@@ -738,6 +738,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             )
             self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
+            # Reset change tracking for flicker-free updates
+            self.poker_game_widget.reset_change_tracking()
+            
             # Connect RPGW logging to our display
             self._connect_rpgw_logging()
             

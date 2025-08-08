@@ -52,15 +52,108 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.layout_manager = self.LayoutManager()
         self.bet_labels = {}  # Store bet display labels for cleanup
         
+        # Change tracking to prevent unnecessary redraws (FLICKER-FREE)
+        self.last_player_states = {}  # Track each player's last state
+        self.last_pot_amount = 0.0
+        
+        # Bet display system (money graphics in front of players)
+        self.player_bet_displays = {}  # Store bet display widgets for each player
+        
         # Sound manager
         self.sound_manager = SoundManager(test_mode=False)
+        
+    def reset_change_tracking(self):
+        """Reset all change tracking for a new hand (prevents false change detection)."""
+        print("🔄 Resetting change tracking for new hand")
+        self.last_player_states.clear()
+        self.last_pot_amount = 0.0
+        if hasattr(self, 'last_board_cards'):
+            self.last_board_cards.clear()
+        
+        # Clear bet displays for new hand
+        self._clear_all_bet_displays_permanent()
+    
+    def _create_bet_display_for_player(self, player_index: int):
+        """Create a bet display widget positioned in front of a player."""
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+        
+        # Calculate position between player and center of table
+        player_seat = self.player_seats[player_index]
+        player_x, player_y = player_seat["position"]
+        
+        # Position bet display closer to table center
+        center_x = self.canvas.winfo_width() // 2
+        center_y = self.canvas.winfo_height() // 2
+        
+        # Bet display positioned 60% toward center from player
+        bet_x = player_x + (center_x - player_x) * 0.6
+        bet_y = player_y + (center_y - player_y) * 0.6
+        
+        # Create bet display widget
+        bet_widget = tk.Label(
+            self.canvas,
+            text="",
+            bg="#2c3e50",  # Dark blue background
+            fg="gold",     # Gold text
+            font=("Arial", 12, "bold"),
+            bd=2,
+            relief="raised",
+            padx=8,
+            pady=4
+        )
+        
+        bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_widget, anchor="center")
+        
+        # Store the bet display
+        self.player_bet_displays[player_index] = {
+            "widget": bet_widget,
+            "window": bet_window,
+            "amount": 0.0
+        }
+        
+        # Initially hidden
+        self.canvas.itemconfig(bet_window, state="hidden")
+        
+        print(f"💰 Created bet display for player {player_index} at ({bet_x:.0f}, {bet_y:.0f})")
+    
+    def _show_bet_display_for_player(self, player_index: int, action: str, amount: float):
+        """Show money graphics in front of a player when they bet/call."""
+        # Create bet display if it doesn't exist
+        if player_index not in self.player_bet_displays:
+            self._create_bet_display_for_player(player_index)
+        
+        if player_index not in self.player_bet_displays:
+            return
+        
+        bet_display = self.player_bet_displays[player_index]
+        bet_widget = bet_display["widget"]
+        bet_window = bet_display["window"]
+        
+        if amount > 0:
+            # Show the money amount in front of player
+            bet_widget.config(text=f"💰 ${amount:,.0f}")
+            self.canvas.itemconfig(bet_window, state="normal")
+            bet_display["amount"] = amount
+            print(f"💸 Showing ${amount:,.0f} in front of player {player_index}")
+        else:
+            # Hide for non-betting actions
+            self.canvas.itemconfig(bet_window, state="hidden")
+            bet_display["amount"] = 0.0
+    
+    def _clear_all_bet_displays_permanent(self):
+        """Clear all bet displays for new hand."""
+        print("🧹 Clearing all player bet displays")
+        for player_index, bet_display in self.player_bet_displays.items():
+            bet_window = bet_display["window"]
+            self.canvas.itemconfig(bet_window, state="hidden")
+            bet_display["amount"] = 0.0
         
         # Session logger for comprehensive logging
         self.session_logger = get_session_logger()
         
         # Logging state tracking
         self.current_hand_id = None
-        self.last_pot_amount = 0.0
         self.last_player_stacks = {}
         self.last_player_bets = {}
         self.current_street = "preflop"
@@ -378,38 +471,63 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._highlight_current_player(action_player_index)
     
     def _update_player_from_display_state(self, player_index: int, player_info: Dict[str, Any]):
-        """Update a single player based on display state."""
+        """Update a single player based on display state (FLICKER-FREE VERSION)."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
         player_seat = self.player_seats[player_index]
         
-        # Update player name
+        # Get current state for comparison
+        last_state = self.last_player_states.get(player_index, {})
+        
+        # Extract new state
         name = player_info.get("name", f"Player {player_index+1}")
         position = player_info.get("position", "")
-        player_seat["name_label"].config(text=f"{name} ({position})")
-        
-        # Update stack
         stack_amount = player_info.get("stack", 1000.0)
-        player_seat["stack_label"].config(text=f"${stack_amount:,.2f}")
-        
-        # Update bet
         bet_amount = player_info.get("current_bet", 0.0)
-        if bet_amount > 0:
-            player_seat["bet_label"].config(text=f"Bet: ${bet_amount:,.2f}")
-        else:
-            player_seat["bet_label"].config(text="")
-        
-        # Update player cards
         cards = player_info.get("cards", [])
-        self._set_player_cards_from_display_state(player_index, cards)
+        has_folded = player_info.get("has_folded", False)
         
-        # Update folded status
-        if player_info.get("has_folded", False):
-            self._mark_player_folded(player_index)
+        # Only update name if it changed
+        name_text = f"{name} ({position})"
+        if last_state.get("name_text") != name_text:
+            player_seat["name_label"].config(text=name_text)
+            print(f"🎯 Updated player {player_index} name: {name_text}")
+        
+        # Only update stack if it changed
+        if last_state.get("stack", 0.0) != stack_amount:
+            player_seat["stack_label"].config(text=f"${stack_amount:,.2f}")
+            print(f"💰 Updated player {player_index} stack: ${stack_amount:,.2f}")
+        
+        # Only update bet if it changed
+        bet_text = f"Bet: ${bet_amount:,.2f}" if bet_amount > 0 else ""
+        if last_state.get("bet_text") != bet_text:
+            player_seat["bet_label"].config(text=bet_text)
+            if bet_amount > 0:
+                print(f"💸 Updated player {player_index} bet: ${bet_amount:,.2f}")
+        
+        # Only update cards if they changed
+        if last_state.get("cards") != cards:
+            self._set_player_cards_from_display_state(player_index, cards)
+            print(f"🎴 Updated player {player_index} cards: {cards}")
+        
+        # Only update folded status if it changed
+        if last_state.get("has_folded", False) != has_folded:
+            if has_folded:
+                self._mark_player_folded(player_index)
+                print(f"❌ Player {player_index} folded")
+        
+        # Store the current state for next comparison
+        self.last_player_states[player_index] = {
+            "name_text": name_text,
+            "stack": stack_amount,
+            "bet_text": bet_text,
+            "cards": cards.copy() if cards else [],
+            "has_folded": has_folded
+        }
     
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
-        """Set player cards based on display state."""
+        """Set player cards based on display state (FLICKER-FREE VERSION)."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
@@ -420,18 +538,26 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             for i in range(2):
                 card = cards[i] if i < len(cards) else ""
                 
-                if card and card != "**" and card != "" and card is not None:
-                    try:
-                        card_widgets[i].set_card(card, is_folded=False)
-                    except tk.TclError:
-                        # Widget was destroyed, skip
-                        pass
-                else:
-                    try:
-                        card_widgets[i].set_card("", is_folded=False)
-                    except tk.TclError:
-                        # Widget was destroyed, skip
-                        pass
+                # Check if card actually changed to prevent redraw
+                current_card = getattr(card_widgets[i], '_current_card', "")
+                
+                if current_card != card:
+                    if card and card != "**" and card != "" and card is not None:
+                        try:
+                            card_widgets[i].set_card(card, is_folded=False)
+                            card_widgets[i]._current_card = card
+                            print(f"🎴 Player {player_index} card {i}: {current_card} → {card}")
+                        except tk.TclError:
+                            # Widget was destroyed, skip
+                            pass
+                    else:
+                        try:
+                            card_widgets[i].set_card("", is_folded=False)
+                            card_widgets[i]._current_card = ""
+                            print(f"🎴 Player {player_index} card {i}: cleared")
+                        except tk.TclError:
+                            # Widget was destroyed, skip
+                            pass
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
@@ -446,11 +572,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not hasattr(self, 'last_board_cards'):
             self.last_board_cards = []
         
+        # Check game state - don't show community cards during preflop
+        current_state = None
+        if hasattr(self, 'state_machine') and self.state_machine:
+            if hasattr(self.state_machine, 'current_state'):
+                current_state = str(self.state_machine.current_state)
+            elif hasattr(self.state_machine, 'get_current_state'):
+                current_state = str(self.state_machine.get_current_state())
+        
+        # Hide community cards during preflop betting
+        if current_state and 'PREFLOP_BETTING' in current_state:
+            print(f"🚫 Hiding community cards during preflop betting (state: {current_state})")
+            for i, card_widget in enumerate(self.community_card_widgets):
+                try:
+                    card_widget.set_card("", is_folded=False)
+                    card_widget._current_card = ""
+                except tk.TclError:
+                    pass
+            self.last_board_cards = []
+            return
+        
         # Only update if board cards have actually changed (prevents flickering)
         if board_cards == self.last_board_cards:
             return  # No change needed
         
-        print(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        print(f"🎴 Board changed: {self.last_board_cards} → {board_cards} (state: {current_state})")
         
         # EFFICIENT UPDATE: Only change cards that are different
         for i, card_widget in enumerate(self.community_card_widgets):
@@ -550,9 +696,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 elif action.value == "check":
                     self.play_sound("check")
             
-            # Show bet display in player area (not animate to pot)
+            # Show bet display in front of player (proper money graphics)
             if amount > 0:
-                self.show_bet_display(player_index, action.value if action else "bet", amount)
+                self._show_bet_display_for_player(player_index, action.value if action else "bet", amount)
         else:
             print(f"⚠️ Could not find player index for {player_name}")
     
@@ -618,6 +764,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Clear all bet displays after all animations complete
             total_delay = animation_delay + 500  # Extra delay for last animation
             self.after(total_delay, self._clear_all_bet_displays)
+            self.after(total_delay, self._clear_all_bet_displays_permanent)
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -794,9 +941,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._remove_bet_display(player_index)
     
     def update_pot_amount(self, amount):
-        """Update the pot amount display."""
-        if self.pot_label:
-            self.pot_label.config(text=f"${amount:.2f}")
+        """Update the pot amount display (FLICKER-FREE VERSION)."""
+        # Only update if pot amount actually changed
+        if self.last_pot_amount != amount:
+            if self.pot_label:
+                self.pot_label.config(text=f"${amount:.2f}")
+                print(f"💰 Updated pot: ${self.last_pot_amount:.2f} → ${amount:.2f}")
+            self.last_pot_amount = amount
     
     def play_sound(self, sound_type: str, **kwargs):
         """Play a sound effect."""
