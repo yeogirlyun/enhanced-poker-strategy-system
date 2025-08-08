@@ -209,7 +209,7 @@ class TestSimulationHandsReview(unittest.TestCase):
         )
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_simulation_startup(self, mock_state_machine_class, mock_practice_session_class):
         """Test that simulation starts up correctly."""
         # Setup mocks
@@ -236,12 +236,19 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Simulation startup test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_legendary_hand_setup(self, mock_state_machine_class, mock_practice_session_class):
         """Test that legendary hand setup works correctly."""
         # Setup mocks
         mock_state_machine_class.return_value = self.mock_state_machine
         mock_practice_session_class.return_value = self.mock_practice_session
+        
+        # Mock the state machine structure
+        self.mock_state_machine.game_state = Mock()
+        # Create a list of mock players
+        mock_players = [Mock() for _ in range(6)]
+        self.mock_state_machine.game_state.players = mock_players
+        self.mock_state_machine.game_state.board = []
         
         # Create the panel
         panel = RedesignedHandsReviewPanel(self.mock_tk.frame)
@@ -261,12 +268,26 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Legendary hand setup test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_next_action_execution(self, mock_state_machine_class, mock_practice_session_class):
         """Test that next action execution works correctly."""
         # Setup mocks
         mock_state_machine_class.return_value = self.mock_state_machine
         mock_practice_session_class.return_value = self.mock_practice_session
+        
+        # Mock the state machine structure
+        self.mock_state_machine.game_state = Mock()
+        self.mock_state_machine.game_state.players = [Mock() for _ in range(6)]
+        self.mock_state_machine.game_state.board = []
+        self.mock_state_machine.game_state.street = 'preflop'
+        self.mock_state_machine.current_state = Mock()
+        self.mock_state_machine.current_state.value = 'PREFLOP_BETTING'
+        
+        # Mock get_action_player to return a player
+        mock_player = Mock()
+        mock_player.name = "Chris Moneymaker"
+        mock_player.current_bet = 0
+        self.mock_state_machine.get_action_player.return_value = mock_player
         
         # Create the panel
         panel = RedesignedHandsReviewPanel(self.mock_tk.frame)
@@ -286,7 +307,7 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Next action execution test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_simulation_completion(self, mock_state_machine_class, mock_practice_session_class):
         """Test that simulation handles completion correctly."""
         # Setup mocks
@@ -294,7 +315,8 @@ class TestSimulationHandsReview(unittest.TestCase):
         mock_practice_session_class.return_value = self.mock_practice_session
         
         # Set state to game over
-        self.mock_state_machine.state = "game_over"
+        self.mock_state_machine.current_state = Mock()
+        self.mock_state_machine.current_state.value = "END_HAND"
         
         # Create the panel
         panel = RedesignedHandsReviewPanel(self.mock_tk.frame)
@@ -311,12 +333,27 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Simulation completion test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_player_action_logic(self, mock_state_machine_class, mock_practice_session_class):
         """Test that player action logic works correctly."""
         # Setup mocks
         mock_state_machine_class.return_value = self.mock_state_machine
         mock_practice_session_class.return_value = self.mock_practice_session
+        
+        # Mock the state machine structure
+        self.mock_state_machine.game_state = Mock()
+        self.mock_state_machine.game_state.players = [Mock() for _ in range(6)]
+        self.mock_state_machine.game_state.board = []
+        self.mock_state_machine.game_state.street = 'preflop'
+        self.mock_state_machine.game_state.current_bet = 20
+        self.mock_state_machine.current_state = Mock()
+        self.mock_state_machine.current_state.value = 'PREFLOP_BETTING'
+        
+        # Mock get_action_player to return a player
+        mock_player = Mock()
+        mock_player.name = "Chris Moneymaker"
+        mock_player.current_bet = 0
+        self.mock_state_machine.get_action_player.return_value = mock_player
         
         # Create the panel
         panel = RedesignedHandsReviewPanel(self.mock_tk.frame)
@@ -325,25 +362,27 @@ class TestSimulationHandsReview(unittest.TestCase):
         panel.practice_session = self.mock_practice_session
         
         # Test with main player (should call)
-        self.mock_player.name = "Chris Moneymaker"
         panel.next_action()
         
         # Verify CALL action was executed
         call_args = self.mock_state_machine.execute_action.call_args
-        self.assertEqual(call_args[0][1], ActionType.CALL)
+        self.assertIsNotNone(call_args)
+        self.assertEqual(call_args[0][1].name, 'CALL')
+        
+        # Reset the mock for the next test
+        self.mock_state_machine.execute_action.reset_mock()
         
         # Test with folded player (should fold)
-        self.mock_player.name = "Folded Player 1"
+        mock_player.name = "Folded Player 1"
         panel.next_action()
         
         # Verify FOLD action was executed
         fold_args = self.mock_state_machine.execute_action.call_args
-        self.assertEqual(fold_args[0][1], ActionType.FOLD)
-        
-        print("✅ Player action logic test passed!")
+        self.assertIsNotNone(fold_args)
+        self.assertEqual(fold_args[0][1].name, 'FOLD')
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_error_handling(self, mock_state_machine_class, mock_practice_session_class):
         """Test that error handling works correctly."""
         # Setup mocks
@@ -366,7 +405,7 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Error handling test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_auto_play_functionality(self, mock_state_machine_class, mock_practice_session_class):
         """Test that auto play functionality works correctly."""
         # Setup mocks
@@ -395,7 +434,7 @@ class TestSimulationHandsReview(unittest.TestCase):
         print("✅ Auto play functionality test passed!")
     
     @patch('ui.practice_session_ui.PracticeSessionUI')
-    @patch('core.poker_state_machine.ImprovedPokerStateMachine')
+    @patch('core.poker_state_machine_adapter.PokerStateMachineAdapter')
     def test_simulation_reset(self, mock_state_machine_class, mock_practice_session_class):
         """Test that simulation reset works correctly."""
         # Setup mocks
