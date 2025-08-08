@@ -37,7 +37,7 @@ from ui.components.postflop_hs_editor import PostflopHSEditor
 from strategy.strategy_optimization_panel import StrategyOptimizationPanel
 from ui.components.tooltips import ToolTip, RichToolTip, COMMON_TOOLTIPS
 from ui.practice_session_ui import PracticeSessionUI
-from ui.components.redesigned_hands_review_panel import RedesignedHandsReviewPanel
+# from ui.components.redesigned_hands_review_panel import RedesignedHandsReviewPanel  # Replaced with FPSM
 # from sound_settings_gui import create_sound_settings_window  # Removed in cleanup
 # from app_config import get_app_full_name  # Removed in cleanup
 

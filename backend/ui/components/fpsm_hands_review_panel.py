@@ -58,6 +58,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.historical_actions = []  # All actions from legendary hand
         self.historical_action_index = 0  # Current position in historical sequence
         self.use_historical_actions = False  # Only true for legendary hands
+        self.hand_completed = False  # Track if hand is finished to prevent extra actions
         
         # UI state
         self.font_size = 12
@@ -723,6 +724,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             # Prepare historical action sequence (for legendary hands only)
             self.prepare_historical_actions()
             
+            # Reset hand completion flag for new simulation
+            self.hand_completed = False
+            
             # Create the poker game widget (RPGW will automatically listen for FPSM events)
             if self.poker_game_widget:
                 self.poker_game_widget.destroy()
@@ -790,6 +794,11 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
     def next_action(self):
         """Execute the next action in the simulation."""
         if not self.fpsm or not self.simulation_active:
+            return
+        
+        # Prevent actions after hand completion
+        if self.hand_completed:
+            print("🚫 Hand completed - ignoring next_action request")
             return
         
         try:
@@ -1146,9 +1155,13 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             print(f"🎯 {hand_msg}")
             self.add_log_entry("INFO", "HAND_COMPLETE", hand_msg)
             
+            # Mark hand as completed to prevent further actions
+            self.hand_completed = True
+            print("🚫 Hand marked as completed - no more actions will be processed")
+            
             # Update simulation status
             if hasattr(self, 'simulation_status_label'):
-                self.simulation_status_label.configure(text=hand_msg)
+                self.simulation_status_label.configure(text=hand_msg + " - COMPLETED")
         
         elif event.event_type == "action_required":
             action_req_msg = f"Action required from: {event.player_name}"

@@ -434,7 +434,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         pass
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
-        """Update community cards based on display state."""
+        """Update community cards based on display state (FLICKER-FREE VERSION)."""
         # Ensure community card widgets are created
         if not self.community_card_widgets:
             self._draw_community_card_area()
@@ -442,22 +442,40 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not self.community_card_widgets:
             return
         
-        # Clear all community cards first
-        for card_widget in self.community_card_widgets:
+        # Initialize tracking if not exists
+        if not hasattr(self, 'last_board_cards'):
+            self.last_board_cards = []
+        
+        # Only update if board cards have actually changed (prevents flickering)
+        if board_cards == self.last_board_cards:
+            return  # No change needed
+        
+        print(f"🎴 Board changed: {self.last_board_cards} → {board_cards}")
+        
+        # EFFICIENT UPDATE: Only change cards that are different
+        for i, card_widget in enumerate(self.community_card_widgets):
             try:
-                card_widget.set_card("", is_folded=False)
+                current_card = getattr(card_widget, '_current_card', "")
+                new_card = board_cards[i] if i < len(board_cards) else ""
+                
+                # Only update if the card has actually changed
+                if current_card != new_card:
+                    if new_card and new_card != "**":
+                        # Set actual card
+                        card_widget.set_card(new_card, is_folded=False)
+                        card_widget._current_card = new_card
+                        print(f"🎴 Updated community card {i}: {current_card} → {new_card}")
+                    else:
+                        # Set empty card
+                        card_widget.set_card("", is_folded=False)
+                        card_widget._current_card = ""
+                        print(f"🎴 Cleared community card {i}")
             except tk.TclError:
                 # Widget was destroyed, skip
                 pass
         
-        # Set the actual board cards
-        for i, card in enumerate(board_cards):
-            if i < len(self.community_card_widgets) and card and card != "**" and card != "":
-                try:
-                    self.community_card_widgets[i].set_card(card, is_folded=False)
-                except tk.TclError:
-                    # Widget was destroyed, skip
-                    pass
+        # Update the tracking
+        self.last_board_cards = board_cards.copy()
     
     def _highlight_current_player(self, player_index):
         """Highlight the current action player."""
@@ -595,7 +613,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     # Schedule staggered animations
                     self.after(animation_delay, lambda idx=i, amt=current_bet: 
                              self._animate_bet_to_pot(idx, amt))
-                    animation_delay += 150  # 150ms between each animation
+                    animation_delay += 300  # 300ms between each animation (more visible)
             
             # Clear all bet displays after all animations complete
             total_delay = animation_delay + 500  # Extra delay for last animation
@@ -832,17 +850,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         pot_x = self.canvas.winfo_width() // 2
         pot_y = self.canvas.winfo_height() // 2 + 50  # Pot position
         
-        # Create animated chip for the movement
+        # Create animated chip for the movement (larger and more visible)
         chip_label = tk.Label(
             self.canvas,
             text="💰",
             bg="gold",
             fg="black",
-            font=("Arial", 20, "bold"),
-            bd=2,
+            font=("Arial", 28, "bold"),  # Larger font
+            bd=3,
             relief="raised",
-            padx=4,
-            pady=2
+            padx=6,
+            pady=4
         )
         
         chip_window = self.canvas.create_window(player_x, player_y, window=chip_label)
@@ -853,7 +871,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Animate the chip to the pot with smooth movement
         def move_chip_step(step=0):
-            total_steps = 25  # Smooth animation
+            total_steps = 40  # Longer animation for visibility
             if step <= total_steps:
                 progress = step / total_steps
                 # Smooth easing function
@@ -868,7 +886,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     y += bounce
                 
                 self.canvas.coords(chip_window, x, y)
-                self.after(25, lambda: move_chip_step(step + 1))
+                self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
             else:
                 # Animation complete - remove chip and update pot
                 self.canvas.delete(chip_window)
@@ -882,9 +900,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             original_bg = self.pot_label.cget("bg")
             original_fg = self.pot_label.cget("fg")
             
-            # Flash yellow
-            self.pot_label.config(bg="yellow", fg="black")
-            self.after(200, lambda: self.pot_label.config(bg=original_bg, fg=original_fg))
+            # Enhanced flash sequence for better visibility
+            def flash_sequence(step=0):
+                if step < 6:  # Flash 3 times
+                    if step % 2 == 0:
+                        self.pot_label.config(bg="gold", fg="black")  # Brighter flash
+                    else:
+                        self.pot_label.config(bg=original_bg, fg=original_fg)
+                    self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
+                else:
+                    self.pot_label.config(bg=original_bg, fg=original_fg)
+            
+            flash_sequence()
     
     def animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
