@@ -318,6 +318,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.current_hand = None
         self.current_mode = "simulation"  # "simulation" or "study"
         
+        # Action tracking for legendary hands
+        self.current_action_indices = {}  # Track current action index for each street
+        
         # Font configuration
         self.font_size = 16
         
@@ -639,6 +642,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Get the state machine from the practice session
             self.poker_state_machine = self.practice_session.state_machine
             
+            # Reset action indices for new simulation
+            self.current_action_indices = {}
+            
             # Setup the hand with legendary hand data
             self.setup_legendary_hand()
             
@@ -788,9 +794,14 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             street_actions = self.current_hand.actions.get(current_street, [])
             print(f"🎯 Found {len(street_actions)} actions for {current_street}")
             
-            # Find the next action for this player
-            for action in street_actions:
+            # Get current action index for this street
+            current_index = self.current_action_indices.get(current_street, 0)
+            
+            # Check if we have more actions for this street
+            if current_index < len(street_actions):
+                action = street_actions[current_index]
                 actor_index = action.get('actor', 0) - 1  # Convert to 0-based index
+                
                 if actor_index < len(self.poker_state_machine.players):
                     actor_player = self.poker_state_machine.players[actor_index]
                     if actor_player.name == current_player.name:
@@ -798,6 +809,9 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                         amount = action.get('amount', 0)
                         
                         print(f"🎯 Found action for {current_player.name}: {action_type_str} (${amount})")
+                        
+                        # Increment the action index for this street
+                        self.current_action_indices[current_street] = current_index + 1
                         
                         # Convert action type string to ActionType enum
                         if action_type_str == 'FOLD':
