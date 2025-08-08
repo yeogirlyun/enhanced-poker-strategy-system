@@ -96,6 +96,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         elif event.event_type == "round_complete":
             # Handle round completion - play sounds and animations
             self._handle_round_complete(event)
+        
+        elif event.event_type == "hand_complete":
+            # Handle hand completion - pot to winner animation
+            self._handle_hand_complete(event)
     
     def _log_event(self, event: GameEvent):
         """Log all events for debugging and analysis."""
@@ -593,6 +597,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 board_cards = display_state.get("board", [])
                 self.play_animation("street_progression", street_name=street, board_cards=board_cards)
     
+    def _handle_hand_complete(self, event: GameEvent):
+        """Handle hand completion events with pot-to-winner animation."""
+        winner_info = event.data.get("winner_info", {})
+        pot_amount = event.data.get("pot_amount", 0.0)
+        
+        print(f"🏆 Hand complete: {winner_info.get('name', 'Unknown')} wins ${pot_amount:.2f}")
+        
+        # Log hand completion
+        if self.session_logger:
+            winner_name = winner_info.get('name', 'Unknown')
+            winning_hand = winner_info.get('hand_description', 'Unknown')
+            
+            self._log_hand_completion(
+                winner=winner_name,
+                winning_hand=winning_hand,
+                pot_size=pot_amount,
+                showdown=True
+            )
+        
+        # Animate pot to winner
+        if winner_info and pot_amount > 0:
+            self.animate_pot_to_winner(winner_info, pot_amount)
+        else:
+            print("⚠️ No valid winner info or pot amount for animation")
+    
     def _handle_player_action(self, **kwargs):
         """Handle player action updates from FPSM."""
         player_name = kwargs.get("player_name", "")
@@ -636,36 +665,90 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.show_bet_display(player_index, action, amount)
     
     def show_bet_display(self, player_index, action, amount):
-        """Show a bet display for a player."""
+        """Show an enhanced bet display for a player with chip graphics."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
         player_seat = self.player_seats[player_index]
         
-        # Create bet label
-        bet_text = f"{action.upper()}"
+        # Remove any existing bet display first
+        self._remove_bet_display(player_index)
+        
+        # Create enhanced bet display frame
+        bet_frame = tk.Frame(self.canvas, bg="#1a1a1a", relief="raised", bd=2)
+        
+        # Create bet text with chip icon
+        bet_text = f"💰 {action.upper()}"
         if amount > 0:
             bet_text += f" ${amount:.2f}"
         
         bet_label = tk.Label(
-            self.canvas,
+            bet_frame,
             text=bet_text,
-            bg="yellow",
+            bg="gold",
             fg="black",
-            font=("Arial", 12, "bold")
+            font=("Arial", 12, "bold"),
+            padx=8,
+            pady=4
         )
+        bet_label.pack()
         
-        # Position the bet label above the player
-        player_x = player_seat["frame"].winfo_x() + player_seat["frame"].winfo_width() // 2
-        player_y = player_seat["frame"].winfo_y() - 30
+        # Add chip stack visualization for larger bets
+        if amount >= 10:
+            chip_frame = tk.Frame(bet_frame, bg="#1a1a1a")
+            chip_frame.pack(pady=2)
+            
+            # Show chip stacks based on amount
+            chip_count = min(int(amount / 10), 5)  # Max 5 chip icons
+            for i in range(chip_count):
+                chip_label = tk.Label(
+                    chip_frame,
+                    text="🔴",  # Red chip icon
+                    bg="#1a1a1a",
+                    fg="red",
+                    font=("Arial", 8)
+                )
+                chip_label.pack(side="left", padx=1)
         
-        bet_window = self.canvas.create_window(player_x, player_y, window=bet_label)
-        
-        # Store the bet label for later removal
-        self.bet_labels[player_index] = bet_window
-        
-        # Remove the bet label after 2 seconds
-        self.after(2000, lambda: self._remove_bet_display(player_index))
+        # Position the bet display near the player
+        try:
+            # Wait for the widget to be properly positioned
+            self.canvas.update_idletasks()
+            player_x = player_seat["position"][0]
+            player_y = player_seat["position"][1] - 60  # Above player
+            
+            bet_window = self.canvas.create_window(player_x, player_y, window=bet_frame, anchor="center")
+            
+            # Store the bet display for later removal
+            self.bet_labels[player_index] = bet_window
+            
+            # Make the bet display fade after showing for a few seconds
+            self.after(3000, lambda: self._fade_bet_display(player_index))
+            
+        except Exception as e:
+            print(f"⚠️ Error positioning bet display: {e}")
+            # Fallback to simple positioning
+            bet_window = self.canvas.create_window(100 + player_index * 80, 100, window=bet_frame)
+            self.bet_labels[player_index] = bet_window
+            self.after(3000, lambda: self._remove_bet_display(player_index))
+    
+    def _fade_bet_display(self, player_index):
+        """Fade out a bet display before removing it."""
+        if player_index in self.bet_labels:
+            # Simple fade by changing to a dimmer color
+            bet_window = self.bet_labels[player_index]
+            try:
+                widget = self.canvas.nametowidget(self.canvas.itemcget(bet_window, "window"))
+                if widget:
+                    # Change to a faded appearance
+                    for child in widget.winfo_children():
+                        if isinstance(child, tk.Label):
+                            child.config(bg="gray", fg="darkgray")
+                    # Remove after fade effect
+                    self.after(500, lambda: self._remove_bet_display(player_index))
+            except Exception:
+                # If fade fails, just remove
+                self._remove_bet_display(player_index)
     
     def _remove_bet_display(self, player_index):
         """Remove a bet display for a player."""
@@ -716,49 +799,192 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self._update_community_cards_from_display_state(board_cards)
     
     def _animate_bet_to_pot(self, player_index, amount):
-        """Animate a bet moving to the pot."""
-        if not self.pot_frame or player_index >= len(self.player_seats):
+        """Animate a bet moving to the pot with enhanced chip graphics."""
+        if not hasattr(self, 'pot_frame') or player_index >= len(self.player_seats):
             return
         
         player_seat = self.player_seats[player_index]
         if not player_seat:
             return
         
-        player_frame = player_seat["frame"]
-        if not player_frame:
-            return
-        
-        # Get player position
-        player_x = player_frame.winfo_x() + player_frame.winfo_width() // 2
-        player_y = player_frame.winfo_y() + player_frame.winfo_height() // 2
+        # Get player and pot positions using stored positions
+        player_x, player_y = player_seat["position"]
         
         # Get pot position
         pot_x = self.canvas.winfo_width() // 2
-        pot_y = self.canvas.winfo_height() // 2
+        pot_y = self.canvas.winfo_height() // 2 + 50  # Pot position
         
-        # Create a temporary bet label for animation
-        bet_label = tk.Label(
+        # Create animated chip for the movement
+        chip_label = tk.Label(
             self.canvas,
-            text=f"${amount:.2f}",
-            bg="yellow",
+            text="💰",
+            bg="gold",
             fg="black",
-            font=("Arial", 10, "bold")
+            font=("Arial", 20, "bold"),
+            bd=2,
+            relief="raised",
+            padx=4,
+            pady=2
         )
         
-        bet_window = self.canvas.create_window(player_x, player_y, window=bet_label)
+        chip_window = self.canvas.create_window(player_x, player_y, window=chip_label)
+        self.canvas.tag_raise(chip_window)  # Bring to front
         
-        # Animate the bet label to the pot
-        def move_step(step=0):
-            if step <= 20:
-                progress = step / 20
-                x = player_x + (pot_x - player_x) * progress
-                y = player_y + (pot_y - player_y) * progress
-                self.canvas.coords(bet_window, x, y)
-                self.after(50, lambda: move_step(step + 1))
+        # Play chip movement sound
+        self.play_sound("bet")
+        
+        # Animate the chip to the pot with smooth movement
+        def move_chip_step(step=0):
+            total_steps = 25  # Smooth animation
+            if step <= total_steps:
+                progress = step / total_steps
+                # Smooth easing function
+                ease_progress = progress * progress * (3.0 - 2.0 * progress)
+                
+                x = player_x + (pot_x - player_x) * ease_progress
+                y = player_y + (pot_y - player_y) * ease_progress
+                
+                # Add slight bounce effect
+                if progress > 0.8:
+                    bounce = math.sin((progress - 0.8) * 10) * 3
+                    y += bounce
+                
+                self.canvas.coords(chip_window, x, y)
+                self.after(25, lambda: move_chip_step(step + 1))
             else:
-                self.canvas.delete(bet_window)
+                # Animation complete - remove chip and update pot
+                self.canvas.delete(chip_window)
+                self._flash_pot_update(amount)
         
-        move_step()
+        move_chip_step()
+    
+    def _flash_pot_update(self, amount):
+        """Flash the pot to indicate chips were added."""
+        if self.pot_label:
+            original_bg = self.pot_label.cget("bg")
+            original_fg = self.pot_label.cget("fg")
+            
+            # Flash yellow
+            self.pot_label.config(bg="yellow", fg="black")
+            self.after(200, lambda: self.pot_label.config(bg=original_bg, fg=original_fg))
+    
+    def animate_pot_to_winner(self, winner_info, pot_amount):
+        """Animate pot money moving to the winner's stack."""
+        if not winner_info or pot_amount <= 0:
+            return
+        
+        print(f"🏆 Animating ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}")
+        
+        # Find winner's seat
+        winner_name = winner_info.get('name', '')
+        winner_seat_index = -1
+        
+        for i, player_seat in enumerate(self.player_seats):
+            if player_seat and player_seat.get("name_label"):
+                player_name = player_seat["name_label"].cget("text")
+                # Extract player name (remove position info)
+                clean_name = player_name.split(' (')[0]
+                if clean_name == winner_name:
+                    winner_seat_index = i
+                    break
+        
+        if winner_seat_index == -1:
+            print(f"⚠️ Could not find winner seat for {winner_name}")
+            return
+        
+        # Get positions
+        pot_x = self.canvas.winfo_width() // 2
+        pot_y = self.canvas.winfo_height() // 2 + 50
+        
+        winner_seat = self.player_seats[winner_seat_index]
+        winner_x, winner_y = winner_seat["position"]
+        
+        # Create multiple chips for large pots
+        num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
+        
+        for i in range(num_chips):
+            self._animate_single_chip_to_winner(
+                pot_x, pot_y, winner_x, winner_y, 
+                pot_amount / num_chips, i * 100  # Stagger timing
+            )
+        
+        # Play winner sound
+        self.play_sound("winner")
+        
+        # Flash winner's stack after animation
+        self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
+    
+    def _animate_single_chip_to_winner(self, start_x, start_y, end_x, end_y, amount, delay):
+        """Animate a single chip from pot to winner."""
+        def start_animation():
+            # Create winner chip
+            winner_chip = tk.Label(
+                self.canvas,
+                text="🏆",
+                bg="gold",
+                fg="red",
+                font=("Arial", 30, "bold"),
+                bd=3,
+                relief="raised",
+                padx=6,
+                pady=4
+            )
+            
+            chip_window = self.canvas.create_window(start_x, start_y, window=winner_chip)
+            self.canvas.tag_raise(chip_window)
+            
+            # Animate to winner
+            def move_to_winner(step=0):
+                total_steps = 30
+                if step <= total_steps:
+                    progress = step / total_steps
+                    # Smooth easing
+                    ease_progress = progress * progress * (3.0 - 2.0 * progress)
+                    
+                    x = start_x + (end_x - start_x) * ease_progress
+                    y = start_y + (end_y - start_y) * ease_progress
+                    
+                    # Add celebratory bounce
+                    if progress > 0.7:
+                        bounce = math.sin((progress - 0.7) * 15) * 5
+                        y += bounce
+                    
+                    self.canvas.coords(chip_window, x, y)
+                    self.after(20, lambda: move_to_winner(step + 1))
+                else:
+                    # Animation complete
+                    self.canvas.delete(chip_window)
+            
+            move_to_winner()
+        
+        # Start with delay for staggered effect
+        self.after(delay, start_animation)
+    
+    def _flash_winner_stack(self, winner_seat_index):
+        """Flash the winner's stack to celebrate."""
+        if winner_seat_index >= len(self.player_seats):
+            return
+        
+        winner_seat = self.player_seats[winner_seat_index]
+        if not winner_seat or not winner_seat.get("stack_label"):
+            return
+        
+        stack_label = winner_seat["stack_label"]
+        original_bg = stack_label.cget("bg")
+        original_fg = stack_label.cget("fg")
+        
+        # Flash green for winner
+        def flash_step(step=0):
+            if step < 6:  # Flash 3 times
+                if step % 2 == 0:
+                    stack_label.config(bg="green", fg="white")
+                else:
+                    stack_label.config(bg=original_bg, fg=original_fg)
+                self.after(200, lambda: flash_step(step + 1))
+            else:
+                stack_label.config(bg=original_bg, fg=original_fg)
+        
+        flash_step()
     
     def _ensure_player_seats_created(self):
         """Ensure player seats are created."""
