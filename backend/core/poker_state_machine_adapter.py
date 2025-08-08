@@ -105,12 +105,17 @@ class PokerStateMachineAdapter(EventListener):
     
     def start_hand(self, existing_players: Optional[List[Player]] = None):
         """Start a new hand (legacy compatibility)."""
-        # Configure for simulation mode if existing players provided
-        if existing_players:
+        # Configure for simulation mode if existing players provided or if we're in simulation
+        if existing_players or hasattr(self, 'simulation_mode') and self.simulation_mode:
             self.flexible_sm.config.show_all_cards = True
         
         self.flexible_sm.start_hand(existing_players)
         self.hand_number = self.flexible_sm.hand_number
+    
+    def enable_simulation_mode(self):
+        """Enable simulation mode to show all cards."""
+        self.flexible_sm.config.show_all_cards = True
+        self.simulation_mode = True
     
     def execute_action(self, player: Player, action: ActionType, amount: float = 0, _is_fallback: bool = False):
         """Execute a player action (legacy compatibility)."""

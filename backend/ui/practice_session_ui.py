@@ -1830,6 +1830,14 @@ class PracticeSessionUI(ttk.Frame):
     
     def _handle_action_executed(self, player_index: int, action: str, amount: float):
         """Handle when a player action is executed - use selective updates."""
+        # Play sound for the action
+        if hasattr(self, 'sfx') and self.sfx:
+            try:
+                self.sfx.play_action_sound(action.lower(), amount)
+                self._log_message(f"🔊 Played sound for {action} action")
+            except Exception as e:
+                self._log_message(f"⚠️ Could not play sound for {action}: {e}")
+        
         # Animate the specific player's action immediately
         self._animate_player_action(player_index, action, amount)
         

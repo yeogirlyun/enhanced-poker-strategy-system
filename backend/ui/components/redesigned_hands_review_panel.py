@@ -696,6 +696,10 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Start a new hand in the state machine
             self.poker_state_machine.start_hand()
             
+            # Enable simulation mode to show all cards
+            if hasattr(self.poker_state_machine, 'enable_simulation_mode'):
+                self.poker_state_machine.enable_simulation_mode()
+            
             # Set up players with their specific cards from the legendary hand
             for i, player_data in enumerate(players[:6]):
                 cards = player_data.get('cards', ['2c', '3d'])
@@ -743,6 +747,11 @@ class RedesignedHandsReviewPanel(ttk.Frame):
                                     player.has_folded = False
                                     player.is_active = True
                                     print(f"✅ Player {name} is active")
+                                
+                                # Set cards in the UI immediately for simulation mode
+                                if hasattr(self.practice_session, '_set_player_card'):
+                                    for card_index, card in enumerate(cards):
+                                        self.practice_session._set_player_card(i, card_index, card)
                         except (IndexError, TypeError):
                             # If we can't access the player, skip
                             print(f"⚠️ Could not access player {i}")
@@ -780,6 +789,14 @@ class RedesignedHandsReviewPanel(ttk.Frame):
             # Reveal all cards for simulation mode
             if hasattr(self.practice_session, 'reveal_all_cards_for_simulation'):
                 self.practice_session.reveal_all_cards_for_simulation()
+            
+            # Also force reveal cards by setting them again with simulation mode
+            if hasattr(self.practice_session, '_set_player_card'):
+                for i, player_data in enumerate(players[:6]):
+                    cards = player_data.get('cards', ['2c', '3d'])
+                    for card_index, card in enumerate(cards):
+                        # Force reveal the card in simulation mode
+                        self.practice_session._set_player_card(i, card_index, card)
             
             # Update the notes panel with player information
             self.update_legendary_hand_notes()
