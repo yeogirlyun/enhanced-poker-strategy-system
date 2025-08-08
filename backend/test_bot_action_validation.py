@@ -8,7 +8,7 @@ and follow proper poker rules before execution.
 
 import unittest
 from core.poker_state_machine import (
-    ImprovedPokerStateMachine, ActionType
+    ImprovedPokerStateMachine, ActionType, PokerState
 )
 from core.strategy_engine import GTOStrategyEngine
 
@@ -22,18 +22,41 @@ class TestBotActionValidation(unittest.TestCase):
         self.sm.strategy_mode = "GTO"
         self.strategy_engine = GTOStrategyEngine(6)
 
+    def _setup_betting_round(self, action_index: int = 0, street: str = "preflop"):
+        """Helper to properly initialize betting round state."""
+        self.sm.start_hand()  # Already called, but ensure state transition
+        
+        # Transition to betting state
+        if street == "preflop":
+            self.sm.transition_to(PokerState.PREFLOP_BETTING)
+        elif street == "flop":
+            self.sm.transition_to(PokerState.FLOP_BETTING)
+        elif street == "turn":
+            self.sm.transition_to(PokerState.TURN_BETTING)
+        elif street == "river":
+            self.sm.transition_to(PokerState.RIVER_BETTING)
+        
+        # Set action player
+        self.sm.action_player_index = action_index
+        
+        # Simulate prior actions if needed (e.g., blinds posted)
+        if street == "preflop":
+            # Post blinds (small blind is half of big blind)
+            small_blind = self.sm.game_state.big_blind / 2
+            self.sm.game_state.players[1].current_bet = small_blind  # SB
+            self.sm.game_state.players[2].current_bet = self.sm.game_state.big_blind    # BB
+            self.sm.game_state.pot += small_blind + self.sm.game_state.big_blind
+            self.sm.game_state.current_bet = self.sm.game_state.big_blind
+
     def test_minimum_raise_validation(self):
         """Test that bot raises meet minimum raise requirements."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up scenario with specific minimum raise
         self.sm.game_state.current_bet = 10.0
         self.sm.game_state.min_raise = 5.0  # Minimum raise is $5.0
         self.sm.game_state.players[0].current_bet = 0.0
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']  # Strong hand
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         # Get bot action
         action, amount = self.sm.get_basic_bot_action(
@@ -58,15 +81,12 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_call_amount_validation(self):
         """Test that bot calls use correct amounts."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up scenario where call amount is specific
         self.sm.game_state.current_bet = 15.0
         self.sm.game_state.players[0].current_bet = 10.0
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         # Calculate expected call amount
         expected_call = (self.sm.game_state.current_bet - 
@@ -122,15 +142,12 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_check_validation(self):
         """Test that bot check actions are valid."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up scenario where check is valid
         self.sm.game_state.current_bet = 0.0
         self.sm.game_state.players[0].current_bet = 0.0
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         # Get bot action
         action, amount = self.sm.get_basic_bot_action(
@@ -149,15 +166,12 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_fold_validation(self):
         """Test that bot fold actions are valid."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up scenario where fold is valid
         self.sm.game_state.current_bet = 10.0
         self.sm.game_state.players[0].current_bet = 0.0
         self.sm.game_state.players[0].cards = ['2h', '3h']  # Weak hand
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         # Get bot action
         action, amount = self.sm.get_basic_bot_action(
@@ -176,7 +190,7 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_gto_strategy_validation(self):
         """Test GTO strategy engine generates valid actions."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up GTO scenario
         self.sm.game_state.current_bet = 5.0
@@ -211,16 +225,13 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_edge_case_validation(self):
         """Test edge cases in bot action generation."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Test 1: Very small minimum raise
         self.sm.game_state.current_bet = 1.0
         self.sm.game_state.min_raise = 0.5
         self.sm.game_state.players[0].current_bet = 0.0
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         action, amount = self.sm.get_basic_bot_action(
             self.sm.game_state.players[0]
@@ -245,7 +256,7 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_stack_validation(self):
         """Test that bot actions respect player stack limits."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Set up short stack scenario
         self.sm.game_state.players[0].stack = 3.0
@@ -253,13 +264,19 @@ class TestBotActionValidation(unittest.TestCase):
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']
         self.sm.game_state.current_bet = 10.0
         
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
+        # Debug logging
+        print(f"DEBUG: Player stack: ${self.sm.game_state.players[0].stack:.2f}")
+        print(f"DEBUG: Current bet: ${self.sm.game_state.current_bet:.2f}")
+        print(f"DEBUG: Player current bet: ${self.sm.game_state.players[0].current_bet:.2f}")
+        print(f"DEBUG: Call amount: ${self.sm.game_state.current_bet - self.sm.game_state.players[0].current_bet:.2f}")
+        print(f"DEBUG: Player cards: {self.sm.game_state.players[0].cards}")
         
         # Get bot action
         action, amount = self.sm.get_basic_bot_action(
             self.sm.game_state.players[0]
         )
+        
+        print(f"DEBUG: Bot action: {action.value}, amount: ${amount:.2f}")
         
         # Validate action doesn't exceed stack
         if action in [ActionType.RAISE, ActionType.CALL]:
@@ -271,7 +288,7 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_position_based_validation(self):
         """Test that bot actions are appropriate for player position."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Test different positions
         positions = ["SB", "BB", "UTG", "MP", "CO", "BTN"]
@@ -284,7 +301,7 @@ class TestBotActionValidation(unittest.TestCase):
             self.sm.game_state.min_raise = 3.0
             
             # Set this player as the action player
-            self.sm.game_state.action_player_index = i
+            self.sm.action_player_index = i
             
             action, amount = self.sm.get_basic_bot_action(
                 self.sm.game_state.players[i]
@@ -302,15 +319,12 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_hand_strength_validation(self):
         """Test that bot actions are appropriate for hand strength."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Test strong hand
         self.sm.game_state.players[0].cards = ['Ah', 'Kh']
         self.sm.game_state.players[0].current_bet = 0.0
         self.sm.game_state.current_bet = 5.0
-        
-        # Set this player as the action player
-        self.sm.game_state.action_player_index = 0
         
         strong_action, strong_amount = self.sm.get_basic_bot_action(
             self.sm.game_state.players[0]
@@ -339,7 +353,7 @@ class TestBotActionValidation(unittest.TestCase):
 
     def test_comprehensive_action_validation(self):
         """Test comprehensive validation of all bot actions."""
-        self.sm.start_hand()
+        self._setup_betting_round(action_index=0, street="preflop")
         
         # Test multiple scenarios
         scenarios = [
@@ -356,7 +370,7 @@ class TestBotActionValidation(unittest.TestCase):
             self.sm.game_state.players[i].cards = scenario["cards"]
             
             # Set this player as the action player
-            self.sm.game_state.action_player_index = i
+            self.sm.action_player_index = i
             
             action, amount = self.sm.get_basic_bot_action(
                 self.sm.game_state.players[i]

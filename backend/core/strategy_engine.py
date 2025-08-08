@@ -128,11 +128,31 @@ class GTOStrategyEngine:
         
         # Preflop logic
         if street == "preflop" and not game_state.board:
-            return self._get_gto_preflop_action(player, game_state, call_amount)
-        
+            action, amount = self._get_gto_preflop_action(player, game_state, call_amount)
         # Postflop logic
         else:
-            return self._get_gto_postflop_action(player, game_state, call_amount, pot_odds)
+            action, amount = self._get_gto_postflop_action(player, game_state, call_amount, pot_odds)
+        
+        # NEW: Comprehensive stack validation
+        return self._validate_stack_limits(player, action, amount, call_amount)
+    
+    def _validate_stack_limits(self, player: Player, action: ActionType, amount: float, call_amount: float) -> Tuple[ActionType, float]:
+        """Validate that action amount doesn't exceed stack and handle all-in scenarios."""
+        if amount > player.stack:
+            # Can't afford the action - need to handle all-in or fold
+            if call_amount > 0:
+                # Facing a bet - can all-in call or fold
+                if player.stack >= call_amount:
+                    return ActionType.CALL, player.stack  # All-in call
+                else:
+                    return ActionType.FOLD, 0.0  # Can't afford to call
+            else:
+                # No bet to call - can all-in bet or check
+                if player.stack >= 2.0:  # Minimum bet amount
+                    return ActionType.BET, player.stack  # All-in bet
+                else:
+                    return ActionType.CHECK, 0.0  # Can't afford to bet
+        return action, amount  # Amount is valid
 
     def _get_gto_preflop_action(self, player: Player, game_state: GameState, call_amount: float) -> Tuple[ActionType, float]:
         """Get GTO preflop action with FIXED validation."""
