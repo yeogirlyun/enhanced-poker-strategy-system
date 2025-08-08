@@ -580,9 +580,30 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             elif hasattr(self.state_machine, 'get_current_state'):
                 current_state = str(self.state_machine.get_current_state())
         
-        # Hide community cards during preflop betting
-        if current_state and 'PREFLOP_BETTING' in current_state:
-            print(f"🚫 Hiding community cards during preflop betting (state: {current_state})")
+        # Determine how many cards to show based on current state
+        cards_to_show = 0
+        if current_state:
+            if 'PREFLOP_BETTING' in current_state:
+                cards_to_show = 0  # No community cards during preflop
+                print(f"🚫 Preflop: Showing {cards_to_show} community cards (state: {current_state})")
+            elif 'FLOP' in current_state or 'DEAL_FLOP' in current_state:
+                cards_to_show = 3  # Show first 3 cards during flop
+                print(f"🎴 Flop: Showing {cards_to_show} community cards (state: {current_state})")
+            elif 'TURN' in current_state or 'DEAL_TURN' in current_state:
+                cards_to_show = 4  # Show first 4 cards during turn
+                print(f"🎴 Turn: Showing {cards_to_show} community cards (state: {current_state})")
+            elif 'RIVER' in current_state or 'DEAL_RIVER' in current_state:
+                cards_to_show = 5  # Show all 5 cards during river
+                print(f"🎴 River: Showing {cards_to_show} community cards (state: {current_state})")
+            else:
+                cards_to_show = len(board_cards)  # Default to all cards for other states
+                print(f"🎴 Other state: Showing {cards_to_show} community cards (state: {current_state})")
+        
+        # Limit board cards to only the first N cards that should be visible
+        visible_board_cards = board_cards[:cards_to_show] if board_cards else []
+        
+        # Hide cards that shouldn't be shown yet
+        if cards_to_show == 0:
             for i, card_widget in enumerate(self.community_card_widgets):
                 try:
                     card_widget.set_card("", is_folded=False)
@@ -592,17 +613,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.last_board_cards = []
             return
         
-        # Only update if board cards have actually changed (prevents flickering)
-        if board_cards == self.last_board_cards:
+        # Only update if visible board cards have actually changed (prevents flickering)
+        if visible_board_cards == self.last_board_cards:
             return  # No change needed
         
-        print(f"🎴 Board changed: {self.last_board_cards} → {board_cards} (state: {current_state})")
+        print(f"🎴 Board changed: {self.last_board_cards} → {visible_board_cards} (showing {cards_to_show}/{len(board_cards)} cards)")
         
         # EFFICIENT UPDATE: Only change cards that are different
         for i, card_widget in enumerate(self.community_card_widgets):
             try:
                 current_card = getattr(card_widget, '_current_card', "")
-                new_card = board_cards[i] if i < len(board_cards) else ""
+                new_card = visible_board_cards[i] if i < len(visible_board_cards) else ""
                 
                 # Only update if the card has actually changed
                 if current_card != new_card:
@@ -612,7 +633,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         card_widget._current_card = new_card
                         print(f"🎴 Updated community card {i}: {current_card} → {new_card}")
                     else:
-                        # Set empty card
+                        # Set empty card (for cards beyond what should be shown)
                         card_widget.set_card("", is_folded=False)
                         card_widget._current_card = ""
                         print(f"🎴 Cleared community card {i}")
@@ -621,7 +642,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 pass
         
         # Update the tracking
-        self.last_board_cards = board_cards.copy()
+        self.last_board_cards = visible_board_cards.copy()
     
     def _highlight_current_player(self, player_index):
         """Highlight the current action player."""
