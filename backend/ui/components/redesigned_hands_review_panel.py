@@ -338,7 +338,7 @@ class RedesignedHandsReviewPanel(ttk.Frame):
         self.setup_right_pane(main_paned)
         
         # Set initial pane weights (30% left, 70% right)
-        main_paned.configure(weight=1)
+        # Note: PanedWindow weights are set when adding panes, not on the widget itself
         
     def setup_left_pane(self, parent):
         """Setup the left pane for hand selection."""
@@ -511,7 +511,8 @@ class RedesignedHandsReviewPanel(ttk.Frame):
     def load_legendary_hands(self):
         """Load legendary hands from database."""
         try:
-            hands_by_category = self.hands_database.get_hands_by_category()
+            # Load all hands and get legendary category
+            hands_by_category = self.hands_database.load_all_hands()
             self.legendary_hands = hands_by_category.get(HandCategory.LEGENDARY, [])
             print(f"✅ Loaded {len(self.legendary_hands)} legendary hands")
         except Exception as e:
