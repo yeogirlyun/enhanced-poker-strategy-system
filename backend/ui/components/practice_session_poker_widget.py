@@ -112,7 +112,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self._setup_action_buttons()
     
     def _setup_action_buttons(self):
-        """Set up industry-standard action buttons for user interaction."""
+        """Set up enhanced action buttons with pre-bet sizes and improved visibility."""
         # Get table color or use default
         table_bg = getattr(self, 'table_color', '#2F4F2F')
         
@@ -123,105 +123,160 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         # Configure grid weights
         self.grid_rowconfigure(2, weight=0)  # Action buttons (fixed height)
         
-        # Industry-standard button configuration (PokerStars/888poker style)
+        # Enhanced button configuration for maximum visibility
         button_config = {
-            'font': ('Arial', 20, 'bold'),  # Much larger font for visibility
-            'width': 12,                    # Wider professional buttons
+            'font': ('Arial', 18, 'bold'),  # Large bold font
+            'width': 10,                    # Optimal width
             'height': 2,                    # Professional height
             'relief': 'raised',
             'bd': 4,                        # Thick professional border
             'cursor': 'hand2',              # Hand cursor on hover
-            'pady': 10,                     # Internal padding
+            'bg': '#87CEEB',                # Light sky blue background
+            'fg': 'black',                  # Bold black text
+            'activebackground': '#4682B4',  # Steel blue on hover
+            'activeforeground': 'white',    # White text on hover
         }
         
-        # FOLD button - Industry standard bright red
+        # FOLD button - High contrast red
         self.action_buttons['fold'] = tk.Button(
             self.action_frame,
             text="FOLD",
-            bg="#E53E3E",                   # Professional red (Chakra UI red.500)
-            fg="white",
-            activebackground="#C53030",     # Darker red on hover
+            bg="#FF6B6B",                   # Bright coral red
+            fg="black",                     # Black text for contrast
+            activebackground="#FF5252",     # Darker red on hover
             activeforeground="white",
             command=lambda: self._handle_action_click('fold'),
-            **button_config
+            **{k: v for k, v in button_config.items() 
+               if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
         )
-        self.action_buttons['fold'].pack(side=tk.LEFT, padx=8, pady=5)
+        self.action_buttons['fold'].pack(side=tk.LEFT, padx=6, pady=5)
         
-        # CHECK/CALL button - Industry standard blue
+        # CHECK/CALL button - Light sky blue
         self.action_buttons['check_call'] = tk.Button(
             self.action_frame,
             text="CHECK",
-            bg="#3182CE",                   # Professional blue (Chakra UI blue.500)
-            fg="white",
-            activebackground="#2C5282",     # Darker blue on hover
-            activeforeground="white",
             command=lambda: self._handle_action_click('check_call'),
             **button_config
         )
-        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=8, pady=5)
+        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=6, pady=5)
         
-        # Bet amount section with label
-        entry_frame = tk.Frame(self.action_frame, bg=table_bg)
-        entry_frame.pack(side=tk.LEFT, padx=12, pady=5)
+        # Betting section with pre-bet buttons and amount entry
+        bet_section = tk.Frame(self.action_frame, bg=table_bg)
+        bet_section.pack(side=tk.LEFT, padx=12, pady=5)
+        
+        # Pre-bet size buttons (top row)
+        prebet_frame = tk.Frame(bet_section, bg=table_bg)
+        prebet_frame.pack(pady=(0, 5))
+        
+        # Pre-bet button configuration (smaller buttons)
+        prebet_config = {
+            'font': ('Arial', 10, 'bold'),
+            'width': 6,
+            'height': 1,
+            'relief': 'raised',
+            'bd': 2,
+            'cursor': 'hand2',
+            'bg': '#B0E0E6',                # Powder blue
+            'fg': 'black',
+            'activebackground': '#87CEEB',
+            'activeforeground': 'black',
+        }
+        
+        # Pre-bet size buttons
+        prebet_sizes = [
+            ("1/4 POT", 0.25),
+            ("1/2 POT", 0.5), 
+            ("3/4 POT", 0.75),
+            ("POT", 1.0),
+            ("2X POT", 2.0)
+        ]
+        
+        self.prebet_buttons = {}
+        for text, multiplier in prebet_sizes:
+            btn = tk.Button(
+                prebet_frame,
+                text=text,
+                command=lambda m=multiplier: self._set_pot_bet(m),
+                **prebet_config
+            )
+            btn.pack(side=tk.LEFT, padx=2)
+            self.prebet_buttons[text] = btn
+        
+        # Amount entry section (bottom row)
+        entry_frame = tk.Frame(bet_section, bg=table_bg)
+        entry_frame.pack()
         
         # Amount label
         bet_label = tk.Label(
             entry_frame,
-            text="AMOUNT",
-            font=('Arial', 14, 'bold'),
+            text="AMOUNT:",
+            font=('Arial', 12, 'bold'),
             bg=table_bg,
             fg="white"
         )
-        bet_label.pack()
+        bet_label.pack(side=tk.LEFT, padx=(0, 5))
         
         # Bet amount entry - enhanced visibility
         self.bet_amount_var = tk.StringVar(value="2.0")
         self.bet_entry = tk.Entry(
             entry_frame,
             textvariable=self.bet_amount_var,
-            font=('Arial', 20, 'bold'),     # Large font for amount
+            font=('Arial', 16, 'bold'),     # Large font for amount
             width=8,                        # Optimal width
             justify=tk.CENTER,
             bg="white",
             fg="black",
             relief='sunken',
-            bd=4,                          # Thick border
-            highlightthickness=3,
-            highlightcolor="#68D391",      # Green highlight when focused
+            bd=3,                          # Thick border
+            highlightthickness=2,
+            highlightcolor="#4682B4",      # Steel blue highlight when focused
             insertbackground="black"        # Black cursor
         )
-        self.bet_entry.pack(pady=3)
+        self.bet_entry.pack(side=tk.LEFT)
         
-        # BET/RAISE button - Industry standard green
+        # BET/RAISE button - Light sky blue 
         self.action_buttons['bet_raise'] = tk.Button(
             self.action_frame,
             text="BET",
-            bg="#38A169",                   # Professional green (Chakra UI green.500)
-            fg="white",
-            activebackground="#2F855A",     # Darker green on hover
-            activeforeground="white",
             command=lambda: self._handle_action_click('bet_raise'),
             **button_config
         )
-        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=8, pady=5)
+        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=6, pady=5)
         
-        # ALL IN button - Industry standard purple/gold
+        # ALL IN button - Bright yellow for maximum visibility
         self.action_buttons['all_in'] = tk.Button(
             self.action_frame,
             text="ALL IN",
-            bg="#805AD5",                   # Professional purple (Chakra UI purple.500)
-            fg="white",
-            activebackground="#6B46C1",     # Darker purple on hover
-            activeforeground="white",
+            bg="#FFD700",                   # Bright gold
+            fg="black",                     # Black text for contrast
+            activebackground="#FFA500",     # Orange on hover  
+            activeforeground="black",
             command=lambda: self._handle_action_click('all_in'),
-            **button_config
+            **{k: v for k, v in button_config.items() 
+               if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
         )
-        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=8, pady=5)
+        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=6, pady=5)
         
         # Initially disable all buttons until it's the human player's turn
         self._disable_action_buttons()
         
         print("🎓 Action buttons setup complete")
+    
+    def _set_pot_bet(self, multiplier: float):
+        """Set bet amount based on pot size multiplier."""
+        if hasattr(self, 'state_machine') and self.state_machine:
+            current_pot = self.state_machine.game_state.pot
+            bet_amount = current_pot * multiplier
+            
+            # Round to nearest 0.5 for clean betting
+            bet_amount = round(bet_amount * 2) / 2
+            
+            # Ensure minimum bet of 2.0
+            bet_amount = max(bet_amount, 2.0)
+            
+            # Update the bet entry
+            self.bet_amount_var.set(f"{bet_amount:.1f}")
+            print(f"🎯 Set bet amount to ${bet_amount:.1f} ({multiplier}x pot of ${current_pot:.1f})")
     
     def _handle_action_click(self, action_type: str):
         """Handle action button clicks."""
@@ -319,6 +374,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 self.action_buttons['all_in'].config(state=tk.NORMAL)
                 self.bet_entry.config(state=tk.NORMAL)
                 
+                # Enable pre-bet size buttons
+                if hasattr(self, 'prebet_buttons'):
+                    for button in self.prebet_buttons.values():
+                        button.config(state=tk.NORMAL)
+                
                 print("🎓 Action buttons enabled for human player")
     
     def _disable_action_buttons(self):
@@ -328,6 +388,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         
         for button in self.action_buttons.values():
             button.config(state=tk.DISABLED)
+        
+        # Disable pre-bet size buttons
+        if hasattr(self, 'prebet_buttons'):
+            for button in self.prebet_buttons.values():
+                button.config(state=tk.DISABLED)
         
         if hasattr(self, 'bet_entry'):
             self.bet_entry.config(state=tk.DISABLED)
