@@ -518,18 +518,30 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
         """Override: Enhanced card display for practice sessions."""
-        # For human players, always get actual cards (not ** placeholders)
-        actual_cards = cards
+        print(f"🎓 PRACTICE CARD DEBUG: Player {player_index} received cards: {cards}")
+        
+        # Check if this is the human player
+        is_human = False
         if (hasattr(self, 'state_machine') and 
             self.state_machine and
-            player_index < len(self.state_machine.game_state.players) and
-            self.state_machine.game_state.players[player_index].is_human and
-            cards and cards[0] == "**"):
-            
+            player_index < len(self.state_machine.game_state.players)):
+            player = self.state_machine.game_state.players[player_index]
+            is_human = player.is_human
+            print(f"🎓 Player {player_index} ({player.name}) is_human: {is_human}")
+            if is_human:
+                print(f"🎓 Human player actual cards from state: {player.cards}")
+        
+        # For human players, always get actual cards (not ** placeholders)
+        actual_cards = cards
+        if (is_human and cards and cards[0] == "**"):
             # Get actual cards from the state machine for human player
             human_player = self.state_machine.game_state.players[player_index]
             actual_cards = human_player.cards if human_player.cards else ["", ""]
-            print(f"🎓 Showing human player actual cards: {actual_cards}")
+            print(f"🎓 Replacing ** with actual cards: {actual_cards}")
+        elif is_human:
+            print(f"🎓 Human player cards already visible: {actual_cards}")
+        
+        print(f"🎓 Calling parent with cards: {actual_cards}")
         
         # Call parent's card setting with actual cards
         super()._set_player_cards_from_display_state(player_index, actual_cards)
