@@ -112,89 +112,111 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self._setup_action_buttons()
     
     def _setup_action_buttons(self):
-        """Set up action buttons for user interaction."""
+        """Set up industry-standard action buttons for user interaction."""
         # Get table color or use default
         table_bg = getattr(self, 'table_color', '#2F4F2F')
         
-        # Create action buttons frame at the bottom
+        # Create action buttons frame with professional spacing
         self.action_frame = tk.Frame(self, bg=table_bg)
-        self.action_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        self.action_frame.grid(row=2, column=0, sticky="ew", padx=15, pady=10)
         
         # Configure grid weights
         self.grid_rowconfigure(2, weight=0)  # Action buttons (fixed height)
         
-        # Action buttons - make them very visible like session control buttons
+        # Industry-standard button configuration (PokerStars/888poker style)
         button_config = {
-            'font': ('Arial', 16, 'bold'),  # Much larger font
-            'width': 10,                    # Wider buttons
-            'height': 3,                    # Taller buttons
+            'font': ('Arial', 20, 'bold'),  # Much larger font for visibility
+            'width': 12,                    # Wider professional buttons
+            'height': 2,                    # Professional height
             'relief': 'raised',
-            'bd': 3,                        # Thicker border
-            'activebackground': '#FFD700',  # Gold hover effect
-            'activeforeground': 'black',
-            'cursor': 'hand2'               # Hand cursor on hover
+            'bd': 4,                        # Thick professional border
+            'cursor': 'hand2',              # Hand cursor on hover
+            'pady': 10,                     # Internal padding
         }
         
-        # Fold button
+        # FOLD button - Industry standard bright red
         self.action_buttons['fold'] = tk.Button(
             self.action_frame,
             text="FOLD",
-            bg="#FF6B6B",  # Red
+            bg="#E53E3E",                   # Professional red (Chakra UI red.500)
             fg="white",
+            activebackground="#C53030",     # Darker red on hover
+            activeforeground="white",
             command=lambda: self._handle_action_click('fold'),
             **button_config
         )
-        self.action_buttons['fold'].pack(side=tk.LEFT, padx=5, pady=5)
+        self.action_buttons['fold'].pack(side=tk.LEFT, padx=8, pady=5)
         
-        # Check/Call button
+        # CHECK/CALL button - Industry standard blue
         self.action_buttons['check_call'] = tk.Button(
             self.action_frame,
             text="CHECK",
-            bg="#4ECDC4",  # Teal
-            fg="white", 
+            bg="#3182CE",                   # Professional blue (Chakra UI blue.500)
+            fg="white",
+            activebackground="#2C5282",     # Darker blue on hover
+            activeforeground="white",
             command=lambda: self._handle_action_click('check_call'),
             **button_config
         )
-        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=5, pady=5)
+        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=8, pady=5)
         
-        # Bet/Raise button
+        # Bet amount section with label
+        entry_frame = tk.Frame(self.action_frame, bg=table_bg)
+        entry_frame.pack(side=tk.LEFT, padx=12, pady=5)
+        
+        # Amount label
+        bet_label = tk.Label(
+            entry_frame,
+            text="AMOUNT",
+            font=('Arial', 14, 'bold'),
+            bg=table_bg,
+            fg="white"
+        )
+        bet_label.pack()
+        
+        # Bet amount entry - enhanced visibility
+        self.bet_amount_var = tk.StringVar(value="2.0")
+        self.bet_entry = tk.Entry(
+            entry_frame,
+            textvariable=self.bet_amount_var,
+            font=('Arial', 20, 'bold'),     # Large font for amount
+            width=8,                        # Optimal width
+            justify=tk.CENTER,
+            bg="white",
+            fg="black",
+            relief='sunken',
+            bd=4,                          # Thick border
+            highlightthickness=3,
+            highlightcolor="#68D391",      # Green highlight when focused
+            insertbackground="black"        # Black cursor
+        )
+        self.bet_entry.pack(pady=3)
+        
+        # BET/RAISE button - Industry standard green
         self.action_buttons['bet_raise'] = tk.Button(
             self.action_frame,
             text="BET",
-            bg="#45B7D1",  # Blue
+            bg="#38A169",                   # Professional green (Chakra UI green.500)
             fg="white",
+            activebackground="#2F855A",     # Darker green on hover
+            activeforeground="white",
             command=lambda: self._handle_action_click('bet_raise'),
             **button_config
         )
-        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=5, pady=5)
+        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=8, pady=5)
         
-        # Bet amount entry - larger and more visible
-        self.bet_amount_var = tk.StringVar(value="2.0")
-        self.bet_entry = tk.Entry(
-            self.action_frame,
-            textvariable=self.bet_amount_var,
-            font=('Arial', 16, 'bold'),  # Larger font
-            width=10,                     # Wider entry
-            justify=tk.CENTER,
-            bg='white',
-            fg='black',
-            relief='sunken',
-            bd=3,                        # Thicker border
-            highlightthickness=2,
-            highlightcolor='#45B7D1'     # Blue highlight when focused
-        )
-        self.bet_entry.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        # All-in button
+        # ALL IN button - Industry standard purple/gold
         self.action_buttons['all_in'] = tk.Button(
             self.action_frame,
             text="ALL IN",
-            bg="#FF8C42",  # Orange
+            bg="#805AD5",                   # Professional purple (Chakra UI purple.500)
             fg="white",
+            activebackground="#6B46C1",     # Darker purple on hover
+            activeforeground="white",
             command=lambda: self._handle_action_click('all_in'),
             **button_config
         )
-        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=5, pady=5)
+        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=8, pady=5)
         
         # Initially disable all buttons until it's the human player's turn
         self._disable_action_buttons()

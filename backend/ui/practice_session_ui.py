@@ -101,27 +101,43 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         self._setup_statistics_panel(controls_frame)
     
     def _setup_session_controls(self, parent):
-        """Setup session control buttons."""
+        """Setup industry-standard session control buttons."""
         controls_frame = ttk.LabelFrame(parent, text="Session Controls", padding=10)
         controls_frame.pack(fill=tk.X, pady=(0, 5))
         
-        # Start New Hand button
-        self.start_btn = ttk.Button(
-            controls_frame,
-            text="🎯 Start New Hand",
-            command=self._start_new_hand,
-            style="Primary.TButton"
-        )
-        self.start_btn.pack(fill=tk.X, pady=(0, 5))
+        # Industry-standard game control button configuration
+        control_button_config = {
+            'font': ('Arial', 16, 'bold'),  # Large readable font
+            'height': 2,                    # Compact height
+            'relief': 'raised',
+            'bd': 3,                        # Professional border
+            'cursor': 'hand2',              # Hand cursor on hover
+            'activeforeground': 'white',    # White text on hover
+        }
         
-        # Reset Session button
-        self.reset_btn = ttk.Button(
+        # Start New Hand button - Industry standard green/blue
+        self.start_btn = tk.Button(
             controls_frame,
-            text="🔄 Reset Session",
-            command=self._reset_session,
-            style="Danger.TButton"
+            text="🎯 START NEW HAND",
+            command=self._start_new_hand,
+            bg="#38A169",                   # Professional green (same as BET button)
+            fg="white",
+            activebackground="#2F855A",     # Darker green on hover
+            **control_button_config
         )
-        self.reset_btn.pack(fill=tk.X, pady=(0, 5))
+        self.start_btn.pack(fill=tk.X, pady=(0, 8))
+        
+        # Reset Session button - Industry standard orange/amber
+        self.reset_btn = tk.Button(
+            controls_frame,
+            text="🔄 RESET SESSION",
+            command=self._reset_session,
+            bg="#D97706",                   # Professional amber (Chakra UI orange.600)
+            fg="white",
+            activebackground="#B45309",     # Darker amber on hover
+            **control_button_config
+        )
+        self.reset_btn.pack(fill=tk.X, pady=(0, 8))
         
         # Coaching Mode toggle
         self.coaching_var = tk.BooleanVar(value=True)
