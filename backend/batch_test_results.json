@@ -1,0 +1,815 @@
+{
+  "summary": {
+    "total_hands": 100,
+    "passed": 39,
+    "failed": 61,
+    "success_rate": 39.0,
+    "total_time": 225.10798597335815,
+    "avg_time_per_hand": 2.2510798597335815,
+    "batch_size": 10,
+    "num_batches": 10,
+    "max_processes": 10
+  },
+  "results": [
+    {
+      "hand_number": 1,
+      "hand_id": "GEN-001",
+      "status": "max_actions",
+      "time": 4.399780035018921,
+      "actions": 200,
+      "error": null
+    },
+    {
+      "hand_number": 2,
+      "hand_id": "GEN-002",
+      "status": "passed",
+      "time": 17.50396704673767,
+      "actions": 14,
+      "error": null
+    },
+    {
+      "hand_number": 3,
+      "hand_id": "GEN-003",
+      "status": "passed",
+      "time": 7.505473852157593,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 4,
+      "hand_id": "GEN-004",
+      "status": "passed",
+      "time": 16.31197690963745,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 5,
+      "hand_id": "GEN-005",
+      "status": "passed",
+      "time": 11.931822061538696,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 6,
+      "hand_id": "GEN-006",
+      "status": "passed",
+      "time": 7.7222678661346436,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 7,
+      "hand_id": "GEN-007",
+      "status": "passed",
+      "time": 4.807435035705566,
+      "actions": 3,
+      "error": null
+    },
+    {
+      "hand_number": 8,
+      "hand_id": "GEN-008",
+      "status": "timeout",
+      "time": 24.501103162765503,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 9,
+      "hand_id": "GEN-009",
+      "status": "passed",
+      "time": 31.604249954223633,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 10,
+      "hand_id": "GEN-010",
+      "status": "passed",
+      "time": 14.772001028060913,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 11,
+      "hand_id": "GEN-011",
+      "status": "passed",
+      "time": 5.753978967666626,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 12,
+      "hand_id": "GEN-012",
+      "status": "passed",
+      "time": 14.77007269859314,
+      "actions": 14,
+      "error": null
+    },
+    {
+      "hand_number": 13,
+      "hand_id": "GEN-013",
+      "status": "passed",
+      "time": 7.417886018753052,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 14,
+      "hand_id": "GEN-014",
+      "status": "passed",
+      "time": 20.770700931549072,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 15,
+      "hand_id": "GEN-015",
+      "status": "timeout",
+      "time": 21.9805428981781,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 16,
+      "hand_id": "GEN-016",
+      "status": "passed",
+      "time": 18.459007024765015,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 17,
+      "hand_id": "GEN-017",
+      "status": "timeout",
+      "time": 20.941242933273315,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 18,
+      "hand_id": "GEN-018",
+      "status": "timeout",
+      "time": 28.6837260723114,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 19,
+      "hand_id": "GEN-019",
+      "status": "timeout",
+      "time": 26.853556156158447,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 20,
+      "hand_id": "GEN-020",
+      "status": "timeout",
+      "time": 23.945924997329712,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 21,
+      "hand_id": "GEN-021",
+      "status": "passed",
+      "time": 4.822624921798706,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 22,
+      "hand_id": "GEN-022",
+      "status": "passed",
+      "time": 5.035643815994263,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 23,
+      "hand_id": "GEN-023",
+      "status": "passed",
+      "time": 9.800773859024048,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 24,
+      "hand_id": "GEN-024",
+      "status": "timeout",
+      "time": 22.41730308532715,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 25,
+      "hand_id": "GEN-025",
+      "status": "passed",
+      "time": 25.558427810668945,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 26,
+      "hand_id": "GEN-026",
+      "status": "timeout",
+      "time": 20.149070739746094,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 27,
+      "hand_id": "GEN-027",
+      "status": "timeout",
+      "time": 21.10177707672119,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 28,
+      "hand_id": "GEN-028",
+      "status": "passed",
+      "time": 3.606949806213379,
+      "actions": 4,
+      "error": null
+    },
+    {
+      "hand_number": 29,
+      "hand_id": "GEN-029",
+      "status": "timeout",
+      "time": 22.4455988407135,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 30,
+      "hand_id": "GEN-030",
+      "status": "timeout",
+      "time": 24.367442846298218,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 31,
+      "hand_id": "GEN-031",
+      "status": "passed",
+      "time": 3.534849166870117,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 32,
+      "hand_id": "GEN-032",
+      "status": "timeout",
+      "time": 22.317129850387573,
+      "actions": 15,
+      "error": null
+    },
+    {
+      "hand_number": 33,
+      "hand_id": "GEN-033",
+      "status": "timeout",
+      "time": 23.367709159851074,
+      "actions": 14,
+      "error": null
+    },
+    {
+      "hand_number": 34,
+      "hand_id": "GEN-034",
+      "status": "timeout",
+      "time": 26.748158931732178,
+      "actions": 14,
+      "error": null
+    },
+    {
+      "hand_number": 35,
+      "hand_id": "GEN-035",
+      "status": "passed",
+      "time": 23.174472332000732,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 36,
+      "hand_id": "GEN-036",
+      "status": "timeout",
+      "time": 21.99056601524353,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 37,
+      "hand_id": "GEN-037",
+      "status": "timeout",
+      "time": 20.62387490272522,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 38,
+      "hand_id": "GEN-038",
+      "status": "timeout",
+      "time": 24.410356998443604,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 39,
+      "hand_id": "GEN-039",
+      "status": "timeout",
+      "time": 24.62962794303894,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 40,
+      "hand_id": "GEN-040",
+      "status": "timeout",
+      "time": 25.634521007537842,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 41,
+      "hand_id": "GEN-041",
+      "status": "passed",
+      "time": 7.471794843673706,
+      "actions": 14,
+      "error": null
+    },
+    {
+      "hand_number": 42,
+      "hand_id": "GEN-042",
+      "status": "passed",
+      "time": 19.073620080947876,
+      "actions": 16,
+      "error": null
+    },
+    {
+      "hand_number": 43,
+      "hand_id": "GEN-043",
+      "status": "timeout",
+      "time": 22.628167867660522,
+      "actions": 15,
+      "error": null
+    },
+    {
+      "hand_number": 44,
+      "hand_id": "GEN-044",
+      "status": "timeout",
+      "time": 27.7442409992218,
+      "actions": 15,
+      "error": null
+    },
+    {
+      "hand_number": 45,
+      "hand_id": "GEN-045",
+      "status": "timeout",
+      "time": 20.379910230636597,
+      "actions": 13,
+      "error": null
+    },
+    {
+      "hand_number": 46,
+      "hand_id": "GEN-046",
+      "status": "timeout",
+      "time": 25.19100308418274,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 47,
+      "hand_id": "GEN-047",
+      "status": "timeout",
+      "time": 24.40389919281006,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 48,
+      "hand_id": "GEN-048",
+      "status": "timeout",
+      "time": 21.1701238155365,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 49,
+      "hand_id": "GEN-049",
+      "status": "timeout",
+      "time": 22.099874019622803,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 50,
+      "hand_id": "GEN-050",
+      "status": "timeout",
+      "time": 26.31775999069214,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 51,
+      "hand_id": "GEN-051",
+      "status": "max_actions",
+      "time": 8.757795095443726,
+      "actions": 200,
+      "error": null
+    },
+    {
+      "hand_number": 52,
+      "hand_id": "GEN-052",
+      "status": "passed",
+      "time": 18.212430000305176,
+      "actions": 13,
+      "error": null
+    },
+    {
+      "hand_number": 53,
+      "hand_id": "GEN-053",
+      "status": "passed",
+      "time": 1.2851929664611816,
+      "actions": 4,
+      "error": null
+    },
+    {
+      "hand_number": 54,
+      "hand_id": "GEN-054",
+      "status": "timeout",
+      "time": 20.61083984375,
+      "actions": 22,
+      "error": null
+    },
+    {
+      "hand_number": 55,
+      "hand_id": "GEN-055",
+      "status": "passed",
+      "time": 30.360769748687744,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 56,
+      "hand_id": "GEN-056",
+      "status": "passed",
+      "time": 2.043909788131714,
+      "actions": 3,
+      "error": null
+    },
+    {
+      "hand_number": 57,
+      "hand_id": "GEN-057",
+      "status": "passed",
+      "time": 2.5056018829345703,
+      "actions": 3,
+      "error": null
+    },
+    {
+      "hand_number": 58,
+      "hand_id": "GEN-058",
+      "status": "timeout",
+      "time": 21.047911167144775,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 59,
+      "hand_id": "GEN-059",
+      "status": "timeout",
+      "time": 27.893517017364502,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 60,
+      "hand_id": "GEN-064",
+      "status": "timeout",
+      "time": 29.123319149017334,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 61,
+      "hand_id": "GEN-069",
+      "status": "passed",
+      "time": 6.531033277511597,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 62,
+      "hand_id": "GEN-074",
+      "status": "passed",
+      "time": 16.875656127929688,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 63,
+      "hand_id": "GEN-079",
+      "status": "passed",
+      "time": 29.89115810394287,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 64,
+      "hand_id": "GEN-084",
+      "status": "timeout",
+      "time": 25.1548810005188,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 65,
+      "hand_id": "GEN-089",
+      "status": "timeout",
+      "time": 24.183254957199097,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 66,
+      "hand_id": "GEN-094",
+      "status": "timeout",
+      "time": 22.64966607093811,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 67,
+      "hand_id": "GEN-099",
+      "status": "timeout",
+      "time": 27.370131015777588,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 68,
+      "hand_id": "GEN-060",
+      "status": "timeout",
+      "time": 21.347083806991577,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 69,
+      "hand_id": "GEN-065",
+      "status": "timeout",
+      "time": 26.322676181793213,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 70,
+      "hand_id": "GEN-070",
+      "status": "timeout",
+      "time": 22.92659592628479,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 71,
+      "hand_id": "GEN-075",
+      "status": "passed",
+      "time": 6.790724039077759,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 72,
+      "hand_id": "GEN-080",
+      "status": "passed",
+      "time": 17.0974862575531,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 73,
+      "hand_id": "GEN-085",
+      "status": "passed",
+      "time": 29.45356583595276,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 74,
+      "hand_id": "GEN-090",
+      "status": "timeout",
+      "time": 28.011314868927002,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 75,
+      "hand_id": "GEN-095",
+      "status": "timeout",
+      "time": 23.53212070465088,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 76,
+      "hand_id": "GEN-100",
+      "status": "timeout",
+      "time": 24.949840784072876,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 77,
+      "hand_id": "GEN-061",
+      "status": "timeout",
+      "time": 21.716734409332275,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 78,
+      "hand_id": "GEN-066",
+      "status": "timeout",
+      "time": 24.14050006866455,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 79,
+      "hand_id": "GEN-071",
+      "status": "timeout",
+      "time": 20.98623490333557,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 80,
+      "hand_id": "GEN-076",
+      "status": "timeout",
+      "time": 23.40569806098938,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 81,
+      "hand_id": "GEN-081",
+      "status": "passed",
+      "time": 6.715029954910278,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 82,
+      "hand_id": "GEN-086",
+      "status": "passed",
+      "time": 16.464081048965454,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 83,
+      "hand_id": "GEN-091",
+      "status": "passed",
+      "time": 29.98632311820984,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 84,
+      "hand_id": "GEN-096",
+      "status": "timeout",
+      "time": 25.43040895462036,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 85,
+      "hand_id": "GEN-062",
+      "status": "timeout",
+      "time": 20.11316204071045,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 86,
+      "hand_id": "GEN-067",
+      "status": "timeout",
+      "time": 21.91219210624695,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 87,
+      "hand_id": "GEN-072",
+      "status": "timeout",
+      "time": 21.56202793121338,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 88,
+      "hand_id": "GEN-077",
+      "status": "timeout",
+      "time": 22.406225204467773,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 89,
+      "hand_id": "GEN-082",
+      "status": "timeout",
+      "time": 22.520067930221558,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 90,
+      "hand_id": "GEN-087",
+      "status": "timeout",
+      "time": 23.281226873397827,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 91,
+      "hand_id": "GEN-092",
+      "status": "passed",
+      "time": 6.868551254272461,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 92,
+      "hand_id": "GEN-097",
+      "status": "passed",
+      "time": 16.658690929412842,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 93,
+      "hand_id": "GEN-063",
+      "status": "passed",
+      "time": 29.581350803375244,
+      "actions": 12,
+      "error": null
+    },
+    {
+      "hand_number": 94,
+      "hand_id": "GEN-068",
+      "status": "timeout",
+      "time": 25.109591007232666,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 95,
+      "hand_id": "GEN-073",
+      "status": "timeout",
+      "time": 23.728800058364868,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 96,
+      "hand_id": "GEN-078",
+      "status": "timeout",
+      "time": 22.50618815422058,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 97,
+      "hand_id": "GEN-083",
+      "status": "timeout",
+      "time": 21.58441710472107,
+      "actions": 8,
+      "error": null
+    },
+    {
+      "hand_number": 98,
+      "hand_id": "GEN-088",
+      "status": "timeout",
+      "time": 22.417715072631836,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 99,
+      "hand_id": "GEN-093",
+      "status": "timeout",
+      "time": 21.821001052856445,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 100,
+      "hand_id": "GEN-098",
+      "status": "timeout",
+      "time": 23.059144973754883,
+      "actions": 7,
+      "error": null
+    }
+  ]
+}

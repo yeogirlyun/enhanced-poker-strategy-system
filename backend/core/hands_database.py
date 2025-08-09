@@ -236,17 +236,16 @@ class LegendaryHandsPHHLoader:
             # Track players as we parse
             elif stripped.startswith('[[players]]') and current_hand:
                 # Start tracking a new player
-                pass
-            elif stripped.startswith('name =') and current_hand:
-                # Extract player name
+                current_players.append({})  # Create empty player dict
+            elif stripped.startswith('name =') and current_hand and current_players:
+                # Extract player name and add to last player
                 player_name = stripped.split('=', 1)[1].strip().strip('"')
-                if player_name and player_name not in [p.get('name', '') for p in current_players]:
-                    current_players.append({'name': player_name})
+                if player_name:
+                    current_players[-1]['name'] = player_name
             elif stripped.startswith('seat =') and current_hand and current_players:
                 # Add seat to last player
                 seat_num = int(stripped.split('=', 1)[1].strip())
-                if current_players:
-                    current_players[-1]['seat'] = seat_num
+                current_players[-1]['seat'] = seat_num
             elif stripped.startswith('cards =') and current_hand and current_players:
                 # Add cards to last player
                 cards_str = stripped.split('=', 1)[1].strip()
@@ -255,6 +254,14 @@ class LegendaryHandsPHHLoader:
                     if current_players:
                         current_players[-1]['cards'] = cards
                 except (ValueError, SyntaxError):
+                    pass
+            elif stripped.startswith('starting_stack_chips =') and current_hand and current_players:
+                # Add starting stack to last player
+                try:
+                    stack_amount = int(stripped.split('=', 1)[1].strip())
+                    if current_players:
+                        current_players[-1]['starting_stack_chips'] = stack_amount
+                except (ValueError, IndexError):
                     pass
             
             # Parse board cards

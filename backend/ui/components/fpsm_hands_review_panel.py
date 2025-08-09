@@ -526,6 +526,10 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
     
     def start_hand_simulation(self):
         """Start the hand simulation."""
+        # Clear cache for new hand
+        if hasattr(self, '_cached_actor_mapping'):
+            del self._cached_actor_mapping
+            
         if not self.current_hand:
             messagebox.showwarning("No Hand Selected", "Please select a hand first.")
             return
@@ -587,11 +591,26 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         for street, street_actions in self.current_hand.actions.items():
             if isinstance(street_actions, list):
                 for action in street_actions:
+                    # Handle both 'amount' and 'to' fields correctly
+                    action_type = action.get('type', '').upper()
+                    amount = 0
+                    
+                    if action_type in ['RAISE', 'RERAISE'] and 'to' in action:
+                        # For raises/reraises, use the 'to' field (total amount to raise to)
+                        amount = action['to']
+                    elif action_type in ['CALL', 'BET'] and 'amount' in action:
+                        # For calls/bets, use the 'amount' field
+                        amount = action['amount']
+                    elif action_type == 'ALL-IN' and 'amount' in action:
+                        # For all-ins, use the 'amount' field
+                        amount = action['amount']
+                    # FOLD and CHECK actions typically have amount = 0, which is correct
+                    
                     self.historical_actions.append({
                         'street': street,
                         'actor': action.get('actor'),
-                        'type': action.get('type', '').upper(),
-                        'amount': action.get('amount', 0)
+                        'type': action_type,
+                        'amount': amount
                     })
         
         self.use_historical_actions = True
@@ -633,7 +652,8 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     print(f"⚠️ Error parsing stakes '{stakes_str}': {e}")
             
             # Create FPSM with simulation configuration using real stakes
-            num_players = max(6, len(self.current_hand.players))
+            # Use EXACT player count from historical hand - no padding!
+            num_players = len(self.current_hand.players)
             config = GameConfig(
                 num_players=num_players,
                 big_blind=big_blind,
@@ -665,9 +685,13 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     # Only take first 2 cards (hole cards)
                     cards = cards[:2]
                 
-                # Calculate estimated stack based on pot and betting amounts
-                # For legendary hands, use high stakes stacks
-                estimated_stack = starting_stack
+                # Use actual starting stack from PHH data if available
+                phh_stack = player_info.get('starting_stack_chips', 0)
+                if phh_stack > 0:
+                    estimated_stack = phh_stack
+                else:
+                    # Fallback to default high stakes stack
+                    estimated_stack = starting_stack
                 
                 # Create player with real name and cards from legendary hand
                 player = Player(
@@ -681,20 +705,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 fpsm_players.append(player)
                 print(f"👤 Created legendary player {i}: {player.name} with cards: {cards} stack: ${player.stack:,.0f}")
             
-            # Ensure we have exactly 6 players (pad with default players if needed)
-            while len(fpsm_players) < 6:
-                i = len(fpsm_players)
-                sample_cards = [["Ah", "Ks"], ["Qd", "Jc"], ["Th", "9s"], ["8d", "7c"], ["6h", "5s"], ["4d", "3c"]]
-                player = Player(
-                    name=f"Player {i+1}", 
-                    stack=1000.0, 
-                    position="", 
-                    is_human=False, 
-                    is_active=True, 
-                    cards=sample_cards[i] if i < len(sample_cards) else ["**", "**"]
-                )
-                fpsm_players.append(player)
-                print(f"👤 Added default player {i}: {player.name} with cards: {player.cards}")
+            # No padding! Use exact historical player count for accurate simulation
             
             # Extract board cards from legendary hand data
             board_cards = []
@@ -751,8 +762,12 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             
             self.poker_game_widget = ReusablePokerGameWidget(
                 self.game_container,
-                state_machine=self.fpsm
+                state_machine=self.fpsm,
+                debug_mode=True  # Enable debug mode for fast testing
             )
+            
+            # Completely disable UI rendering for testing performance
+            self.poker_game_widget.headless_mode = True
             self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
             # Set poker game config for dynamic positioning
@@ -1065,6 +1080,10 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
     
     def build_actor_mapping(self):
         """Build mapping from FPSM player index to legendary hand actor ID (DYNAMIC)."""
+        # Cache the mapping to avoid rebuilding repeatedly during the same hand
+        if hasattr(self, '_cached_actor_mapping') and self._cached_actor_mapping:
+            return self._cached_actor_mapping
+            
         fpsm_to_actor = {}
         
         if not hasattr(self.current_hand, 'players'):
@@ -1106,6 +1125,8 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     fpsm_to_actor[fpsm_index] = fallback_actor
                     print(f"🎯 Fallback mapping: FPSM player {fpsm_index} → Actor {fallback_actor}")
         
+        # Cache the mapping for this hand
+        self._cached_actor_mapping = fpsm_to_actor
         return fpsm_to_actor
     
     def _names_match(self, fpsm_name: str, hand_name: str) -> bool:
@@ -1165,6 +1186,11 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             if player_actor_id in [3, 4, 5, 6] or player_actor_id is None:
                 print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - should have folded preflop")
                 return {'type': ActionType.FOLD, 'amount': 0}
+        
+        # Special case: Players named "Folded Player X" should always fold
+        if "Folded Player" in player.name:
+            print(f"🎯 Auto-folding {player.name} (marked as folder in PHH)")
+            return {'type': ActionType.FOLD, 'amount': 0}
         
         # Fallback to original logic for non-legendary hands or when no historical action matches
         try:
@@ -1393,16 +1419,6 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             # Update simulation status
             if hasattr(self, 'simulation_status_label'):
                 self.simulation_status_label.configure(text=action_req_msg)
-        
-        elif event.event_type == "round_complete":
-            street = event.data.get("street", "")
-            round_msg = f"Round complete: {street}"
-            print(f"🎯 {round_msg}")
-            self.add_log_entry("INFO", "ROUND_COMPLETE", round_msg)
-            
-            # Update simulation status
-            if hasattr(self, 'simulation_status_label'):
-                self.simulation_status_label.configure(text=f"Round complete: {street}")
         
         # For any other event, just log it
         else:

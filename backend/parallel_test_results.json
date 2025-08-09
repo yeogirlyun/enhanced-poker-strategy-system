@@ -1,0 +1,813 @@
+{
+  "summary": {
+    "total_hands": 100,
+    "passed": 9,
+    "failed": 91,
+    "success_rate": 9.0,
+    "total_time": 10.365447282791138,
+    "avg_time_per_hand": 0.10365447282791138,
+    "max_processes": 10
+  },
+  "results": [
+    {
+      "hand_number": 1,
+      "hand_id": "GEN-001",
+      "status": "max_actions",
+      "time": 4.89754319190979,
+      "actions": 200,
+      "error": null
+    },
+    {
+      "hand_number": 2,
+      "hand_id": "GEN-002",
+      "status": "setup_failed",
+      "time": 0.009945154190063477,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 3,
+      "hand_id": "GEN-003",
+      "status": "setup_failed",
+      "time": 0.006566047668457031,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 4,
+      "hand_id": "GEN-004",
+      "status": "passed",
+      "time": 3.4268851280212402,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 5,
+      "hand_id": "GEN-005",
+      "status": "setup_failed",
+      "time": 0.010632991790771484,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 6,
+      "hand_id": "GEN-006",
+      "status": "setup_failed",
+      "time": 0.006903171539306641,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 7,
+      "hand_id": "GEN-007",
+      "status": "passed",
+      "time": 0.8991949558258057,
+      "actions": 2,
+      "error": null
+    },
+    {
+      "hand_number": 8,
+      "hand_id": "GEN-008",
+      "status": "setup_failed",
+      "time": 0.020596027374267578,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 9,
+      "hand_id": "GEN-009",
+      "status": "setup_failed",
+      "time": 0.0073320865631103516,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 10,
+      "hand_id": "GEN-010",
+      "status": "passed",
+      "time": 1.2786967754364014,
+      "actions": 6,
+      "error": null
+    },
+    {
+      "hand_number": 11,
+      "hand_id": "GEN-011",
+      "status": "setup_failed",
+      "time": 0.015051841735839844,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 12,
+      "hand_id": "GEN-012",
+      "status": "setup_failed",
+      "time": 0.010049819946289062,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 13,
+      "hand_id": "GEN-013",
+      "status": "passed",
+      "time": 2.8682188987731934,
+      "actions": 7,
+      "error": null
+    },
+    {
+      "hand_number": 14,
+      "hand_id": "GEN-014",
+      "status": "setup_failed",
+      "time": 0.02311110496520996,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 15,
+      "hand_id": "GEN-015",
+      "status": "setup_failed",
+      "time": 0.009567022323608398,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 16,
+      "hand_id": "GEN-016",
+      "status": "passed",
+      "time": 4.270238876342773,
+      "actions": 10,
+      "error": null
+    },
+    {
+      "hand_number": 17,
+      "hand_id": "GEN-017",
+      "status": "setup_failed",
+      "time": 0.011017084121704102,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 18,
+      "hand_id": "GEN-018",
+      "status": "setup_failed",
+      "time": 0.006806850433349609,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 19,
+      "hand_id": "GEN-019",
+      "status": "passed",
+      "time": 7.844235897064209,
+      "actions": 15,
+      "error": null
+    },
+    {
+      "hand_number": 20,
+      "hand_id": "GEN-020",
+      "status": "setup_failed",
+      "time": 0.01045989990234375,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 21,
+      "hand_id": "GEN-021",
+      "status": "setup_failed",
+      "time": 0.006109952926635742,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 22,
+      "hand_id": "GEN-022",
+      "status": "passed",
+      "time": 4.5763630867004395,
+      "actions": 11,
+      "error": null
+    },
+    {
+      "hand_number": 23,
+      "hand_id": "GEN-023",
+      "status": "setup_failed",
+      "time": 0.009868144989013672,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 24,
+      "hand_id": "GEN-024",
+      "status": "setup_failed",
+      "time": 0.006311178207397461,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 25,
+      "hand_id": "GEN-025",
+      "status": "passed",
+      "time": 3.563960075378418,
+      "actions": 9,
+      "error": null
+    },
+    {
+      "hand_number": 26,
+      "hand_id": "GEN-026",
+      "status": "setup_failed",
+      "time": 0.01024770736694336,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 27,
+      "hand_id": "GEN-027",
+      "status": "setup_failed",
+      "time": 0.006726264953613281,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 28,
+      "hand_id": "GEN-028",
+      "status": "passed",
+      "time": 1.1572892665863037,
+      "actions": 5,
+      "error": null
+    },
+    {
+      "hand_number": 29,
+      "hand_id": "GEN-029",
+      "status": "setup_failed",
+      "time": 0.015105009078979492,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 30,
+      "hand_id": "GEN-030",
+      "status": "setup_failed",
+      "time": 0.011381864547729492,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 31,
+      "hand_id": "GEN-031",
+      "status": "setup_failed",
+      "time": 0.011621952056884766,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 32,
+      "hand_id": "GEN-032",
+      "status": "setup_failed",
+      "time": 0.00846409797668457,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 33,
+      "hand_id": "GEN-033",
+      "status": "setup_failed",
+      "time": 0.0068891048431396484,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 34,
+      "hand_id": "GEN-034",
+      "status": "setup_failed",
+      "time": 0.01109004020690918,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 35,
+      "hand_id": "GEN-035",
+      "status": "setup_failed",
+      "time": 0.007784843444824219,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 36,
+      "hand_id": "GEN-036",
+      "status": "setup_failed",
+      "time": 0.007016181945800781,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 37,
+      "hand_id": "GEN-037",
+      "status": "setup_failed",
+      "time": 0.010670900344848633,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 38,
+      "hand_id": "GEN-038",
+      "status": "setup_failed",
+      "time": 0.01632213592529297,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 39,
+      "hand_id": "GEN-039",
+      "status": "setup_failed",
+      "time": 0.007500648498535156,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 40,
+      "hand_id": "GEN-040",
+      "status": "setup_failed",
+      "time": 0.008108139038085938,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 41,
+      "hand_id": "GEN-041",
+      "status": "setup_failed",
+      "time": 0.009964942932128906,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 42,
+      "hand_id": "GEN-042",
+      "status": "setup_failed",
+      "time": 0.011893033981323242,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 43,
+      "hand_id": "GEN-043",
+      "status": "setup_failed",
+      "time": 0.007022857666015625,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 44,
+      "hand_id": "GEN-044",
+      "status": "setup_failed",
+      "time": 0.006649017333984375,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 45,
+      "hand_id": "GEN-045",
+      "status": "setup_failed",
+      "time": 0.013104915618896484,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 46,
+      "hand_id": "GEN-046",
+      "status": "setup_failed",
+      "time": 0.008224010467529297,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 47,
+      "hand_id": "GEN-047",
+      "status": "setup_failed",
+      "time": 0.009692907333374023,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 48,
+      "hand_id": "GEN-048",
+      "status": "setup_failed",
+      "time": 0.007260322570800781,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 49,
+      "hand_id": "GEN-049",
+      "status": "setup_failed",
+      "time": 0.0072438716888427734,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 50,
+      "hand_id": "GEN-050",
+      "status": "setup_failed",
+      "time": 0.006632089614868164,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 51,
+      "hand_id": "GEN-051",
+      "status": "setup_failed",
+      "time": 0.013848066329956055,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 52,
+      "hand_id": "GEN-052",
+      "status": "setup_failed",
+      "time": 0.009532928466796875,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 53,
+      "hand_id": "GEN-053",
+      "status": "setup_failed",
+      "time": 0.00787496566772461,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 54,
+      "hand_id": "GEN-054",
+      "status": "setup_failed",
+      "time": 0.008542299270629883,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 55,
+      "hand_id": "GEN-055",
+      "status": "setup_failed",
+      "time": 0.012207984924316406,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 56,
+      "hand_id": "GEN-056",
+      "status": "setup_failed",
+      "time": 0.009320974349975586,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 57,
+      "hand_id": "GEN-057",
+      "status": "setup_failed",
+      "time": 0.011089324951171875,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 58,
+      "hand_id": "GEN-058",
+      "status": "setup_failed",
+      "time": 0.007944107055664062,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 59,
+      "hand_id": "GEN-059",
+      "status": "setup_failed",
+      "time": 0.010312318801879883,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 60,
+      "hand_id": "GEN-064",
+      "status": "setup_failed",
+      "time": 0.00643467903137207,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 61,
+      "hand_id": "GEN-069",
+      "status": "setup_failed",
+      "time": 0.006661891937255859,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 62,
+      "hand_id": "GEN-074",
+      "status": "setup_failed",
+      "time": 0.006673097610473633,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 63,
+      "hand_id": "GEN-079",
+      "status": "setup_failed",
+      "time": 0.009254932403564453,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 64,
+      "hand_id": "GEN-084",
+      "status": "setup_failed",
+      "time": 0.006516218185424805,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 65,
+      "hand_id": "GEN-089",
+      "status": "setup_failed",
+      "time": 0.006433010101318359,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 66,
+      "hand_id": "GEN-094",
+      "status": "setup_failed",
+      "time": 0.013432025909423828,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 67,
+      "hand_id": "GEN-099",
+      "status": "setup_failed",
+      "time": 0.00638580322265625,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 68,
+      "hand_id": "GEN-060",
+      "status": "setup_failed",
+      "time": 0.006903171539306641,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 69,
+      "hand_id": "GEN-065",
+      "status": "setup_failed",
+      "time": 0.011667966842651367,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 70,
+      "hand_id": "GEN-070",
+      "status": "setup_failed",
+      "time": 0.012111902236938477,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 71,
+      "hand_id": "GEN-075",
+      "status": "setup_failed",
+      "time": 0.010153055191040039,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 72,
+      "hand_id": "GEN-080",
+      "status": "setup_failed",
+      "time": 0.006617307662963867,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 73,
+      "hand_id": "GEN-085",
+      "status": "setup_failed",
+      "time": 0.008281946182250977,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 74,
+      "hand_id": "GEN-090",
+      "status": "setup_failed",
+      "time": 0.010860204696655273,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 75,
+      "hand_id": "GEN-095",
+      "status": "setup_failed",
+      "time": 0.010813236236572266,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 76,
+      "hand_id": "GEN-100",
+      "status": "setup_failed",
+      "time": 0.014136075973510742,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 77,
+      "hand_id": "GEN-061",
+      "status": "setup_failed",
+      "time": 0.008702993392944336,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 78,
+      "hand_id": "GEN-066",
+      "status": "setup_failed",
+      "time": 0.0065271854400634766,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 79,
+      "hand_id": "GEN-071",
+      "status": "setup_failed",
+      "time": 0.007848262786865234,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 80,
+      "hand_id": "GEN-076",
+      "status": "setup_failed",
+      "time": 0.013043880462646484,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 81,
+      "hand_id": "GEN-081",
+      "status": "setup_failed",
+      "time": 0.00662994384765625,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 82,
+      "hand_id": "GEN-086",
+      "status": "setup_failed",
+      "time": 0.008451700210571289,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 83,
+      "hand_id": "GEN-091",
+      "status": "setup_failed",
+      "time": 0.006363868713378906,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 84,
+      "hand_id": "GEN-096",
+      "status": "setup_failed",
+      "time": 0.012738227844238281,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 85,
+      "hand_id": "GEN-062",
+      "status": "setup_failed",
+      "time": 0.008842945098876953,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 86,
+      "hand_id": "GEN-067",
+      "status": "setup_failed",
+      "time": 0.006372928619384766,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 87,
+      "hand_id": "GEN-072",
+      "status": "setup_failed",
+      "time": 0.011639118194580078,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 88,
+      "hand_id": "GEN-077",
+      "status": "setup_failed",
+      "time": 0.009192943572998047,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 89,
+      "hand_id": "GEN-082",
+      "status": "setup_failed",
+      "time": 0.013562679290771484,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 90,
+      "hand_id": "GEN-087",
+      "status": "setup_failed",
+      "time": 0.006500959396362305,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 91,
+      "hand_id": "GEN-092",
+      "status": "setup_failed",
+      "time": 0.008659124374389648,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 92,
+      "hand_id": "GEN-097",
+      "status": "setup_failed",
+      "time": 0.009171009063720703,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 93,
+      "hand_id": "GEN-063",
+      "status": "setup_failed",
+      "time": 0.006673097610473633,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 94,
+      "hand_id": "GEN-068",
+      "status": "setup_failed",
+      "time": 0.011577844619750977,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 95,
+      "hand_id": "GEN-073",
+      "status": "setup_failed",
+      "time": 0.009423017501831055,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 96,
+      "hand_id": "GEN-078",
+      "status": "setup_failed",
+      "time": 0.010735034942626953,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 97,
+      "hand_id": "GEN-083",
+      "status": "setup_failed",
+      "time": 0.0064411163330078125,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 98,
+      "hand_id": "GEN-088",
+      "status": "setup_failed",
+      "time": 0.011774063110351562,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 99,
+      "hand_id": "GEN-093",
+      "status": "setup_failed",
+      "time": 0.006482124328613281,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    },
+    {
+      "hand_number": 100,
+      "hand_id": "GEN-098",
+      "status": "setup_failed",
+      "time": 0.014815092086791992,
+      "actions": 0,
+      "error": "Failed to setup simulation"
+    }
+  ]
+}

@@ -36,13 +36,25 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     with no independent decision-making.
     """
     
-    def __init__(self, parent, state_machine=None, **kwargs):
+    def __init__(self, parent, state_machine=None, debug_mode=False, **kwargs):
         """Initialize the reusable poker game widget."""
         ttk.Frame.__init__(self, parent, **kwargs)
         EventListener.__init__(self)
         
         # Store the state machine
         self.state_machine = state_machine
+        
+        # Debug/test mode - eliminates delays and animations for fast testing
+        self.debug_mode = debug_mode
+        
+        # Headless mode - completely bypasses UI rendering for ultra-fast testing
+        self.headless_mode = False
+        
+        # Event loop detection to prevent infinite loops
+        self.event_history = []
+        self.max_event_history = 100
+        self.last_round_complete_time = 0
+        self.min_round_complete_interval = 0.1  # Minimum 100ms between round_complete events
         
         # Initialize UI components
         self.canvas = None
@@ -519,6 +531,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _render_from_display_state(self, display_state: Dict[str, Any]):
         """Render the widget based on the FPSM's display state (LAZY REDRAW OPTIMIZATION)."""
+        # Skip all rendering in headless mode for ultra-fast testing
+        if self.headless_mode:
+            return
+            
         # Skip rendering during bet animations to prevent interference
         if self.animating_bets_to_pot:
             print("🎯 Skipping display state render - bet animation in progress")
@@ -907,6 +923,26 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _handle_round_complete(self, event: GameEvent):
         """Handle round completion events."""
         street = event.data.get("street", "")
+        
+        # Loop detection: prevent rapid-fire round_complete events
+        current_time = time.time()
+        if current_time - self.last_round_complete_time < self.min_round_complete_interval:
+            print(f"⚠️  Ignoring rapid round_complete event (street={street}) - too soon after last one")
+            return
+        
+        self.last_round_complete_time = current_time
+        
+        # Track event history for loop detection
+        self.event_history.append({'type': 'round_complete', 'street': street, 'time': current_time})
+        if len(self.event_history) > self.max_event_history:
+            self.event_history.pop(0)
+        
+        # Check for infinite loop (same street repeated too many times)
+        recent_street_events = [e for e in self.event_history[-10:] if e['type'] == 'round_complete' and e['street'] == street]
+        if len(recent_street_events) >= 5:
+            print(f"🛑 INFINITE LOOP DETECTED: {street} round_complete repeated {len(recent_street_events)} times - STOPPING")
+            return
+        
         print(f"🎯 Round complete: {street}")
         
         # Log round completion
@@ -948,9 +984,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     animation_delay += 300  # 300ms between each animation (more visible)
             
             # Clear all bet displays after all animations complete
-            total_delay = animation_delay + 1000  # Extra delay for last animation
-            self.after(total_delay, lambda: self._finish_bet_animations())
-            print(f"💰 Scheduled bet clearing in {total_delay}ms")
+            if self.debug_mode:
+                # Immediate clearing in debug mode
+                self._finish_bet_animations()
+                print("💰 Debug mode: Immediate bet clearing")
+            else:
+                total_delay = animation_delay + 1000  # Extra delay for last animation
+                self.after(total_delay, lambda: self._finish_bet_animations())
+                print(f"💰 Scheduled bet clearing in {total_delay}ms")
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -1147,6 +1188,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def play_sound(self, sound_type: str, **kwargs):
         """Play a sound effect."""
+        if self.debug_mode:
+            # Skip sound in debug mode
+            return
+            
         if not self.sound_manager:
             print(f"🔇 No sound manager available for {sound_type}")
             return
@@ -1217,29 +1262,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.play_sound("bet")
         
         # Animate the chip to the pot with smooth movement
-        def move_chip_step(step=0):
-            total_steps = 40  # Longer animation for visibility
-            if step <= total_steps:
-                progress = step / total_steps
-                # Smooth easing function
-                ease_progress = progress * progress * (3.0 - 2.0 * progress)
-                
-                x = player_x + (pot_x - player_x) * ease_progress
-                y = player_y + (pot_y - player_y) * ease_progress
-                
-                # Add slight bounce effect
-                if progress > 0.8:
-                    bounce = math.sin((progress - 0.8) * 10) * 3
-                    y += bounce
-                
-                self.canvas.coords(chip_window, x, y)
-                self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
-            else:
-                # Animation complete - remove chip and update pot
-                self.canvas.delete(chip_window)
-                self._flash_pot_update(amount)
-        
-        move_chip_step()
+        if self.debug_mode:
+            # Skip animation in debug mode - immediate completion
+            self.canvas.delete(chip_window)
+            self._flash_pot_update(amount)
+        else:
+            def move_chip_step(step=0):
+                total_steps = 40  # Longer animation for visibility
+                if step <= total_steps:
+                    progress = step / total_steps
+                    # Smooth easing function
+                    ease_progress = progress * progress * (3.0 - 2.0 * progress)
+                    
+                    x = player_x + (pot_x - player_x) * ease_progress
+                    y = player_y + (pot_y - player_y) * ease_progress
+                    
+                    # Add slight bounce effect
+                    if progress > 0.8:
+                        bounce = math.sin((progress - 0.8) * 10) * 3
+                        y += bounce
+                    
+                    self.canvas.coords(chip_window, x, y)
+                    self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
+                else:
+                    # Animation complete - remove chip and update pot
+                    self.canvas.delete(chip_window)
+                    self._flash_pot_update(amount)
+            
+            move_chip_step()
     
     def _flash_pot_update(self, amount):
         """Flash the pot to indicate chips were added."""
@@ -1248,17 +1298,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             original_fg = self.pot_label.cget("fg")
             
             # Enhanced flash sequence for better visibility
-            def flash_sequence(step=0):
-                if step < 6:  # Flash 3 times
-                    if step % 2 == 0:
-                        self.pot_label.config(bg="gold", fg="black")  # Brighter flash
+            if self.debug_mode:
+                # Skip flashing in debug mode
+                pass
+            else:
+                def flash_sequence(step=0):
+                    if step < 6:  # Flash 3 times
+                        if step % 2 == 0:
+                            self.pot_label.config(bg="gold", fg="black")  # Brighter flash
+                        else:
+                            self.pot_label.config(bg=original_bg, fg=original_fg)
+                        self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
                     else:
                         self.pot_label.config(bg=original_bg, fg=original_fg)
-                    self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
-                else:
-                    self.pot_label.config(bg=original_bg, fg=original_fg)
-            
-            flash_sequence()
+                
+                flash_sequence()
     
     def animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
@@ -1292,22 +1346,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         winner_x, winner_y = winner_seat["position"]
         
         # Create multiple chips for large pots
-        num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
-        
-        for i in range(num_chips):
-            self._animate_single_chip_to_winner(
-                pot_x, pot_y, winner_x, winner_y, 
-                pot_amount / num_chips, i * 100  # Stagger timing
-            )
+        if self.debug_mode:
+            # Skip animation in debug mode - just flash the winner's stack
+            self._flash_winner_stack(winner_seat_index)
+        else:
+            num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
+            
+            for i in range(num_chips):
+                self._animate_single_chip_to_winner(
+                    pot_x, pot_y, winner_x, winner_y, 
+                    pot_amount / num_chips, i * 100  # Stagger timing
+                )
         
         # Play winner sound
         self.play_sound("winner")
         
         # Flash winner's stack after animation
-        self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
+        if not self.debug_mode:
+            self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
     
     def _animate_single_chip_to_winner(self, start_x, start_y, end_x, end_y, amount, delay):
         """Animate a single chip from pot to winner."""
+        if self.debug_mode:
+            # Skip animation in debug mode
+            return
+            
         def start_animation():
             # Create winner chip
             winner_chip = tk.Label(
@@ -1366,17 +1429,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         original_fg = stack_label.cget("fg")
         
         # Flash green for winner
-        def flash_step(step=0):
-            if step < 6:  # Flash 3 times
-                if step % 2 == 0:
-                    stack_label.config(bg="green", fg="white")
+        if self.debug_mode:
+            # Skip flashing in debug mode
+            pass
+        else:
+            def flash_step(step=0):
+                if step < 6:  # Flash 3 times
+                    if step % 2 == 0:
+                        stack_label.config(bg="green", fg="white")
+                    else:
+                        stack_label.config(bg=original_bg, fg=original_fg)
+                    self.after(200, lambda: flash_step(step + 1))
                 else:
                     stack_label.config(bg=original_bg, fg=original_fg)
-                self.after(200, lambda: flash_step(step + 1))
-            else:
-                stack_label.config(bg=original_bg, fg=original_fg)
-        
-        flash_step()
+            
+            flash_step()
     
     def _ensure_player_seats_created(self):
         """Ensure player seats are created."""
