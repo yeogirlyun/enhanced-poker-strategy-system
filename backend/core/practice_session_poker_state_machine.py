@@ -8,10 +8,13 @@ and provides practice-specific functionality for learning and skill development.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import random
+import time
 from .flexible_poker_state_machine import (
     FlexiblePokerStateMachine, GameConfig, PokerState, Player, GameEvent
 )
 from .types import ActionType
+from .strategy_engine import GTOStrategyEngine
 
 
 class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
@@ -30,6 +33,9 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Practice session specific properties
         self.strategy_data = strategy_data
         self.practice_mode = True
+        
+        # Initialize strategy engine for bot decision making
+        self.strategy_engine = GTOStrategyEngine(self.config.num_players, strategy_data)
         
         # Mark Player 1 as human for practice sessions
         if self.game_state.players:
@@ -110,6 +116,11 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             self._analyze_showdown_for_learning()
         
         print(f"🎓 Practice: State transition {old_state.name} → {new_state.name}")
+        
+        # Handle bot auto-play after state transitions
+        if new_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
+                        PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
+            self._schedule_bot_actions()
     
     def _get_human_player_position(self) -> Optional[str]:
         """Get the position of the human player."""
@@ -353,6 +364,84 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             display_state["current_bet"] = 0.0
         
         return display_state
+    
+    def _schedule_bot_actions(self):
+        """Schedule bot actions to auto-play non-human players."""
+        # Use after_idle to schedule bot actions so UI can update first
+        if hasattr(self, '_scheduled_bot_action'):
+            return  # Already scheduled
+        
+        self._scheduled_bot_action = True
+        
+        # Schedule bot action after a short delay for realism
+        def execute_bot_action():
+            self._scheduled_bot_action = False
+            self._execute_bot_action_if_needed()
+        
+        # Use threading timer for delayed execution
+        import threading
+        timer = threading.Timer(0.8, execute_bot_action)  # 800ms delay for realism
+        timer.start()
+    
+    def _execute_bot_action_if_needed(self):
+        """Execute bot action if current player is a bot."""
+        if (self.action_player_index >= 0 and 
+            self.action_player_index < len(self.game_state.players)):
+            
+            current_player = self.game_state.players[self.action_player_index]
+            
+            # Only auto-play for non-human players
+            if not current_player.is_human and current_player.is_active and not current_player.has_folded:
+                action, amount = self._get_bot_strategy_decision(current_player)
+                
+                print(f"🤖 Bot {current_player.name} auto-playing: {action.value} ${amount:.2f}")
+                
+                # Execute the bot's decision
+                success = self.execute_action(current_player, action, amount)
+                
+                if success:
+                    # Schedule next bot action if needed (chain bot actions)
+                    self._schedule_bot_actions()
+                else:
+                    print(f"🚫 Bot action failed: {action.value}")
+    
+    def _get_bot_strategy_decision(self, bot_player: Player) -> tuple[ActionType, float]:
+        """Get bot's strategic decision using existing GTO strategy engine."""
+        
+        # Use the existing GTO strategy engine
+        try:
+            action, amount = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
+            print(f"🤖 GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}")
+            return action, amount
+        except Exception as e:
+            print(f"🚫 GTO Strategy engine error: {e}")
+            # Fallback to simple logic
+            return self._get_simple_gto_decision(bot_player)
+    
+    def _get_simple_gto_decision(self, bot_player: Player) -> tuple[ActionType, float]:
+        """Simple fallback decision making when GTO engine fails."""
+        
+        # Get valid actions first
+        valid_actions = self.get_valid_actions_for_player(bot_player)
+        current_bet = self.game_state.current_bet
+        player_bet = bot_player.current_bet
+        call_amount = current_bet - player_bet
+        
+        # Simple conservative fallback logic
+        if call_amount == 0:
+            # No bet to call - can check or bet
+            if valid_actions.get('check', False):
+                return ActionType.CHECK, 0.0
+            else:
+                return ActionType.FOLD, 0.0
+        else:
+            # Facing a bet - conservative approach: fold unless small call
+            if call_amount <= bot_player.stack * 0.1 and valid_actions.get('call', False):
+                return ActionType.CALL, call_amount
+            else:
+                return ActionType.FOLD, 0.0
+    
+
     
     def _get_valid_actions_for_current_player(self) -> list:
         """Get valid actions for the current action player."""

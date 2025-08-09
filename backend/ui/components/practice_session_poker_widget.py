@@ -124,13 +124,16 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         # Configure grid weights
         self.grid_rowconfigure(2, weight=0)  # Action buttons (fixed height)
         
-        # Action buttons
+        # Action buttons - make them very visible like session control buttons
         button_config = {
-            'font': ('Arial', 12, 'bold'),
-            'width': 8,
-            'height': 2,
+            'font': ('Arial', 16, 'bold'),  # Much larger font
+            'width': 10,                    # Wider buttons
+            'height': 3,                    # Taller buttons
             'relief': 'raised',
-            'bd': 2
+            'bd': 3,                        # Thicker border
+            'activebackground': '#FFD700',  # Gold hover effect
+            'activeforeground': 'black',
+            'cursor': 'hand2'               # Hand cursor on hover
         }
         
         # Fold button
@@ -166,14 +169,20 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         )
         self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=5, pady=5)
         
-        # Bet amount entry
+        # Bet amount entry - larger and more visible
         self.bet_amount_var = tk.StringVar(value="2.0")
         self.bet_entry = tk.Entry(
             self.action_frame,
             textvariable=self.bet_amount_var,
-            font=('Arial', 12),
-            width=8,
-            justify=tk.CENTER
+            font=('Arial', 16, 'bold'),  # Larger font
+            width=10,                     # Wider entry
+            justify=tk.CENTER,
+            bg='white',
+            fg='black',
+            relief='sunken',
+            bd=3,                        # Thicker border
+            highlightthickness=2,
+            highlightcolor='#45B7D1'     # Blue highlight when focused
         )
         self.bet_entry.pack(side=tk.LEFT, padx=5, pady=5)
         
