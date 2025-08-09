@@ -107,7 +107,7 @@ class FlexiblePokerStateMachine:
         
         # Utilities
         self.hand_evaluator = EnhancedHandEvaluator()
-        self.sound_manager = SoundManager(test_mode=self.config.test_mode)
+        self.sound_manager = SoundManager()
         
         # Strategy integration (optional)
         self.strategy_integration = self._create_basic_strategy_integration()
@@ -131,8 +131,7 @@ class FlexiblePokerStateMachine:
         self.session_logger = get_session_logger()
         self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                      "FPSM initialized", {
-                                         "num_players": self.config.num_players,
-                                         "test_mode": self.config.test_mode
+                                         "num_players": self.config.num_players
                                      })
     
     def _initialize_players(self):
@@ -394,8 +393,8 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "Flop dealt", {"board": self.game_state.board})
-            # Auto-advance to FLOP_BETTING if auto_advance is enabled or for simulation
-            if self.config.auto_advance or self.config.test_mode:
+            # Auto-advance to FLOP_BETTING if auto_advance is enabled
+            if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.FLOP_BETTING)
         
         elif new_state == PokerState.DEAL_TURN:
@@ -407,8 +406,8 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "Turn dealt", {"board": self.game_state.board})
-            # Auto-advance to TURN_BETTING if auto_advance is enabled or for simulation
-            if self.config.auto_advance or self.config.test_mode:
+            # Auto-advance to TURN_BETTING if auto_advance is enabled
+            if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.TURN_BETTING)
         
         elif new_state == PokerState.DEAL_RIVER:
@@ -420,8 +419,8 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "River dealt", {"board": self.game_state.board})
-            # Auto-advance to RIVER_BETTING if auto_advance is enabled or for simulation
-            if self.config.auto_advance or self.config.test_mode:
+            # Auto-advance to RIVER_BETTING if auto_advance is enabled  
+            if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.RIVER_BETTING)
         
         elif new_state == PokerState.SHOWDOWN:

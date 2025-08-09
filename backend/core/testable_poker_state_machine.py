@@ -46,6 +46,9 @@ class TestablePokerStateMachine(FlexiblePokerStateMachine):
         self.auto_advance = True
         self.fast_execution = True
         
+        # Override config to add auto_advance property for state transitions
+        self.config.auto_advance = True
+        
         print("🧪 TestablePokerStateMachine initialized - optimized for testing")
     
     def _deal_cards(self, num_cards: int) -> List[str]:
@@ -86,7 +89,7 @@ class TestablePokerStateMachine(FlexiblePokerStateMachine):
         print(f"🧪 Set test board cards: {cards}")
 
 
-class HandsReviewPokerStateMachine(TestablePokerStateMachine):
+class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
     """
     A specialized state machine for hands review that provides:
     - Always visible cards for study purposes
@@ -96,11 +99,19 @@ class HandsReviewPokerStateMachine(TestablePokerStateMachine):
     
     def __init__(self, config: GameConfig):
         """Initialize the hands review poker state machine."""
+        # Convert to base config if it's a testable config
+        if isinstance(config, TestableGameConfig):
+            config = GameConfig(**{k: v for k, v in config.__dict__.items() 
+                                 if k in ['num_players', 'big_blind', 'small_blind', 'starting_stack']})
+        
         super().__init__(config)
         
         # Hands review specific properties
         self.show_all_cards_always = True
         self.educational_mode = True
+        
+        # Override config to add auto_advance property for smooth street progression
+        self.config.auto_advance = True
         
         print("🎯 HandsReviewPokerStateMachine initialized - optimized for hands review")
     

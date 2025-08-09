@@ -14,8 +14,8 @@ from tkinter import messagebox
 # Import core components
 from core.json_hands_database import JSONHandsDatabase, HandCategory
 from core.types import ActionType
-from core.flexible_poker_state_machine import GameEvent, EventListener, Player
-from core.testable_poker_state_machine import HandsReviewPokerStateMachine, TestableGameConfig
+from core.flexible_poker_state_machine import GameConfig, GameEvent, EventListener, Player
+from core.testable_poker_state_machine import HandsReviewPokerStateMachine
 
 # Import UI components
 from .hands_review_poker_widget import HandsReviewPokerWidget
@@ -631,7 +631,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             
             # Create specialized hands review state machine using inheritance
             num_players = len(self.current_hand.players)
-            config = TestableGameConfig(
+            config = GameConfig(
                 num_players=num_players,
                 big_blind=big_blind,
                 small_blind=small_blind,
