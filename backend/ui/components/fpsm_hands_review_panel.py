@@ -19,7 +19,7 @@ from core.flexible_poker_state_machine import (
 )
 
 # Import UI components
-from .reusable_poker_game_widget import ReusablePokerGameWidget
+from .hands_review_poker_widget import HandsReviewPokerWidget
 from core.gui_models import THEME
 
 
@@ -791,15 +791,14 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             # Reset hand completion flag for new simulation
             self.hand_completed = False
             
-            # Create the poker game widget (RPGW will automatically listen for FPSM events)
+            # Create the specialized hands review poker widget
             if self.poker_game_widget:
                 self.poker_game_widget.destroy()
                 self.poker_game_widget = None
             
-            self.poker_game_widget = ReusablePokerGameWidget(
+            self.poker_game_widget = HandsReviewPokerWidget(
                 self.game_container,
-                state_machine=self.fpsm,
-                debug_mode=False  # Enable sounds and animations
+                state_machine=self.fpsm
             )
             self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             

@@ -708,20 +708,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                             # Widget was destroyed, skip
                             pass
                     elif card == "**":
-                        # Card is hidden - show empty card (no back) unless in hands review mode
-                        # In hands review mode, preserve existing cards for simulation
-                        if current_card and hasattr(self, 'state_machine') and self.state_machine and self.state_machine.config.show_all_cards:
-                            # In hands review mode with show_all_cards=True, preserve the card
-                            print(f"🎴 Player {player_index} card {i}: preserved {current_card} (hands review mode)")
-                        else:
-                            # Normal game mode - hide the card by clearing it
-                            try:
-                                card_widgets[i].set_card("", is_folded=False)  # Empty card, not card back
-                                card_widgets[i]._current_card = ""
-                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (empty card)")
-                            except tk.TclError:
-                                # Widget was destroyed, skip
-                                pass
+                        # Card is hidden - show empty card (no back)
+                        try:
+                            card_widgets[i].set_card("", is_folded=False)  # Empty card, not card back
+                            card_widgets[i]._current_card = ""
+                            print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (empty card)")
+                        except tk.TclError:
+                            # Widget was destroyed, skip
+                            pass
                     elif current_card != "":
                         # Only clear cards if they were previously set - preserve cards during transitions
                         # Don't clear cards just because the display state has empty cards temporarily

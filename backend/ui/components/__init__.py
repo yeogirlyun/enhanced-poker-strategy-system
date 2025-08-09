@@ -12,6 +12,8 @@ from .tooltips import ToolTip, RichToolTip
 from .postflop_hs_editor import PostflopHSEditor
 from .dialogs import TierEditDialog, FileDialog, AboutDialog
 from .dynamic_position_manager import DynamicPositionManager
+from .reusable_poker_game_widget import ReusablePokerGameWidget
+from .hands_review_poker_widget import HandsReviewPokerWidget
 
 __all__ = [
     'TierPanel',
@@ -23,5 +25,7 @@ __all__ = [
     'TierEditDialog',
     'FileDialog',
     'AboutDialog',
-    'DynamicPositionManager'
+    'DynamicPositionManager',
+    'ReusablePokerGameWidget',
+    'HandsReviewPokerWidget'
 ] 
