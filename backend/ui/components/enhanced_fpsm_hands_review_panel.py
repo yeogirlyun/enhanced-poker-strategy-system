@@ -149,7 +149,7 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         list_container = ttk.Frame(list_frame)
         list_container.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
         
-        self.hands_listbox = tk.Listbox(list_container, font=('TkDefaultFont', 10))
+        self.hands_listbox = tk.Listbox(list_container, font=('TkDefaultFont', self.font_size))
         scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.hands_listbox.yview)
         self.hands_listbox.config(yscrollcommand=scrollbar.set)
         
@@ -162,9 +162,9 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         info_frame = ttk.Frame(left_frame)
         info_frame.pack(fill=tk.X, pady=(10, 0))
         
-        ttk.Label(info_frame, text="Hand Details:", font=('TkDefaultFont', 10, 'bold')).pack(anchor=tk.W)
+        ttk.Label(info_frame, text="Hand Details:", font=('TkDefaultFont', self.font_size, 'bold')).pack(anchor=tk.W)
         self.hand_info_label = ttk.Label(info_frame, text="Select a hand to view details", 
-                                        wraplength=280, justify=tk.LEFT, font=('TkDefaultFont', 9))
+                                        wraplength=280, justify=tk.LEFT, font=('TkDefaultFont', self.font_size))
         self.hand_info_label.pack(anchor=tk.W, pady=(5, 0))
     
     def setup_center_panel(self, parent):
@@ -234,7 +234,7 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         progress_section = ttk.LabelFrame(center_frame, text="Progress", padding=5)
         progress_section.pack(fill=tk.X, pady=(0, 10))
         
-        self.progress_label = ttk.Label(progress_section, text="No hand loaded", font=('TkDefaultFont', 9))
+        self.progress_label = ttk.Label(progress_section, text="No hand loaded", font=('TkDefaultFont', self.font_size))
         self.progress_label.pack(anchor=tk.W)
         
         self.action_progress = ttk.Progressbar(progress_section, mode='determinate')
@@ -244,12 +244,12 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         status_section = ttk.LabelFrame(center_frame, text="Status", padding=5)
         status_section.pack(fill=tk.BOTH, expand=True)
         
-        self.status_label = ttk.Label(status_section, text="Ready", font=('TkDefaultFont', 9, 'bold'))
+        self.status_label = ttk.Label(status_section, text="Ready", font=('TkDefaultFont', self.font_size, 'bold'))
         self.status_label.pack(anchor=tk.W)
         
         # Current action display
         self.current_action_label = ttk.Label(status_section, text="", 
-                                             font=('TkDefaultFont', 8), foreground='blue')
+                                             font=('TkDefaultFont', self.font_size), foreground='blue')
         self.current_action_label.pack(anchor=tk.W, pady=(5, 0))
         
         # Initially disable simulation controls
@@ -269,7 +269,7 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.placeholder_label = ttk.Label(
             self.game_container, 
             text="Select a hand and click 'Load Selected Hand' to begin simulation",
-            font=('TkDefaultFont', 14),
+            font=('TkDefaultFont', self.font_size),
             foreground='gray'
         )
         self.placeholder_label.pack(expand=True)
@@ -562,18 +562,70 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
             self.pause_simulation()
             return
             
-        player_name = action.get('player', '')
-        action_type = action.get('type', '').lower()
+        player_name = action.get('player_name', action.get('player', ''))
+        action_type = action.get('action_type', action.get('type', '')).lower()
         amount = action.get('amount', 0)
         
         print(f"🎮 Executing: {player_name} {action_type} {amount} on {street}")
+        print(f"🔍 Full action data: {action}")
         
         # Update current action display
         self.current_action_label.config(text=f"Current: {player_name} {action_type} {amount}")
         
-        # Here you would execute the action on the FPSM
-        # This would require matching player names to FPSM player indices
-        # and converting action types to ActionType enum values
+        # Execute the action on the FPSM
+        self._execute_action_on_fpsm(player_name, action_type, amount, street)
+    
+    def _execute_action_on_fpsm(self, player_name, action_type, amount, street):
+        """Execute the action on the FPSM by finding the player and converting action types."""
+        if not self.fpsm:
+            return
+        
+        # Find the player in FPSM by name
+        player_index = None
+        for i, player in enumerate(self.fpsm.game_state.players):
+            if player.name == player_name:
+                player_index = i
+                break
+        
+        if player_index is None:
+            print(f"❌ Player {player_name} not found in FPSM")
+            return
+        
+        # Get the player object
+        player = self.fpsm.game_state.players[player_index]
+        
+        # Convert action type to ActionType enum
+        from core.types import ActionType
+        action_type_map = {
+            'fold': ActionType.FOLD,
+            'check': ActionType.CHECK,
+            'call': ActionType.CALL,
+            'bet': ActionType.BET,
+            'raise': ActionType.RAISE,
+            'reraise': ActionType.RAISE,  # Map reraise to raise
+            '3bet': ActionType.RAISE,    # Map 3bet to raise
+            'allin': ActionType.RAISE,   # Map all-in to raise (with player's full stack)
+            'all-in': ActionType.RAISE   # Map all-in to raise
+        }
+        
+        if action_type not in action_type_map:
+            print(f"❌ Unknown action type: {action_type}")
+            return
+        
+        fpsm_action = action_type_map[action_type]
+        
+        # Handle all-in actions - use player's full stack
+        if action_type in ['allin', 'all-in']:
+            amount = player.stack
+        
+        try:
+            # Execute the action on FPSM
+            print(f"🎯 Executing {fpsm_action.value} for {player_name} with amount {amount}")
+            self.fpsm.execute_action(player, fpsm_action, amount)
+            print(f"✅ Action executed successfully")
+            
+        except Exception as e:
+            print(f"❌ Error executing action: {e}")
     
     def jump_to_street(self, street):
         """Jump to a specific street in the hand."""
@@ -629,7 +681,7 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
             self.placeholder_label = ttk.Label(
                 self.game_container, 
                 text="Select a hand and click 'Load Selected Hand' to begin simulation",
-                font=('TkDefaultFont', 14),
+                font=('TkDefaultFont', self.font_size),
                 foreground='gray'
             )
             self.placeholder_label.pack(expand=True)
