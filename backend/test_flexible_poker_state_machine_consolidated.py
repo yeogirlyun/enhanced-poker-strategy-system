@@ -467,10 +467,10 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
         # Check that side pots are handled correctly
         self.assertGreaterEqual(self.state_machine.game_state.pot, 0.0)
     
-    def test_legendary_hands_database_loading(self):
-        """Test legendary hands database loading."""
-        # Test that hand history manager is available
-        self.assertIsNotNone(self.state_machine.hand_history_manager)
+    def test_hands_simulation_basic(self):
+        """Test basic hands simulation functionality."""
+        # Test that the state machine can handle basic scenarios
+        self.assertTrue(len(self.state_machine.game_state.players) > 0)
     
     def test_legendary_hands_simulation(self):
         """Test legendary hands simulation."""

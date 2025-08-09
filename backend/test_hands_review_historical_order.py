@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath('.')))
 from core.flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig
 from core.types import Player, ActionType, PokerState
 from core.position_mapping import UniversalPosition
-from core.hands_database import HandCategory
-from ui.components.fpsm_hands_review_panel import FPSMHandsReviewPanel
+from core.json_hands_database import HandCategory
+from ui.components.fpsm_hands_review_panel_json import FPSMHandsReviewPanelJSON
 
 class MockHandMetadata:
     """Mock metadata object for hand data."""
@@ -99,7 +99,7 @@ class HandsReviewHistoricalTester:
     
     def load_json_data(self):
         """Load the complete JSON format hands data."""
-        json_file_path = "data/legendary_hands_complete_100_final.json"
+        json_file_path = "data/legendary_hands_complete_130_fixed.json"
         
         print(f"📚 Loading complete JSON data from {json_file_path}...")
         
@@ -172,7 +172,7 @@ class HandsReviewHistoricalTester:
             mock_db = MockHandsDatabase({'hands': [hand_data]})
             
             # Create hands review panel in test mode
-            panel = FPSMHandsReviewPanel(
+            panel = FPSMHandsReviewPanelJSON(
                 self.root,
                 hands_db=mock_db,
                 test_mode=True  # Disable UI components

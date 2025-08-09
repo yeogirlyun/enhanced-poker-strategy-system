@@ -47,7 +47,7 @@ class FPSMRPGWHistoricalTester:
     
     def load_json_data(self):
         """Load the complete JSON format hands data."""
-        json_file_path = "data/legendary_hands_complete_100_final.json"
+        json_file_path = "data/legendary_hands_complete_130_fixed.json"
         
         print(f"📚 Loading complete JSON data from {json_file_path}...")
         

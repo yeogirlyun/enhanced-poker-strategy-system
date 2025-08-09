@@ -14,7 +14,7 @@ import json
 # Import shared types
 from .session_logger import SessionLogger
 # from .types import Player, GameState  # Not used in this module
-from .phh_converter import PracticeHandsPHHManager
+# PHH functionality removed - users can add hands through practice sessions
 
 
 @dataclass
@@ -82,7 +82,7 @@ class SessionManager:
         self.num_players = num_players
         self.big_blind = big_blind
         self.session_id: Optional[str] = None
-        self.phh_manager = PracticeHandsPHHManager()
+        # PHH functionality removed - users can add hands through practice sessions
 
     def start_session(self) -> str:
         """Start a new session and return session ID."""
@@ -113,31 +113,11 @@ class SessionManager:
         
         self._log_session_event("Session ended")
         
-        # Export to PHH format if logger has session data
-        self._export_to_phh()
+        # Session completed - data available for analysis
         
         return self.get_session_info()
     
-    def _export_to_phh(self) -> List[str]:
-        """Export session to PHH format for hands review."""
-        exported_files = []
-        
-        try:
-            if self.logger and hasattr(self.logger, 'session') and self.logger.session:
-                # Export the session to PHH format
-                exported_files = self.phh_manager.export_session_hands(self.logger.session)
-                
-                if exported_files:
-                    self._log_session_event(f"Exported {len(exported_files)} PHH files")
-                    print(f"✅ Practice session exported to PHH format: {exported_files}")
-                else:
-                    self._log_session_event("No hands to export to PHH")
-            
-        except Exception as e:
-            self._log_session_event(f"Error exporting to PHH: {str(e)}")
-            print(f"❌ Error exporting session to PHH: {e}")
-        
-        return exported_files
+    # PHH export functionality removed - focus on JSON-based hands database
 
     def _log_session_event(self, event: str) -> None:
         """Log a session event."""

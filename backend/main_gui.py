@@ -508,13 +508,16 @@ class EnhancedMainGUI:
 
         self._create_enhanced_game_tab(enhanced_game_frame)
 
-        # Tab 8: Hands Review (NEW) - Using FPSM
+        # Tab 8: Hands Review (NEW) - Using Latest 130-Hand JSON Database
         hands_review_frame = ttk.Frame(self.notebook)
-        self.notebook.add(hands_review_frame, text="🎯 Hands Review (FPSM)")
+        self.notebook.add(hands_review_frame, text="🎯 Hands Review (130 Legendary)")
         
-        # Create FPSM hands review panel
-        from ui.components.fpsm_hands_review_panel import FPSMHandsReviewPanel
-        self.hands_review_panel = FPSMHandsReviewPanel(hands_review_frame)
+        # Create FPSM hands review panel with JSON database
+        from ui.components.fpsm_hands_review_panel_json import FPSMHandsReviewPanelJSON
+        self.hands_review_panel = FPSMHandsReviewPanelJSON(
+            hands_review_frame,
+            json_db_path="data/legendary_hands_complete_130_fixed.json"
+        )
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
 
         # Update strategy file display
