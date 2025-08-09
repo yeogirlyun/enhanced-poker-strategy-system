@@ -104,9 +104,32 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             # Schedule bot actions after any successful action (to handle action player changes)
             if self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
                                     PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
+                print(f"🤖 SCHEDULING: About to schedule bot actions after {player.name}'s {action_type.value}")
                 self._schedule_bot_actions()
+            else:
+                print(f"🤖 NOT SCHEDULING: Current state {self.current_state} not a betting state")
         
         return success
+    
+    def _advance_action_player(self):
+        """Override: Advance action player and schedule bot actions."""
+        old_action_player = self.action_player_index
+        super()._advance_action_player()
+        new_action_player = self.action_player_index
+        
+        print(f"🔄 ACTION PLAYER ADVANCED: {old_action_player} → {new_action_player}")
+        
+        # Schedule bot actions after action player advancement
+        if (self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
+                                  PokerState.TURN_BETTING, PokerState.RIVER_BETTING] and
+            new_action_player >= 0 and new_action_player < len(self.game_state.players)):
+            next_player = self.game_state.players[new_action_player]
+            print(f"🔄 Next player: {next_player.name} (is_human={next_player.is_human})")
+            if not next_player.is_human:
+                print(f"🤖 SCHEDULING after advance: Bot {next_player.name} needs to act")
+                self._schedule_bot_actions()
+            else:
+                print(f"👤 HUMAN TURN: {next_player.name} - not scheduling bot actions")
     
     def transition_to(self, new_state: PokerState):
         """Override: Enhanced state transitions with educational insights."""
