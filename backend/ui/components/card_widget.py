@@ -33,8 +33,11 @@ class CardWidget(tk.Canvas):
         if is_folded:
             # Player has folded - show dark folded card back
             self._draw_card_back(is_folded=True)
-        elif not card_str or card_str == "**":
-            # Card is hidden/empty - show transparent/empty space instead of card back
+        elif card_str == "**":
+            # Card is hidden - show card back (red for active, gray for folded)
+            self._draw_card_back(is_folded=is_folded)
+        elif not card_str:
+            # Card is empty - show transparent/empty space
             self._draw_empty_card()
         else:
             # Valid card - show the actual card

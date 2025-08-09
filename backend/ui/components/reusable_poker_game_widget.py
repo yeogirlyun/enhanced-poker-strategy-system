@@ -700,11 +700,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                             # Widget was destroyed, skip
                             pass
                     elif card == "**":
-                        # Card is hidden - show empty card (no back)
+                        # Card is hidden - show card back for active players
                         try:
-                            card_widgets[i].set_card("", is_folded=False)  # Empty card, not card back
-                            card_widgets[i]._current_card = ""
-                            print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (empty card)")
+                            # Check if player has folded to determine card back type
+                            player_has_folded = False
+                            if player_index < len(self.last_player_states) and self.last_player_states[player_index]:
+                                player_has_folded = self.last_player_states[player_index].get("has_folded", False)
+                            
+                            card_widgets[i].set_card("**", is_folded=player_has_folded)  # Show appropriate card back
+                            card_widgets[i]._current_card = "**"
+                            if player_has_folded:
+                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (GRAY card back - folded)")
+                            else:
+                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (RED card back - active)")
                         except tk.TclError:
                             # Widget was destroyed, skip
                             pass

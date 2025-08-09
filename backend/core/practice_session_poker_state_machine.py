@@ -391,10 +391,13 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
+        print(f"🤖 BOT EXECUTION CHECK: action_player_index={self.action_player_index}, total_players={len(self.game_state.players)}")
+        
         if (self.action_player_index >= 0 and 
             self.action_player_index < len(self.game_state.players)):
             
             current_player = self.game_state.players[self.action_player_index]
+            print(f"🤖 Current action player: {current_player.name} (is_human={current_player.is_human}, is_active={current_player.is_active}, has_folded={current_player.has_folded})")
             
             # Only auto-play for non-human players
             if not current_player.is_human and current_player.is_active and not current_player.has_folded:
@@ -406,10 +409,15 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 success = self.execute_action(current_player, action, amount)
                 
                 if success:
+                    print(f"🤖 Bot action successful, checking for next bot...")
                     # Schedule next bot action if needed (chain bot actions)
                     self._schedule_bot_actions()
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
+            else:
+                print(f"🤖 NOT executing bot action: human={current_player.is_human}, active={current_player.is_active}, folded={current_player.has_folded}")
+        else:
+            print(f"🤖 Invalid action_player_index: {self.action_player_index}")
     
     def _get_bot_strategy_decision(self, bot_player: Player) -> tuple[ActionType, float]:
         """Get bot's strategic decision using existing GTO strategy engine."""
