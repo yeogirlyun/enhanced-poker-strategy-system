@@ -418,6 +418,10 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
             state_machine=self.fpsm,
             debug_mode=self.debug_mode
         )
+        
+        # Set the poker game config so widget knows how many seats to create
+        self.poker_game_widget.set_poker_game_config(self.fpsm.config)
+        
         self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Force initial display refresh to show the table

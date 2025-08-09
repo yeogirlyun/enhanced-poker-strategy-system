@@ -1311,6 +1311,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._draw_community_card_area()  # Force community cards
             self._draw_pot_display()  # Force pot display
             
+            # Force seat creation/update
+            self._ensure_seats_created_and_update()
+            
             # Request fresh display state from FPSM
             self.state_machine._emit_display_state_event()
             # Also trigger a manual update
@@ -1600,10 +1603,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _ensure_seats_created_and_update(self):
         """Ensure seats are created and then update from FPSM (LAZY OPTIMIZATION)."""
-        # Skip if seats already exist and we're not forcing redraw
+        # Skip if seats already exist and match the expected count
+        expected_player_count = None
+        if hasattr(self, 'state_machine') and self.state_machine:
+            expected_player_count = len(self.state_machine.game_state.players)
+        elif hasattr(self, 'poker_game_config') and self.poker_game_config:
+            expected_player_count = self.poker_game_config.num_players
+            
         if (hasattr(self, 'player_seats') and 
             self.player_seats and 
-            all(seat is not None for seat in self.player_seats)):
+            all(seat is not None for seat in self.player_seats) and
+            expected_player_count and len(self.player_seats) == expected_player_count):
             print("🎯 Seats already exist - skipping creation, proceeding to update")
             self._update_from_fpsm_state()
             return
@@ -1626,11 +1636,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not self.player_seats or all(seat is None for seat in self.player_seats):
             print("🎯 Creating player seats...")
             self._draw_player_seats()
+        elif expected_player_count and len(self.player_seats) != expected_player_count:
+            print(f"🎯 Player count changed ({len(self.player_seats)} → {expected_player_count}), recreating seats...")
+            self._draw_player_seats()
         
         # Update display from FPSM
         self._update_from_fpsm_state()
         
-        print(f"🎯 Seats created and updated. Player seats: {len([s for s in self.player_seats if s])}/6")
+        print(f"🎯 Seats created and updated. Player seats: {len([s for s in self.player_seats if s])}/{len(self.player_seats)}")
     
     def reveal_all_cards(self):
         """Reveal all cards (for simulation mode) - now driven by FPSM."""
@@ -1835,8 +1848,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         )
         self.canvas.grid(row=0, column=0, sticky="nsew")
         
-        # Initialize player seats
-        self.player_seats = [None] * 6
+        # Initialize player seats (will be set dynamically based on actual player count)
+        self.player_seats = []
         
         # Force initial draw immediately
         self._force_initial_draw()
@@ -1943,6 +1956,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if hasattr(self, 'last_display_state') and self.last_display_state:
             players = self.last_display_state.get('players', [])
             if players:
+
                 return [
                     {
                         'name': player.get('name', f"Player {i+1}"),
@@ -1954,6 +1968,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # If we have a poker game config (from FPSM), use that
         if hasattr(self, 'poker_game_config') and self.poker_game_config:
             num_players = getattr(self.poker_game_config, 'num_players', 6)
+
             return [
                 {
                     'name': f"Player {i+1}",
@@ -1964,6 +1979,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Default fallback for 6 players with calculated positions
         default_num_players = 6
+
         return [
             {
                 'name': f"Player {i+1}",
