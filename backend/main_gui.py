@@ -512,12 +512,9 @@ class EnhancedMainGUI:
         hands_review_frame = ttk.Frame(self.notebook)
         self.notebook.add(hands_review_frame, text="🎯 Hands Review (130 Legendary)")
         
-        # Create enhanced FPSM hands review panel with full simulation controls
-        from ui.components.enhanced_fpsm_hands_review_panel import EnhancedFPSMHandsReviewPanel
-        self.hands_review_panel = EnhancedFPSMHandsReviewPanel(
-            hands_review_frame,
-            json_db_path="data/legendary_hands_complete_130_fixed.json"
-        )
+        # Create original working FPSM hands review panel 
+        from ui.components.fpsm_hands_review_panel import FPSMHandsReviewPanel
+        self.hands_review_panel = FPSMHandsReviewPanel(hands_review_frame)
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
 
         # Update strategy file display
