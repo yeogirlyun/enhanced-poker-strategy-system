@@ -309,4 +309,59 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         display_state["hands_played"] = self.hands_played
         display_state["session_stats"] = self.get_practice_stats()
         
+        # Add expected UI structure fields that the practice session UI expects
+        num_players = len(self.game_state.players)
+        
+        # Card visibilities - in practice mode, human player cards should be visible
+        display_state["card_visibilities"] = []
+        for i, player in enumerate(self.game_state.players):
+            # Human player cards always visible, others based on game state
+            is_visible = (player.is_human or 
+                         self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND])
+            display_state["card_visibilities"].append(is_visible)
+        
+        # Player highlights - highlight the action player
+        display_state["player_highlights"] = []
+        for i in range(num_players):
+            is_highlighted = (i == self.action_player_index)
+            display_state["player_highlights"].append(is_highlighted)
+        
+        # Layout positions - simple circular layout
+        display_state["layout_positions"] = []
+        for i in range(num_players):
+            # Simple position data
+            display_state["layout_positions"].append({"seat": i, "position": i})
+        
+        # Valid actions for current player
+        display_state["valid_actions"] = self._get_valid_actions_for_current_player()
+        
+        # Chip representations (simplified)
+        display_state["chip_representations"] = {}
+        for i, player in enumerate(self.game_state.players):
+            display_state["chip_representations"][f"player{i}_stack"] = "🟡"  # Simple chip symbol
+        display_state["chip_representations"]["pot"] = "💰"
+        
+        # Current bet info
+        if hasattr(self.game_state, 'current_bet'):
+            display_state["current_bet"] = self.game_state.current_bet
+        else:
+            display_state["current_bet"] = 0.0
+        
         return display_state
+    
+    def _get_valid_actions_for_current_player(self) -> list:
+        """Get valid actions for the current action player."""
+        if (self.action_player_index >= 0 and 
+            self.action_player_index < len(self.game_state.players)):
+            
+            current_player = self.game_state.players[self.action_player_index]
+            
+            # Basic valid actions based on game state
+            valid_actions = []
+            
+            if current_player.is_human:
+                valid_actions.extend(["fold", "check", "call", "bet", "raise"])
+            
+            return valid_actions
+        
+        return []

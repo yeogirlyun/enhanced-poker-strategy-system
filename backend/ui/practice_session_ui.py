@@ -722,7 +722,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     def prompt_human_action(self, player):
         """Shows and configures the action controls for the human player using display state."""
         display_state = self.state_machine.get_display_state()
-        actions = display_state.valid_actions
+        actions = display_state.get('valid_actions', [])
 
         self._show_action_buttons()
         
@@ -1872,20 +1872,26 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             return
 
         # DEBUG: Log display state information
-        self._log_message(f"🐛 DISPLAY DEBUG: display_state.card_visibilities={display_state.card_visibilities}")
-        self._log_message(f"🐛 DISPLAY DEBUG: display_state.player_highlights={display_state.player_highlights}")
-        self._log_message(f"🐛 DISPLAY DEBUG: display_state.layout_positions={display_state.layout_positions}")
-        self._log_message(f"🐛 DISPLAY DEBUG: Number of players={len(display_state.card_visibilities)}")
+        card_visibilities = display_state.get('card_visibilities', [])
+        player_highlights = display_state.get('player_highlights', [])
+        layout_positions = display_state.get('layout_positions', [])
+        
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state card_visibilities={card_visibilities}")
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state player_highlights={player_highlights}")
+        self._log_message(f"🐛 DISPLAY DEBUG: display_state layout_positions={layout_positions}")
+        self._log_message(f"🐛 DISPLAY DEBUG: Number of players={len(display_state.get('players', []))}")
 
         # Update pot and current bet display using display state
-        self.update_pot_amount(display_state.pot_amount)
+        pot_amount = display_state.get('pot', 0.0)
+        self.update_pot_amount(pot_amount)
         
         # Show current bet information in message area if there's a current bet
-        if display_state.current_bet > 0:
-            self.add_game_message(f"💰 Current Bet: ${display_state.current_bet:.2f}")
+        current_bet = display_state.get('current_bet', 0.0)
+        if current_bet > 0:
+            self.add_game_message(f"💰 Current Bet: ${current_bet:.2f}")
 
         # Update community cards using display state
-        board_cards = display_state.community_cards
+        board_cards = display_state.get('board', [])
         if board_cards:
             # Check if we should delay community card updates (during pot consolidation)
             # BUT: Always show community cards during showdown/end hand
@@ -1900,12 +1906,17 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 self._draw_community_cards(board_cards)
 
         # Update player positions and highlights using display state
-        for i, (position, highlight) in enumerate(zip(display_state.layout_positions, display_state.player_highlights)):
+        layout_positions = display_state.get('layout_positions', [])
+        player_highlights = display_state.get('player_highlights', [])
+        
+        for i in range(min(len(layout_positions), len(player_highlights))):
             if i < len(self.player_seats) and self.player_seats[i]:
+                position = layout_positions[i] if i < len(layout_positions) else None
+                highlight = player_highlights[i] if i < len(player_highlights) else False
                 self._update_player_position(i, position, highlight)
 
         # Update action controls using display state
-        valid_actions = display_state.valid_actions
+        valid_actions = display_state.get('valid_actions', [])
         if valid_actions:
             self._update_action_controls(valid_actions)
     
@@ -1920,7 +1931,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         print(f"🎯 PRESET DEBUG: User clicked '{preset_type}' button")
         
         display_state = self.state_machine.get_display_state()
-        preset_bets = display_state.valid_actions.get('preset_bets', {})
+        valid_actions = display_state.get('valid_actions', {})
+        preset_bets = valid_actions.get('preset_bets', {}) if isinstance(valid_actions, dict) else {}
         
         print(f"🎯 PRESET DEBUG: Available preset_bets = {preset_bets}")
         print(f"🎯 PRESET DEBUG: Looking for '{preset_type}' in preset_bets")
@@ -2662,7 +2674,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             if player_pod:
                 # Get chip representation from display state
                 display_state = self.state_machine.get_display_state()
-                chip_symbols = display_state.chip_representations.get(f'player{player_index}_stack', '')
+                chip_representations = display_state.get('chip_representations', {})
+                chip_symbols = chip_representations.get(f'player{player_index}_stack', '')
                 
                 # Update the stack display
                 pod_data = {
@@ -2682,7 +2695,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         # Get chip representation from display state
         display_state = self.state_machine.get_display_state()
         if display_state:
-            chip_symbols = display_state.chip_representations.get('pot', '')
+            chip_representations = display_state.get('chip_representations', {})
+            chip_symbols = chip_representations.get('pot', '')
             self.pot_label.config(text=f"Pot: ${new_amount:.2f} {chip_symbols}")
         else:
             self.pot_label.config(text=f"Pot: ${new_amount:.2f}")
@@ -2721,8 +2735,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 
                 # Update card visibility using display state
                 display_state = self.state_machine.get_display_state()
-                if display_state and player_index < len(display_state.card_visibilities):
-                    card_visible = display_state.card_visibilities[player_index]
+                card_visibilities = display_state.get('card_visibilities', [])
+                if display_state and player_index < len(card_visibilities):
+                    card_visible = card_visibilities[player_index]
                     card_widgets = player_seat.get("card_widgets", [])
                     
                     if len(card_widgets) >= 2 and len(player_info['cards']) >= 2:
