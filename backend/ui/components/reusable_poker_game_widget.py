@@ -1714,8 +1714,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _calculate_position_for_seat(self, seat_index: int, total_players: int) -> str:
         """Calculate position name based on seat index and total players (DYNAMIC)."""
         if total_players == 2:
-            # Heads-up
-            return "SB" if seat_index == 0 else "BB"
+            # Heads-up: Seat 0 = Small Blind/Button, Seat 1 = Big Blind
+            return "SB/BTN" if seat_index == 0 else "BB"
         elif total_players == 3:
             # 3-handed
             positions = ["BTN", "SB", "BB"]
