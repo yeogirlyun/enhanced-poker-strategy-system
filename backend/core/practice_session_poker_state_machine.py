@@ -88,17 +88,23 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         
         success = super().execute_action(player, action_type, amount)
         
-        if success and player.is_human:
-            # Provide educational feedback
-            feedback = self._generate_action_feedback(player, action_type, amount)
-            self._emit_event(GameEvent(
-                event_type="practice_feedback",
-                timestamp=datetime.now(),
-                player_name=player.name,
-                action=action_type,
-                amount=amount,
-                data={"feedback": feedback}
-            ))
+        if success:
+            if player.is_human:
+                # Provide educational feedback
+                feedback = self._generate_action_feedback(player, action_type, amount)
+                self._emit_event(GameEvent(
+                    event_type="practice_feedback",
+                    timestamp=datetime.now(),
+                    player_name=player.name,
+                    action=action_type,
+                    amount=amount,
+                    data={"feedback": feedback}
+                ))
+            
+            # Schedule bot actions after any successful action (to handle action player changes)
+            if self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
+                                    PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
+                self._schedule_bot_actions()
         
         return success
     
