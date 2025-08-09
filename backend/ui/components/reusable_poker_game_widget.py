@@ -416,6 +416,49 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Handle hand completion - pot to winner animation
             self._handle_hand_complete(event)
     
+    def _handle_action_executed(self, event: GameEvent):
+        """Handle action execution events - show bet amounts and play sounds."""
+        if not hasattr(event, 'data') or not event.data:
+            return
+            
+        action_type = event.data.get("action_type")
+        amount = event.data.get("amount", 0.0)
+        player_name = event.data.get("player_name", "Unknown")
+        
+        # Find player index by name
+        player_index = -1
+        if hasattr(self, 'state_machine') and self.state_machine and hasattr(self.state_machine, 'game_state'):
+            for i, player in enumerate(self.state_machine.game_state.players):
+                if player.name == player_name:
+                    player_index = i
+                    break
+        
+        print(f"🎯 Handling action executed: {action_type} by {player_name} for ${amount:.2f}")
+        
+        # Show bet amount for betting actions
+        if action_type in ["bet", "raise", "call"] and amount > 0 and player_index >= 0:
+            print(f"💰 Displaying bet ${amount:.2f} for player {player_index}")
+            self.show_bet_display(player_index, action_type, amount)
+        
+        # Clear any existing action indicator for this player
+        if player_index >= 0:
+            print(f"🎯 Found player {player_name} at index {player_index}")
+            print(f"🎯 Clearing action indicator for player {player_index}")
+            # Clear action indicator (you can enhance this later)
+        
+        # Play sound for the action
+        if action_type and hasattr(self, 'play_sound'):
+            sound_map = {
+                "bet": "bet",
+                "raise": "bet", 
+                "call": "call",
+                "check": "check",
+                "fold": "fold",
+                "all_in": "all_in"
+            }
+            if action_type.lower() in sound_map:
+                self.play_sound(sound_map[action_type.lower()])
+    
     def _log_event(self, event: GameEvent):
         """Log all events for debugging and analysis."""
         if not self.session_logger:
@@ -1459,18 +1502,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if hasattr(self, 'last_seats_canvas_size'):
                 delattr(self, 'last_seats_canvas_size')
             
-            # Force redraw all table components
-            self._draw_table()  # This will now redraw the complete table
-            self._draw_community_card_area()  # Force community cards
-            self._draw_pot_display()  # Force pot display
-            
-            # Force seat creation/update
+            # Minimal forced redraw - let lazy optimization handle the rest
+            # Only force what's absolutely necessary after clearing
             self._ensure_seats_created_and_update()
             
-            # Request fresh display state from FPSM
-            self.state_machine._emit_display_state_event()
-            # Also trigger a manual update
-            self._ensure_seats_created_and_update()
+            # No need to manually trigger display state events - FPSM will emit them
+            # when needed. This prevents duplicate rendering cycles.
             # Final canvas refresh
             print("🔄 Final canvas refresh completed")
             self.canvas.update()
