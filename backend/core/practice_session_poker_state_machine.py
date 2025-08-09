@@ -434,6 +434,11 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
+        # Don't execute bot actions in end game states
+        if self.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
+            print(f"🤖 NOT EXECUTING: Hand is ending (state: {self.current_state})")
+            return
+        
         print(f"🤖 BOT EXECUTION CHECK: action_player_index={self.action_player_index}, total_players={len(self.game_state.players)}")
         
         if (self.action_player_index >= 0 and 
