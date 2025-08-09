@@ -45,9 +45,21 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
+        # In hands review mode, always get actual cards (not ** placeholders)
+        actual_cards = cards
+        if (hasattr(self, 'state_machine') and 
+            self.state_machine and
+            player_index < len(self.state_machine.game_state.players) and
+            cards and cards[0] == "**"):
+            
+            # Get actual cards from the state machine for hands review
+            player = self.state_machine.game_state.players[player_index]
+            actual_cards = player.cards if player.cards else ["", ""]
+            print(f"🎯 Hands Review: Showing actual cards for player {player_index}: {actual_cards}")
+        
         card_widgets = self.player_seats[player_index]["card_widgets"]
         
-        # In hands review mode, get the actual player cards from FPSM directly
+        # In hands review mode, use the actual cards (not placeholders)
         # This bypasses any display state filtering
         actual_cards = self._get_actual_player_cards(player_index)
         if actual_cards and len(actual_cards) >= 2:

@@ -639,14 +639,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 # Also show graphical money display for existing bets (like blinds)
                 self._show_bet_display_for_player(player_index, "bet", bet_amount)
         
-        # Only update cards if they changed (with preservation logic)
+        # Always call card update method - let specialized widgets decide how to handle **
         last_cards = last_state.get("cards", [])
-        if (last_cards != cards and 
-            not (last_cards and cards == ["**", "**"])):  # Don't clear real cards with hidden
+        if last_cards != cards:
             self._set_player_cards_from_display_state(player_index, cards)
             print(f"🎴 Updated player {player_index} cards: {last_cards} → {cards}")
         elif last_cards and cards == ["**", "**"]:
-            print(f"🎴 Preserving player {player_index} cards: {last_cards} (ignoring hidden card data)")
+            # Still call the method - specialized widgets may want to override ** behavior
+            self._set_player_cards_from_display_state(player_index, cards)
+            print(f"🎴 Calling card update with hidden data: {cards} (specialized widgets may override)")
         
         # Only update folded status if it changed
         if last_state.get("has_folded", False) != has_folded:
