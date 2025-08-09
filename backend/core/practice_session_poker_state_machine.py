@@ -7,6 +7,7 @@ and provides practice-specific functionality for learning and skill development.
 """
 
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from .flexible_poker_state_machine import (
     FlexiblePokerStateMachine, GameConfig, PokerState, Player, GameEvent
 )
@@ -56,6 +57,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Emit practice-specific events
         self._emit_event(GameEvent(
             event_type="practice_hand_started",
+            timestamp=datetime.now(),
             data={
                 "hand_number": self.hands_played,
                 "players": len(self.game_state.players),
@@ -80,6 +82,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             feedback = self._generate_action_feedback(player, action_type, amount)
             self._emit_event(GameEvent(
                 event_type="practice_feedback",
+                timestamp=datetime.now(),
                 player_name=player.name,
                 action=action_type,
                 amount=amount,
@@ -188,6 +191,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         
         self._emit_event(GameEvent(
             event_type="practice_analysis",
+            timestamp=datetime.now(),
             data={
                 "street": street_name,
                 "analysis": analysis,
@@ -216,6 +220,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Emit learning insights
         self._emit_event(GameEvent(
             event_type="practice_showdown_analysis",
+            timestamp=datetime.now(),
             data={
                 "your_cards": human_player.cards,
                 "board": self.game_state.board,
@@ -272,6 +277,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         
         self._emit_event(GameEvent(
             event_type="practice_stats_reset",
+            timestamp=datetime.now(),
             data={"message": "Practice session statistics have been reset"}
         ))
     
@@ -292,3 +298,15 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             suggestion += "evaluate your hand strength against the board texture."
         
         return suggestion
+    
+    def get_display_state(self) -> dict:
+        """Override: Get display state with practice-specific enhancements."""
+        # Use parent's get_game_info method which provides display state
+        display_state = self.get_game_info()
+        
+        # Add practice-specific information
+        display_state["practice_mode"] = True
+        display_state["hands_played"] = self.hands_played
+        display_state["session_stats"] = self.get_practice_stats()
+        
+        return display_state
