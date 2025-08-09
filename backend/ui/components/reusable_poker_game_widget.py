@@ -13,7 +13,7 @@ from typing import Dict, Any, List
 import time
 
 # Import shared components
-from ..practice_session_ui import CardWidget
+from .card_widget import CardWidget
 
 # Import theme
 from core.gui_models import THEME
