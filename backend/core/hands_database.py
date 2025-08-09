@@ -99,7 +99,7 @@ class LegendaryHandsPHHLoader:
         return hands
     
     def _create_simplified_hands_from_phh(self, content: str) -> List[ParsedHand]:
-        """Create simplified hands from PHH content with 6+ player conversion."""
+        """Create hands from PHH content with native player counts (NO PADDING)."""
         hands = []
         lines = content.split('\n')
         
@@ -120,9 +120,9 @@ class LegendaryHandsPHHLoader:
                     # Add actions and board to the hand
                     current_hand.actions = current_actions.copy()
                     current_hand.board = current_board.copy()
-                    converted_hand = self._convert_to_6_player_format(
-                        current_hand, current_players)
-                    hands.append(converted_hand)
+                    # Use native player count (NO PADDING)
+                    current_hand.players = current_players
+                    hands.append(current_hand)
                 
                 # Start new hand
                 hand_counter += 1
@@ -282,8 +282,9 @@ class LegendaryHandsPHHLoader:
             # Add actions and board to the hand
             current_hand.actions = current_actions.copy()
             current_hand.board = current_board.copy()
-            converted_hand = self._convert_to_6_player_format(current_hand, current_players)
-            hands.append(converted_hand)
+            # Use native player count (NO PADDING)
+            current_hand.players = current_players
+            hands.append(current_hand)
         
         return hands
     

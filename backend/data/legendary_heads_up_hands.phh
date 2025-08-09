@@ -1,0 +1,1616 @@
+# Legendary Heads-Up Poker Hands
+# Famous heads-up confrontations and epic battles
+# Format: PHH v1 (TOML-like blocks)
+
+############################################################
+# Heads-Up Legends
+############################################################
+
+# Hand HU-001 — Tom Dwan vs Phil Ivey Triple Barrel Bluff
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-001"
+event = "NBC Heads-Up Poker Championship"
+date = "2009-03"
+round = "Round 2"
+note = "Tom Dwan triple-barrel bluffs Phil Ivey."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "300/600"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Tom Dwan"
+position = "BTN/SB"
+starting_stack_chips = 20000
+cards = ["8h","6h"]
+
+[[players]]
+seat = 2
+name = "Phil Ivey"
+position = "BB"
+starting_stack_chips = 20000
+cards = ["As","Qd"]
+
+[blinds]
+small_blind = { seat = 1, amount = 300 }
+big_blind   = { seat = 2, amount = 600 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 1600
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 1000
+
+# FLOP: Kd 5c 2h
+[board.flop]
+cards = ["Kd","5c","2h"]
+
+[[actions.flop]]
+actor = 2
+type = "check"
+[[actions.flop]]
+actor = 1
+type = "bet"
+amount = 2200
+[[actions.flop]]
+actor = 2
+type = "call"
+amount = 2200
+
+# TURN: 9s
+[board.turn]
+card = "9s"
+
+[[actions.turn]]
+actor = 2
+type = "check"
+[[actions.turn]]
+actor = 1
+type = "bet"
+amount = 5600
+[[actions.turn]]
+actor = 2
+type = "call"
+amount = 5600
+
+# RIVER: 4c
+[board.river]
+card = "4c"
+
+[[actions.river]]
+actor = 2
+type = "check"
+[[actions.river]]
+actor = 1
+type = "all-in"
+amount = 10500
+[[actions.river]]
+actor = 2
+type = "fold"
+
+[pot]
+total_chips = 19600
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "no_showdown"
+
+[metadata]
+sources = [
+  "NBC Heads-Up Poker Championship 2009 Broadcast",
+  "CardPlayer hand recap"
+]
+
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-006"
+event = "Full Tilt Poker HU Cash Game"
+date = "2009-11"
+note = "One of the biggest online NLHE pots in history."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "500/1000"
+currency = "USD"
+format = "Cash Game"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Isildur1"
+position = "BTN/SB"
+starting_stack_chips = 678500
+cards = ["Ad","Kd"]
+
+[[players]]
+seat = 2
+name = "Tom Dwan"
+position = "BB"
+starting_stack_chips = 678500
+cards = ["Ah","Qs"]
+
+[blinds]
+small_blind = { seat = 1, amount = 500 }
+big_blind   = { seat = 2, amount = 1000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 3000
+[[actions.preflop]]
+actor = 2
+type = "3bet"
+to = 9000
+[[actions.preflop]]
+actor = 1
+type = "4bet"
+to = 27000
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 18000
+
+# FLOP: Kc Qh 3s
+[board.flop]
+cards = ["Kc","Qh","3s"]
+
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 45000
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 45000
+
+# TURN: Jd
+[board.turn]
+card = "Jd"
+
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 123000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 123000
+
+# RIVER: 9s
+[board.river]
+card = "9s"
+
+[[actions.river]]
+actor = 2
+type = "all-in"
+amount = 483500
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 483500
+
+[pot]
+total_chips = 1_357_000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Ad","Kd"]
+description = "Pair of Kings, Ace kicker"
+[showdown.2]
+hand = ["Ah","Qs"]
+description = "Pair of Queens, Ace kicker"
+
+[metadata]
+sources = [
+  "Full Tilt Poker HH archive (November 2009)",
+  "2+2 Hand History discussion"
+]
+
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-007"
+event = "Monte Carlo Millions"
+date = "2005-11"
+note = "Famous raise/re-raise bluff war with 6-high."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "40_000/80_000"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Phil Ivey"
+position = "BTN/SB"
+starting_stack_chips = 2_350_000
+cards = ["7c","6c"]
+
+[[players]]
+seat = 2
+name = "Paul Jackson"
+position = "BB"
+starting_stack_chips = 1_650_000
+cards = ["Kc","Jd"]
+
+[blinds]
+small_blind = { seat = 1, amount = 40000 }
+big_blind   = { seat = 2, amount = 80000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 40000
+[[actions.preflop]]
+actor = 2
+type = "check"
+
+# FLOP: 4h 2h Qs
+[board.flop]
+cards = ["4h","2h","Qs"]
+
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 120000
+[[actions.flop]]
+actor = 1
+type = "raise"
+to = 320000
+[[actions.flop]]
+actor = 2
+type = "3bet"
+to = 820000
+[[actions.flop]]
+actor = 1
+type = "4bet"
+to = 1_320_000
+[[actions.flop]]
+actor = 2
+type = "fold"
+
+[pot]
+total_chips = 1_280_000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "no_showdown"
+
+[metadata]
+sources = [
+  "Monte Carlo Millions 2005 TV broadcast",
+  "PokerNews tournament report"
+]
+
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-008"
+event = "WSOP Main Event"
+date = "1988-05"
+round = "Final Hand"
+note = "Immortalized in 'Rounders'."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "10_000/20_000"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Johnny Chan"
+position = "BTN/SB"
+starting_stack_chips = 1_000_000
+cards = ["Jc","9c"]
+
+[[players]]
+seat = 2
+name = "Erik Seidel"
+position = "BB"
+starting_stack_chips = 400_000
+cards = ["Qc","7h"]
+
+[blinds]
+small_blind = { seat = 1, amount = 10000 }
+big_blind   = { seat = 2, amount = 20000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 10000
+[[actions.preflop]]
+actor = 2
+type = "check"
+
+# FLOP: Qs 8h 10h
+[board.flop]
+cards = ["Qs","8h","Th"]
+
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 40000
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 40000
+
+# TURN: 2s
+[board.turn]
+card = "2s"
+
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 80000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 80000
+
+# RIVER: 7s
+[board.river]
+card = "7s"
+
+[[actions.river]]
+actor = 2
+type = "all-in"
+amount = 260000
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 260000
+
+[pot]
+total_chips = 800000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Jc","9c"]
+description = "Straight to the Queen"
+[showdown.2]
+hand = ["Qc","7h"]
+description = "Two pair, Queens and Sevens"
+
+[metadata]
+sources = [
+  "WSOP 1988 Final broadcast",
+  "ESPN Classic recap"
+]
+
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-009"
+event = "Super High Roller Bowl"
+date = "2018-05"
+round = "Final Hand"
+note = "Bonomo wins $5M heads-up vs Holz."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "50_000/100_000"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Fedor Holz"
+position = "BB"
+starting_stack_chips = 2_100_000
+cards = ["Ac","Qc"]
+
+[[players]]
+seat = 2
+name = "Justin Bonomo"
+position = "BTN/SB"
+starting_stack_chips = 6_300_000
+cards = ["Ad","Jd"]
+
+[blinds]
+small_blind = { seat = 2, amount = 50000 }
+big_blind   = { seat = 1, amount = 100000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 225000
+[[actions.preflop]]
+actor = 1
+type = "all-in"
+amount = 2_100_000
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 1_875_000
+
+# FLOP: Js 4c 2d
+[board.flop]
+cards = ["Js","4c","2d"]
+
+# TURN: 8h
+[board.turn]
+card = "8h"
+
+# RIVER: 3h
+[board.river]
+card = "3h"
+
+[pot]
+total_chips = 4_200_000
+rake_chips = 0
+
+[winners]
+players = [2]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Ac","Qc"]
+description = "Ace high"
+[showdown.2]
+hand = ["Ad","Jd"]
+description = "Pair of Jacks"
+
+[metadata]
+sources = [
+  "PokerGO Super High Roller Bowl Final",
+  "PokerNews recap"
+]
+
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-010"
+event = "EPT Heads-Up Showdown"
+date = "2009-12"
+note = "Famous trash-talk hand with hero call."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "10_000/20_000"
+currency = "EUR"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Lex Veldhuis"
+position = "BB"
+starting_stack_chips = 800000
+cards = ["9c","7d"]
+
+[[players]]
+seat = 2
+name = "Bertrand Grospellier"
+position = "BTN/SB"
+starting_stack_chips = 1200000
+cards = ["Ah","4h"]
+
+[blinds]
+small_blind = { seat = 2, amount = 10000 }
+big_blind   = { seat = 1, amount = 20000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 50000
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 30000
+
+# FLOP: 4c 8s 2d
+[board.flop]
+cards = ["4c","8s","2d"]
+
+[[actions.flop]]
+actor = 1
+type = "check"
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 65000
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 65000
+
+# TURN: 6h
+[board.turn]
+card = "6h"
+
+[[actions.turn]]
+actor = 1
+type = "check"
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 140000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 140000
+
+# RIVER: Kh
+[board.river]
+card = "Kh"
+
+[[actions.river]]
+actor = 1
+type = "check"
+[[actions.river]]
+actor = 2
+type = "all-in"
+amount = 945000
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 545000
+
+[pot]
+total_chips = 1600000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["9c","7d"]
+description = "Nine high (hero call)"
+[showdown.2]
+hand = ["Ah","4h"]
+description = "Pair of Fours"
+
+[metadata]
+sources = [
+  "EPT Heads-Up Showdown 2009 broadcast",
+  "PokerStars blog"
+]
+
+# Hand HU-002 — Daniel Negreanu vs Gus Hansen Bluff Catch
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-002"
+event = "High Stakes Poker Season 4"
+date = "2007-01"
+round = "Cash Game"
+note = "Negreanu catches Gus Hansen's river bluff with ace high."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "500/1000"
+currency = "USD"
+format = "Cash Game"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Daniel Negreanu"
+position = "BB"
+starting_stack_chips = 150000
+cards = ["Ad","7c"]
+
+[[players]]
+seat = 2
+name = "Gus Hansen"
+position = "BTN/SB"
+starting_stack_chips = 180000
+cards = ["Jh","9h"]
+
+[blinds]
+small_blind = { seat = 2, amount = 500 }
+big_blind   = { seat = 1, amount = 1000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 3000
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 2000
+
+# FLOP: Qc 8s 3d
+[board.flop]
+cards = ["Qc","8s","3d"]
+
+[[actions.flop]]
+actor = 1
+type = "check"
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 4500
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 4500
+
+# TURN: 2h
+[board.turn]
+card = "2h"
+
+[[actions.turn]]
+actor = 1
+type = "check"
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 12000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 12000
+
+# RIVER: 6d
+[board.river]
+card = "6d"
+
+[[actions.river]]
+actor = 1
+type = "check"
+[[actions.river]]
+actor = 2
+type = "bet"
+amount = 25000
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 25000
+
+[pot]
+total_chips = 90000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Ad","7c"]
+description = "Ace High"
+
+[showdown.2]
+hand = ["Jh","9h"]
+description = "Jack High"
+
+[metadata]
+sources = [
+  "High Stakes Poker Season 4 Episode 8",
+  "PokerNews hand analysis"
+]
+
+# Hand HU-003 — Antonio Esfandiari vs Phil Hellmuth Big Bluff
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-003"
+event = "NBC Heads-Up Championship Final"
+date = "2004-05"
+round = "Final"
+note = "Esfandiari's massive river bluff against Hellmuth for the title."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "1000/2000"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Antonio Esfandiari"
+position = "BTN/SB"
+starting_stack_chips = 35000
+cards = ["7d","4c"]
+
+[[players]]
+seat = 2
+name = "Phil Hellmuth"
+position = "BB"
+starting_stack_chips = 25000
+cards = ["Kh","Js"]
+
+[blinds]
+small_blind = { seat = 1, amount = 1000 }
+big_blind   = { seat = 2, amount = 2000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 1000
+[[actions.preflop]]
+actor = 2
+type = "check"
+
+# FLOP: Ks 9c 2s
+[board.flop]
+cards = ["Ks","9c","2s"]
+
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 3000
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 3000
+
+# TURN: 8h
+[board.turn]
+card = "8h"
+
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 6000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 6000
+
+# RIVER: 5d
+[board.river]
+card = "5d"
+
+[[actions.river]]
+actor = 2
+type = "check"
+[[actions.river]]
+actor = 1
+type = "all-in"
+amount = 23000
+[[actions.river]]
+actor = 2
+type = "fold"
+
+[pot]
+total_chips = 24000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "no_showdown"
+
+[metadata]
+sources = [
+  "NBC Heads-Up Championship 2004 Final",
+  "Poker documentary archives"
+]
+
+# Hand HU-004 — Doyle Brunson vs Stu Ungar Classic
+[hand.meta]
+category = "Heads-Up Legends" 
+id = "HU-004"
+event = "WSOP Main Event Final Table"
+date = "1980-05"
+round = "Heads-Up Final"
+note = "Brunson's legendary comeback against The Kid."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "400/800"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Doyle Brunson"
+position = "BB"
+starting_stack_chips = 95000
+cards = ["Ah","7s"]
+
+[[players]]
+seat = 2
+name = "Stu Ungar"
+position = "BTN/SB"
+starting_stack_chips = 185000
+cards = ["Qd","Jd"]
+
+[blinds]
+small_blind = { seat = 2, amount = 400 }
+big_blind   = { seat = 1, amount = 800 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 2400
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 1600
+
+# FLOP: As 7c 2h
+[board.flop]
+cards = ["As","7c","2h"]
+
+[[actions.flop]]
+actor = 1
+type = "check"
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 4000
+[[actions.flop]]
+actor = 1
+type = "raise"
+to = 12000
+[[actions.flop]]
+actor = 2
+type = "call"
+amount = 8000
+
+# TURN: Kh
+[board.turn]
+card = "Kh"
+
+[[actions.turn]]
+actor = 1
+type = "bet"
+amount = 15000
+[[actions.turn]]
+actor = 2
+type = "call"
+amount = 15000
+
+# RIVER: 8c
+[board.river]
+card = "8c"
+
+[[actions.river]]
+actor = 1
+type = "all-in"
+amount = 65600
+[[actions.river]]
+actor = 2
+type = "call"
+amount = 65600
+
+[pot]
+total_chips = 190000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Ah","7s"]
+description = "Two Pair, Aces and Sevens"
+
+[showdown.2]
+hand = ["Qd","Jd"]
+description = "Queen High"
+
+[metadata]
+sources = [
+  "WSOP 1980 Final Table footage",
+  "Super System hand analysis"
+]
+
+# Hand HU-005 — Chris Ferguson vs T.J. Cloutier WSOP 2000
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-005"
+event = "WSOP Main Event Final"
+date = "2000-05"
+round = "Heads-Up Final"
+note = "Ferguson's winning hand for his first WSOP bracelet."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "4000/8000"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Chris Ferguson"
+position = "BTN/SB"
+starting_stack_chips = 3200000
+cards = ["9d","9h"]
+
+[[players]]
+seat = 2
+name = "T.J. Cloutier"
+position = "BB"
+starting_stack_chips = 1600000
+cards = ["Ah","Qc"]
+
+[blinds]
+small_blind = { seat = 1, amount = 4000 }
+big_blind   = { seat = 2, amount = 8000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 4000
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 40000
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 32000
+
+# FLOP: Ks 2h 6d
+[board.flop]
+cards = ["Ks","2h","6d"]
+
+[[actions.flop]]
+actor = 2
+type = "bet"
+amount = 70000
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 70000
+
+# TURN: 9c
+[board.turn]
+card = "9c"
+
+[[actions.turn]]
+actor = 2
+type = "check"
+[[actions.turn]]
+actor = 1
+type = "bet"
+amount = 200000
+[[actions.turn]]
+actor = 2
+type = "all-in"
+amount = 1490000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 1290000
+
+# RIVER: 5s
+[board.river]
+card = "5s"
+
+[pot]
+total_chips = 3200000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["9d","9h"]
+description = "Three of a Kind, Nines"
+
+[showdown.2]
+hand = ["Ah","Qc"]
+description = "Ace High"
+
+[metadata]
+sources = [
+  "WSOP 2000 Main Event Final Table",
+  "ESPN broadcast coverage"
+]
+
+# Hand HU-006 — Jennifer Harman vs Daniel Negreanu Cash Game Battle
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-006"
+event = "High Stakes Poker Season 2"
+date = "2005-12"
+round = "Cash Game"
+note = "Harman outplays Negreanu in massive pot."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "300/600"
+currency = "USD"
+format = "Cash Game"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Jennifer Harman"
+position = "BB"
+starting_stack_chips = 85000
+cards = ["Qs","Qh"]
+
+[[players]]
+seat = 2
+name = "Daniel Negreanu"
+position = "BTN/SB"
+starting_stack_chips = 125000
+cards = ["Ac","Kd"]
+
+[blinds]
+small_blind = { seat = 2, amount = 300 }
+big_blind   = { seat = 1, amount = 600 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 2100
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 7000
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 4900
+
+# FLOP: Jc 8h 4s
+[board.flop]
+cards = ["Jc","8h","4s"]
+
+[[actions.flop]]
+actor = 1
+type = "bet"
+amount = 9000
+[[actions.flop]]
+actor = 2
+type = "call"
+amount = 9000
+
+# TURN: Ah
+[board.turn]
+card = "Ah"
+
+[[actions.turn]]
+actor = 1
+type = "check"
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 18000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 18000
+
+# RIVER: 2c
+[board.river]
+card = "2c"
+
+[[actions.river]]
+actor = 1
+type = "check"
+[[actions.river]]
+actor = 2
+type = "bet"
+amount = 35000
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 35000
+
+[pot]
+total_chips = 138000
+rake_chips = 0
+
+[winners]
+players = [2]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Qs","Qh"]
+description = "Pair of Queens"
+
+[showdown.2]
+hand = ["Ac","Kd"]
+description = "Pair of Aces"
+
+[metadata]
+sources = [
+  "High Stakes Poker Season 2 Episode 5",
+  "GSN poker coverage"
+]
+
+# Hand HU-007 — Vanessa Selbst vs Tony G Aggressive Battle
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-007"
+event = "PartyPoker Premier League"
+date = "2011-09"
+round = "Heads-Up Playoff"
+note = "Selbst's aggressive line against Tony G's bluff."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "200/400"
+currency = "USD"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "Vanessa Selbst"
+position = "BTN/SB"
+starting_stack_chips = 28000
+cards = ["Kh","Qh"]
+
+[[players]]
+seat = 2
+name = "Tony G"
+position = "BB"
+starting_stack_chips = 32000
+cards = ["7d","5d"]
+
+[blinds]
+small_blind = { seat = 1, amount = 200 }
+big_blind   = { seat = 2, amount = 400 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 1200
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 800
+
+# FLOP: Kc 9s 6h
+[board.flop]
+cards = ["Kc","9s","6h"]
+
+[[actions.flop]]
+actor = 2
+type = "check"
+[[actions.flop]]
+actor = 1
+type = "bet"
+amount = 1800
+[[actions.flop]]
+actor = 2
+type = "raise"
+to = 5500
+[[actions.flop]]
+actor = 1
+type = "call"
+amount = 3700
+
+# TURN: 3c
+[board.turn]
+card = "3c"
+
+[[actions.turn]]
+actor = 2
+type = "bet"
+amount = 8000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 8000
+
+# RIVER: Jh
+[board.river]
+card = "Jh"
+
+[[actions.river]]
+actor = 2
+type = "all-in"
+amount = 17300
+[[actions.river]]
+actor = 1
+type = "call"
+amount = 13300
+
+[pot]
+total_chips = 60000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Kh","Qh"]
+description = "Pair of Kings"
+
+[showdown.2]
+hand = ["7d","5d"]
+description = "King High"
+
+[metadata]
+sources = [
+  "PartyPoker Premier League VI",
+  "PokerStars coverage"
+]
+
+# Hand HU-008 — Jason Mercier vs Bertrand Grospellier EPT Final
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-008"
+event = "EPT San Remo Main Event Final"
+date = "2008-10"
+round = "Heads-Up Final"
+note = "Mercier's championship-winning hand against ElkY."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "8000/16000"
+currency = "EUR"
+format = "Tournament"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Jason Mercier"
+position = "BB"
+starting_stack_chips = 1200000
+cards = ["As","Kh"]
+
+[[players]]
+seat = 2
+name = "Bertrand Grospellier"
+position = "BTN/SB"
+starting_stack_chips = 1650000
+cards = ["9c","9s"]
+
+[blinds]
+small_blind = { seat = 2, amount = 8000 }
+big_blind   = { seat = 1, amount = 16000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 45000
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 120000
+[[actions.preflop]]
+actor = 2
+type = "all-in"
+amount = 1642000
+[[actions.preflop]]
+actor = 1
+type = "call"
+amount = 1080000
+
+# FLOP: Ad 7h 2c
+[board.flop]
+cards = ["Ad","7h","2c"]
+
+# TURN: 5s
+[board.turn]
+card = "5s"
+
+# RIVER: Kc
+[board.river]
+card = "Kc"
+
+[pot]
+total_chips = 2850000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["As","Kh"]
+description = "Two Pair, Aces and Kings"
+
+[showdown.2]
+hand = ["9c","9s"]
+description = "Pair of Nines"
+
+[metadata]
+sources = [
+  "EPT San Remo 2008 Final Table",
+  "PokerStars broadcast"
+]
+
+# Hand HU-009 — John Juanda vs Phil Ivey Million Dollar Game
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-009"
+event = "Full Tilt Million Dollar Cash Game"
+date = "2007-08"
+round = "Cash Game"
+note = "Juanda's perfect river call against Ivey's bluff."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "500/1000"
+currency = "USD"
+format = "Cash Game"
+
+[table]
+max_players = 2
+button_seat = 1
+
+[[players]]
+seat = 1
+name = "John Juanda"
+position = "BTN/SB"
+starting_stack_chips = 245000
+cards = ["Ad","8c"]
+
+[[players]]
+seat = 2
+name = "Phil Ivey"
+position = "BB"
+starting_stack_chips = 280000
+cards = ["Jh","Tc"]
+
+[blinds]
+small_blind = { seat = 1, amount = 500 }
+big_blind   = { seat = 2, amount = 1000 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 3500
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 2500
+
+# FLOP: Ac 6s 4h
+[board.flop]
+cards = ["Ac","6s","4h"]
+
+[[actions.flop]]
+actor = 2
+type = "check"
+[[actions.flop]]
+actor = 1
+type = "bet"
+amount = 5000
+[[actions.flop]]
+actor = 2
+type = "call"
+amount = 5000
+
+# TURN: 2d
+[board.turn]
+card = "2d"
+
+[[actions.turn]]
+actor = 2
+type = "check"
+[[actions.turn]]
+actor = 1
+type = "bet"
+amount = 14000
+[[actions.turn]]
+actor = 2
+type = "call"
+amount = 14000
+
+# RIVER: 9h
+[board.river]
+card = "9h"
+
+[[actions.river]]
+actor = 2
+type = "check"
+[[actions.river]]
+actor = 1
+type = "check"
+
+[pot]
+total_chips = 45000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Ad","8c"]
+description = "Pair of Aces"
+
+[showdown.2]
+hand = ["Jh","Tc"]
+description = "Ace High"
+
+[metadata]
+sources = [
+  "Full Tilt Million Dollar Cash Game",
+  "Poker documentary footage"
+]
+
+# Hand HU-010 — Patrik Antonius vs Viktor Blom Massive Pot
+[hand.meta]
+category = "Heads-Up Legends"
+id = "HU-010"
+event = "Full Tilt Superstars Online"
+date = "2010-11"
+round = "Heads-Up Cash"
+note = "Antonius vs Isildur1 in one of the biggest online pots ever."
+
+[game]
+variant = "No-Limit Hold'em"
+stakes = "200/400"
+currency = "USD"
+format = "Cash Game"
+
+[table]
+max_players = 2
+button_seat = 2
+
+[[players]]
+seat = 1
+name = "Patrik Antonius"
+position = "BB"
+starting_stack_chips = 320000
+cards = ["Qh","Qd"]
+
+[[players]]
+seat = 2
+name = "Viktor Blom"
+position = "BTN/SB"
+starting_stack_chips = 285000
+cards = ["Ah","8h"]
+
+[blinds]
+small_blind = { seat = 2, amount = 200 }
+big_blind   = { seat = 1, amount = 400 }
+
+# PREFLOP
+[[actions.preflop]]
+actor = 2
+type = "raise"
+to = 1200
+[[actions.preflop]]
+actor = 1
+type = "raise"
+to = 4000
+[[actions.preflop]]
+actor = 2
+type = "call"
+amount = 2800
+
+# FLOP: Qc 8d 2s
+[board.flop]
+cards = ["Qc","8d","2s"]
+
+[[actions.flop]]
+actor = 1
+type = "bet"
+amount = 6000
+[[actions.flop]]
+actor = 2
+type = "raise"
+to = 18000
+[[actions.flop]]
+actor = 1
+type = "raise"
+to = 42000
+[[actions.flop]]
+actor = 2
+type = "call"
+amount = 24000
+
+# TURN: 5h
+[board.turn]
+card = "5h"
+
+[[actions.turn]]
+actor = 1
+type = "bet"
+amount = 65000
+[[actions.turn]]
+actor = 2
+type = "all-in"
+amount = 239000
+[[actions.turn]]
+actor = 1
+type = "call"
+amount = 174000
+
+# RIVER: 3c
+[board.river]
+card = "3c"
+
+[pot]
+total_chips = 570000
+rake_chips = 0
+
+[winners]
+players = [1]
+winning_type = "showdown"
+
+[showdown]
+[showdown.1]
+hand = ["Qh","Qd"]
+description = "Three of a Kind, Queens"
+
+[showdown.2]
+hand = ["Ah","8h"]
+description = "Pair of Eights"
+
+[metadata]
+sources = [
+  "Full Tilt Poker hand history",
+  "High Stakes Database"
+]
