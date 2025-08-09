@@ -1,0 +1,2629 @@
+# Incomplete Poker Hands - Template/Placeholder Hands
+# These hands have player data but are missing:
+# - Actions (no betting sequences)
+# - Board cards (no community cards)
+# - Blinds structure
+# 
+# Total: 42 hands (GEN-059 through GEN-100)
+# These appear to be auto-generated templates that were never completed
+# with actual poker hand data.
+
+# Hand GEN-059 — High Stakes Cash Game 59
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-059"
+source_file = "generated"
+source_method = "template_59"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 59"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-060 — Tournament Bubble Play 60
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-060"
+source_file = "generated"
+source_method = "template_60"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 60"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-061 — Final Table Drama 61
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-061"
+source_file = "generated"
+source_method = "template_61"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 61"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-062 — Heads-Up Battle 62
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-062"
+source_file = "generated"
+source_method = "template_62"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 62"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-063 — Online High Roller 63
+[hand.meta]
+category = "Online Legends"
+id = "GEN-063"
+source_file = "generated"
+source_method = "template_63"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 63"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-064 — High Stakes Cash Game 64
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-064"
+source_file = "generated"
+source_method = "template_64"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 64"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-065 — Tournament Bubble Play 65
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-065"
+source_file = "generated"
+source_method = "template_65"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 65"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-066 — Final Table Drama 66
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-066"
+source_file = "generated"
+source_method = "template_66"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 66"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-067 — Heads-Up Battle 67
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-067"
+source_file = "generated"
+source_method = "template_67"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 67"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-068 — Online High Roller 68
+[hand.meta]
+category = "Online Legends"
+id = "GEN-068"
+source_file = "generated"
+source_method = "template_68"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 68"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-069 — High Stakes Cash Game 69
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-069"
+source_file = "generated"
+source_method = "template_69"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 69"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-070 — Tournament Bubble Play 70
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-070"
+source_file = "generated"
+source_method = "template_70"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 70"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-071 — Final Table Drama 71
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-071"
+source_file = "generated"
+source_method = "template_71"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 71"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-072 — Heads-Up Battle 72
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-072"
+source_file = "generated"
+source_method = "template_72"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 72"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-073 — Online High Roller 73
+[hand.meta]
+category = "Online Legends"
+id = "GEN-073"
+source_file = "generated"
+source_method = "template_73"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 73"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-074 — High Stakes Cash Game 74
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-074"
+source_file = "generated"
+source_method = "template_74"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 74"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-075 — Tournament Bubble Play 75
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-075"
+source_file = "generated"
+source_method = "template_75"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 75"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-076 — Final Table Drama 76
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-076"
+source_file = "generated"
+source_method = "template_76"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 76"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-077 — Heads-Up Battle 77
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-077"
+source_file = "generated"
+source_method = "template_77"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 77"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-078 — Online High Roller 78
+[hand.meta]
+category = "Online Legends"
+id = "GEN-078"
+source_file = "generated"
+source_method = "template_78"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 78"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-079 — High Stakes Cash Game 79
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-079"
+source_file = "generated"
+source_method = "template_79"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 79"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-080 — Tournament Bubble Play 80
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-080"
+source_file = "generated"
+source_method = "template_80"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 80"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-081 — Final Table Drama 81
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-081"
+source_file = "generated"
+source_method = "template_81"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 81"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-082 — Heads-Up Battle 82
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-082"
+source_file = "generated"
+source_method = "template_82"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 82"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-083 — Online High Roller 83
+[hand.meta]
+category = "Online Legends"
+id = "GEN-083"
+source_file = "generated"
+source_method = "template_83"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 83"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-084 — High Stakes Cash Game 84
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-084"
+source_file = "generated"
+source_method = "template_84"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 84"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-085 — Tournament Bubble Play 85
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-085"
+source_file = "generated"
+source_method = "template_85"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 85"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-086 — Final Table Drama 86
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-086"
+source_file = "generated"
+source_method = "template_86"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 86"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-087 — Heads-Up Battle 87
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-087"
+source_file = "generated"
+source_method = "template_87"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 87"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-088 — Online High Roller 88
+[hand.meta]
+category = "Online Legends"
+id = "GEN-088"
+source_file = "generated"
+source_method = "template_88"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 88"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-089 — High Stakes Cash Game 89
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-089"
+source_file = "generated"
+source_method = "template_89"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 89"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-090 — Tournament Bubble Play 90
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-090"
+source_file = "generated"
+source_method = "template_90"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 90"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-091 — Final Table Drama 91
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-091"
+source_file = "generated"
+source_method = "template_91"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 91"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-092 — Heads-Up Battle 92
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-092"
+source_file = "generated"
+source_method = "template_92"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 92"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-093 — Online High Roller 93
+[hand.meta]
+category = "Online Legends"
+id = "GEN-093"
+source_file = "generated"
+source_method = "template_93"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 93"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-094 — High Stakes Cash Game 94
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-094"
+source_file = "generated"
+source_method = "template_94"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 94"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-095 — Tournament Bubble Play 95
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-095"
+source_file = "generated"
+source_method = "template_95"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 95"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+
+ # Add separator
+# Hand GEN-096 — Final Table Drama 96
+[hand.meta]
+category = "Championship Moments"
+id = "GEN-096"
+source_file = "generated"
+source_method = "template_96"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "25000/50000/5000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 96"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+############################################################
+# Heads-Up Mastery
+############################################################
+
+
+ # Add separator
+# Hand GEN-097 — Heads-Up Battle 97
+[hand.meta]
+category = "Heads-Up Mastery"
+id = "GEN-097"
+source_file = "generated"
+source_method = "template_97"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "200/400/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 97"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+############################################################
+# Online Legends
+############################################################
+
+
+ # Add separator
+# Hand GEN-098 — Online High Roller 98
+[hand.meta]
+category = "Online Legends"
+id = "GEN-098"
+source_file = "generated"
+source_method = "template_98"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "1000/2000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 98"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+ # Add separator
+# Hand GEN-099 — High Stakes Cash Game 99
+[hand.meta]
+category = "High Stakes Action"
+id = "GEN-099"
+source_file = "generated"
+source_method = "template_99"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "500/1000/0"
+        currency = "USD"
+        format = "Cash Game"
+        
+        [table]
+        table_name = "Generated Hand 99"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+############################################################
+# Tournament Pressure
+############################################################
+
+
+ # Add separator
+# Hand GEN-100 — Tournament Bubble Play 100
+[hand.meta]
+category = "Tournament Pressure"
+id = "GEN-100"
+source_file = "generated"
+source_method = "template_100"
+
+[game]
+        variant = "No-Limit Hold'em"
+        stakes = "5000/10000/1000"
+        currency = "USD"
+        format = "Tournament"
+        
+        [table]
+        table_name = "Generated Hand 100"
+        max_players = 6
+        button_seat = 1
+        
+        [[players]]
+        seat = 1
+        name = "Player1"
+        position = "Button"
+        starting_stack_chips = 100000
+        cards = ["As","Ks"]
+        
+        [[players]]
+        seat = 2
+        name = "Player2"
+        position = "Small Blind"
+        starting_stack_chips = 100000
+        cards = ["Qh","Qd"]
+        
+        [[players]]
+        seat = 3
+        name = "Player3"
+        position = "Big Blind"  
+        starting_stack_chips = 100000
+        cards = ["Jc","Js"]
+        
+        [[players]]
+        seat = 4
+        name = "Player4"
+        position = "UTG"
+        starting_stack_chips = 100000
+        cards = ["Td","9d"]
+        
+        [[players]]
+        seat = 5
+        name = "Player5"
+        position = "MP"
+        starting_stack_chips = 100000
+        cards = ["8h","7h"]
+        
+        [[players]]
+        seat = 6
+        name = "Player6"
+        position = "CO"
+        starting_stack_chips = 100000
+        cards = ["6s","5s"]
+
+############################################################
+# Championship Moments
+############################################################
+
+
+ # Add separator

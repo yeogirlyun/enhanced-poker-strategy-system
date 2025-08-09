@@ -1,0 +1,372 @@
+{
+  "hands": [
+    {
+      "meta": {
+        "category": "High Stakes Action",
+        "id": "GEN-059",
+        "source_file": "real",
+        "source_method": "Hansen vs Negreanu HSP S2"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "400/800/100",
+        "currency": "USD",
+        "format": "Cash Game"
+      },
+      "table": {
+        "table_name": "High Stakes Poker Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Daniel Negreanu", "position": "Button", "starting_stack_chips": 100000, "cards": ["6s", "6h"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Player3", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Gus Hansen", "position": "CO", "starting_stack_chips": 100000, "cards": ["5d", "5c"]}
+      ],
+      "board": {"flop": ["9c", "6d", "5h"], "turn": "5s", "river": "8s"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Gus Hansen", "type": "raise", "amount": 2100},
+          {"player": "Daniel Negreanu", "type": "reraise", "amount": 5000},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Player3", "type": "fold", "amount": 0},
+          {"player": "Gus Hansen", "type": "call", "amount": 2900}
+        ],
+        "flop": [
+          {"player": "Gus Hansen", "type": "check", "amount": 0},
+          {"player": "Daniel Negreanu", "type": "bet", "amount": 8000},
+          {"player": "Gus Hansen", "type": "raise", "amount": 26000},
+          {"player": "Daniel Negreanu", "type": "call", "amount": 18000}
+        ],
+        "turn": [
+          {"player": "Gus Hansen", "type": "bet", "amount": 24000},
+          {"player": "Daniel Negreanu", "type": "call", "amount": 24000}
+        ],
+        "river": [
+          {"player": "Gus Hansen", "type": "check", "amount": 0},
+          {"player": "Daniel Negreanu", "type": "bet", "amount": 65000},
+          {"player": "Gus Hansen", "type": "allin", "amount": 232000},
+          {"player": "Daniel Negreanu", "type": "call", "amount": 167000}
+        ]
+      },
+      "outcome": {"winner": "Gus Hansen", "final_pot": 575700}
+    },
+    {
+      "meta": {
+        "category": "Tournament Pressure",
+        "id": "GEN-060",
+        "source_file": "real",
+        "source_method": "Petrangelo vs Rajkumar Triton Bubble"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "50000/100000/100000",
+        "currency": "GBP",
+        "format": "Tournament"
+      },
+      "table": {
+        "table_name": "Triton Million Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Player1", "position": "Button", "starting_stack_chips": 2500000, "cards": ["Xx", "Xx"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 2500000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Chin Wei Lim", "position": "Big Blind", "starting_stack_chips": 2400000, "cards": ["7d", "7h"]},
+        {"seat": 4, "name": "Nick Petrangelo", "position": "UTG", "starting_stack_chips": 2500000, "cards": ["Js", "Jd"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 2500000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Vivek Rajkumar", "position": "CO", "starting_stack_chips": 2500000, "cards": ["Ad", "10d"]}
+      ],
+      "board": {"flop": ["8d", "2d", "2s"], "turn": "Kd", "river": "6s"},
+      "actions": {
+        "preflop": [
+          {"player": "Nick Petrangelo", "type": "raise", "amount": 200000},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Vivek Rajkumar", "type": "call", "amount": 200000},
+          {"player": "Player1", "type": "fold", "amount": 0},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Chin Wei Lim", "type": "call", "amount": 100000}
+        ],
+        "flop": [
+          {"player": "Chin Wei Lim", "type": "check", "amount": 0},
+          {"player": "Nick Petrangelo", "type": "bet", "amount": 250000},
+          {"player": "Vivek Rajkumar", "type": "raise", "amount": 650000},
+          {"player": "Chin Wei Lim", "type": "fold", "amount": 0},
+          {"player": "Nick Petrangelo", "type": "allin", "amount": 2500000},
+          {"player": "Vivek Rajkumar", "type": "call", "amount": 1850000}
+        ]
+      },
+      "outcome": {"winner": "Vivek Rajkumar", "final_pot": 5000000}
+    },
+    {
+      "meta": {
+        "category": "Championship Moments",
+        "id": "GEN-061",
+        "source_file": "real",
+        "source_method": "Chan vs Seidel 1988 WSOP Main"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "25000/50000/5000",
+        "currency": "USD",
+        "format": "Tournament"
+      },
+      "table": {
+        "table_name": "WSOP Main Final Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Johnny Chan", "position": "Button", "starting_stack_chips": 100000, "cards": ["Jc", "9c"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Erik Seidel", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["Qc", "7h"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Player6", "position": "CO", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]}
+      ],
+      "board": {"flop": ["Qc", "8d", "10h"], "turn": "2s", "river": "6d"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Player6", "type": "fold", "amount": 0},
+          {"player": "Johnny Chan", "type": "call", "amount": 50000},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Erik Seidel", "type": "check", "amount": 0}
+        ],
+        "flop": [
+          {"player": "Erik Seidel", "type": "check", "amount": 0},
+          {"player": "Johnny Chan", "type": "bet", "amount": 50000},
+          {"player": "Erik Seidel", "type": "raise", "amount": 100000},
+          {"player": "Johnny Chan", "type": "call", "amount": 50000}
+        ],
+        "turn": [
+          {"player": "Erik Seidel", "type": "check", "amount": 0},
+          {"player": "Johnny Chan", "type": "check", "amount": 0}
+        ],
+        "river": [
+          {"player": "Erik Seidel", "type": "allin", "amount": 100000},
+          {"player": "Johnny Chan", "type": "call", "amount": 100000}
+        ]
+      },
+      "outcome": {"winner": "Johnny Chan", "final_pot": 400000}
+    },
+    {
+      "meta": {
+        "category": "Heads-Up Mastery",
+        "id": "GEN-062",
+        "source_file": "real",
+        "source_method": "Chan vs Seidel 1988 WSOP heads-up trap"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "200/400/0",
+        "currency": "USD",
+        "format": "Cash Game"
+      },
+      "table": {
+        "table_name": "WSOP Heads-Up Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Johnny Chan", "position": "Button", "starting_stack_chips": 100000, "cards": ["Jc", "9c"]},
+        {"seat": 2, "name": "Erik Seidel", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Qc", "7h"]},
+        {"seat": 3, "name": "Player3", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Player6", "position": "CO", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]}
+      ],
+      "board": {"flop": ["Qc", "8d", "10h"], "turn": "2s", "river": "6d"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Player6", "type": "fold", "amount": 0},
+          {"player": "Johnny Chan", "type": "raise", "amount": 800},
+          {"player": "Erik Seidel", "type": "call", "amount": 600},
+          {"player": "Player3", "type": "fold", "amount": 0}
+        ],
+        "flop": [
+          {"player": "Erik Seidel", "type": "check", "amount": 0},
+          {"player": "Johnny Chan", "type": "bet", "amount": 800},
+          {"player": "Erik Seidel", "type": "raise", "amount": 1600},
+          {"player": "Johnny Chan", "type": "call", "amount": 800}
+        ],
+        "turn": [
+          {"player": "Erik Seidel", "type": "check", "amount": 0},
+          {"player": "Johnny Chan", "type": "check", "amount": 0}
+        ],
+        "river": [
+          {"player": "Erik Seidel", "type": "allin", "amount": 100000},
+          {"player": "Johnny Chan", "type": "call", "amount": 100000}
+        ]
+      },
+      "outcome": {"winner": "Johnny Chan", "final_pot": 204000}
+    },
+    {
+      "meta": {
+        "category": "Online Legends",
+        "id": "GEN-063",
+        "source_file": "real",
+        "source_method": "Antonius vs Blom online PLO"
+      },
+      "game": {
+        "variant": "Pot-Limit Omaha",
+        "stakes": "500/1000",
+        "currency": "USD",
+        "format": "Cash Game"
+      },
+      "table": {
+        "table_name": "Online High Roller Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Patrik Antonius", "position": "Button", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Viktor Blom", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Player6", "position": "CO", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]}
+      ],
+      "board": {"flop": ["Xx", "Xx", "Xx"], "turn": "Xx", "river": "Xx"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Player6", "type": "fold", "amount": 0},
+          {"player": "Patrik Antonius", "type": "raise", "amount": 3000},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Viktor Blom", "type": "call", "amount": 2000}
+        ],
+        "flop": [
+          {"player": "Viktor Blom", "type": "check", "amount": 0},
+          {"player": "Patrik Antonius", "type": "bet", "amount": 6000},
+          {"player": "Viktor Blom", "type": "raise", "amount": 18000},
+          {"player": "Patrik Antonius", "type": "call", "amount": 12000}
+        ],
+        "turn": [
+          {"player": "Viktor Blom", "type": "bet", "amount": 42000},
+          {"player": "Patrik Antonius", "type": "raise", "amount": 126000},
+          {"player": "Viktor Blom", "type": "call", "amount": 84000}
+        ],
+        "river": [
+          {"player": "Viktor Blom", "type": "check", "amount": 0},
+          {"player": "Patrik Antonius", "type": "bet", "amount": 378000},
+          {"player": "Viktor Blom", "type": "call", "amount": 378000}
+        ]
+      },
+      "outcome": {"winner": "Patrik Antonius", "final_pot": 1356947}
+    },
+    {
+      "meta": {
+        "category": "High Stakes Action",
+        "id": "GEN-064",
+        "source_file": "real",
+        "source_method": "Keating vs Wang HSP"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "500/1000/0",
+        "currency": "USD",
+        "format": "Cash Game"
+      },
+      "table": {
+        "table_name": "High Stakes Poker Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Alan Keating", "position": "Button", "starting_stack_chips": 100000, "cards": ["Kd", "Kc"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Peter Wang", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["As", "3s"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Player6", "position": "CO", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]}
+      ],
+      "board": {"flop": ["2s", "Js", "Kh"], "turn": "Ad", "river": "Ac"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Player6", "type": "fold", "amount": 0},
+          {"player": "Alan Keating", "type": "call", "amount": 4000},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Peter Wang", "type": "raise", "amount": 14000},
+          {"player": "Alan Keating", "type": "reraise", "amount": 69000},
+          {"player": "Peter Wang", "type": "call", "amount": 55000}
+        ],
+        "flop": [
+          {"player": "Peter Wang", "type": "check", "amount": 0},
+          {"player": "Alan Keating", "type": "bet", "amount": 70000},
+          {"player": "Peter Wang", "type": "checkraise", "amount": 200000},
+          {"player": "Alan Keating", "type": "call", "amount": 130000}
+        ],
+        "turn": [
+          {"player": "Peter Wang", "type": "allin", "amount": 434000},
+          {"player": "Alan Keating", "type": "call", "amount": 434000}
+        ],
+        "river": [
+          {"type": "runout", "note": "Two runouts agreed, no further betting"}
+        ]
+      },
+      "outcome": {"winner": "Alan Keating", "final_pot": 1412500}
+    },
+    {
+      "meta": {
+        "category": "Tournament Pressure",
+        "id": "GEN-100",
+        "source_file": "real",
+        "source_method": "Affleck vs Duhamel 2010 WSOP Main"
+      },
+      "game": {
+        "variant": "No-Limit Hold'em",
+        "stakes": "5000/10000/1000",
+        "currency": "USD",
+        "format": "Tournament"
+      },
+      "table": {
+        "table_name": "WSOP Main Table",
+        "max_players": 6,
+        "button_seat": 1
+      },
+      "players": [
+        {"seat": 1, "name": "Matt Affleck", "position": "Button", "starting_stack_chips": 100000, "cards": ["As", "Ah"]},
+        {"seat": 2, "name": "Player2", "position": "Small Blind", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 3, "name": "Jonathan Duhamel", "position": "Big Blind", "starting_stack_chips": 100000, "cards": ["Js", "Jh"]},
+        {"seat": 4, "name": "Player4", "position": "UTG", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 5, "name": "Player5", "position": "MP", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]},
+        {"seat": 6, "name": "Player6", "position": "CO", "starting_stack_chips": 100000, "cards": ["Xx", "Xx"]}
+      ],
+      "board": {"flop": ["9c", "7c", "4s"], "turn": "8d", "river": "10c"},
+      "actions": {
+        "preflop": [
+          {"player": "Player4", "type": "fold", "amount": 0},
+          {"player": "Player5", "type": "fold", "amount": 0},
+          {"player": "Player6", "type": "fold", "amount": 0},
+          {"player": "Matt Affleck", "type": "raise", "amount": 225000},
+          {"player": "Player2", "type": "fold", "amount": 0},
+          {"player": "Jonathan Duhamel", "type": "call", "amount": 225000}
+        ],
+        "flop": [
+          {"player": "Jonathan Duhamel", "type": "check", "amount": 0},
+          {"player": "Matt Affleck", "type": "bet", "amount": 250000},
+          {"player": "Jonathan Duhamel", "type": "raise", "amount": 650000},
+          {"player": "Matt Affleck", "type": "call", "amount": 400000}
+        ],
+        "turn": [
+          {"player": "Jonathan Duhamel", "type": "bet", "amount": 1250000},
+          {"player": "Matt Affleck", "type": "allin", "amount": 15000000},
+          {"player": "Jonathan Duhamel", "type": "call", "amount": 13750000}
+        ]
+      },
+      "outcome": {"winner": "Jonathan Duhamel", "final_pot": 32000000}
+    }
+  ]
+}

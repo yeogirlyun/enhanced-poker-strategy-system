@@ -542,16 +542,17 @@ class FlexiblePokerStateMachine:
         
         # Additional validation based on action type
         if action == ActionType.CALL:
-            call_amount = self.game_state.current_bet - valid_actions.get('current_bet', 0)
-            return call_amount >= 0
+            # No Limit Hold'em: Always allow calls (automatically capped at stack in execute_action)
+            return True
         
         elif action == ActionType.BET:
-            return amount > 0 and amount <= valid_actions.get('max_bet', 0)
+            # No Limit Hold'em: Only check minimum bet, no maximum limit
+            return amount > 0
         
         elif action == ActionType.RAISE:
+            # No Limit Hold'em: Only check minimum raise, no maximum limit
             min_raise = valid_actions.get('min_bet', self.config.big_blind)
-            max_raise = valid_actions.get('max_bet', float('inf'))
-            return amount >= min_raise and amount <= max_raise
+            return amount >= min_raise
         
         return True
     
@@ -596,21 +597,27 @@ class FlexiblePokerStateMachine:
                 self._safe_print(f"   {player.name} calls ${actual_call}")
             
         elif action == ActionType.BET:
-            if amount > 0 and amount <= player.stack:
-                player.current_bet += amount
-                player.stack -= amount
-                self.game_state.pot += amount
+            if amount > 0:
+                # No Limit Hold'em: Allow any bet amount (capped at stack if needed)
+                actual_amount = min(amount, player.stack)
+                player.current_bet += actual_amount
+                player.stack -= actual_amount
+                self.game_state.pot += actual_amount
                 self.game_state.current_bet = player.current_bet
-                self._safe_print(f"   {player.name} bets ${amount}")
+                self._safe_print(f"   {player.name} bets ${actual_amount}")
             
         elif action == ActionType.RAISE:
-            if amount >= self.game_state.current_bet and amount <= player.stack:
-                total_amount = amount - player.current_bet
-                player.current_bet = amount
-                player.stack -= total_amount
-                self.game_state.pot += total_amount
-                self.game_state.current_bet = amount
-                self._safe_print(f"   {player.name} raises to ${amount}")
+            if amount >= self.game_state.current_bet:
+                # No Limit Hold'em: Allow any raise amount (capped at stack if needed)
+                total_needed = amount - player.current_bet
+                actual_total = min(total_needed, player.stack)
+                actual_amount = player.current_bet + actual_total
+                
+                player.current_bet = actual_amount
+                player.stack -= actual_total
+                self.game_state.pot += actual_total
+                self.game_state.current_bet = actual_amount
+                self._safe_print(f"   {player.name} raises to ${actual_amount}")
         
         # Mark player as acted this round
         self.players_acted_this_round.add(player.name)

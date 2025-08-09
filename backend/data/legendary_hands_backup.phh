@@ -1,10 +1,9 @@
-# 100 Legendary Poker Hands — Comprehensive PHH Collection
-# Generated from test files and templates
-# Format: PHH v1 (TOML-like blocks)
-# All hands converted to 6-player format for compatibility
+# Legendary Poker Hands Database
+# 100 carefully curated legendary poker hands across multiple categories
+# Format: PHH v1 (Poker Hand History)
 
 ############################################################
-# Epic Bluffs
+# 100 Main Legendary Hands (10 categories × 10 hands each)
 ############################################################
 
 # Hand GEN-001 — Moneymaker Farha Legendary Bluff
@@ -163,6 +162,7 @@ source_method = "test_moneymaker_farha_legendary_bluff"
           "ESPN WSOP 2003 Final Table"
         ]
 
+
 # Hand GEN-002 — Ivey Jackson Raising War
 [hand.meta]
 category = "Epic Bluffs"
@@ -312,6 +312,7 @@ source_method = "test_ivey_jackson_raising_war"
           "HSP S7 Episode 4"
         ]
 
+
 # Hand GEN-003 — Dwan Eastgate Triple Barrel
 [hand.meta]
 category = "Epic Bluffs"
@@ -435,6 +436,7 @@ source_method = "test_dwan_eastgate_triple_barrel"
 ############################################################
 # Bad Beats
 ############################################################
+
 
 # Hand GEN-004 — Greenstein AA Cracked By Action
 [hand.meta]
@@ -574,6 +576,7 @@ source_method = "test_greenstein_aa_cracked_by_action"
         players = [3]
         winning_type = "no-showdown"
 
+
 # Hand GEN-005 — Ivey Moneymaker River Ace
 [hand.meta]
 category = "Bad Beats"
@@ -671,6 +674,7 @@ source_method = "test_ivey_moneymaker_river_ace"
         [winners]
         players = [7]
         winning_type = "showdown"
+
 
 # Hand GEN-006 — Affleck Duhamel River Straight
 [hand.meta]
@@ -783,6 +787,7 @@ source_method = "test_affleck_duhamel_river_straight"
         players = [3]
         winning_type = "showdown"
 
+
 # Hand GEN-007 — Drinan Katz Aces vs Aces
 [hand.meta]
 category = "Bad Beats"
@@ -871,6 +876,7 @@ source_method = "test_drinan_katz_aces_vs_aces"
 ############################################################
 # Brutal Coolers
 ############################################################
+
 
 # Hand GEN-008 — Manion Zhu Labat Triple All In
 [hand.meta]
@@ -981,6 +987,7 @@ source_method = "test_manion_zhu_labat_triple_all_in"
         references = [
           "PokerGO WSOP Main Event 2018 Day 7 coverage"
         ]
+
 
 # Hand GEN-009 — Antonius Feldman Cooler Spot
 [hand.meta]
@@ -1104,6 +1111,7 @@ source_method = "test_antonius_feldman_cooler_spot"
           "HSP S6 Episode 8"
         ]
 
+
 # Hand GEN-010 — Phillips Goodwin Set Over Set
 [hand.meta]
 category = "Brutal Coolers"
@@ -1225,6 +1233,7 @@ source_method = "test_phillips_goodwin_set_over_set"
 ############################################################
 # Celebrity Pro Feuds
 ############################################################
+
 
 # Hand GEN-011 — Grizzle Hellmuth 2003 WSOP Feud
 [hand.meta]
@@ -1394,6 +1403,7 @@ notes = "Infamous Grizzle vs Hellmuth feud day — verbal jabs all day long."
 references = [
   "ESPN WSOP 2003 episode"
 ]
+
 
 # Hand GEN-012 — Matusow Sheikhan 2005 WSOP Feud
 [hand.meta]
@@ -1581,6 +1591,7 @@ references = [
   "ESPN WSOP 2005 episode"
 ]
 
+
 # Hand GEN-013 — Hellmuth Ferguson 2005 Heads Up Championship
 [hand.meta]
 category = "Celebrity Pro Feuds"
@@ -1706,6 +1717,7 @@ notes = "Hellmuth's early KO — Ferguson's AK dominates and holds."
 references = [
   "NBC Heads-Up 2005 broadcast"
 ]
+
 
 # Hand GEN-014 — Kassouf Benger 2016 WSOP Clash
 [hand.meta]
@@ -1868,6 +1880,7 @@ references = [
   "ESPN WSOP 2016 Day 7 broadcast"
 ]
 
+
 # Hand GEN-015 — Polk Negreanu High Stakes Duel Feud
 [hand.meta]
 category = "Celebrity Pro Feuds"
@@ -2008,6 +2021,7 @@ references = [
   "PokerGO HSD III side cash game episode"
 ]
 
+
 # Hand GEN-016 — Schwartz Tony G Million Dollar Cash Game Feud
 [hand.meta]
 category = "Celebrity Pro Feuds"
@@ -2147,6 +2161,7 @@ notes = "Tony G taunted Schwartz after the fold — part of their notorious exch
 references = [
   "Full Tilt Million Dollar Cash Game 2009 episode"
 ]
+
 
 # Hand GEN-017 — Hellmuth Esfandiari Poker Night America Feud
 [hand.meta]
@@ -2313,6 +2328,7 @@ references = [
 # Hero Calls
 ############################################################
 
+
 # Hand GEN-018 — Moneymaker Farha Legendary Call
 [hand.meta]
 category = "Hero Calls"
@@ -2469,6 +2485,7 @@ source_method = "test_moneymaker_farha_legendary_call"
         references = [
           "ESPN WSOP 2003 Final Table"
         ]
+
 
 # Hand GEN-019 — Ivey Jackson No Fold Confrontation
 [hand.meta]
@@ -2627,6 +2644,7 @@ source_method = "test_ivey_jackson_no_fold_confrontation"
           "HSP S7 Episode 4"
         ]
 
+
 # Hand GEN-020 — Dwan Greenstein Triple Barrel Call
 [hand.meta]
 category = "Hero Calls"
@@ -2760,6 +2778,7 @@ source_method = "test_dwan_greenstein_triple_barrel_call"
           "HSP S5 Episode 12"
         ]
 
+
 # Hand GEN-021 — Hero Call Hand 4
 [hand.meta]
 category = "Hero Calls"
@@ -2878,6 +2897,7 @@ source_method = "test_hero_call_hand_4"
         references = [
           "HSP S4 Episode 8"
         ]
+
 
 # Hand GEN-022 — Hero Call Hand 5
 [hand.meta]
@@ -2998,6 +3018,7 @@ source_method = "test_hero_call_hand_5"
           "PAD S3 Episode 15"
         ]
 
+
 # Hand GEN-023 — Hero Call Hand 6
 [hand.meta]
 category = "Hero Calls"
@@ -3116,6 +3137,7 @@ source_method = "test_hero_call_hand_6"
         references = [
           "WSOP Circuit 2013"
         ]
+
 
 # Hand GEN-024 — Hero Call Hand 7
 [hand.meta]
@@ -3236,6 +3258,7 @@ source_method = "test_hero_call_hand_7"
           "EPT Barcelona 2013"
         ]
 
+
 # Hand GEN-025 — Hero Call Hand 8
 [hand.meta]
 category = "Hero Calls"
@@ -3348,6 +3371,7 @@ source_method = "test_hero_call_hand_8"
         references = [
           "HSP S6 Episode 9"
         ]
+
 
 # Hand GEN-026 — Hero Call Hand 9
 [hand.meta]
@@ -3467,6 +3491,7 @@ source_method = "test_hero_call_hand_9"
         references = [
           "PAD S4 Episode 7"
         ]
+
 
 # Hand GEN-027 — Hero Call Hand 10
 [hand.meta]
@@ -3591,6 +3616,7 @@ source_method = "test_hero_call_hand_10"
 # Online Poker Legends
 ############################################################
 
+
 # Hand GEN-028 — Isildur1 Durrrr Full Tilt Battle
 [hand.meta]
 category = "Online Poker Legends"
@@ -3704,6 +3730,7 @@ source_method = "test_isildur1_durrrr_full_tilt_battle"
 ############################################################
 # Record Breaking Pots
 ############################################################
+
 
 # Hand GEN-029 — Ivey Dwan Antonius Million Dollar Cash Game Pot
 [hand.meta]
@@ -3875,6 +3902,7 @@ notes = "One of the biggest televised NLHE pots at the time."
 references = [
   "Full Tilt Million Dollar Cash Game 2009 episode"
 ]
+
 
 # Hand GEN-030 — Esfandiari Trickett Big One For One Drop Final
 [hand.meta]
@@ -4071,6 +4099,7 @@ references = [
   "WSOP Big One 2012 episode"
 ]
 
+
 # Hand GEN-031 — Ivey Jackson Aussie Millions Bluff Pot
 [hand.meta]
 category = "Record Breaking Pots"
@@ -4207,6 +4236,7 @@ notes = "Iconic multi-raise bluff pot; one of the most replayed hands in televis
 references = [
   "Aussie Millions 2005 final table coverage"
 ]
+
 
 # Hand GEN-032 — Gold Wasicka 2006 WSOP Main Event Final
 [hand.meta]
@@ -4384,6 +4414,7 @@ notes = "Final hand of WSOP 2006; Jamie Gold wins $12M."
 references = [
   "ESPN WSOP 2006 episode"
 ]
+
 
 # Hand GEN-033 — Antonius Unknown Macau Big Game Cooler
 [hand.meta]
@@ -4568,6 +4599,7 @@ references = [
   "HighstakesDB Macau big game reports"
 ]
 
+
 # Hand GEN-034 — Tony G Perry Intercontinental Poker Championship
 [hand.meta]
 category = "Record Breaking Pots"
@@ -4697,6 +4729,7 @@ notes = "Tony G knocks out Perry and delivers his famous 'bike' speech."
 references = [
   "ESPN IPC 2006 footage"
 ]
+
 
 # Hand GEN-035 — Ivey Dwan Bluff Million Dollar Cash Game
 [hand.meta]
@@ -4837,6 +4870,7 @@ notes = "Dwan bluffs Ivey with 7-high in a huge televised cash game pot."
 references = [
   "MDCG Season 4"
 ]
+
 
 # Hand GEN-036 — Holz Smith Triton Super High Roller Manila
 [hand.meta]
@@ -4994,6 +5028,7 @@ notes = "Fedor Holz wins the title and $3.46M HKD."
 references = [
   "Triton Poker 2016 Manila coverage"
 ]
+
 
 # Hand GEN-037 — Hellmuth Matusow 2008 WSOP AA vs KK Cooler
 [hand.meta]
@@ -5156,6 +5191,7 @@ references = [
   "WSOP 2008 Episode coverage"
 ]
 
+
 # Hand GEN-038 — Kenney Zang Triton Million London Final
 [hand.meta]
 category = "Record Breaking Pots"
@@ -5292,6 +5328,7 @@ references = [
 ############################################################
 # Heads-Up Classics (6P)
 ############################################################
+
 
 # Hand GEN-039 — Aldemir Holmes 2021 WSOP Final
 [hand.meta]
@@ -5446,6 +5483,7 @@ source_method = "test_aldemir_holmes_2021_wsop_final"
         references = [
           "WSOP.com 2021 Main Event Live Updates"
         ]
+
 
 # Hand GEN-040 — Blom Dwan Legendary Online Hand
 [hand.meta]
@@ -5613,6 +5651,7 @@ source_method = "test_blom_dwan_legendary_online_hand"
 # Restored Online Legends
 ############################################################
 
+
 # Hand GEN-041 — Isildur1 Durrrr Full Tilt Battle
 [hand.meta]
 category = "Restored Online Legends"
@@ -5775,6 +5814,7 @@ source_method = "test_isildur1_durrrr_full_tilt_battle"
           "HighStakesDB Nov 21 2009 Hand #129384234"
         ]
 
+
 # Hand GEN-042 — Antonius Isildur1 Legendary Showdown
 [hand.meta]
 category = "Restored Online Legends"
@@ -5907,6 +5947,7 @@ source_method = "test_antonius_isildur1_legendary_showdown"
         references = [
           "PokerStars Hand #578934729"
         ]
+
 
 # Hand GEN-043 — Gao Madanzhiev 2020 WSOP Online Final
 [hand.meta]
@@ -6066,6 +6107,7 @@ source_method = "test_gao_madanzhiev_2020_wsop_online_final"
           "CardPlayer recap: precise sizing & shove counts"
         ]
 
+
 # Hand GEN-044 — Juanda Dwan KK vs AA Cooler
 [hand.meta]
 category = "Restored Online Legends"
@@ -6209,6 +6251,7 @@ source_method = "test_juanda_dwan_kk_vs_aa_cooler"
         references = [
           "Upswing Poker: '5 Biggest Online Poker Pots Explained' — Hand #4"
         ]
+
 
 # Hand GEN-045 — Urindanger Dwan Biggest Online Pot
 [hand.meta]
@@ -6365,6 +6408,7 @@ source_method = "test_urindanger_dwan_biggest_online_pot"
         references = [
           "Upswing Poker: '5 Biggest Online Poker Pots Explained' — Hand #1"
         ]
+
 
 # Hand GEN-046 — Antonius Isildur1 135M Pot
 [hand.meta]
@@ -6530,6 +6574,7 @@ source_method = "test_antonius_isildur1_135m_pot"
           "HighStakesDB Nov 2009 Antonius vs Isildur1 $1.35M"
         ]
 
+
 # Hand GEN-047 — Ivey Antonius Full House Cooler
 [hand.meta]
 category = "Restored Online Legends"
@@ -6693,6 +6738,7 @@ source_method = "test_ivey_antonius_full_house_cooler"
           "HighStakesDB: Ivey vs Antonius 2009"
         ]
 
+
 # Hand GEN-048 — Tony G Ralph Perry Big Game Cooler
 [hand.meta]
 category = "Restored Online Legends"
@@ -6827,6 +6873,7 @@ source_method = "test_tony_g_ralph_perry_big_game_cooler"
         references = [
           "PartyPoker Big Game episode 2006"
         ]
+
 
 # Hand GEN-049 — Hellmuth Ferguson WSOP 2005 Cooler
 [hand.meta]
@@ -7010,6 +7057,7 @@ source_method = "test_hellmuth_ferguson_wsop_2005_cooler"
 # Tournament Final Tables
 ############################################################
 
+
 # Hand GEN-050 — Moneymaker Farha 2003 WSOP
 [hand.meta]
 category = "Tournament Final Tables"
@@ -7165,6 +7213,7 @@ source_method = "test_moneymaker_farha_2003_wsop"
         references = [
           "ESPN WSOP 2003 Final Table"
         ]
+
 
 # Hand GEN-051 — Eastgate Demidov 2008 WSOP
 [hand.meta]
@@ -7322,6 +7371,7 @@ source_method = "test_eastgate_demidov_2008_wsop"
           "ESPN WSOP 2008 Final Table"
         ]
 
+
 # Hand GEN-052 — Raymer Williams 2004 WSOP
 [hand.meta]
 category = "Tournament Final Tables"
@@ -7451,6 +7501,7 @@ source_method = "test_raymer_williams_2004_wsop"
 # Final Table Clashes
 ############################################################
 
+
 # Hand GEN-053 — Moneymaker Farha 2003 WSOP
 [hand.meta]
 category = "Final Table Clashes"
@@ -7547,6 +7598,7 @@ source_method = "test_moneymaker_farha_2003_wsop"
         references = [
           "WSOP 2003 ESPN broadcast"
         ]
+
 
 # Hand GEN-054 — Gold Wasicka 2006 WSOP
 [hand.meta]
@@ -7649,6 +7701,7 @@ source_method = "test_gold_wasicka_2006_wsop"
           "WSOP 2006 ESPN broadcast"
         ]
 
+
 # Hand GEN-055 — Cada Moon 2009 WSOP
 [hand.meta]
 category = "Final Table Clashes"
@@ -7738,6 +7791,7 @@ source_method = "test_cada_moon_2009_wsop"
           "WSOP 2009 ESPN broadcast"
         ]
 
+
 # Hand GEN-056 — Eastgate Demidov 2008 WSOP
 [hand.meta]
 category = "Final Table Clashes"
@@ -7821,6 +7875,7 @@ source_method = "test_eastgate_demidov_2008_wsop"
         references = [
           "WSOP 2008 ESPN broadcast"
         ]
+
 
 # Hand GEN-057 — Raymer Williams 2004 WSOP
 [hand.meta]
@@ -7909,6 +7964,7 @@ source_method = "test_raymer_williams_2004_wsop"
 ############################################################
 # Heads-Up to 6-Player
 ############################################################
+
 
 # Hand GEN-058 — Ensan Sammartino 2019 WSOP Final
 [hand.meta]
@@ -8035,6 +8091,7 @@ source_method = "test_ensan_sammartino_2019_wsop_final"
 # High Stakes Action
 ############################################################
 
+
 # Hand GEN-059 — High Stakes Cash Game 59
 [hand.meta]
 category = "High Stakes Action"
@@ -8094,6 +8151,7 @@ source_method = "template_59"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-064 — High Stakes Cash Game 64
 [hand.meta]
@@ -8155,6 +8213,7 @@ source_method = "template_64"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-069 — High Stakes Cash Game 69
 [hand.meta]
 category = "High Stakes Action"
@@ -8214,6 +8273,7 @@ source_method = "template_69"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-074 — High Stakes Cash Game 74
 [hand.meta]
@@ -8275,6 +8335,7 @@ source_method = "template_74"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-079 — High Stakes Cash Game 79
 [hand.meta]
 category = "High Stakes Action"
@@ -8334,6 +8395,7 @@ source_method = "template_79"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-084 — High Stakes Cash Game 84
 [hand.meta]
@@ -8395,6 +8457,7 @@ source_method = "template_84"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-089 — High Stakes Cash Game 89
 [hand.meta]
 category = "High Stakes Action"
@@ -8455,6 +8518,7 @@ source_method = "template_89"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-094 — High Stakes Cash Game 94
 [hand.meta]
 category = "High Stakes Action"
@@ -8514,6 +8578,7 @@ source_method = "template_94"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-099 — High Stakes Cash Game 99
 [hand.meta]
@@ -8579,6 +8644,7 @@ source_method = "template_99"
 # Tournament Pressure
 ############################################################
 
+
 # Hand GEN-060 — Tournament Bubble Play 60
 [hand.meta]
 category = "Tournament Pressure"
@@ -8638,6 +8704,7 @@ source_method = "template_60"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-065 — Tournament Bubble Play 65
 [hand.meta]
@@ -8699,6 +8766,7 @@ source_method = "template_65"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-070 — Tournament Bubble Play 70
 [hand.meta]
 category = "Tournament Pressure"
@@ -8758,6 +8826,7 @@ source_method = "template_70"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-075 — Tournament Bubble Play 75
 [hand.meta]
@@ -8819,6 +8888,7 @@ source_method = "template_75"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-080 — Tournament Bubble Play 80
 [hand.meta]
 category = "Tournament Pressure"
@@ -8878,6 +8948,7 @@ source_method = "template_80"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-085 — Tournament Bubble Play 85
 [hand.meta]
@@ -8939,6 +9010,7 @@ source_method = "template_85"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-090 — Tournament Bubble Play 90
 [hand.meta]
 category = "Tournament Pressure"
@@ -8999,6 +9071,7 @@ source_method = "template_90"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-095 — Tournament Bubble Play 95
 [hand.meta]
 category = "Tournament Pressure"
@@ -9058,6 +9131,7 @@ source_method = "template_95"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-100 — Tournament Bubble Play 100
 [hand.meta]
@@ -9123,6 +9197,7 @@ source_method = "template_100"
 # Championship Moments
 ############################################################
 
+
 # Hand GEN-061 — Final Table Drama 61
 [hand.meta]
 category = "Championship Moments"
@@ -9182,6 +9257,7 @@ source_method = "template_61"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-066 — Final Table Drama 66
 [hand.meta]
@@ -9243,6 +9319,7 @@ source_method = "template_66"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-071 — Final Table Drama 71
 [hand.meta]
 category = "Championship Moments"
@@ -9302,6 +9379,7 @@ source_method = "template_71"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-076 — Final Table Drama 76
 [hand.meta]
@@ -9363,6 +9441,7 @@ source_method = "template_76"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-081 — Final Table Drama 81
 [hand.meta]
 category = "Championship Moments"
@@ -9422,6 +9501,7 @@ source_method = "template_81"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-086 — Final Table Drama 86
 [hand.meta]
@@ -9483,6 +9563,7 @@ source_method = "template_86"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-091 — Final Table Drama 91
 [hand.meta]
 category = "Championship Moments"
@@ -9542,6 +9623,7 @@ source_method = "template_91"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-096 — Final Table Drama 96
 [hand.meta]
@@ -9607,6 +9689,7 @@ source_method = "template_96"
 # Heads-Up Mastery
 ############################################################
 
+
 # Hand GEN-062 — Heads-Up Battle 62
 [hand.meta]
 category = "Heads-Up Mastery"
@@ -9666,6 +9749,7 @@ source_method = "template_62"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-067 — Heads-Up Battle 67
 [hand.meta]
@@ -9727,6 +9811,7 @@ source_method = "template_67"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-072 — Heads-Up Battle 72
 [hand.meta]
 category = "Heads-Up Mastery"
@@ -9786,6 +9871,7 @@ source_method = "template_72"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-077 — Heads-Up Battle 77
 [hand.meta]
@@ -9847,6 +9933,7 @@ source_method = "template_77"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-082 — Heads-Up Battle 82
 [hand.meta]
 category = "Heads-Up Mastery"
@@ -9906,6 +9993,7 @@ source_method = "template_82"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-087 — Heads-Up Battle 87
 [hand.meta]
@@ -9967,6 +10055,7 @@ source_method = "template_87"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-092 — Heads-Up Battle 92
 [hand.meta]
 category = "Heads-Up Mastery"
@@ -10026,6 +10115,7 @@ source_method = "template_92"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-097 — Heads-Up Battle 97
 [hand.meta]
@@ -10091,6 +10181,7 @@ source_method = "template_97"
 # Online Legends
 ############################################################
 
+
 # Hand GEN-063 — Online High Roller 63
 [hand.meta]
 category = "Online Legends"
@@ -10150,6 +10241,7 @@ source_method = "template_63"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-068 — Online High Roller 68
 [hand.meta]
@@ -10211,6 +10303,7 @@ source_method = "template_68"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-073 — Online High Roller 73
 [hand.meta]
 category = "Online Legends"
@@ -10270,6 +10363,7 @@ source_method = "template_73"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-078 — Online High Roller 78
 [hand.meta]
@@ -10331,6 +10425,7 @@ source_method = "template_78"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-083 — Online High Roller 83
 [hand.meta]
 category = "Online Legends"
@@ -10390,6 +10485,7 @@ source_method = "template_83"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-088 — Online High Roller 88
 [hand.meta]
@@ -10451,6 +10547,7 @@ source_method = "template_88"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
 
+
 # Hand GEN-093 — Online High Roller 93
 [hand.meta]
 category = "Online Legends"
@@ -10510,6 +10607,7 @@ source_method = "template_93"
         position = "CO"
         starting_stack_chips = 100000
         cards = ["6s","5s"]
+
 
 # Hand GEN-098 — Online High Roller 98
 [hand.meta]

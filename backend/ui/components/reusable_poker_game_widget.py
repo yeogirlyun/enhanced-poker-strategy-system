@@ -252,6 +252,45 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Handle events from the FPSM."""
         print(f"🎯 Received event: {event.event_type}")
         
+        # ENHANCED Event deduplication to prevent infinite loops
+        if not hasattr(self, 'last_processed_events'):
+            self.last_processed_events = {}
+        if not hasattr(self, 'rapid_event_count'):
+            self.rapid_event_count = {}
+        
+        # Create a more comprehensive unique key for this event
+        event_data = getattr(event, 'data', {})
+        player_name = event_data.get('player_name', getattr(event, 'player_name', ''))
+        action = event_data.get('action', getattr(event, 'action', ''))
+        amount = event_data.get('amount', getattr(event, 'amount', 0))
+        
+        event_key = f"{event.event_type}_{player_name}_{action}_{amount}"
+        current_time = time.time()
+        
+        # Track rapid-fire events and block excessive duplicates
+        if event_key in self.last_processed_events:
+            time_diff = current_time - self.last_processed_events[event_key]
+            if time_diff < 0.2:  # 200ms threshold
+                # Count rapid events
+                if event_key not in self.rapid_event_count:
+                    self.rapid_event_count[event_key] = 1
+                else:
+                    self.rapid_event_count[event_key] += 1
+                
+                # Block if too many rapid events
+                if self.rapid_event_count[event_key] > 2:
+                    print(f"🛑 BLOCKING rapid-fire event: {event.event_type} (#{self.rapid_event_count[event_key]}) within {time_diff*1000:.1f}ms")
+                    return
+                else:
+                    print(f"⚠️  Skipping duplicate event: {event.event_type} (within {time_diff*1000:.1f}ms)")
+                    return
+        else:
+            # Reset rapid event count for new events
+            if event_key in self.rapid_event_count:
+                del self.rapid_event_count[event_key]
+        
+        self.last_processed_events[event_key] = current_time
+        
         # Log the event for debugging and analysis
         self._log_event(event)
         
@@ -535,45 +574,37 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if self.headless_mode:
             return
             
-        # Skip rendering during bet animations to prevent interference
+        # Clear animation flag if it's been stuck too long (failsafe)
         if self.animating_bets_to_pot:
-            print("🎯 Skipping display state render - bet animation in progress")
-            return
+            print("🎯 CLEARING STUCK ANIMATION FLAG - allowing normal rendering")
+            self.animating_bets_to_pot = False  # Force clear to prevent blocking
         
-        # LAZY REDRAW: Check if display state actually changed
-        if not self._display_state_changed(display_state):
-            print("🎯 Skipping display state render - no meaningful changes detected")
-            return
+        print("🎯 Rendering from FPSM display state (ALWAYS redraw - no lazy optimization)")
         
-        print("🎯 Rendering from FPSM display state (changes detected)")
+        # ALWAYS redraw everything - remove lazy optimization completely
+        self._draw_table()
         
-        # Ensure table is drawn (one-time setup)
-        if not self.table_drawn and self.canvas.winfo_width() > 1:
-            self._draw_table()
-            self.table_drawn = True
-        
-        # Update players (with individual lazy checking)
+        # Update all players
         for i, player_info in enumerate(display_state.get("players", [])):
             if i < len(self.player_seats) and self.player_seats[i]:
                 self._update_player_from_display_state(i, player_info)
         
-        # Update community cards (already has lazy checking)
+        # ALWAYS redraw community cards
         board_cards = display_state.get("board", [])
+        print(f"🎴 FORCE updating community cards: {board_cards}")
+        self._draw_community_card_area()
         self._update_community_cards_from_display_state(board_cards)
         
-        # Update pot (already has lazy checking)
+        # ALWAYS redraw pot
         pot_amount = display_state.get("pot", 0.0)
+        print(f"💰 FORCE updating pot display: ${pot_amount:,.2f}")
+        self._draw_pot_display()
         self.update_pot_amount(pot_amount)
         
-        # Update current action player (with lazy checking)
+        # Update current action player
         action_player_index = display_state.get("action_player", -1)
-        if action_player_index != self.last_action_player:
-            if action_player_index >= 0 and action_player_index < len(self.player_seats):
-                self._highlight_current_player(action_player_index)
-            self.last_action_player = action_player_index
-        
-        # Store current display state for next comparison
-        self.last_display_state = display_state.copy()
+        if action_player_index >= 0 and action_player_index < len(self.player_seats):
+            self._highlight_current_player(action_player_index)
     
     def _update_player_from_display_state(self, player_index: int, player_info: Dict[str, Any]):
         """Update a single player based on display state (FLICKER-FREE VERSION)."""
@@ -769,8 +800,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         for i, player_seat in enumerate(self.player_seats):
             if player_seat:
                 player_frame = player_seat["frame"]
-                if i == player_index:
-                    # STRONG highlighting for active player
+                
+                # Check if this player has folded by looking for existing folded indicator
+                has_folded_indicator = False
+                for widget in player_frame.winfo_children():
+                    if (hasattr(widget, '_action_indicator') and 
+                        hasattr(widget, 'cget') and 
+                        "FOLDED" in widget.cget('text')):
+                        has_folded_indicator = True
+                        break
+                
+                if i == player_index and not has_folded_indicator:
+                    # STRONG highlighting for active player (only if not folded)
                     player_frame.config(
                         highlightbackground="#FFD700",  # Bright gold
                         highlightthickness=6,           # Much thicker border
@@ -778,13 +819,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     )
                     # Add blinking effect for extra visibility
                     self._add_action_indicator(player_frame)
-                else:
-                    # Normal appearance for inactive players
+                elif not has_folded_indicator:
+                    # Normal appearance for inactive players (only if not folded)
                     player_frame.config(
                         highlightbackground="#006400",  # Dark green
                         highlightthickness=2,
                         bg="#1a1a1a"                    # Normal background
                     )
+                # Note: Folded players keep their gray styling set by _mark_player_folded
     
     def _add_action_indicator(self, player_frame):
         """Add a visual action indicator to the player frame."""
@@ -820,14 +862,59 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Continue blinking every 500ms
             self.after(500, lambda: self._blink_action_indicator(label, not visible))
     
+    def _clear_action_indicators(self, player_index=None):
+        """Clear action indicators for a specific player or all players."""
+        if player_index is not None:
+            # Clear for specific player
+            if player_index < len(self.player_seats) and self.player_seats[player_index]:
+                player_frame = self.player_seats[player_index]["frame"]
+                for widget in player_frame.winfo_children():
+                    if hasattr(widget, '_action_indicator'):
+                        print(f"🎯 Clearing action indicator for player {player_index}")
+                        widget.destroy()
+        else:
+            # Clear for all players
+            for i, player_seat in enumerate(self.player_seats):
+                if player_seat:
+                    self._clear_action_indicators(i)
+    
     def _mark_player_folded(self, player_index):
         """Mark a player as folded."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
+        # Mark cards as folded
         card_widgets = self.player_seats[player_index]["card_widgets"]
         for card_widget in card_widgets:
             card_widget.set_folded()
+        
+        # Remove any "YOUR TURN" indicator and add "FOLDED" indicator
+        player_frame = self.player_seats[player_index]["frame"]
+        
+        # Remove any existing action indicators
+        for widget in player_frame.winfo_children():
+            if hasattr(widget, '_action_indicator'):
+                widget.destroy()
+        
+        # Add "FOLDED" indicator with gray background
+        folded_label = tk.Label(
+            player_frame,
+            text="💤 FOLDED 💤",
+            bg="#808080",  # Gray background
+            fg="#FFFFFF",  # White text
+            font=("Arial", 10, "bold"),
+            relief="sunken",
+            bd=2
+        )
+        folded_label._action_indicator = True
+        folded_label.pack(side=tk.TOP, pady=2)
+        
+        # Change player frame to gray background to indicate folded
+        player_frame.config(
+            highlightbackground="#696969",  # Dark gray
+            highlightthickness=2,
+            bg="#404040"  # Dark gray background
+        )
     
     def _restore_player_cards(self, player_index):
         """Restore player cards to normal display (unfold them)."""
@@ -882,6 +969,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     break
         
         if player_index >= 0:
+            # Clear "YOUR TURN" indicator for this player since they just acted
+            self._clear_action_indicators(player_index)
+            
             # Play sound based on action
             if action:
                 if action.value == "fold":
@@ -989,7 +1079,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 self._finish_bet_animations()
                 print("💰 Debug mode: Immediate bet clearing")
             else:
-                total_delay = animation_delay + 1000  # Extra delay for last animation
+                total_delay = animation_delay + 500  # Shorter delay for better responsiveness
                 self.after(total_delay, lambda: self._finish_bet_animations())
                 print(f"💰 Scheduled bet clearing in {total_delay}ms")
         
@@ -1176,14 +1266,70 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.animating_bets_to_pot = False
         self._clear_all_bet_displays()
         self._clear_all_bet_displays_permanent()
+        
+        # Force a display update after animation completes
+        print("🔄 Forcing display update after bet animation completion")
+        self.after_idle(self._force_display_refresh)
+    
+    def _force_display_refresh(self):
+        """Force a complete display refresh after animations."""
+        print("🔄 Forcing complete display refresh")
+        if hasattr(self, 'state_machine') and self.state_machine:
+            # Force a complete canvas refresh
+            print("🔄 Forcing canvas update and refresh")
+            self.canvas.update()
+            self.canvas.update_idletasks()
+            
+            # Force redraw all table components - reset all lazy redraw flags
+            print("🔄 Force redrawing all components with complete table refresh")
+            
+            # Reset ALL drawing flags to force complete redraw
+            self.table_drawn = False
+            
+            # Reset lazy redraw tracking for ALL components
+            if hasattr(self, 'last_canvas_size'):
+                delattr(self, 'last_canvas_size')
+            if hasattr(self, 'last_community_canvas_size'):
+                delattr(self, 'last_community_canvas_size')
+            if hasattr(self, 'last_pot_canvas_size'):
+                delattr(self, 'last_pot_canvas_size')
+            
+            # Force clear community card and pot existence flags
+            if hasattr(self, 'community_card_widgets'):
+                print("🔄 Clearing community card widgets for forced redraw")
+                self.community_card_widgets = []
+            if hasattr(self, 'pot_label'):
+                print("🔄 Clearing pot label for forced redraw")
+                self.pot_label = None
+            if hasattr(self, 'last_seats_canvas_size'):
+                delattr(self, 'last_seats_canvas_size')
+            
+            # Force redraw all table components
+            self._draw_table()  # This will now redraw the complete table
+            self._draw_community_card_area()  # Force community cards
+            self._draw_pot_display()  # Force pot display
+            
+            # Request fresh display state from FPSM
+            self.state_machine._emit_display_state_event()
+            # Also trigger a manual update
+            self._ensure_seats_created_and_update()
+            # Final canvas refresh
+            print("🔄 Final canvas refresh completed")
+            self.canvas.update()
     
     def update_pot_amount(self, amount):
         """Update the pot amount display (FLICKER-FREE VERSION)."""
         # Only update if pot amount actually changed
         if self.last_pot_amount != amount:
-            if self.pot_label:
-                self.pot_label.config(text=f"${amount:.2f}")
-                print(f"💰 Updated pot: ${self.last_pot_amount:.2f} → ${amount:.2f}")
+            if hasattr(self, 'pot_label') and self.pot_label:
+                self.pot_label.config(text=f"${amount:,.2f}")
+                print(f"💰 Updated pot: ${self.last_pot_amount:,.2f} → ${amount:,.2f}")
+            else:
+                # Pot display doesn't exist yet - ensure it's created
+                print(f"💰 Creating pot display for amount: ${amount:,.2f}")
+                self._draw_pot_display()
+                if hasattr(self, 'pot_label') and self.pot_label:
+                    self.pot_label.config(text=f"${amount:,.2f}")
             self.last_pot_amount = amount
     
     def play_sound(self, sound_type: str, **kwargs):

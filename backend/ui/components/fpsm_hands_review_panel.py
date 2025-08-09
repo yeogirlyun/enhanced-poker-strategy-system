@@ -35,12 +35,19 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
     - Event-driven updates
     """
     
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, hands_db=None, debug_mode=False, test_mode=False, **kwargs):
         super().__init__(parent, **kwargs)
         
         # Initialize hands database
-        self.hands_database = ComprehensiveHandsDatabase()
+        self.hands_database = hands_db if hands_db else ComprehensiveHandsDatabase()
         self.phh_manager = PracticeHandsPHHManager()
+        
+        # Mock UI testing support
+        self.debug_mode = debug_mode
+        self.test_mode = test_mode
+        
+        # Testing properties
+        self.rpgw = None  # Reference to poker game widget for testing
         
         # Hand data
         self.legendary_hands = []
@@ -65,10 +72,19 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.mode = "legendary"
         
         # Setup UI
-        self.setup_ui()
-        
-        # Load data
-        self.load_data()
+        if not self.test_mode:
+            self.setup_ui()
+            # Load data
+            self.load_data()
+        else:
+            # For test mode, just load hands data without UI
+            self._load_hands_data_only()
+    
+    def load_hand_data(self, hand_data):
+        """Load specific hand data for testing."""
+        self.current_hand = hand_data
+        self.current_hand_index = 0
+        print(f"📖 Loaded hand data: {hand_data.metadata.name if hand_data and hasattr(hand_data, 'metadata') else 'Unknown'}")
     
     def setup_ui(self):
         """Setup the redesigned two-pane interface."""
@@ -413,6 +429,12 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.load_practice_hands()
         self.update_hands_list()
     
+    def _load_hands_data_only(self):
+        """Load hands data without updating UI (for test mode)."""
+        self.load_legendary_hands()
+        self.load_practice_hands()
+        # Skip update_hands_list() in test mode since UI components don't exist
+    
     def load_legendary_hands(self):
         """Load legendary hands from database."""
         try:
@@ -659,9 +681,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 big_blind=big_blind,
                 small_blind=small_blind,
                 starting_stack=starting_stack,
-                test_mode=True,  # Enable test mode for automatic state advancement
+                test_mode=False,  # Disable test mode for normal GUI operation
                 show_all_cards=True,  # Show all cards in simulation mode
-                auto_advance=True  # Enable auto-advance for smooth street progression
+                auto_advance=False  # Disable auto-advance for manual GUI control
             )
             
             self.fpsm = FlexiblePokerStateMachine(config)
@@ -754,6 +776,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             
             # Reset hand completion flag for new simulation
             self.hand_completed = False
+            self.last_pot_amount = 0  # Track pot for winner animation
             
             # Create the poker game widget (RPGW will automatically listen for FPSM events)
             if self.poker_game_widget:
@@ -763,12 +786,16 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             self.poker_game_widget = ReusablePokerGameWidget(
                 self.game_container,
                 state_machine=self.fpsm,
-                debug_mode=True  # Enable debug mode for fast testing
+                debug_mode=self.debug_mode or self.test_mode  # Use debug mode for testing
             )
             
-            # Completely disable UI rendering for testing performance
-            self.poker_game_widget.headless_mode = True
-            self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            # Enable UI rendering for GUI display (unless in test mode)
+            if not self.test_mode:
+                self.poker_game_widget.headless_mode = False
+                self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+            # Store reference for testing
+            self.rpgw = self.poker_game_widget
             
             # Set poker game config for dynamic positioning
             if self.fpsm and hasattr(self.fpsm, 'config'):
@@ -841,9 +868,17 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             self._disable_action_buttons()
             return
         
+        # CRITICAL: Prevent multiple concurrent action executions
+        if hasattr(self, '_executing_action') and self._executing_action:
+            print("⚠️ Action execution already in progress - ignoring duplicate call")
+            return
+        
+        self._executing_action = True
+        
         # Check if we're already at end state
         if self.fpsm.current_state.name in ['END_HAND', 'SHOWDOWN']:
             print(f"🏁 Hand at final state: {self.fpsm.current_state.name}")
+            self._executing_action = False  # Clear the flag
             self._handle_simulation_completion()
             return
         
@@ -853,6 +888,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             if not action_player:
                 print("No action player available - checking if hand should end")
                 self.add_log_entry("WARNING", "SIMULATION", "No action player available")
+                self._executing_action = False  # Clear the flag
                 self._check_for_hand_completion()
                 return
             
@@ -907,6 +943,12 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     print(f"❌ Failed to execute action: {action_msg}")
                     self.add_log_entry("ERROR", "ACTION_EXECUTION", f"Failed to execute: {action_msg}")
                     
+                    # CRITICAL: Stop simulation on action failure to prevent infinite loops
+                    print("🛑 Stopping simulation due to action execution failure")
+                    self._executing_action = False  # Clear the flag
+                    self._handle_simulation_completion()
+                    return
+                    
             else:
                 self.add_log_entry("WARNING", "SIMULATION", 
                                  f"No action determined for {action_player.name}")
@@ -918,6 +960,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             self.add_log_entry("ERROR", "SIMULATION", f"Error executing action: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            # Always clear the execution flag
+            self._executing_action = False
     
     def _check_for_hand_completion(self):
         """Check if the hand should be completed and handle accordingly."""
@@ -1011,72 +1056,40 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             if active_players:
                 # For now, treat first active player as winner (can be enhanced with actual evaluation)
                 winner = active_players[0]
+                
+                # Get pot amount before it's reset to 0 by FPSM
                 pot_amount = self.fpsm.game_state.pot
+                if pot_amount == 0 and hasattr(self, 'last_pot_amount'):
+                    pot_amount = getattr(self, 'last_pot_amount', 0)
+                    print(f"🏆 Using last known pot amount: ${pot_amount:,.0f}")
+                
+                # Store current pot for future reference
+                if pot_amount > 0:
+                    self.last_pot_amount = pot_amount
                 
                 print(f"🏆 Triggering winner animation: {winner.name} wins ${pot_amount:,.0f}")
                 
-                # Use RPGW's winner animation
-                if hasattr(self.poker_game_widget, 'animate_pot_to_winner'):
-                    winner_info = {'name': winner.name, 'seat': 0}  # Simplified
+                # Find winner seat index for proper animation
+                winner_seat = 0
+                if hasattr(self.poker_game_widget, 'player_seats'):
+                    for i, seat in enumerate(self.poker_game_widget.player_seats):
+                        if hasattr(seat, 'name_label') and seat.name_label:
+                            seat_text = seat.name_label.cget('text')
+                            if winner.name in seat_text:
+                                winner_seat = i
+                                break
+                
+                # Use RPGW's winner animation with proper seat info
+                if hasattr(self.poker_game_widget, 'animate_pot_to_winner') and pot_amount > 0:
+                    winner_info = {'name': winner.name, 'seat': winner_seat}
                     self.poker_game_widget.animate_pot_to_winner(winner_info, pot_amount)
+                else:
+                    print(f"🏆 {winner.name} wins ${pot_amount:,.0f} (no animation - pot: {pot_amount})")
+            else:
+                print("🏆 No active players found for winner animation")
                 
         except Exception as e:
             print(f"⚠️ Error triggering showdown animations: {e}")
-    
-    def get_next_historical_action(self, player):
-        """Get the next historical action for legendary hands (FPSM-independent)."""
-        if not self.use_historical_actions or self.historical_action_index >= len(self.historical_actions):
-            return None
-        
-        # Map FPSM player to legendary hand actor
-        fpsm_to_actor = self.build_actor_mapping()
-        fpsm_player_index = self.get_player_fpsm_index(player)
-        player_actor_id = fpsm_to_actor.get(fpsm_player_index)
-        
-        # Look ahead in historical actions to find an action for this player
-        # (This handles the case where FPSM action order doesn't match historical order)
-        max_lookahead = 10  # Prevent infinite loops
-        original_index = self.historical_action_index
-        
-        for lookahead in range(max_lookahead):
-            check_index = self.historical_action_index + lookahead
-            if check_index >= len(self.historical_actions):
-                break
-                
-            next_action = self.historical_actions[check_index]
-            print(f"🎯 Checking historical action [{check_index}]: Actor {next_action['actor']} {next_action['type']} ${next_action['amount']}")
-            print(f"🎯 Current player: {player.name} (FPSM index {fpsm_player_index} → Actor {player_actor_id})")
-            
-            # Check if this action belongs to the current player
-            if next_action['actor'] == player_actor_id:
-                # Map action string to ActionType
-                action_type_map = {
-                    'FOLD': ActionType.FOLD,
-                    'CHECK': ActionType.CHECK,
-                    'CALL': ActionType.CALL,
-                    'BET': ActionType.BET,
-                    'RAISE': ActionType.RAISE,
-                    'ALL-IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET,
-                    'ALL_IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET
-                }
-                
-                action_type_str = next_action['type']
-                if action_type_str in action_type_map:
-                    print(f"✅ MATCH! Historical action: {player.name} (actor {player_actor_id}) {action_type_str} ${next_action['amount']:,.0f}")
-                    # Advance the historical index to this action + 1
-                    self.historical_action_index = check_index + 1
-                    print(f"🎯 Advanced historical index to {self.historical_action_index}")
-                    return {
-                        'type': action_type_map[action_type_str],
-                        'amount': next_action['amount']
-                    }
-            
-            # If we didn't find a match and this is the first action we checked, show the mismatch
-            if lookahead == 0:
-                print(f"❌ NO IMMEDIATE MATCH: Expected actor {player_actor_id}, but next action is for actor {next_action['actor']}")
-        
-        print(f"🎯 No historical action found for {player.name} in next {max_lookahead} actions, using fallback")
-        return None
     
     def build_actor_mapping(self):
         """Build mapping from FPSM player index to legendary hand actor ID (DYNAMIC)."""
@@ -1162,122 +1175,183 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         return -1
     
     def determine_action_from_history(self, player, valid_actions):
-        """Determine action based on actual hand history."""
+        """
+        NEW APPROACH: Natural turn order with historical action lookup.
+        
+        Instead of forcing PHH action sequence, let FPSM control turn order naturally
+        and look up what each player should do when it's their turn.
+        """
         if not self.current_hand:
             return self.determine_action_simple(player, valid_actions)
         
-        # For legendary hands, try to get historical action first
-        if self.use_historical_actions:
-            historical_action = self.get_next_historical_action(player)
-            if historical_action:
-                return historical_action
-            else:
-                print(f"🎯 No historical action for {player.name}, using fallback")
-        
-        # For legendary hands that didn't match, force fold if they should have folded
-        if self.use_historical_actions:
-            # Check if this player should have folded in preflop based on actor mapping
-            fpsm_to_actor = self.build_actor_mapping()
-            fpsm_player_index = self.get_player_fpsm_index(player)
-            player_actor_id = fpsm_to_actor.get(fpsm_player_index)
-            
-            # Actors 3,4,5,6 should fold preflop in the legendary hand
-            # Also fold players with no actor mapping (Actor None)
-            if player_actor_id in [3, 4, 5, 6] or player_actor_id is None:
-                print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - should have folded preflop")
-                return {'type': ActionType.FOLD, 'amount': 0}
-        
-        # Special case: Players named "Folded Player X" should always fold
+        # Special case: Players named "Folded Player X" should always fold immediately
         if "Folded Player" in player.name:
             print(f"🎯 Auto-folding {player.name} (marked as folder in PHH)")
             return {'type': ActionType.FOLD, 'amount': 0}
         
-        # Fallback to original logic for non-legendary hands or when no historical action matches
+        # For legendary hands, use historical action lookup
+        if self.use_historical_actions:
+            return self._lookup_historical_action_for_player(player, valid_actions)
+        
+        # Fallback for non-legendary hands
+        return self.determine_action_simple(player, valid_actions)
+    
+    def _lookup_historical_action_for_player(self, player, valid_actions):
+        """
+        Look up what action this specific player should take based on PHH history.
+        
+        This respects FPSM's natural turn order while achieving historical accuracy.
+        """
         try:
-            # Get hand history from ParsedHand structure
-            actions = self.current_hand.actions if hasattr(self.current_hand, 'actions') else {}
-            
-            # Flatten actions from all streets
-            all_actions = []
-            for street, street_actions in actions.items():
-                if isinstance(street_actions, list):
-                    all_actions.extend(street_actions)
-            
-            print(f"🎯 Found {len(all_actions)} historical actions")
-            print(f"🎯 Action history so far: {len(self.action_history)} actions executed")
-            
-            # The next action index should be the length of our action history
-            current_action_index = len(self.action_history)
-            
-            # Map FPSM player positions to legendary hand actor IDs
-            # FPSM creates players in order [0,1,2,3,4,5] but legendary hand uses actor IDs [1,2,3,4,5,6]
-            fpsm_to_actor = {}
-            if hasattr(self.current_hand, 'players'):
-                for i, p in enumerate(self.current_hand.players):
-                    seat = p.get('seat', i+1)
-                    # Map FPSM player index to legendary hand actor ID based on seat
-                    if seat == 2:  # Chris Moneymaker
-                        fpsm_to_actor[0] = 1  # FPSM player 0 → Actor 1 
-                    elif seat == 3:  # Sammy Farha  
-                        fpsm_to_actor[1] = 2  # FPSM player 1 → Actor 2
-                    elif seat == 4:  # Folded Player 1
-                        fpsm_to_actor[2] = 3  # FPSM player 2 → Actor 3
-                    elif seat == 5:  # Folded Player 2
-                        fpsm_to_actor[3] = 4  # FPSM player 3 → Actor 4
-                    elif seat == 6:  # Folded Player 3
-                        fpsm_to_actor[4] = 5  # FPSM player 4 → Actor 5
-                    else:  # Folded Player 4 (no seat specified)
-                        fpsm_to_actor[5] = 6  # FPSM player 5 → Actor 6
-            
-            # Find current player's actor ID based on FPSM position
-            fpsm_player_index = -1
-            if hasattr(self, 'fpsm') and self.fpsm:
-                for i, fpsm_player in enumerate(self.fpsm.game_state.players):
-                    if fpsm_player.name == player.name:
-                        fpsm_player_index = i
-                        break
-            
+            # Build actor mapping to connect FPSM players to PHH actors
+            fpsm_to_actor = self.build_actor_mapping()
+            fpsm_player_index = self.get_player_fpsm_index(player)
             player_actor_id = fpsm_to_actor.get(fpsm_player_index)
-            print(f"🎯 Player {player.name} (FPSM index {fpsm_player_index}) → Actor {player_actor_id}")
             
-            if current_action_index < len(all_actions):
-                next_action = all_actions[current_action_index]
-                action_actor = next_action.get('actor')
-                action_type_str = next_action.get('type', '').upper()
-                amount = next_action.get('amount', 0)
+            print(f"🎯 Looking up action for {player.name} (FPSM index {fpsm_player_index}) → Actor {player_actor_id}")
+            
+            if player_actor_id is None:
+                print(f"⚠️  No actor mapping for {player.name} - using fallback")
+                return self.determine_action_simple(player, valid_actions)
+            
+            # Get current game context
+            current_street = self._get_current_street()
+            current_bet = self.fpsm.game_state.current_bet
+            player_current_bet = player.current_bet
+            
+            print(f"🎯 Game context: {current_street}, Current bet: ${current_bet:,}, Player bet: ${player_current_bet:,}")
+            
+            # Find the appropriate action for this player in this context
+            historical_action = self._find_historical_action_for_player_context(
+                player_actor_id, current_street, current_bet, player_current_bet)
+            
+            if historical_action:
+                action_type_str = historical_action.get('type', '').upper()
+                amount = historical_action.get('amount', historical_action.get('to', 0))
                 
-                print(f"🎯 Next historical action [{current_action_index}]: Actor {action_actor} {action_type_str} ${amount}")
-                print(f"🎯 Current player: {player.name} (Actor {player_actor_id})")
+                # Handle different action amount types
+                if action_type_str in ['RAISE', 'RERAISE'] and 'to' in historical_action:
+                    amount = historical_action['to']  # Total amount to raise to
+                elif action_type_str in ['CALL', 'BET'] and 'amount' in historical_action:
+                    amount = historical_action['amount']  # Call/bet amount
+                elif action_type_str == 'ALL-IN' and 'amount' in historical_action:
+                    amount = historical_action['amount']  # All-in amount
                 
-                # Check if this action belongs to the current player
-                if action_actor == player_actor_id:
-                    # Map action string to ActionType
-                    action_type_map = {
-                        'FOLD': ActionType.FOLD,
-                        'CHECK': ActionType.CHECK,
-                        'CALL': ActionType.CALL,
-                        'BET': ActionType.BET,
-                        'RAISE': ActionType.RAISE,
-                        'ALL-IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET,
-                        'ALL_IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET
-                    }
+                # Map action string to ActionType
+                action_type_map = {
+                    'FOLD': ActionType.FOLD,
+                    'CHECK': ActionType.CHECK,
+                    'CALL': ActionType.CALL,
+                    'BET': ActionType.BET,
+                    'RAISE': ActionType.RAISE,
+                    'RERAISE': ActionType.RAISE,  # Map reraise to raise
+                    'ALL-IN': ActionType.RAISE,  # Map all-in to raise (for large raise amounts)
+                    'ALL_IN': ActionType.RAISE
+                }
+                
+                if action_type_str in action_type_map:
+                    action_type = action_type_map[action_type_str]
+                    print(f"✅ HISTORICAL ACTION FOUND: {player.name} (actor {player_actor_id}) {action_type_str} ${amount:,.0f}")
                     
-                    if action_type_str in action_type_map:
-                        print(f"✅ MATCH! Using historical action: {player.name} (actor {action_actor}) {action_type_str} ${amount:,.0f}")
-                        return {
-                            'type': action_type_map[action_type_str],
-                            'amount': amount
-                        }
+                    # Validate action is actually possible in current game state
+                    if self._validate_action_feasible(player, action_type, amount, valid_actions):
+                        return {'type': action_type, 'amount': amount}
+                    else:
+                        print(f"⚠️  Historical action not feasible in current state - using fallback")
+                        return self.determine_action_simple(player, valid_actions)
                 else:
-                    print(f"❌ NO MATCH: Expected actor {player_actor_id}, but next action is for actor {action_actor}")
-                    print(f"🎯 This means {player.name} should wait or use fallback action")
+                    print(f"❌ Unknown action type: {action_type_str}")
+                    return self.determine_action_simple(player, valid_actions)
             
-            # Fallback to simple action determination
+            # No historical action found for this player in this context
+            print(f"🎯 No historical action found for {player.name} in current context - using fallback")
             return self.determine_action_simple(player, valid_actions)
             
         except Exception as e:
-            print(f"❌ Error determining action from history: {e}")
+            print(f"❌ Error in historical action lookup: {e}")
+            import traceback
+            traceback.print_exc()
             return self.determine_action_simple(player, valid_actions)
+    
+    def _get_current_street(self):
+        """Get the current street name."""
+        if not self.fpsm:
+            return "unknown"
+        
+        state_name = self.fpsm.current_state.name
+        if 'PREFLOP' in state_name:
+            return "preflop"
+        elif 'FLOP' in state_name:
+            return "flop"
+        elif 'TURN' in state_name:
+            return "turn"
+        elif 'RIVER' in state_name:
+            return "river"
+        else:
+            return "unknown"
+    
+    def _find_historical_action_for_player_context(self, actor_id, street, current_bet, player_bet):
+        """
+        Find the historical action for a specific actor in the current game context.
+        
+        This looks through all actions for this actor and finds the one that matches
+        the current street and betting situation.
+        """
+        if not self.current_hand or not hasattr(self.current_hand, 'actions'):
+            return None
+        
+        actions = self.current_hand.actions
+        street_actions = actions.get(street, [])
+        
+        if not isinstance(street_actions, list):
+            return None
+        
+        # Look for actions by this actor on this street
+        actor_actions = [action for action in street_actions if action.get('actor') == actor_id]
+        
+        print(f"🔍 Found {len(actor_actions)} actions for actor {actor_id} on {street}")
+        
+        if not actor_actions:
+            return None
+        
+        # For now, return the first action for this actor on this street
+        # This can be enhanced to consider betting context for multiple actions
+        action = actor_actions[0]
+        print(f"🎯 Selected action: Actor {actor_id} {action.get('type')} ${action.get('amount', action.get('to', 0))}")
+        
+        return action
+    
+    def _validate_action_feasible(self, player, action_type, amount, valid_actions):
+        """
+        Validate that the historical action is actually feasible in the current game state.
+        
+        This prevents trying impossible actions like calling more than stack, etc.
+        """
+        # Basic validation - can be enhanced
+        if action_type == ActionType.FOLD:
+            return True  # Fold is always possible
+        
+        if action_type == ActionType.CHECK:
+            return valid_actions.get('check', False)
+        
+        if action_type == ActionType.CALL:
+            if not valid_actions.get('call', False):
+                return False
+            # Check if player can afford the call
+            call_amount = self.fpsm.game_state.current_bet - player.current_bet
+            return call_amount <= player.stack
+        
+        if action_type in [ActionType.BET, ActionType.RAISE]:
+            if action_type == ActionType.BET and not valid_actions.get('bet', False):
+                return False
+            if action_type == ActionType.RAISE and not valid_actions.get('raise', False):
+                return False
+            # Check if player can afford the bet/raise
+            return amount <= player.stack
+        
+        # Note: ALL_IN is handled as RAISE with large amount
+        
+        return True
     
     def determine_action_simple(self, player, valid_actions):
         """Simple action determination logic (fallback)."""
@@ -1388,10 +1462,22 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         elif event.event_type == "hand_complete":
             winners = event.data.get('winners', [])
-            winner_names = [w.name for w in winners] if winners else ["No winners"]
+            # Safe winner name extraction - handle both objects and strings
+            winner_names = []
+            for w in winners:
+                if hasattr(w, 'name'):
+                    winner_names.append(w.name)
+                elif isinstance(w, str):
+                    winner_names.append(w)
+                else:
+                    winner_names.append(str(w))
+            
+            if not winner_names:
+                winner_names = ["No winners"]
+                
             pot_amount = event.data.get('pot_amount', 0.0)
             hand_msg = f"Hand complete - Winners: {', '.join(winner_names)}, Pot: ${pot_amount:,.0f}"
-            print(f"🎯 {hand_msg}")
+            print(f"🏆 {hand_msg}")
             self.add_log_entry("INFO", "HAND_COMPLETE", hand_msg)
             
             # Enhanced completion handling
