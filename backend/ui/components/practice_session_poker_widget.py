@@ -7,7 +7,7 @@ and provides practice-specific functionality for learning and skill development.
 """
 
 import tkinter as tk
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from .reusable_poker_game_widget import ReusablePokerGameWidget
 from core.flexible_poker_state_machine import GameEvent
 
@@ -516,6 +516,31 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             self.toggle_stats_btn.config(text="📈")
             self._update_stats_display()
     
+    def _update_player_from_display_state(self, player_index: int, player_info: Dict[str, Any]):
+        """Override: Force human player card updates even when FPSM returns '**'."""
+        print(f"🎓 PLAYER UPDATE DEBUG: Player {player_index} info: {player_info}")
+        
+        # Check if this is the human player
+        is_human = False
+        if (hasattr(self, 'state_machine') and 
+            self.state_machine and
+            player_index < len(self.state_machine.game_state.players)):
+            player = self.state_machine.game_state.players[player_index]
+            is_human = player.is_human
+            print(f"🎓 Player {player_index} ({player.name}) is_human: {is_human}")
+            
+            # For human players, force card update with actual cards
+            if is_human and player_info.get("cards") == ["**", "**"]:
+                print(f"🎓 FORCING human player card update - replacing ** with actual cards: {player.cards}")
+                # Create modified player_info with actual cards
+                modified_info = player_info.copy()
+                modified_info["cards"] = player.cards if player.cards else ["", ""]
+                super()._update_player_from_display_state(player_index, modified_info)
+                return
+        
+        # For non-human players or when human cards are already visible, use normal logic
+        super()._update_player_from_display_state(player_index, player_info)
+
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
         """Override: Enhanced card display for practice sessions."""
         print(f"🎓 PRACTICE CARD DEBUG: Player {player_index} received cards: {cards}")
