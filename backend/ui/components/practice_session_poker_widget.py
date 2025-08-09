@@ -84,22 +84,30 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         
         This ensures human players can always see their cards for learning.
         """
-        if card == "**" and hasattr(self, 'state_machine') and self.state_machine:
+        print(f"🎯 Transform hook called: player {player_index}, card '{card}', index {card_index}")
+        
+        if hasattr(self, 'state_machine') and self.state_machine:
             try:
                 if (hasattr(self.state_machine, 'game_state') and 
                     self.state_machine.game_state and 
                     player_index < len(self.state_machine.game_state.players)):
                     
                     player = self.state_machine.game_state.players[player_index]
-                    if hasattr(player, 'is_human') and player.is_human:
-                        # Transform ** to actual cards for human player only
+                    is_human = hasattr(player, 'is_human') and player.is_human
+                    print(f"🎯 Player {player_index} is_human: {is_human}")
+                    
+                    if is_human:
+                        # For human player, ALWAYS return actual cards (even if not **)
                         if hasattr(player, 'cards') and player.cards and card_index < len(player.cards):
                             actual_card = player.cards[card_index]
-                            print(f"🎓 Practice: Transformed ** to {actual_card} for human player {player_index} card {card_index}")
+                            print(f"🎓 Practice: Human player {player_index} card {card_index}: '{card}' → '{actual_card}'")
                             return actual_card
+                        else:
+                            print(f"⚠️ Human player {player_index} missing cards or invalid index {card_index}")
             except Exception as e:
                 print(f"⚠️ Error transforming card for player {player_index}: {e}")
         
+        print(f"🤖 Bot player {player_index}: returning '{card}' as-is")
         return card  # Return as-is for bot players
     
     def _should_update_display(self, player_index: int, old_cards: list, new_cards: list) -> bool:
@@ -583,17 +591,25 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         # Add bet animations for practice sessions
         if event.event_type == "action_executed":
             try:
-                details = event.details or {}
-                action_type = details.get("action_type")
-                amount = details.get("amount", 0.0)
-                player_index = details.get("player_index")
+                # GameEvent structure has different attributes
+                action_type = getattr(event, 'action_type', None)
+                amount = getattr(event, 'amount', 0.0) 
+                player_index = getattr(event, 'player_index', None)
                 
-                if action_type in ["bet", "raise", "call"] and amount > 0 and player_index is not None:
+                # Alternative: try to get from event data if available
+                if hasattr(event, 'data') and event.data:
+                    action_type = event.data.get("action_type", action_type)
+                    amount = event.data.get("amount", amount)
+                    player_index = event.data.get("player_index", player_index)
+                
+                if action_type and action_type in ["bet", "raise", "call"] and amount > 0 and player_index is not None:
                     print(f"🎓 Practice: Animating ${amount} bet from player {player_index}")
                     # Trigger bet animation
                     self.after(100, lambda: self.play_animation("bet_to_pot", 
                                                                 player_index=player_index, 
                                                                 amount=amount))
+                else:
+                    print(f"🎓 Practice: No animation needed - action: {action_type}, amount: {amount}, player: {player_index}")
             except Exception as e:
                 print(f"⚠️ Error handling bet animation: {e}")
 
