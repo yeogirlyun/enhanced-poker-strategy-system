@@ -297,14 +297,16 @@ class LegendaryHandsPHHLoader:
         # Create 6-player format
         converted_players = []
         
-        # Add original players (first N seats)
+        # Add original players (preserve original seat numbers)
         for i, player in enumerate(original_players):
+            # Preserve original seat number if available, otherwise use sequential
+            original_seat = player.get('seat', i + 1)
             player_data = {
-                'seat': i + 1,
+                'seat': original_seat,  # PRESERVE ORIGINAL SEAT
                 'name': player.get('name', f'Player {i+1}'),
                 'cards': player.get('cards', []),
-                'starting_stack_chips': 100000,  # Default stack
-                'position': self._get_position_name(i, 6)
+                'starting_stack_chips': player.get('starting_stack_chips', 100000),
+                'position': player.get('position', self._get_position_name(i, 6))
             }
             converted_players.append(player_data)
         

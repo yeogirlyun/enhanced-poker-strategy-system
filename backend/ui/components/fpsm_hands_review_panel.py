@@ -919,29 +919,35 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         print(f"🎯 Building dynamic actor mapping for {len(hand_players)} hand players, {len(fpsm_players)} FPSM players")
         
-        # Map by matching names and seats
+        # Create mapping between hand seats and FPSM player indices based on name matching
         for fpsm_index, fpsm_player in enumerate(fpsm_players):
-            # Find corresponding player in hand data
+            matched = False
+            
+            # First, try exact name matching
             for hand_player in hand_players:
                 hand_name = hand_player.get('name', '')
                 hand_seat = hand_player.get('seat', 0)
                 
-                # Match by name similarity or seat position
                 if (fpsm_player.name == hand_name or 
-                    self._names_match(fpsm_player.name, hand_name) or
-                    (fpsm_index == 0 and hand_seat == 1) or  # First FPSM player → Actor with seat 1
-                    (fpsm_index == 1 and hand_seat == 3) or  # Second FPSM player → Actor with seat 3  
-                    (fpsm_index == 2 and hand_seat == 9)):   # Third FPSM player → Actor with seat 9
-                    
+                    self._names_match(fpsm_player.name, hand_name)):
                     fpsm_to_actor[fpsm_index] = hand_seat
-                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {hand_seat} ({hand_name})")
+                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {hand_seat} ({hand_name}) [NAME MATCH]")
+                    matched = True
                     break
             
-            # If no mapping found, use sequential fallback
-            if fpsm_index not in fpsm_to_actor:
-                fallback_actor = fpsm_index + 1
-                fpsm_to_actor[fpsm_index] = fallback_actor
-                print(f"🎯 Fallback mapping: FPSM player {fpsm_index} → Actor {fallback_actor}")
+            # If no name match, map by order (for folded players or when names don't match)
+            if not matched:
+                # Map to the next available seat in the hand data
+                hand_seats = [p.get('seat', i+1) for i, p in enumerate(hand_players)]
+                if fpsm_index < len(hand_seats):
+                    mapped_seat = hand_seats[fpsm_index]
+                    fpsm_to_actor[fpsm_index] = mapped_seat
+                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {mapped_seat} [POSITIONAL MATCH]")
+                else:
+                    # Fallback for extra players
+                    fallback_actor = fpsm_index + 1
+                    fpsm_to_actor[fpsm_index] = fallback_actor
+                    print(f"🎯 Fallback mapping: FPSM player {fpsm_index} → Actor {fallback_actor}")
         
         return fpsm_to_actor
     
