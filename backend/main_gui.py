@@ -512,9 +512,9 @@ class EnhancedMainGUI:
         hands_review_frame = ttk.Frame(self.notebook)
         self.notebook.add(hands_review_frame, text="🎯 Hands Review (130 Legendary)")
         
-        # Create FPSM hands review panel with JSON database
-        from ui.components.fpsm_hands_review_panel_json import FPSMHandsReviewPanelJSON
-        self.hands_review_panel = FPSMHandsReviewPanelJSON(
+        # Create enhanced FPSM hands review panel with full simulation controls
+        from ui.components.enhanced_fpsm_hands_review_panel import EnhancedFPSMHandsReviewPanel
+        self.hands_review_panel = EnhancedFPSMHandsReviewPanel(
             hands_review_frame,
             json_db_path="data/legendary_hands_complete_130_fixed.json"
         )
