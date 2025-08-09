@@ -149,7 +149,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             **{k: v for k, v in button_config.items() 
                if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
         )
-        self.action_buttons['fold'].pack(side=tk.LEFT, padx=6, pady=5)
+        self.action_buttons['fold'].grid(row=0, column=0, padx=6, pady=5)
         
         # CHECK/CALL button - Light sky blue
         self.action_buttons['check_call'] = tk.Button(
@@ -158,11 +158,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             command=lambda: self._handle_action_click('check_call'),
             **button_config
         )
-        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=6, pady=5)
+        self.action_buttons['check_call'].grid(row=0, column=1, padx=6, pady=5)
         
         # Betting section with pre-bet buttons and amount entry
         bet_section = tk.Frame(self.action_frame, bg=table_bg)
-        bet_section.pack(side=tk.LEFT, padx=12, pady=5)
+        bet_section.grid(row=0, column=2, padx=12, pady=5)
         
         # Pre-bet size buttons (top row)
         prebet_frame = tk.Frame(bet_section, bg=table_bg)
@@ -241,7 +241,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             command=lambda: self._handle_action_click('bet_raise'),
             **button_config
         )
-        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=6, pady=5)
+        self.action_buttons['bet_raise'].grid(row=0, column=3, padx=6, pady=5)
         
         # ALL IN button - Bright yellow for maximum visibility
         self.action_buttons['all_in'] = tk.Button(
@@ -255,7 +255,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             **{k: v for k, v in button_config.items() 
                if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
         )
-        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=6, pady=5)
+        self.action_buttons['all_in'].grid(row=0, column=4, padx=6, pady=5)
         
         # Initially disable all buttons until it's the human player's turn
         self._disable_action_buttons()
