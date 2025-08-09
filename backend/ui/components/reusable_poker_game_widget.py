@@ -96,6 +96,112 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.state_machine.add_event_listener(self)
             # Wait for UI to be ready, then create seats and update
             self.after(100, self._ensure_seats_created_and_update)
+    
+    # ==============================
+    # EXTENSIBILITY HOOK METHODS
+    # Override these in child classes for customization
+    # ==============================
+    
+    def _should_show_card(self, player_index: int, card: str) -> bool:
+        """
+        Hook: Determine if a card should be visible to the user.
+        
+        Args:
+            player_index: Index of the player (0-based)
+            card: Card string (e.g., "As", "**", "")
+            
+        Returns:
+            bool: True if card should be shown, False if hidden
+            
+        Default behavior: Hide placeholder cards ("**")
+        Override in child classes for different visibility policies.
+        """
+        return card != "**" and card != ""
+    
+    def _transform_card_data(self, player_index: int, card: str, card_index: int = 0) -> str:
+        """
+        Hook: Transform card data before display.
+        
+        Args:
+            player_index: Index of the player (0-based)
+            card: Original card string
+            card_index: Index of the card (0 or 1 for hole cards)
+            
+        Returns:
+            str: Transformed card string to display
+            
+        Default behavior: Return card as-is
+        Override in child classes to fetch actual cards, add annotations, etc.
+        """
+        return card
+    
+    def _should_update_display(self, player_index: int, old_cards: list, new_cards: list) -> bool:
+        """
+        Hook: Determine if player card display should be updated.
+        
+        Args:
+            player_index: Index of the player (0-based)
+            old_cards: Previous card list
+            new_cards: New card list
+            
+        Returns:
+            bool: True if display should update, False to skip
+            
+        Default behavior: Update when cards change
+        Override in child classes for different update policies.
+        """
+        return old_cards != new_cards
+    
+    def _should_update_community_cards(self, old_cards: list, new_cards: list) -> bool:
+        """
+        Hook: Determine if community card display should be updated.
+        
+        Args:
+            old_cards: Previous community card list
+            new_cards: New community card list
+            
+        Returns:
+            bool: True if display should update, False to skip
+            
+        Default behavior: Update when cards change
+        Override in child classes for different update policies.
+        """
+        return old_cards != new_cards
+    
+    def _customize_player_styling(self, player_index: int, player_info: dict) -> dict:
+        """
+        Hook: Customize player appearance based on game state.
+        
+        Args:
+            player_index: Index of the player (0-based)
+            player_info: Player information from display state
+            
+        Returns:
+            dict: Styling information (colors, highlights, etc.)
+            
+        Default behavior: Standard styling
+        Override in child classes for custom player appearance.
+        """
+        return {
+            'highlight': False,
+            'background': None,
+            'border_color': None,
+            'text_color': None
+        }
+    
+    def _handle_card_interaction(self, player_index: int, card_index: int, card: str):
+        """
+        Hook: Handle card-specific interactions or annotations.
+        
+        Args:
+            player_index: Index of the player (0-based)
+            card_index: Index of the card (0 or 1 for hole cards)
+            card: Card string
+            
+        Default behavior: No action
+        Override in child classes for educational features, analysis, etc.
+        """
+        pass
         
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
@@ -668,62 +774,78 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         }
     
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
-        """Set player cards based on display state (FLICKER-FREE VERSION)."""
+        """Set player cards based on display state using extensibility hooks."""
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
         card_widgets = self.player_seats[player_index]["card_widgets"]
         
+        # Get current cards for change detection
+        old_cards = [getattr(card_widgets[i], '_current_card', "") for i in range(min(2, len(card_widgets)))]
+        
+        # Ask child class if we should update
+        if not self._should_update_display(player_index, old_cards, cards):
+            print(f"🎴 HOOK: Child class blocked card update for player {player_index}")
+            return
+        
         if len(cards) >= 2 and len(card_widgets) >= 2:
-            # Only use the first 2 cards (hole cards)
+            # Process each card through the hook system
             for i in range(2):
-                card = cards[i] if i < len(cards) else ""
+                original_card = cards[i] if i < len(cards) else ""
                 
-                # Check if card actually changed to prevent redraw
+                # Transform card data through hook
+                display_card = self._transform_card_data(player_index, original_card, i)
+                
+                # Check if card should be shown through hook
+                should_show = self._should_show_card(player_index, display_card)
+                
+                # Get current card for change detection
                 current_card = getattr(card_widgets[i], '_current_card', "")
                 
-                if current_card != card:
-                    if card and card != "**" and card != "" and card is not None:
-                        try:
-                            # Check if player has folded - if so, show card backs
+                # Only update if changed
+                if current_card != display_card:
+                    try:
+                        if should_show and display_card and display_card not in ["**", ""]:
+                            # Show actual card
                             player_has_folded = False
                             if player_index < len(self.last_player_states) and self.last_player_states[player_index]:
                                 player_has_folded = self.last_player_states[player_index].get("has_folded", False)
                             
-                            card_widgets[i].set_card(card, is_folded=player_has_folded)
-                            card_widgets[i]._current_card = card
-                            if player_has_folded:
-                                print(f"🎴 Player {player_index} card {i}: {current_card} → {card} (FOLDED - showing card back)")
-                            else:
-                                print(f"🎴 Player {player_index} card {i}: {current_card} → {card}")
-                        except tk.TclError:
-                            # Widget was destroyed, skip
-                            pass
-                    elif card == "**":
-                        # Card is hidden - show card back for active players
-                        try:
-                            # Check if player has folded to determine card back type
+                            card_widgets[i].set_card(display_card, is_folded=player_has_folded)
+                            card_widgets[i]._current_card = display_card
+                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → {display_card} (shown)")
+                            
+                            # Call interaction hook
+                            self._handle_card_interaction(player_index, i, display_card)
+                            
+                        elif display_card == "**":
+                            # Show card back (hook decided to keep as hidden)
                             player_has_folded = False
                             if player_index < len(self.last_player_states) and self.last_player_states[player_index]:
                                 player_has_folded = self.last_player_states[player_index].get("has_folded", False)
                             
-                            card_widgets[i].set_card("**", is_folded=player_has_folded)  # Show appropriate card back
+                            card_widgets[i].set_card("**", is_folded=player_has_folded)
                             card_widgets[i]._current_card = "**"
-                            if player_has_folded:
-                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (GRAY card back - folded)")
-                            else:
-                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (RED card back - active)")
-                        except tk.TclError:
-                            # Widget was destroyed, skip
-                            pass
-                    elif current_card != "":
-                        # Only clear cards if they were previously set - preserve cards during transitions
-                        # Don't clear cards just because the display state has empty cards temporarily
-                        print(f"🎴 Player {player_index} card {i}: preserved {current_card} (avoiding clear during transition)")
-        else:
-            # Handle case where player has folded but we want to preserve their cards visually
-            # Only clear if explicitly folded, not during street transitions
-            pass
+                            color = "GRAY" if player_has_folded else "RED"
+                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → {color} card back")
+                            
+                        else:
+                            # Empty card or hook decided to hide
+                            card_widgets[i].set_card("", is_folded=False)
+                            card_widgets[i]._current_card = ""
+                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → empty")
+                    
+                    except tk.TclError:
+                        # Widget was destroyed, skip
+                        pass
+                elif current_card and not should_show:
+                    # Hook wants to hide a previously visible card
+                    try:
+                        card_widgets[i].set_card("", is_folded=False)
+                        card_widgets[i]._current_card = ""
+                        print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → hidden by hook")
+                    except tk.TclError:
+                        pass
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
@@ -788,11 +910,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.last_board_cards = []
             return
         
-        # Only update if visible board cards have actually changed (prevents flickering)
+        # Use hook to determine if community cards should update
         print(f"🎴 CHANGE CHECK: visible_board_cards={visible_board_cards}, last_board_cards={self.last_board_cards}")
-        if visible_board_cards == self.last_board_cards:
-            print(f"🎴 NO CHANGE DETECTED - skipping update")
-            return  # No change needed
+        if not self._should_update_community_cards(self.last_board_cards, visible_board_cards):
+            print(f"🎴 HOOK: Child class blocked community card update")
+            return  # Child class decided not to update
         
         print(f"🎴 Board changed: {self.last_board_cards} → {visible_board_cards} (showing {cards_to_show}/{len(board_cards)} cards)")
         

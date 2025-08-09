@@ -163,6 +163,8 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         if new_state in betting_states:
             print(f"🤖 TRANSITION SCHEDULING: New state {new_state} is a betting state")
             self._schedule_bot_actions()
+        else:
+            print(f"🤖 NOT SCHEDULING: Transition to {new_state} - not a betting state")
     
     def _get_human_player_position(self) -> Optional[str]:
         """Get the position of the human player."""
@@ -409,6 +411,11 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     
     def _schedule_bot_actions(self):
         """Schedule bot actions to auto-play non-human players."""
+        # Don't schedule bots in end game states
+        if self.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
+            print(f"🤖 NOT SCHEDULING: Hand is ending (state: {self.current_state})")
+            return
+        
         # Use after_idle to schedule bot actions so UI can update first
         if getattr(self, '_scheduled_bot_action', False):
             return  # Already scheduled
@@ -459,7 +466,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         """Get bot's strategic decision using existing GTO strategy engine."""
         
         # Prevent infinite betting loops - limit actions per round
-        if self.actions_this_round >= 20:  # Maximum 20 actions per round
+        if self.actions_this_round >= 8:  # Maximum 8 actions per round (more aggressive)
             print(f"🛑 ACTION LIMIT: Too many actions this round ({self.actions_this_round}), forcing conservative play")
             call_amount = self.game_state.current_bet - bot_player.current_bet
             if call_amount <= 0:
@@ -473,6 +480,17 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         try:
             action, amount = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
             print(f"🤖 GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}")
+            
+            # Early prevention: Limit raising after 5 actions
+            if self.actions_this_round >= 5 and action in [ActionType.BET, ActionType.RAISE]:
+                print(f"🛑 EARLY LIMIT: Too many actions ({self.actions_this_round}), downgrading {action.value} to call/check")
+                call_amount = self.game_state.current_bet - bot_player.current_bet
+                if call_amount <= 0:
+                    return ActionType.CHECK, 0.0
+                elif call_amount <= bot_player.stack * 0.3:
+                    return ActionType.CALL, call_amount
+                else:
+                    return ActionType.FOLD, 0.0
             
             # Additional check: If pot is already very large relative to stacks, be more conservative
             if action in [ActionType.BET, ActionType.RAISE]:

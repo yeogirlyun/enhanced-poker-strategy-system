@@ -15,7 +15,7 @@ from tkinter import messagebox
 from core.json_hands_database import JSONHandsDatabase, HandCategory
 from core.types import ActionType
 from core.flexible_poker_state_machine import GameConfig, GameEvent, EventListener, Player
-from core.testable_poker_state_machine import HandsReviewPokerStateMachine
+from core.hands_review_poker_state_machine import HandsReviewPokerStateMachine
 
 # Import UI components
 from .hands_review_poker_widget import HandsReviewPokerWidget

@@ -32,16 +32,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the practice session poker widget."""
-        # Extract practice-specific parameters before calling parent
-        self.strategy_data = kwargs.pop('strategy_data', None)
-        
-        # Call parent with remaining kwargs (tkinter-safe parameters only)
         super().__init__(parent, state_machine=state_machine, **kwargs)
         
         # Practice session specific properties
         self.practice_mode = True
         self.action_buttons = {}
-        self.prebet_buttons = {}
         
         # Setup practice-specific UI after parent initialization
         self.after_idle(self._setup_practice_ui)
@@ -57,7 +52,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         """
         Hook Override: Show cards based on practice session policy.
         
-        - Human player: Always show cards (including ** which will be transformed)
+        - Human player: Always show cards
         - Bot players: Hide cards (show card backs)
         """
         if hasattr(self, 'state_machine') and self.state_machine:
@@ -68,15 +63,12 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     
                     player = self.state_machine.game_state.players[player_index]
                     if hasattr(player, 'is_human') and player.is_human:
-                        print(f"🎓 Hook: Human player {player_index} card '{card}' -> SHOW (will transform if **)")
-                        return True  # Always show human player cards (including **)
-            except Exception as e:
-                print(f"⚠️ Hook error for player {player_index}: {e}")
+                        return True  # Always show human player cards
+            except Exception:
+                pass
         
         # For bot players, use default behavior (hide ** cards)
-        result = card != "**" and card != ""
-        print(f"🤖 Hook: Bot player {player_index} card '{card}' -> {'SHOW' if result else 'HIDE'}")
-        return result
+        return card != "**" and card != ""
     
     def _transform_card_data(self, player_index: int, card: str, card_index: int = 0) -> str:
         """
@@ -528,10 +520,8 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 # Gold border and label for human
                 player_frame.config(
                     highlightbackground="#FFD700",
-                    highlightthickness=6,
-                    bg="#1a1a1a",  # Darker background for contrast
-                    relief="solid",
-                    bd=3
+                    highlightthickness=4,
+                    bg="#1a1a2e"
                 )
                 
                 # Add turn indicator
@@ -554,13 +544,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             if player_index < len(self.player_seats) and self.player_seats[player_index]:
                 player_frame = self.player_seats[player_index]["frame"]
                 
-                # Bright blue border for bots with better visibility
+                # Blue border for bots
                 player_frame.config(
                     highlightbackground="#4169E1",
-                    highlightthickness=5,
-                    bg="#0a0a1a",  # Darker background for contrast
-                    relief="solid",
-                    bd=2
+                    highlightthickness=3,
+                    bg="#1a1a2e"
                 )
                 
                 # Add bot thinking indicator
@@ -575,27 +563,6 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 )
                 bot_label._action_indicator = True
                 bot_label.pack(side=tk.TOP, pady=2)
-    
-    def on_event(self, event: 'GameEvent'):
-        """Override: Enhanced event handling with animations for practice sessions."""
-        super().on_event(event)
-        
-        # Add bet animations for practice sessions
-        if event.event_type == "action_executed":
-            try:
-                details = event.details or {}
-                action_type = details.get("action_type")
-                amount = details.get("amount", 0.0)
-                player_index = details.get("player_index")
-                
-                if action_type in ["bet", "raise", "call"] and amount > 0 and player_index is not None:
-                    print(f"🎓 Practice: Animating ${amount} bet from player {player_index}")
-                    # Trigger bet animation
-                    self.after(100, lambda: self.play_animation("bet_to_pot", 
-                                                                player_index=player_index, 
-                                                                amount=amount))
-            except Exception as e:
-                print(f"⚠️ Error handling bet animation: {e}")
 
 
 # ==============================
