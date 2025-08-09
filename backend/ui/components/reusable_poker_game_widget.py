@@ -36,19 +36,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     with no independent decision-making.
     """
     
-    def __init__(self, parent, state_machine=None, debug_mode=False, **kwargs):
+    def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the reusable poker game widget."""
         ttk.Frame.__init__(self, parent, **kwargs)
         EventListener.__init__(self)
         
         # Store the state machine
         self.state_machine = state_machine
-        
-        # Debug/test mode - eliminates delays and animations for fast testing
-        self.debug_mode = debug_mode
-        
-        # Headless mode - completely bypasses UI rendering for ultra-fast testing
-        self.headless_mode = False
         
         # Event loop detection to prevent infinite loops
         self.event_history = []
@@ -72,7 +66,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.player_bet_displays = {}  # Store bet display widgets for each player
         
         # Sound manager
-        self.sound_manager = SoundManager(test_mode=False)
+        self.sound_manager = SoundManager()
         
         # Animation protection flag
         self.animating_bets_to_pot = False
@@ -572,10 +566,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _render_from_display_state(self, display_state: Dict[str, Any]):
         """Render the widget based on the FPSM's display state (LAZY REDRAW OPTIMIZATION)."""
-        # Skip all rendering in headless mode for ultra-fast testing
-        if self.headless_mode:
-            return
-            
+        
         # Clear animation flag if it's been stuck too long (failsafe)
         if self.animating_bets_to_pot:
             print("🎯 CLEARING STUCK ANIMATION FLAG - allowing normal rendering")
@@ -1092,14 +1083,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     animation_delay += 300  # 300ms between each animation (more visible)
             
             # Clear all bet displays after all animations complete
-            if self.debug_mode:
-                # Immediate clearing in debug mode
-                self._finish_bet_animations()
-                print("💰 Debug mode: Immediate bet clearing")
-            else:
-                total_delay = animation_delay + 500  # Shorter delay for better responsiveness
-                self.after(total_delay, lambda: self._finish_bet_animations())
-                print(f"💰 Scheduled bet clearing in {total_delay}ms")
+            total_delay = animation_delay + 500  # Shorter delay for better responsiveness
+            self.after(total_delay, lambda: self._finish_bet_animations())
+            print(f"💰 Scheduled bet clearing in {total_delay}ms")
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -1355,10 +1341,6 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def play_sound(self, sound_type: str, **kwargs):
         """Play a sound effect."""
-        if self.debug_mode:
-            # Skip sound in debug mode
-            return
-            
         if not self.sound_manager:
             print(f"🔇 No sound manager available for {sound_type}")
             return
@@ -1429,34 +1411,29 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.play_sound("bet")
         
         # Animate the chip to the pot with smooth movement
-        if self.debug_mode:
-            # Skip animation in debug mode - immediate completion
-            self.canvas.delete(chip_window)
-            self._flash_pot_update(amount)
-        else:
-            def move_chip_step(step=0):
-                total_steps = 40  # Longer animation for visibility
-                if step <= total_steps:
-                    progress = step / total_steps
-                    # Smooth easing function
-                    ease_progress = progress * progress * (3.0 - 2.0 * progress)
-                    
-                    x = player_x + (pot_x - player_x) * ease_progress
-                    y = player_y + (pot_y - player_y) * ease_progress
-                    
-                    # Add slight bounce effect
-                    if progress > 0.8:
-                        bounce = math.sin((progress - 0.8) * 10) * 3
-                        y += bounce
-                    
-                    self.canvas.coords(chip_window, x, y)
-                    self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
-                else:
-                    # Animation complete - remove chip and update pot
-                    self.canvas.delete(chip_window)
-                    self._flash_pot_update(amount)
-            
-            move_chip_step()
+        def move_chip_step(step=0):
+            total_steps = 40  # Longer animation for visibility
+            if step <= total_steps:
+                progress = step / total_steps
+                # Smooth easing function
+                ease_progress = progress * progress * (3.0 - 2.0 * progress)
+                
+                x = player_x + (pot_x - player_x) * ease_progress
+                y = player_y + (pot_y - player_y) * ease_progress
+                
+                # Add slight bounce effect
+                if progress > 0.8:
+                    bounce = math.sin((progress - 0.8) * 10) * 3
+                    y += bounce
+                
+                self.canvas.coords(chip_window, x, y)
+                self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
+            else:
+                # Animation complete - remove chip and update pot
+                self.canvas.delete(chip_window)
+                self._flash_pot_update(amount)
+        
+        move_chip_step()
     
     def _flash_pot_update(self, amount):
         """Flash the pot to indicate chips were added."""
@@ -1465,21 +1442,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             original_fg = self.pot_label.cget("fg")
             
             # Enhanced flash sequence for better visibility
-            if self.debug_mode:
-                # Skip flashing in debug mode
-                pass
-            else:
-                def flash_sequence(step=0):
-                    if step < 6:  # Flash 3 times
-                        if step % 2 == 0:
-                            self.pot_label.config(bg="gold", fg="black")  # Brighter flash
-                        else:
-                            self.pot_label.config(bg=original_bg, fg=original_fg)
-                        self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
+            def flash_sequence(step=0):
+                if step < 6:  # Flash 3 times
+                    if step % 2 == 0:
+                        self.pot_label.config(bg="gold", fg="black")  # Brighter flash
                     else:
                         self.pot_label.config(bg=original_bg, fg=original_fg)
-                
-                flash_sequence()
+                    self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
+                else:
+                    self.pot_label.config(bg=original_bg, fg=original_fg)
+            
+            flash_sequence()
     
     def animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
@@ -1513,31 +1486,23 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         winner_x, winner_y = winner_seat["position"]
         
         # Create multiple chips for large pots
-        if self.debug_mode:
-            # Skip animation in debug mode - just flash the winner's stack
-            self._flash_winner_stack(winner_seat_index)
-        else:
-            num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
-            
-            for i in range(num_chips):
-                self._animate_single_chip_to_winner(
-                    pot_x, pot_y, winner_x, winner_y, 
-                    pot_amount / num_chips, i * 100  # Stagger timing
-                )
+        num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
+        
+        for i in range(num_chips):
+            self._animate_single_chip_to_winner(
+                pot_x, pot_y, winner_x, winner_y, 
+                pot_amount / num_chips, i * 100  # Stagger timing
+            )
         
         # Play winner sound
         self.play_sound("winner")
         
         # Flash winner's stack after animation
-        if not self.debug_mode:
-            self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
+        self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
     
     def _animate_single_chip_to_winner(self, start_x, start_y, end_x, end_y, amount, delay):
         """Animate a single chip from pot to winner."""
-        if self.debug_mode:
-            # Skip animation in debug mode
-            return
-            
+        
         def start_animation():
             # Create winner chip
             winner_chip = tk.Label(
@@ -1596,21 +1561,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         original_fg = stack_label.cget("fg")
         
         # Flash green for winner
-        if self.debug_mode:
-            # Skip flashing in debug mode
-            pass
-        else:
-            def flash_step(step=0):
-                if step < 6:  # Flash 3 times
-                    if step % 2 == 0:
-                        stack_label.config(bg="green", fg="white")
-                    else:
-                        stack_label.config(bg=original_bg, fg=original_fg)
-                    self.after(200, lambda: flash_step(step + 1))
+        def flash_step(step=0):
+            if step < 6:  # Flash 3 times
+                if step % 2 == 0:
+                    stack_label.config(bg="green", fg="white")
                 else:
                     stack_label.config(bg=original_bg, fg=original_fg)
-            
-            flash_step()
+                self.after(200, lambda: flash_step(step + 1))
+            else:
+                stack_label.config(bg=original_bg, fg=original_fg)
+        
+        flash_step()
     
     def _ensure_player_seats_created(self):
         """Ensure player seats are created."""

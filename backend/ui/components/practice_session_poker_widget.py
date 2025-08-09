@@ -23,8 +23,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     """
     
     def __init__(self, parent, state_machine=None, strategy_data=None, **kwargs):
-        # Enable normal mode for full features
-        kwargs['debug_mode'] = False
+        # Practice session widget always has full features enabled
         super().__init__(parent, state_machine=state_machine, **kwargs)
         
         self.strategy_data = strategy_data

@@ -31,10 +31,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
     
     def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the hands review poker widget."""
-        # Enable normal mode for full animations and sounds
-        kwargs['debug_mode'] = False
-        
-        # Initialize the parent widget
+        # Hands review widget always has full features enabled
         super().__init__(parent, state_machine=state_machine, **kwargs)
         
         # Hands review specific properties
