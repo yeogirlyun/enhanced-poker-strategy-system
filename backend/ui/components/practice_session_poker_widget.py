@@ -647,6 +647,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         print(f"🔊 Playing turn notification sound for player {player_index}")
         self.play_sound("turn_notify")
         
+        # CRITICAL: Debug logging for button enabling
+        print(f"🎯 HIGHLIGHT_ACTION_PLAYER called for player {player_index}")
+        print(f"🎯 Has state_machine: {hasattr(self, 'state_machine')}")
+        print(f"🎯 State machine exists: {self.state_machine is not None if hasattr(self, 'state_machine') else False}")
+        
         # Enable/disable action buttons based on whether it's the human player's turn
         if (hasattr(self, 'state_machine') and 
             self.state_machine and 
@@ -656,7 +661,16 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             
             if player.is_human:
                 # It's the human player's turn - enable action buttons
+                print(f"🎯 HUMAN PLAYER TURN DETECTED - Enabling buttons for {player.name}")
                 self._enable_action_buttons()
+                
+                # FORCE verify buttons are enabled
+                for name, button in self.action_buttons.items():
+                    state = button.cget('state')
+                    print(f"🎯 Button {name}: {state}")
+                    if state != 'normal':
+                        print(f"⚠️ Button {name} is not normal - forcing enable!")
+                        button.config(state=tk.NORMAL)
                 
                 # Play special sound for human player's turn
                 print(f"🔊 Playing your turn sound")
