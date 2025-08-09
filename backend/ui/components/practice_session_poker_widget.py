@@ -636,12 +636,24 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             # The parent class will handle the actual animation through its event system
             pass
     
-    def highlight_action_player(self, player_index: int):
+    def _highlight_current_player(self, player_index: int):
         """Override: Enhanced action player highlighting for practice."""
         # DON'T call super() - we'll handle highlighting ourselves to distinguish human vs bot
         
-        # Use the parent's highlighting method but with custom logic
-        self._highlight_current_player(player_index)
+        # First, reset all player highlighting
+        for i, player_seat in enumerate(self.player_seats):
+            if player_seat:
+                player_frame = player_seat["frame"]
+                player_frame.config(
+                    highlightbackground="#2F4F2F",
+                    highlightthickness=1,
+                    bg="#2F4F2F"
+                )
+                
+                # Remove any existing action indicators
+                for widget in player_frame.winfo_children():
+                    if hasattr(widget, '_action_indicator'):
+                        widget.destroy()
         
         # Play notification sound when highlighting any player
         print(f"🔊 Playing turn notification sound for player {player_index}")
@@ -659,105 +671,81 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             
             player = self.state_machine.game_state.players[player_index]
             
-            if player.is_human:
-                # It's the human player's turn - enable action buttons
-                print(f"🎯 HUMAN PLAYER TURN DETECTED - Enabling buttons for {player.name}")
-                self._enable_action_buttons()
+            # Highlight the current action player
+            if player_index < len(self.player_seats) and self.player_seats[player_index]:
+                player_frame = self.player_seats[player_index]["frame"]
                 
-                # FORCE verify buttons are enabled
-                for name, button in self.action_buttons.items():
-                    state = button.cget('state')
-                    print(f"🎯 Button {name}: {state}")
-                    if state != 'normal':
-                        print(f"⚠️ Button {name} is not normal - forcing enable!")
-                        button.config(state=tk.NORMAL)
-                
-                # Play special sound for human player's turn
-                print(f"🔊 Playing your turn sound")
-                self.play_sound("your_turn")
-                
-                # Get strategy suggestion
-                suggestion = None
-                if hasattr(self.state_machine, 'get_strategy_suggestion'):
-                    suggestion = self.state_machine.get_strategy_suggestion(player)
-                
-                if suggestion:
-                    self._display_suggestion(suggestion)
+                if player.is_human:
+                    # Human player highlighting - bright gold with "YOUR TURN"
+                    player_frame.config(
+                        highlightbackground="#FFD700",  # Bright gold
+                        highlightthickness=6,           # Much thicker border
+                        bg="#2A2A00"                    # Darker background for contrast
+                    )
+                    
+                    # Add "YOUR TURN" indicator for human player
+                    action_label = tk.Label(
+                        player_frame,
+                        text="⚡ YOUR TURN ⚡",
+                        bg="#FFD700",
+                        fg="#000000",
+                        font=("Arial", 10, "bold"),
+                        relief="raised",
+                        bd=2
+                    )
+                    action_label.pack(side=tk.TOP, pady=(0, 2))
+                    action_label._action_indicator = True
+                    
+                    # ENABLE ACTION BUTTONS FOR HUMAN PLAYER
+                    print(f"🎯 HUMAN PLAYER TURN DETECTED - Enabling buttons for {player.name}")
+                    self._enable_action_buttons()
+                    
+                    # FORCE verify buttons are enabled
+                    for name, button in self.action_buttons.items():
+                        state = button.cget('state')
+                        print(f"🎯 Button {name}: {state}")
+                        if state != 'normal':
+                            print(f"⚠️ Button {name} is not normal - forcing enable!")
+                            button.config(state=tk.NORMAL)
+                    
+                    # Play special sound for human player's turn
+                    print(f"🔊 Playing your turn sound")
+                    self.play_sound("your_turn")
+                    
+                    # Get strategy suggestion
+                    suggestion = None
+                    if hasattr(self.state_machine, 'get_strategy_suggestion'):
+                        suggestion = self.state_machine.get_strategy_suggestion(player)
+                    
+                    if suggestion:
+                        self._display_suggestion(suggestion)
+                    else:
+                        self._display_suggestion("Consider your position, hand strength, and opponents' actions.")
+                        
                 else:
-                    self._display_suggestion("Consider your position, hand strength, and opponents' actions.")
-            else:
-                # It's not the human player's turn - disable action buttons
-                self._disable_action_buttons()
-    
-    def _highlight_current_player(self, player_index):
-        """Override: Practice-specific player highlighting that distinguishes human vs bot."""
-        for i, player_seat in enumerate(self.player_seats):
-            if player_seat:
-                player_frame = player_seat["frame"]
-                
-                # Reset all player highlighting first
-                player_frame.config(
-                    highlightbackground="#2F4F2F",
-                    highlightthickness=1,
-                    bg="#2F4F2F"
-                )
-                
-                # Remove any existing action indicators
-                for widget in player_frame.winfo_children():
-                    if hasattr(widget, '_action_indicator'):
-                        widget.destroy()
-        
-        # Now highlight the current action player
-        if player_index < len(self.player_seats) and self.player_seats[player_index]:
-            player_frame = self.player_seats[player_index]["frame"]
-            
-            # Check if this player is human
-            is_human_player = False
-            if (hasattr(self, 'state_machine') and 
-                self.state_machine and 
-                player_index < len(self.state_machine.game_state.players)):
-                is_human_player = self.state_machine.game_state.players[player_index].is_human
-            
-            if is_human_player:
-                # Human player highlighting - bright gold with "YOUR TURN"
-                player_frame.config(
-                    highlightbackground="#FFD700",  # Bright gold
-                    highlightthickness=6,           # Much thicker border
-                    bg="#2A2A00"                    # Darker background for contrast
-                )
-                
-                # Add "YOUR TURN" indicator for human player
-                action_label = tk.Label(
-                    player_frame,
-                    text="⚡ YOUR TURN ⚡",
-                    bg="#FFD700",
-                    fg="#000000",
-                    font=("Arial", 10, "bold"),
-                    relief="raised",
-                    bd=2
-                )
-                action_label.pack(side=tk.TOP, pady=(0, 2))
-                action_label._action_indicator = True
-            else:
-                # Bot player highlighting - blue with "BOT THINKING"
-                player_frame.config(
-                    highlightbackground="#4169E1",  # Royal blue
-                    highlightthickness=4,           # Thinner than human
-                    bg="#000A1A"                    # Dark blue background
-                )
-                
-                # Add "BOT THINKING" indicator for bot player
-                action_label = tk.Label(
-                    player_frame,
-                    text="🤖 BOT THINKING",
-                    bg="#4169E1",
-                    fg="white",
-                    font=("Arial", 9, "bold"),
-                    relief="raised",
-                    bd=2
-                )
-                action_label.pack(side=tk.TOP, pady=(0, 2))
-                action_label._action_indicator = True
+                    # Bot player highlighting - blue with "BOT THINKING"
+                    player_frame.config(
+                        highlightbackground="#4169E1",  # Royal blue
+                        highlightthickness=4,           # Medium border
+                        bg="#000033"                    # Dark blue background
+                    )
+                    
+                    # Add "BOT THINKING" indicator
+                    action_label = tk.Label(
+                        player_frame,
+                        text="🤖 BOT THINKING",
+                        bg="#4169E1",
+                        fg="#FFFFFF",
+                        font=("Arial", 9, "bold"),
+                        relief="raised",
+                        bd=2
+                    )
+                    action_label.pack(side=tk.TOP, pady=(0, 2))
+                    action_label._action_indicator = True
+                    
+                    # DISABLE ACTION BUTTONS FOR BOT
+                    print(f"🎯 BOT PLAYER TURN - Disabling buttons for {player.name}")
+                    self._disable_action_buttons()
     
     def reset_practice_session(self):
         """Reset the practice session and clear displays."""
