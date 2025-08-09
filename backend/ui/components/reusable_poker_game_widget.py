@@ -85,6 +85,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Store poker game configuration for dynamic positioning
         self.poker_game_config = None
         
+        # Session logger for comprehensive logging
+        self.session_logger = get_session_logger()
+        
+        # Logging state tracking
+        self.current_hand_id = None
+        self.last_player_stacks = {}
+        self.last_player_bets = {}
+        self.current_street = "preflop"
+        
+        # Setup the UI components
+        self._setup_ui()
+        
+        # If state machine is provided, add this widget as a listener
+        if self.state_machine:
+            self.state_machine.add_event_listener(self)
+            # Wait for UI to be ready, then create seats and update
+            self.after(100, self._ensure_seats_created_and_update)
+        
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
         print("🔄 Resetting change tracking for new hand")
@@ -230,23 +248,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.canvas.itemconfig(bet_window, state="hidden")
             bet_display["amount"] = 0.0
         
-        # Session logger for comprehensive logging
-        self.session_logger = get_session_logger()
-        
-        # Logging state tracking
-        self.current_hand_id = None
-        self.last_player_stacks = {}
-        self.last_player_bets = {}
-        self.current_street = "preflop"
-        
-        # Setup the UI
-        self._setup_ui()
-        
-        # If state machine is provided, add this widget as a listener
-        if self.state_machine:
-            self.state_machine.add_event_listener(self)
-            # Wait for UI to be ready, then create seats and update
-            self.after(100, self._ensure_seats_created_and_update)
+
     
     def on_event(self, event: GameEvent):
         """Handle events from the FPSM."""

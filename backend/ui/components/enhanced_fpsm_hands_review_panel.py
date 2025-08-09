@@ -420,6 +420,9 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         )
         self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
+        # Force initial display refresh to show the table
+        self.poker_game_widget.after(100, lambda: self.poker_game_widget._force_display_refresh())
+        
         # Reset simulation state
         self.current_action_index = 0
         self.current_street = "preflop"
@@ -552,6 +555,13 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
             return
         
         action, street = action_data
+        
+        # Check if action is None (end of hand)
+        if action is None:
+            print("🎮 Reached end of hand - stopping simulation")
+            self.pause_simulation()
+            return
+            
         player_name = action.get('player', '')
         action_type = action.get('type', '').lower()
         amount = action.get('amount', 0)
