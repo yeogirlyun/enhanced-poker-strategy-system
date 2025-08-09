@@ -33,6 +33,18 @@ class GameConfig:
     starting_stack: float = 100.0
     test_mode: bool = False
     show_all_cards: bool = False  # For simulation mode
+    
+    def __post_init__(self):
+        """Validate configuration after initialization."""
+        if not (2 <= self.num_players <= 9):
+            raise ValueError(f"num_players must be between 2 and 9, got {self.num_players}")
+        if self.big_blind <= 0:
+            raise ValueError(f"big_blind must be positive, got {self.big_blind}")
+        if self.small_blind <= 0:
+            raise ValueError(f"small_blind must be positive, got {self.small_blind}")
+        if self.small_blind >= self.big_blind:
+            raise ValueError(f"small_blind ({self.small_blind}) must be less than big_blind ({self.big_blind})")
+    
     auto_advance: bool = False  # For simulation mode
 
 
@@ -140,25 +152,60 @@ class FlexiblePokerStateMachine:
             self.game_state.players.append(player)
         
         # Assign positions
-        self.assign_positions()
+        self._assign_positions()
     
-    def assign_positions(self):
-        """Assign positions to players."""
-        positions = self._get_position_names()
-        for i, player in enumerate(self.game_state.players):
-            player.position = positions[i]
+    def _assign_positions(self):
+        """Assign positions to players relative to dealer position."""
+        position_names = self._get_position_names()
+        num_players = len(self.game_state.players)
+        
+        # Assign positions relative to dealer
+        for i in range(num_players):
+            # Calculate position index relative to dealer
+            if self.config.num_players == 2:
+                # Heads-up: dealer=SB/BTN (pos 0), BB (pos 1)  
+                if i == self.dealer_position:
+                    self.game_state.players[i].position = "SB/BTN"
+                else:
+                    self.game_state.players[i].position = "BB"
+            else:
+                # Multi-way: assign positions in order starting from UTG
+                # UTG is first after BB, so we calculate from that
+                utg_position = (self.big_blind_position + 1) % num_players
+                position_offset = (i - utg_position) % num_players
+                
+                if position_offset < len(position_names):
+                    self.game_state.players[i].position = position_names[position_offset]
+                else:
+                    self.game_state.players[i].position = f"Seat{i+1}"
     
     def _get_position_names(self) -> List[str]:
-        """Get position names for the current number of players."""
-        base_positions = ["BB", "SB", "BTN", "UTG", "MP", "CO"]
+        """Get position names for the current number of players (proper poker order)."""
+        num_players = self.config.num_players
         
-        if self.config.num_players <= 6:
-            return base_positions[:self.config.num_players]
+        if num_players == 2:
+            # Heads-up: [SB/BTN, BB]
+            return ["SB/BTN", "BB"]
+        elif num_players == 3:
+            # 3-handed: [BTN, SB, BB]
+            return ["BTN", "SB", "BB"]
+        elif num_players == 4:
+            # 4-handed: [UTG, BTN, SB, BB]
+            return ["UTG", "BTN", "SB", "BB"]
+        elif num_players == 5:
+            # 5-handed: [UTG, CO, BTN, SB, BB]
+            return ["UTG", "CO", "BTN", "SB", "BB"]
+        elif num_players == 6:
+            # 6-handed: [UTG, MP, CO, BTN, SB, BB]
+            return ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         else:
-            # For 7+ players, cycle through positions
-            positions = []
-            for i in range(self.config.num_players):
-                positions.append(base_positions[i % len(base_positions)])
+            # 7+ players: [UTG, MP1, MP2, ..., CO, BTN, SB, BB]
+            positions = ["UTG"]
+            # Add middle positions
+            mp_count = num_players - 5  # Total - (UTG + CO + BTN + SB + BB)
+            for i in range(1, mp_count + 1):
+                positions.append(f"MP{i}")
+            positions.extend(["CO", "BTN", "SB", "BB"])
             return positions
     
     def add_event_listener(self, listener: EventListener):
@@ -226,6 +273,9 @@ class FlexiblePokerStateMachine:
         # Use existing players if provided (for simulation)
         if existing_players:
             self.game_state.players = existing_players
+            # Validate player count matches config
+            if len(self.game_state.players) != self.config.num_players:
+                raise ValueError(f"Player count mismatch: config expects {self.config.num_players}, got {len(self.game_state.players)}")
         else:
             # Reset player states
             for player in self.game_state.players:
@@ -242,8 +292,17 @@ class FlexiblePokerStateMachine:
             self.dealer_position = random.randint(0, self.config.num_players - 1)
         
         # Set blind positions
-        self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
-        self.big_blind_position = (self.small_blind_position + 1) % self.config.num_players
+        if self.config.num_players == 2:
+            # Heads-up: Dealer is Small Blind, other player is Big Blind
+            self.small_blind_position = self.dealer_position
+            self.big_blind_position = (self.dealer_position + 1) % 2
+        else:
+            # Multi-way: SB is left of dealer, BB is left of SB
+            self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
+            self.big_blind_position = (self.small_blind_position + 1) % self.config.num_players
+        
+        # Assign positions based on dealer position
+        self._assign_positions()
         
         # Initialize deck if not in test mode
         if not self.config.test_mode:
@@ -273,8 +332,13 @@ class FlexiblePokerStateMachine:
         
         self.game_state.current_bet = bb_amount
         
-        # Set first action player (after big blind)
-        self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
+        # Set first action player (special handling for heads-up)
+        if self.config.num_players == 2:
+            # Heads-up: SB/BTN acts first preflop (small blind is also button)
+            self.action_player_index = self.small_blind_position
+        else:
+            # Multi-way: First action is UTG (after big blind)
+            self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
         
         # Transition to preflop betting
         self.transition_to(PokerState.PREFLOP_BETTING)
@@ -430,8 +494,13 @@ class FlexiblePokerStateMachine:
                 # Don't override - action player was already set correctly in start_hand()
                 pass
             else:
-                # Postflop: First action is player after dealer (SB if active)
-                self.action_player_index = self._find_first_active_after_dealer()
+                # Postflop: First action is player after dealer
+                if self.config.num_players == 2:
+                    # Heads-up postflop: BB acts first (opposite of preflop)
+                    self.action_player_index = self.big_blind_position
+                else:
+                    # Multi-way postflop: SB acts first (player after dealer)
+                    self.action_player_index = self._find_first_active_after_dealer()
             first_player = self.game_state.players[self.action_player_index].name
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          f"{new_state} betting started", 
