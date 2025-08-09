@@ -789,7 +789,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return
         
         # Only update if visible board cards have actually changed (prevents flickering)
+        print(f"🎴 CHANGE CHECK: visible_board_cards={visible_board_cards}, last_board_cards={self.last_board_cards}")
         if visible_board_cards == self.last_board_cards:
+            print(f"🎴 NO CHANGE DETECTED - skipping update")
             return  # No change needed
         
         print(f"🎴 Board changed: {self.last_board_cards} → {visible_board_cards} (showing {cards_to_show}/{len(board_cards)} cards)")

@@ -458,10 +458,33 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     def _get_bot_strategy_decision(self, bot_player: Player) -> tuple[ActionType, float]:
         """Get bot's strategic decision using existing GTO strategy engine."""
         
+        # Prevent infinite betting loops - limit actions per round
+        if self.actions_this_round >= 20:  # Maximum 20 actions per round
+            print(f"🛑 ACTION LIMIT: Too many actions this round ({self.actions_this_round}), forcing conservative play")
+            call_amount = self.game_state.current_bet - bot_player.current_bet
+            if call_amount <= 0:
+                return ActionType.CHECK, 0.0
+            elif call_amount <= bot_player.stack * 0.1:  # Only call small amounts
+                return ActionType.CALL, call_amount
+            else:
+                return ActionType.FOLD, 0.0
+        
         # Use the existing GTO strategy engine
         try:
             action, amount = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
             print(f"🤖 GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}")
+            
+            # Additional check: If pot is already very large relative to stacks, be more conservative
+            if action in [ActionType.BET, ActionType.RAISE]:
+                pot_to_stack_ratio = self.game_state.pot / bot_player.stack
+                if pot_to_stack_ratio > 2.0:  # Pot is more than 2x the bot's stack
+                    print(f"🛑 CONSERVATIVE: Large pot detected, switching {action.value} to CALL/CHECK")
+                    call_amount = self.game_state.current_bet - bot_player.current_bet
+                    if call_amount <= 0:
+                        return ActionType.CHECK, 0.0
+                    else:
+                        return ActionType.CALL, call_amount
+            
             return action, amount
         except Exception as e:
             print(f"🚫 GTO Strategy engine error: {e}")
