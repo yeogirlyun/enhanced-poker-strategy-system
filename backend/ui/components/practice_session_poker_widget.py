@@ -35,6 +35,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self.feedback_label = None
         self.suggestion_label = None
         self.stats_display = None
+        self.action_buttons = {}
         
         # Setup practice UI after parent initialization
         self.after_idle(self._setup_practice_ui)
@@ -107,6 +108,201 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             relief="raised"
         )
         self.toggle_stats_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Add action buttons area
+        self._setup_action_buttons()
+    
+    def _setup_action_buttons(self):
+        """Set up action buttons for user interaction."""
+        # Get table color or use default
+        table_bg = getattr(self, 'table_color', '#2F4F2F')
+        
+        # Create action buttons frame at the bottom
+        self.action_frame = tk.Frame(self, bg=table_bg)
+        self.action_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        
+        # Configure grid weights
+        self.grid_rowconfigure(2, weight=0)  # Action buttons (fixed height)
+        
+        # Action buttons
+        button_config = {
+            'font': ('Arial', 12, 'bold'),
+            'width': 8,
+            'height': 2,
+            'relief': 'raised',
+            'bd': 2
+        }
+        
+        # Fold button
+        self.action_buttons['fold'] = tk.Button(
+            self.action_frame,
+            text="FOLD",
+            bg="#FF6B6B",  # Red
+            fg="white",
+            command=lambda: self._handle_action_click('fold'),
+            **button_config
+        )
+        self.action_buttons['fold'].pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # Check/Call button
+        self.action_buttons['check_call'] = tk.Button(
+            self.action_frame,
+            text="CHECK",
+            bg="#4ECDC4",  # Teal
+            fg="white", 
+            command=lambda: self._handle_action_click('check_call'),
+            **button_config
+        )
+        self.action_buttons['check_call'].pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # Bet/Raise button
+        self.action_buttons['bet_raise'] = tk.Button(
+            self.action_frame,
+            text="BET",
+            bg="#45B7D1",  # Blue
+            fg="white",
+            command=lambda: self._handle_action_click('bet_raise'),
+            **button_config
+        )
+        self.action_buttons['bet_raise'].pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # Bet amount entry
+        self.bet_amount_var = tk.StringVar(value="2.0")
+        self.bet_entry = tk.Entry(
+            self.action_frame,
+            textvariable=self.bet_amount_var,
+            font=('Arial', 12),
+            width=8,
+            justify=tk.CENTER
+        )
+        self.bet_entry.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # All-in button
+        self.action_buttons['all_in'] = tk.Button(
+            self.action_frame,
+            text="ALL IN",
+            bg="#FF8C42",  # Orange
+            fg="white",
+            command=lambda: self._handle_action_click('all_in'),
+            **button_config
+        )
+        self.action_buttons['all_in'].pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # Initially disable all buttons until it's the human player's turn
+        self._disable_action_buttons()
+        
+        print("🎓 Action buttons setup complete")
+    
+    def _handle_action_click(self, action_type: str):
+        """Handle action button clicks."""
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            print("🚫 No state machine available")
+            return
+        
+        from core.types import ActionType
+        
+        # Get the human player
+        human_player = None
+        for player in self.state_machine.game_state.players:
+            if player.is_human:
+                human_player = player
+                break
+        
+        if not human_player:
+            print("🚫 No human player found")
+            return
+        
+        # Map button action to ActionType and amount
+        amount = 0.0
+        action = None
+        
+        if action_type == 'fold':
+            action = ActionType.FOLD
+        elif action_type == 'check_call':
+            # Determine if it's check or call based on current bet
+            if self.state_machine.game_state.current_bet > human_player.current_bet:
+                action = ActionType.CALL
+                amount = self.state_machine.game_state.current_bet - human_player.current_bet
+            else:
+                action = ActionType.CHECK
+        elif action_type == 'bet_raise':
+            # Determine if it's bet or raise
+            try:
+                amount = float(self.bet_amount_var.get())
+                if self.state_machine.game_state.current_bet > 0:
+                    action = ActionType.RAISE
+                else:
+                    action = ActionType.BET
+            except ValueError:
+                print("🚫 Invalid bet amount")
+                return
+        elif action_type == 'all_in':
+            action = ActionType.ALL_IN
+            amount = human_player.stack
+        
+        if action:
+            print(f"🎓 Human player action: {action.value} (${amount:.2f})")
+            success = self.state_machine.execute_action(human_player, action, amount)
+            if success:
+                self._disable_action_buttons()
+            else:
+                print("🚫 Action was not valid")
+    
+    def _enable_action_buttons(self):
+        """Enable action buttons when it's the human player's turn."""
+        if not hasattr(self, 'action_buttons'):
+            return
+        
+        # Get current game state to determine valid actions
+        if hasattr(self, 'state_machine') and self.state_machine:
+            human_player = None
+            for player in self.state_machine.game_state.players:
+                if player.is_human:
+                    human_player = player
+                    break
+            
+            if human_player:
+                current_bet = self.state_machine.game_state.current_bet
+                player_bet = human_player.current_bet
+                
+                # Update check/call button text and enable appropriate buttons
+                if current_bet > player_bet:
+                    call_amount = current_bet - player_bet
+                    self.action_buttons['check_call'].config(
+                        text=f"CALL\n${call_amount:.1f}",
+                        state=tk.NORMAL
+                    )
+                else:
+                    self.action_buttons['check_call'].config(
+                        text="CHECK",
+                        state=tk.NORMAL
+                    )
+                
+                # Update bet/raise button text
+                if current_bet > 0:
+                    self.action_buttons['bet_raise'].config(text="RAISE", state=tk.NORMAL)
+                else:
+                    self.action_buttons['bet_raise'].config(text="BET", state=tk.NORMAL)
+                
+                # Enable other buttons
+                self.action_buttons['fold'].config(state=tk.NORMAL)
+                self.action_buttons['all_in'].config(state=tk.NORMAL)
+                self.bet_entry.config(state=tk.NORMAL)
+                
+                print("🎓 Action buttons enabled for human player")
+    
+    def _disable_action_buttons(self):
+        """Disable action buttons when it's not the human player's turn."""
+        if not hasattr(self, 'action_buttons'):
+            return
+        
+        for button in self.action_buttons.values():
+            button.config(state=tk.DISABLED)
+        
+        if hasattr(self, 'bet_entry'):
+            self.bet_entry.config(state=tk.DISABLED)
+        
+        print("🎓 Action buttons disabled")
     
     def _handle_action_executed(self, event: GameEvent):
         """Override: Enhanced action handling with educational feedback."""
@@ -212,8 +408,21 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
         """Override: Enhanced card display for practice sessions."""
-        # Call parent's card setting
-        super()._set_player_cards_from_display_state(player_index, cards)
+        # For human players, always get actual cards (not ** placeholders)
+        actual_cards = cards
+        if (hasattr(self, 'state_machine') and 
+            self.state_machine and
+            player_index < len(self.state_machine.game_state.players) and
+            self.state_machine.game_state.players[player_index].is_human and
+            cards and cards[0] == "**"):
+            
+            # Get actual cards from the state machine for human player
+            human_player = self.state_machine.game_state.players[player_index]
+            actual_cards = human_player.cards if human_player.cards else ["", ""]
+            print(f"🎓 Showing human player actual cards: {actual_cards}")
+        
+        # Call parent's card setting with actual cards
+        super()._set_player_cards_from_display_state(player_index, actual_cards)
         
         # Add practice-specific card annotations for human player
         if (player_index < len(self.player_seats) and 
@@ -225,7 +434,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             if (player_index < len(self.state_machine.game_state.players) and
                 self.state_machine.game_state.players[player_index].is_human):
                 
-                self._add_card_annotations(player_index, cards)
+                self._add_card_annotations(player_index, actual_cards)
     
     def _add_card_annotations(self, player_index: int, cards: List[str]):
         """Add educational annotations to the human player's cards."""
@@ -305,23 +514,29 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         """Override: Enhanced action player highlighting for practice."""
         super().highlight_action_player(player_index)
         
-        # Add educational prompt for human player
+        # Enable/disable action buttons based on whether it's the human player's turn
         if (hasattr(self, 'state_machine') and 
             self.state_machine and 
-            player_index < len(self.state_machine.game_state.players) and
-            self.state_machine.game_state.players[player_index].is_human):
+            player_index < len(self.state_machine.game_state.players)):
             
-            # Get strategy suggestion
-            suggestion = None
-            if hasattr(self.state_machine, 'get_strategy_suggestion'):
-                suggestion = self.state_machine.get_strategy_suggestion(
-                    self.state_machine.game_state.players[player_index]
-                )
+            player = self.state_machine.game_state.players[player_index]
             
-            if suggestion:
-                self._display_suggestion(suggestion)
+            if player.is_human:
+                # It's the human player's turn - enable action buttons
+                self._enable_action_buttons()
+                
+                # Get strategy suggestion
+                suggestion = None
+                if hasattr(self.state_machine, 'get_strategy_suggestion'):
+                    suggestion = self.state_machine.get_strategy_suggestion(player)
+                
+                if suggestion:
+                    self._display_suggestion(suggestion)
+                else:
+                    self._display_suggestion("Consider your position, hand strength, and opponents' actions.")
             else:
-                self._display_suggestion("Consider your position, hand strength, and opponents' actions.")
+                # It's not the human player's turn - disable action buttons
+                self._disable_action_buttons()
     
     def reset_practice_session(self):
         """Reset the practice session and clear displays."""

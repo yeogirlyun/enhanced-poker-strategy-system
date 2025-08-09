@@ -30,6 +30,11 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Practice session specific properties
         self.strategy_data = strategy_data
         self.practice_mode = True
+        
+        # Mark Player 1 as human for practice sessions
+        if self.game_state.players:
+            self.game_state.players[0].is_human = True
+            print(f"🎓 Marked {self.game_state.players[0].name} as human player")
         self.provide_feedback = True
         self.track_performance = True
         
