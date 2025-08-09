@@ -903,25 +903,67 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         return None
     
     def build_actor_mapping(self):
-        """Build mapping from FPSM player index to legendary hand actor ID."""
+        """Build mapping from FPSM player index to legendary hand actor ID (DYNAMIC)."""
         fpsm_to_actor = {}
-        if hasattr(self.current_hand, 'players'):
-            for i, p in enumerate(self.current_hand.players):
-                seat = p.get('seat', i+1)
-                # Map FPSM player index to legendary hand actor ID based on seat
-                if seat == 2:  # Chris Moneymaker
-                    fpsm_to_actor[0] = 1  # FPSM player 0 → Actor 1 
-                elif seat == 3:  # Sammy Farha  
-                    fpsm_to_actor[1] = 2  # FPSM player 1 → Actor 2
-                elif seat == 4:  # Folded Player 1
-                    fpsm_to_actor[2] = 3  # FPSM player 2 → Actor 3
-                elif seat == 5:  # Folded Player 2
-                    fpsm_to_actor[3] = 4  # FPSM player 3 → Actor 4
-                elif seat == 6:  # Folded Player 3
-                    fpsm_to_actor[4] = 5  # FPSM player 4 → Actor 5
-                else:  # Folded Player 4 (no seat specified)
-                    fpsm_to_actor[5] = 6  # FPSM player 5 → Actor 6
+        
+        if not hasattr(self.current_hand, 'players'):
+            return fpsm_to_actor
+        
+        # Create dynamic mapping based on actual hand players
+        hand_players = self.current_hand.players
+        fpsm_players = self.fpsm.game_state.players if self.fpsm else []
+        
+        print(f"🎯 Building dynamic actor mapping for {len(hand_players)} hand players, {len(fpsm_players)} FPSM players")
+        
+        # Map by matching names and seats
+        for fpsm_index, fpsm_player in enumerate(fpsm_players):
+            # Find corresponding player in hand data
+            for hand_player in hand_players:
+                hand_name = hand_player.get('name', '')
+                hand_seat = hand_player.get('seat', 0)
+                
+                # Match by name similarity or seat position
+                if (fpsm_player.name == hand_name or 
+                    self._names_match(fpsm_player.name, hand_name) or
+                    (fpsm_index == 0 and hand_seat == 1) or  # First FPSM player → Actor with seat 1
+                    (fpsm_index == 1 and hand_seat == 3) or  # Second FPSM player → Actor with seat 3  
+                    (fpsm_index == 2 and hand_seat == 9)):   # Third FPSM player → Actor with seat 9
+                    
+                    fpsm_to_actor[fpsm_index] = hand_seat
+                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {hand_seat} ({hand_name})")
+                    break
+            
+            # If no mapping found, use sequential fallback
+            if fpsm_index not in fpsm_to_actor:
+                fallback_actor = fpsm_index + 1
+                fpsm_to_actor[fpsm_index] = fallback_actor
+                print(f"🎯 Fallback mapping: FPSM player {fpsm_index} → Actor {fallback_actor}")
+        
         return fpsm_to_actor
+    
+    def _names_match(self, fpsm_name: str, hand_name: str) -> bool:
+        """Check if FPSM player name matches hand player name."""
+        # Handle common name variations
+        fpsm_clean = fpsm_name.lower().replace(' ', '')
+        hand_clean = hand_name.lower().replace(' ', '')
+        
+        # Check for partial matches (first/last name)
+        if fpsm_clean in hand_clean or hand_clean in fpsm_clean:
+            return True
+        
+        # Check for specific known mappings
+        name_mappings = {
+            'nicolasmanion': ['manion', 'nicolas'],
+            'yueqizhu': ['zhu', 'yueqi', 'yang'],  # Handle Yang Zhu → Yueqi Zhu
+            'antoinelabat': ['labat', 'antoine']
+        }
+        
+        for canonical, variants in name_mappings.items():
+            if fpsm_clean == canonical or any(v in fpsm_clean for v in variants):
+                if hand_clean == canonical or any(v in hand_clean for v in variants):
+                    return True
+        
+        return False
     
     def get_player_fpsm_index(self, player):
         """Get the FPSM index for a player."""
