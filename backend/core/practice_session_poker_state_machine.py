@@ -102,9 +102,13 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 ))
             
             # Schedule bot actions after any successful action (to handle action player changes)
-            if self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
-                                    PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
-                print(f"🤖 SCHEDULING: About to schedule bot actions after {player.name}'s {action_type.value}")
+            betting_states = [
+                PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
+                PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
+                PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+            ]
+            if self.current_state in betting_states:
+                print(f"🤖 SCHEDULING: About to schedule bot actions after {player.name}'s {action_type.value} (state: {self.current_state})")
                 self._schedule_bot_actions()
             else:
                 print(f"🤖 NOT SCHEDULING: Current state {self.current_state} not a betting state")
@@ -120,8 +124,12 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         print(f"🔄 ACTION PLAYER ADVANCED: {old_action_player} → {new_action_player}")
         
         # Schedule bot actions after action player advancement
-        if (self.current_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
-                                  PokerState.TURN_BETTING, PokerState.RIVER_BETTING] and
+        betting_states = [
+            PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
+            PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
+            PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+        ]
+        if (self.current_state in betting_states and
             new_action_player >= 0 and new_action_player < len(self.game_state.players)):
             next_player = self.game_state.players[new_action_player]
             print(f"🔄 Next player: {next_player.name} (is_human={next_player.is_human})")
@@ -147,8 +155,13 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         print(f"🎓 Practice: State transition {old_state.name} → {new_state.name}")
         
         # Handle bot auto-play after state transitions
-        if new_state in [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
-                        PokerState.TURN_BETTING, PokerState.RIVER_BETTING]:
+        betting_states = [
+            PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
+            PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
+            PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+        ]
+        if new_state in betting_states:
+            print(f"🤖 TRANSITION SCHEDULING: New state {new_state} is a betting state")
             self._schedule_bot_actions()
     
     def _get_human_player_position(self) -> Optional[str]:

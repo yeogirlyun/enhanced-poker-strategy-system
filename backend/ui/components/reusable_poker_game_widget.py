@@ -727,12 +727,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
+        print(f"🎴 COMMUNITY CARD UPDATE: Input cards: {board_cards}")
+        
         # Ensure community card widgets are created
         if not self.community_card_widgets:
+            print(f"🎴 No community card widgets, creating them...")
             self._draw_community_card_area()
         
         if not self.community_card_widgets:
+            print(f"❌ COMMUNITY CARD WIDGETS STILL NOT CREATED!")
             return
+        
+        print(f"🎴 Community card widgets exist: {len(self.community_card_widgets)} widgets")
         
         # Initialize tracking if not exists
         if not hasattr(self, 'last_board_cards'):

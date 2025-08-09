@@ -708,12 +708,21 @@ class FlexiblePokerStateMachine:
         if self.current_state == PokerState.PREFLOP_BETTING:
             self._safe_print("🔄 Preflop betting complete, transitioning to DEAL_FLOP")
             self.transition_to(PokerState.DEAL_FLOP)
+        elif self.current_state == PokerState.DEAL_FLOP:
+            self._safe_print("🔄 Flop dealing complete, transitioning to DEAL_TURN")
+            self.transition_to(PokerState.DEAL_TURN)
         elif self.current_state == PokerState.FLOP_BETTING:
             self._safe_print("🔄 Flop betting complete, transitioning to DEAL_TURN")
             self.transition_to(PokerState.DEAL_TURN)
+        elif self.current_state == PokerState.DEAL_TURN:
+            self._safe_print("🔄 Turn dealing complete, transitioning to DEAL_RIVER")
+            self.transition_to(PokerState.DEAL_RIVER)
         elif self.current_state == PokerState.TURN_BETTING:
             self._safe_print("🔄 Turn betting complete, transitioning to DEAL_RIVER")
             self.transition_to(PokerState.DEAL_RIVER)
+        elif self.current_state == PokerState.DEAL_RIVER:
+            self._safe_print("🔄 River dealing complete, transitioning to SHOWDOWN")
+            self.transition_to(PokerState.SHOWDOWN)
         elif self.current_state == PokerState.RIVER_BETTING:
             self._safe_print("🔄 River betting complete, transitioning to SHOWDOWN")
             self.transition_to(PokerState.SHOWDOWN)
