@@ -424,8 +424,29 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # Force initial display refresh to show the table
-        self.poker_game_widget.after(100, lambda: self.poker_game_widget._force_display_refresh())
+        # Force initial display refresh to show the table with proper sizing
+        def delayed_refresh():
+            # Force widget and parent to update geometry
+            self.game_container.update_idletasks()
+            self.poker_game_widget.update_idletasks()
+            
+            # Force the master window to complete layout
+            self.master.update_idletasks()
+            
+            # Check canvas size
+            canvas_width = self.poker_game_widget.canvas.winfo_width()
+            canvas_height = self.poker_game_widget.canvas.winfo_height()
+            print(f"🔧 Canvas size before refresh: {canvas_width}x{canvas_height}")
+            
+            # If still too small, force a size
+            if canvas_width <= 1 or canvas_height <= 1:
+                print("🔧 Forcing canvas size...")
+                self.poker_game_widget.canvas.config(width=800, height=600)
+                self.poker_game_widget.canvas.update_idletasks()
+            
+            self.poker_game_widget._force_display_refresh()
+        
+        self.poker_game_widget.after(300, delayed_refresh)
         
         # Reset simulation state
         self.current_action_index = 0
@@ -569,6 +590,12 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         player_name = action.get('player_name', action.get('player', ''))
         action_type = action.get('action_type', action.get('type', '')).lower()
         amount = action.get('amount', 0)
+        
+        # For raises, use 'to_amount' if available and amount is 0
+        if action_type in ['raise', 'reraise', '3bet'] and amount == 0:
+            to_amount = action.get('to_amount', 0)
+            if to_amount > 0:
+                amount = to_amount
         
         print(f"🎮 Executing: {player_name} {action_type} {amount} on {street}")
         print(f"🔍 Full action data: {action}")
