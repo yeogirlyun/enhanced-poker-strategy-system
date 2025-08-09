@@ -630,14 +630,13 @@ class FlexiblePokerStateMachine:
         )
         self._emit_event(action_event)
         
-        # Advance to next player
-        self._advance_action_player()
-        
-        # Check if round is complete
+        # Check if round is complete BEFORE advancing action player
         if self._is_round_complete():
             self._safe_print(f"🎯 Round complete detected on {self.game_state.street}")
             self._handle_round_complete()
         else:
+            # Round not complete - advance to next player
+            self._advance_action_player()
             # Only emit display state event if round is not complete to avoid conflicts
             self._emit_display_state_event()
         
