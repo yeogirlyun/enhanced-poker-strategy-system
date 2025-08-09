@@ -639,7 +639,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 big_blind=big_blind,
                 small_blind=small_blind,
                 starting_stack=starting_stack,
-                test_mode=False,  # Disable test mode to allow real card dealing
+                test_mode=True,  # Enable test mode for automatic state advancement
                 show_all_cards=True,  # Show all cards in simulation mode
                 auto_advance=True  # Enable auto-advance for smooth street progression
             )
@@ -699,7 +699,24 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             # Extract board cards from legendary hand data
             board_cards = []
             if hasattr(self.current_hand, 'board') and self.current_hand.board:
-                board_cards = self.current_hand.board
+                # Handle both dict and list formats for board
+                if isinstance(self.current_hand.board, dict):
+                    # Convert dict format to list
+                    for street in ['flop', 'turn', 'river']:
+                        if street in self.current_hand.board:
+                            street_data = self.current_hand.board[street]
+                            if isinstance(street_data, dict):
+                                if 'cards' in street_data:
+                                    board_cards.extend(street_data['cards'])
+                                elif 'card' in street_data:
+                                    board_cards.append(street_data['card'])
+                            elif isinstance(street_data, list):
+                                board_cards.extend(street_data)
+                            elif isinstance(street_data, str):
+                                board_cards.append(street_data)
+                    print(f"🎯 Converted board dict to list: {board_cards}")
+                elif isinstance(self.current_hand.board, list):
+                    board_cards = self.current_hand.board.copy()
             elif hasattr(self.current_hand, 'actions') and self.current_hand.actions:
                 # For legendary hands, board cards may need to be inferred from actions
                 # For now, use a sample board that works with the betting pattern
@@ -799,57 +816,197 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.add_log_entry("INFO", "LOGGING", "RPGW logging connected to display")
     
     def next_action(self):
-        """Execute the next action in the simulation."""
+        """Execute the next action in the simulation with enhanced completion handling."""
         if not self.fpsm or not self.simulation_active:
             return
         
         # Prevent actions after hand completion
         if self.hand_completed:
             print("🚫 Hand completed - ignoring next_action request")
+            self._disable_action_buttons()
+            return
+        
+        # Check if we're already at end state
+        if self.fpsm.current_state.name in ['END_HAND', 'SHOWDOWN']:
+            print(f"🏁 Hand at final state: {self.fpsm.current_state.name}")
+            self._handle_simulation_completion()
             return
         
         try:
             # Get the current action player
             action_player = self.fpsm.get_action_player()
             if not action_player:
-                print("No action player available")
+                print("No action player available - checking if hand should end")
                 self.add_log_entry("WARNING", "SIMULATION", "No action player available")
+                self._check_for_hand_completion()
                 return
             
             # Get valid actions for the player
             valid_actions = self.fpsm.get_valid_actions_for_player(action_player)
             
-            # Determine the action to take (for now, use a simple strategy)
+            # Determine the action to take using historical data
             action = self.determine_action_from_history(action_player, valid_actions)
             
             if action:
-                # Log the action before execution
+                # Log action with enhanced detail including stack/pot info
                 action_msg = (f"Executing action: {action_player.name} "
                             f"{action['type'].value} ${action['amount']}")
-                self.add_log_entry("INFO", "ACTION_EXECUTION", action_msg)
+                
+                # Log stack and pot before action
+                current_pot = self.fpsm.game_state.pot
+                current_stack = action_player.stack
+                
+                self.add_log_entry("INFO", "ACTION_EXECUTION", 
+                                 f"{action_msg} (Stack: ${current_stack}, Pot: ${current_pot})")
                 
                 # Execute the action
-                self.fpsm.execute_action(action_player, action['type'], action['amount'])
-                print(f"✅ {action_msg}")
+                success = self.fpsm.execute_action(action_player, action['type'], action['amount'])
                 
-                # Track the action in history (CRITICAL: This updates the action index!)
-                self.action_history.append({
-                    'player': action_player.name,
-                    'action': action['type'].value,
-                    'amount': action['amount'],
-                    'valid_actions': valid_actions,
-                    'action_index': len(self.action_history)  # Current index before append
-                })
-                print(f"🎯 Action history updated! Now {len(self.action_history)} actions executed")
+                if success:
+                    print(f"✅ {action_msg}")
+                    
+                    # Log stack and pot after action for accuracy validation
+                    new_pot = self.fpsm.game_state.pot
+                    new_stack = action_player.stack
+                    
+                    # Track the action in history
+                    self.action_history.append({
+                        'player': action_player.name,
+                        'action': action['type'].value,
+                        'amount': action['amount'],
+                        'valid_actions': valid_actions,
+                        'action_index': len(self.action_history),
+                        'stack_before': current_stack,
+                        'stack_after': new_stack,
+                        'pot_before': current_pot,
+                        'pot_after': new_pot
+                    })
+                    
+                    print(f"🎯 Action executed: Stack {current_stack} → {new_stack}, Pot {current_pot} → {new_pot}")
+                    print(f"📊 Action history updated! Now {len(self.action_history)} actions executed")
+                    
+                    # Check if this action caused hand completion
+                    self._check_for_hand_completion()
+                    
+                else:
+                    print(f"❌ Failed to execute action: {action_msg}")
+                    self.add_log_entry("ERROR", "ACTION_EXECUTION", f"Failed to execute: {action_msg}")
+                    
             else:
                 self.add_log_entry("WARNING", "SIMULATION", 
                                  f"No action determined for {action_player.name}")
+                # If no action can be determined, the hand might be complete
+                self._check_for_hand_completion()
             
         except Exception as e:
             print(f"❌ Error executing action: {e}")
             self.add_log_entry("ERROR", "SIMULATION", f"Error executing action: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _check_for_hand_completion(self):
+        """Check if the hand should be completed and handle accordingly."""
+        if not self.fpsm:
+            return
+        
+        current_state = self.fpsm.current_state.name
+        
+        # Check for completion states
+        if current_state in ['END_HAND', 'SHOWDOWN']:
+            print(f"🏁 Hand completion detected: {current_state}")
+            self._handle_simulation_completion()
+            return
+        
+        # Check if only one or fewer active players remain
+        active_players = [p for p in self.fpsm.game_state.players 
+                         if not p.has_folded and p.is_active]
+        
+        if len(active_players) <= 1:
+            print(f"🏁 Only {len(active_players)} active players remaining - hand should end")
+            self._handle_simulation_completion()
+            return
+    
+    def _handle_simulation_completion(self):
+        """Handle simulation completion with enhanced animations and logging."""
+        if self.hand_completed:
+            return  # Already handled
+            
+        print("🎉 Handling simulation completion")
+        self.hand_completed = True
+        
+        # Disable action buttons
+        self._disable_action_buttons()
+        
+        # Log final state
+        if self.fpsm:
+            final_pot = self.fpsm.game_state.pot
+            active_players = [p for p in self.fpsm.game_state.players 
+                             if not p.has_folded and p.is_active]
+            
+            completion_msg = f"Hand completed - Final pot: ${final_pot:,.0f}, Active players: {len(active_players)}"
+            self.add_log_entry("INFO", "COMPLETION", completion_msg)
+            
+            # Log final stacks for all players
+            for i, player in enumerate(self.fpsm.game_state.players):
+                stack_msg = f"{player.name}: ${player.stack:,.0f} (Folded: {player.has_folded})"
+                self.add_log_entry("INFO", "FINAL_STACKS", stack_msg)
+        
+        # Trigger showdown animations if we have RPGW
+        if hasattr(self, 'poker_game_widget') and self.poker_game_widget:
+            self._trigger_showdown_animations()
+        
+        # Enable reset button for new simulation
+        if hasattr(self, 'reset_simulation_btn'):
+            self.reset_simulation_btn.configure(state="normal")
+        
+        print("✅ Simulation completion handled successfully")
+    
+    def _disable_action_buttons(self):
+        """Disable action control buttons when simulation is complete."""
+        if hasattr(self, 'next_action_btn'):
+            self.next_action_btn.configure(state="disabled")
+        if hasattr(self, 'auto_play_btn'):
+            self.auto_play_btn.configure(state="disabled")
+        
+        print("🚫 Action buttons disabled - simulation complete")
+    
+    def _trigger_showdown_animations(self):
+        """Trigger showdown and winner animations."""
+        if not self.fpsm or not hasattr(self, 'poker_game_widget'):
+            return
+        
+        try:
+            # Force showdown state for card reveals
+            current_state = self.fpsm.current_state.name
+            
+            if current_state not in ['SHOWDOWN', 'END_HAND']:
+                print("🎭 Forcing transition to showdown for animations")
+                # Manually trigger showdown transition
+                from core.flexible_poker_state_machine import PokerState
+                if hasattr(self.fpsm, 'transition_to'):
+                    self.fpsm.transition_to(PokerState.SHOWDOWN)
+            
+            # Trigger final display state update to show all cards
+            self.fpsm._emit_display_state_event()
+            
+            # Get winners for animation
+            active_players = [p for p in self.fpsm.game_state.players 
+                             if not p.has_folded and p.is_active]
+            
+            if active_players:
+                # For now, treat first active player as winner (can be enhanced with actual evaluation)
+                winner = active_players[0]
+                pot_amount = self.fpsm.game_state.pot
+                
+                print(f"🏆 Triggering winner animation: {winner.name} wins ${pot_amount:,.0f}")
+                
+                # Use RPGW's winner animation
+                if hasattr(self.poker_game_widget, 'animate_pot_to_winner'):
+                    winner_info = {'name': winner.name, 'seat': 0}  # Simplified
+                    self.poker_game_widget.animate_pot_to_winner(winner_info, pot_amount)
+                
+        except Exception as e:
+            print(f"⚠️ Error triggering showdown animations: {e}")
     
     def get_next_historical_action(self, player):
         """Get the next historical action for legendary hands (FPSM-independent)."""
@@ -1206,17 +1363,27 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         elif event.event_type == "hand_complete":
             winners = event.data.get('winners', [])
             winner_names = [w.name for w in winners] if winners else ["No winners"]
-            hand_msg = f"Hand complete - Winners: {', '.join(winner_names)}"
+            pot_amount = event.data.get('pot_amount', 0.0)
+            hand_msg = f"Hand complete - Winners: {', '.join(winner_names)}, Pot: ${pot_amount:,.0f}"
             print(f"🎯 {hand_msg}")
             self.add_log_entry("INFO", "HAND_COMPLETE", hand_msg)
             
-            # Mark hand as completed to prevent further actions
-            self.hand_completed = True
-            print("🚫 Hand marked as completed - no more actions will be processed")
+            # Enhanced completion handling
+            self._handle_simulation_completion()
             
             # Update simulation status
             if hasattr(self, 'simulation_status_label'):
                 self.simulation_status_label.configure(text=hand_msg + " - COMPLETED")
+        
+        elif event.event_type == "round_complete":
+            street = event.data.get('street', 'unknown')
+            print(f"🎯 Round complete on {street} - triggering street animation")
+            self.add_log_entry("INFO", "ROUND_COMPLETE", f"Round complete on {street}")
+            
+            # Street transition animations are handled automatically by RPGW
+            # Log the transition for debugging
+            if hasattr(self, 'simulation_status_label'):
+                self.simulation_status_label.configure(text=f"Moving to next street after {street}")
         
         elif event.event_type == "action_required":
             action_req_msg = f"Action required from: {event.player_name}"

@@ -365,11 +365,11 @@ class FlexiblePokerStateMachine:
     STATE_TRANSITIONS = {
         PokerState.START_HAND: [PokerState.PREFLOP_BETTING],
         PokerState.PREFLOP_BETTING: [PokerState.DEAL_FLOP, PokerState.END_HAND],
-        PokerState.DEAL_FLOP: [PokerState.FLOP_BETTING],
+        PokerState.DEAL_FLOP: [PokerState.FLOP_BETTING, PokerState.END_HAND],  # Allow END_HAND for fold situations
         PokerState.FLOP_BETTING: [PokerState.DEAL_TURN, PokerState.END_HAND],
-        PokerState.DEAL_TURN: [PokerState.TURN_BETTING],
+        PokerState.DEAL_TURN: [PokerState.TURN_BETTING, PokerState.END_HAND],  # Allow END_HAND for fold situations
         PokerState.TURN_BETTING: [PokerState.DEAL_RIVER, PokerState.END_HAND],
-        PokerState.DEAL_RIVER: [PokerState.RIVER_BETTING],
+        PokerState.DEAL_RIVER: [PokerState.RIVER_BETTING, PokerState.END_HAND],  # Allow END_HAND for fold situations
         PokerState.RIVER_BETTING: [PokerState.SHOWDOWN, PokerState.END_HAND],
         PokerState.SHOWDOWN: [PokerState.END_HAND],
         PokerState.END_HAND: [PokerState.START_HAND],
