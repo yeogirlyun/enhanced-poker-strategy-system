@@ -749,14 +749,60 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_board_cards = visible_board_cards.copy()
     
     def _highlight_current_player(self, player_index):
-        """Highlight the current action player."""
+        """Highlight the current action player with strong visual indication."""
         for i, player_seat in enumerate(self.player_seats):
             if player_seat:
                 player_frame = player_seat["frame"]
                 if i == player_index:
-                    player_frame.config(highlightbackground="gold", highlightthickness=3)
+                    # STRONG highlighting for active player
+                    player_frame.config(
+                        highlightbackground="#FFD700",  # Bright gold
+                        highlightthickness=6,           # Much thicker border
+                        bg="#2A2A00"                    # Darker background for contrast
+                    )
+                    # Add blinking effect for extra visibility
+                    self._add_action_indicator(player_frame)
                 else:
-                    player_frame.config(highlightbackground="#006400", highlightthickness=2)
+                    # Normal appearance for inactive players
+                    player_frame.config(
+                        highlightbackground="#006400",  # Dark green
+                        highlightthickness=2,
+                        bg="#1a1a1a"                    # Normal background
+                    )
+    
+    def _add_action_indicator(self, player_frame):
+        """Add a visual action indicator to the player frame."""
+        # Create or update action indicator text
+        for widget in player_frame.winfo_children():
+            if hasattr(widget, '_action_indicator'):
+                widget.destroy()  # Remove old indicator
+        
+        # Add "YOUR TURN" indicator
+        action_label = tk.Label(
+            player_frame,
+            text="⚡ YOUR TURN ⚡",
+            bg="#FFD700",
+            fg="#000000",
+            font=("Arial", 10, "bold"),
+            relief="raised",
+            bd=2
+        )
+        action_label._action_indicator = True
+        action_label.pack(side=tk.TOP, pady=2)
+        
+        # Start blinking animation
+        self._blink_action_indicator(action_label, True)
+    
+    def _blink_action_indicator(self, label, visible=True):
+        """Create a blinking effect for the action indicator."""
+        if label.winfo_exists():
+            if visible:
+                label.config(bg="#FFD700", fg="#000000")
+            else:
+                label.config(bg="#FF4500", fg="#FFFFFF")  # Orange flash
+            
+            # Continue blinking every 500ms
+            self.after(500, lambda: self._blink_action_indicator(label, not visible))
     
     def _mark_player_folded(self, player_index):
         """Mark a player as folded."""
