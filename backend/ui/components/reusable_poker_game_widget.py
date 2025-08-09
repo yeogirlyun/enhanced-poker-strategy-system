@@ -65,6 +65,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Animation protection flag
         self.animating_bets_to_pot = False
         
+        # Display state tracking for lazy redrawing
+        self.last_display_state = None
+        self.last_action_player = -1
+        self.table_drawn = False
+        
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
         print("🔄 Resetting change tracking for new hand")
@@ -73,8 +78,52 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if hasattr(self, 'last_board_cards'):
             self.last_board_cards.clear()
         
+        # Reset display state tracking
+        self.last_display_state = None
+        self.last_action_player = -1
+        
         # Clear bet displays for new hand
         self._clear_all_bet_displays_permanent()
+    
+    def _display_state_changed(self, new_state: Dict[str, Any]) -> bool:
+        """Check if display state has meaningfully changed (LAZY REDRAW OPTIMIZATION)."""
+        if self.last_display_state is None:
+            return True  # First time, must render
+        
+        # Compare key elements that affect display
+        last = self.last_display_state
+        current = new_state
+        
+        # Check if player count changed
+        if len(last.get("players", [])) != len(current.get("players", [])):
+            return True
+        
+        # Check if pot changed
+        if last.get("pot", 0) != current.get("pot", 0):
+            return True
+        
+        # Check if board cards changed
+        if last.get("board", []) != current.get("board", []):
+            return True
+        
+        # Check if action player changed
+        if last.get("action_player", -1) != current.get("action_player", -1):
+            return True
+        
+        # Check if any player data changed significantly
+        last_players = last.get("players", [])
+        current_players = current.get("players", [])
+        
+        for i, (last_player, current_player) in enumerate(zip(last_players, current_players)):
+            # Check key player attributes
+            if (last_player.get("name") != current_player.get("name") or
+                last_player.get("stack") != current_player.get("stack") or
+                last_player.get("current_bet") != current_player.get("current_bet") or
+                last_player.get("cards") != current_player.get("cards") or
+                last_player.get("has_folded") != current_player.get("has_folded")):
+                return True
+        
+        return False  # No meaningful changes detected
     
     def _create_bet_display_for_player(self, player_index: int):
         """Create a bet display widget positioned in front of a player."""
@@ -452,31 +501,46 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         )
     
     def _render_from_display_state(self, display_state: Dict[str, Any]):
-        """Render the widget based on the FPSM's display state."""
+        """Render the widget based on the FPSM's display state (LAZY REDRAW OPTIMIZATION)."""
         # Skip rendering during bet animations to prevent interference
         if self.animating_bets_to_pot:
             print("🎯 Skipping display state render - bet animation in progress")
             return
         
-        print("🎯 Rendering from FPSM display state")
+        # LAZY REDRAW: Check if display state actually changed
+        if not self._display_state_changed(display_state):
+            print("🎯 Skipping display state render - no meaningful changes detected")
+            return
         
-        # Update players
+        print("🎯 Rendering from FPSM display state (changes detected)")
+        
+        # Ensure table is drawn (one-time setup)
+        if not self.table_drawn and self.canvas.winfo_width() > 1:
+            self._draw_table()
+            self.table_drawn = True
+        
+        # Update players (with individual lazy checking)
         for i, player_info in enumerate(display_state.get("players", [])):
             if i < len(self.player_seats) and self.player_seats[i]:
                 self._update_player_from_display_state(i, player_info)
         
-        # Update community cards
+        # Update community cards (already has lazy checking)
         board_cards = display_state.get("board", [])
         self._update_community_cards_from_display_state(board_cards)
         
-        # Update pot
+        # Update pot (already has lazy checking)
         pot_amount = display_state.get("pot", 0.0)
         self.update_pot_amount(pot_amount)
         
-        # Update current action player
+        # Update current action player (with lazy checking)
         action_player_index = display_state.get("action_player", -1)
-        if action_player_index >= 0 and action_player_index < len(self.player_seats):
-            self._highlight_current_player(action_player_index)
+        if action_player_index != self.last_action_player:
+            if action_player_index >= 0 and action_player_index < len(self.player_seats):
+                self._highlight_current_player(action_player_index)
+            self.last_action_player = action_player_index
+        
+        # Store current display state for next comparison
+        self.last_display_state = display_state.copy()
     
     def _update_player_from_display_state(self, player_index: int, player_info: Dict[str, Any]):
         """Update a single player based on display state (FLICKER-FREE VERSION)."""
@@ -1250,7 +1314,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._draw_player_seats()
     
     def _ensure_seats_created_and_update(self):
-        """Ensure seats are created and then update from FPSM."""
+        """Ensure seats are created and then update from FPSM (LAZY OPTIMIZATION)."""
+        # Skip if seats already exist and we're not forcing redraw
+        if (hasattr(self, 'player_seats') and 
+            self.player_seats and 
+            all(seat is not None for seat in self.player_seats)):
+            print("🎯 Seats already exist - skipping creation, proceeding to update")
+            self._update_from_fpsm_state()
+            return
+        
         print("🎯 Ensuring seats are created and updating from FPSM...")
         
         # Force update to get actual canvas size
@@ -1300,8 +1372,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 player_frame.update_font_size(font_size)
     
     def _draw_community_card_area(self):
-        """Draw the community card area in the center."""
+        """Draw the community card area in the center (LAZY REDRAW OPTIMIZATION)."""
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        
+        # Check if community card area already exists and canvas size hasn't changed
+        current_size = (width, height)
+        if (hasattr(self, 'community_frame') and 
+            self.community_frame and 
+            hasattr(self, 'community_card_widgets') and
+            self.community_card_widgets and
+            hasattr(self, 'last_community_canvas_size') and
+            self.last_community_canvas_size == current_size):
+            print("🎯 Skipping community card area redraw - already exists and no size changes")
+            return
+        
+        print(f"🎯 Drawing community card area - canvas size: {width}x{height}")
         
         # Use layout manager for positioning
         community_x, community_y = self.layout_manager.calculate_community_card_position(width, height)
@@ -1333,10 +1418,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Store the community frame
         self.community_frame = community_frame
         self.canvas.create_window(community_x, community_y, window=community_frame, anchor="center")
+        
+        # Store canvas size for next comparison
+        self.last_community_canvas_size = current_size
     
     def _draw_pot_display(self):
-        """Draw the pot display in the center."""
+        """Draw the pot display in the center (LAZY REDRAW OPTIMIZATION)."""
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        
+        # Check if pot display already exists and canvas size hasn't changed
+        current_size = (width, height)
+        if (hasattr(self, 'pot_frame') and 
+            self.pot_frame and 
+            hasattr(self, 'last_pot_canvas_size') and
+            self.last_pot_canvas_size == current_size):
+            print("🎯 Skipping pot display redraw - already exists and no size changes")
+            return
+        
+        print(f"🎯 Drawing pot display - canvas size: {width}x{height}")
         
         # Use layout manager for positioning
         pot_x, pot_y = self.layout_manager.calculate_pot_position(width, height)
@@ -1367,11 +1466,35 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Store the pot frame
         self.pot_frame = pot_frame
         self.canvas.create_window(pot_x, pot_y, window=pot_frame, anchor="center")
+        
+        # Store canvas size for next comparison
+        self.last_pot_canvas_size = current_size
     
     def _on_resize(self, event=None):
-        """Handle resize events."""
+        """Handle resize events (LAZY REDRAW OPTIMIZATION)."""
         if event and event.width > 1 and event.height > 1:
-            self._draw_table()
+            # Force redraw of all elements when canvas size changes
+            self._force_complete_redraw()
+    
+    def _force_complete_redraw(self):
+        """Force a complete redraw of all UI elements (used on resize)."""
+        print("🎯 Forcing complete redraw (resize detected)")
+        
+        # Reset all canvas size tracking to force redraw
+        if hasattr(self, 'last_canvas_size'):
+            delattr(self, 'last_canvas_size')
+        if hasattr(self, 'last_seats_canvas_size'):
+            delattr(self, 'last_seats_canvas_size')
+        if hasattr(self, 'last_pot_canvas_size'):
+            delattr(self, 'last_pot_canvas_size')
+        if hasattr(self, 'last_community_canvas_size'):
+            delattr(self, 'last_community_canvas_size')
+        
+        # Mark table as not drawn to force redraw
+        self.table_drawn = False
+        
+        # Redraw table (this will trigger all sub-elements)
+        self._draw_table()
     
     def set_state_machine(self, state_machine):
         """Set the state machine for this widget."""
@@ -1445,13 +1568,23 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.after(100, self._draw_table)
     
     def _draw_table(self):
-        """Draw the poker table with felt design."""
+        """Draw the poker table with felt design (LAZY REDRAW OPTIMIZATION)."""
         if not self.canvas or self.canvas.winfo_width() <= 1:
             self.after(100, self._draw_table)
+            return
+        
+        # Check if table is already drawn and canvas size hasn't changed
+        current_size = (self.canvas.winfo_width(), self.canvas.winfo_height())
+        if (hasattr(self, 'last_canvas_size') and 
+            self.last_canvas_size == current_size and 
+            self.table_drawn):
+            print("🎯 Skipping table redraw - no size changes detected")
             return
             
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
+        
+        print(f"🎯 Drawing table - canvas size: {width}x{height}")
         
         # Clear canvas
         self.canvas.delete("all")
@@ -1474,9 +1607,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Draw pot display
         self._draw_pot_display()
+        
+        # Mark table as drawn and store canvas size
+        self.table_drawn = True
+        self.last_canvas_size = current_size
     
     def _draw_player_seats(self):
-        """Draw player seats around the table."""
+        """Draw player seats around the table (LAZY REDRAW OPTIMIZATION)."""
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         
         # Use default size if canvas not ready
@@ -1484,7 +1621,22 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             width, height = 800, 600
             print(f"🎯 Using default canvas size for seat positioning: {width}x{height}")
         
+        # Check if seats already exist and canvas size hasn't changed
+        current_size = (width, height)
+        if (hasattr(self, 'player_seats') and 
+            self.player_seats and 
+            all(seat is not None for seat in self.player_seats) and
+            hasattr(self, 'last_seats_canvas_size') and
+            self.last_seats_canvas_size == current_size):
+            print("🎯 Skipping player seats redraw - already exist and no size changes")
+            return
+        
+        print(f"🎯 Drawing player seats - canvas size: {width}x{height}")
+        
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        
+        # Initialize player seats list
+        self.player_seats = [None] * 6
         
         # Use layout manager for positioning
         player_positions = self.layout_manager.calculate_player_positions(width, height, 6)
@@ -1492,6 +1644,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         for i in range(6):
             seat_x, seat_y = player_positions[i]
             self._create_player_seat_widget(seat_x, seat_y, f"Player {i+1}", positions[i], i)
+        
+        # Store canvas size for next comparison
+        self.last_seats_canvas_size = current_size
     
     def _create_player_seat_widget(self, x, y, name, position, index):
         """Create a player seat widget with all components controlled by RPGW."""
