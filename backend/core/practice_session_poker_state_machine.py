@@ -368,7 +368,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     def _schedule_bot_actions(self):
         """Schedule bot actions to auto-play non-human players."""
         # Use after_idle to schedule bot actions so UI can update first
-        if hasattr(self, '_scheduled_bot_action'):
+        if getattr(self, '_scheduled_bot_action', False):
             return  # Already scheduled
         
         self._scheduled_bot_action = True
