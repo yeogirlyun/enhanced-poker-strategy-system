@@ -31,8 +31,6 @@ class GameConfig:
     big_blind: float = 1.0
     small_blind: float = 0.5
     starting_stack: float = 100.0
-    test_mode: bool = False
-    show_all_cards: bool = False  # For simulation mode
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -304,15 +302,14 @@ class FlexiblePokerStateMachine:
         # Assign positions based on dealer position
         self._assign_positions()
         
-        # Initialize deck if not in test mode
-        if not self.config.test_mode:
-            self.game_state.deck = self._create_deck()
-            random.shuffle(self.game_state.deck)
+        # Initialize and shuffle deck
+        self.game_state.deck = self._create_deck()
+        random.shuffle(self.game_state.deck)
         
-        # Deal cards - but preserve existing cards in test mode
+        # Deal cards to all players
         for player in self.game_state.players:
-            if not player.cards or (self.config.test_mode and (player.cards == ['**', '**'] or player.cards == [])):
-                # Only deal new cards if player doesn't have cards or has placeholder cards
+            if not player.cards:
+                # Only deal new cards if player doesn't have cards
                 player.cards = self._deal_cards(2)
         
         # Post blinds
@@ -354,9 +351,6 @@ class FlexiblePokerStateMachine:
     
     def _deal_cards(self, num_cards: int) -> List[str]:
         """Deal cards from the deck."""
-        if self.config.test_mode:
-            return ['**'] * num_cards  # Placeholder for test mode
-        
         cards = self.game_state.deck[:num_cards]
         self.game_state.deck = self.game_state.deck[num_cards:]
         return cards
@@ -788,10 +782,8 @@ class FlexiblePokerStateMachine:
                     "has_folded": p.has_folded,
                     "is_human": p.is_human,
                     "cards": p.cards if (
-                        self.config.show_all_cards or 
                         p.is_human or 
-                        self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND] or
-                        (len(p.cards) > 0 and p.cards[0] != "**" and p.cards[0] != "")
+                        self.current_state in [PokerState.SHOWDOWN, PokerState.END_HAND]
                     ) else ["**", "**"],
                 }
                 for p in self.game_state.players

@@ -21,8 +21,9 @@ from unittest.mock import MagicMock, patch
 sys.path.append('.')
 
 from core.flexible_poker_state_machine import (
-    FlexiblePokerStateMachine, GameConfig, GameEvent, EventListener, ActionType, PokerState, Player
+    GameEvent, EventListener, ActionType, PokerState, Player
 )
+from core.testable_poker_state_machine import TestablePokerStateMachine, TestableGameConfig
 from core.types import GameState
 
 
@@ -64,15 +65,13 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment."""
-        self.config = GameConfig(
+        self.config = TestableGameConfig(
             num_players=6,
             big_blind=1.0,
             small_blind=0.5,
-            starting_stack=100.0,
-            test_mode=True,
-            show_all_cards=True
+            starting_stack=100.0
         )
-        self.state_machine = FlexiblePokerStateMachine(self.config)
+        self.state_machine = TestablePokerStateMachine(self.config)
         self.event_listener = TestEventListener()
         self.state_machine.add_event_listener(self.event_listener)
         self.start_time = time.time()

@@ -14,9 +14,8 @@ from tkinter import messagebox
 # Import core components
 from core.json_hands_database import JSONHandsDatabase, HandCategory
 from core.types import ActionType
-from core.flexible_poker_state_machine import (
-    FlexiblePokerStateMachine, GameConfig, GameEvent, EventListener, Player
-)
+from core.flexible_poker_state_machine import GameEvent, EventListener, Player
+from core.testable_poker_state_machine import HandsReviewPokerStateMachine, TestableGameConfig
 
 # Import UI components
 from .hands_review_poker_widget import HandsReviewPokerWidget
@@ -630,19 +629,16 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 except Exception as e:
                     print(f"⚠️ Error parsing stakes '{stakes_str}': {e}")
             
-            # Create FPSM with simulation configuration using real stakes (no forced padding)
+            # Create specialized hands review state machine using inheritance
             num_players = len(self.current_hand.players)
-            config = GameConfig(
+            config = TestableGameConfig(
                 num_players=num_players,
                 big_blind=big_blind,
                 small_blind=small_blind,
-                starting_stack=starting_stack,
-                test_mode=True,  # Enable test mode for automatic state advancement
-                show_all_cards=True,  # Show all cards in simulation mode
-                auto_advance=True  # Enable auto-advance for smooth street progression
+                starting_stack=starting_stack
             )
             
-            self.fpsm = FlexiblePokerStateMachine(config)
+            self.fpsm = HandsReviewPokerStateMachine(config)
             
             # Add this panel as an event listener
             self.fpsm.add_event_listener(self)
