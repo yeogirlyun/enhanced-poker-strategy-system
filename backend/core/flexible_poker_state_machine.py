@@ -424,10 +424,13 @@ class FlexiblePokerStateMachine:
             self.players_acted_this_round.clear()
             if new_state != PokerState.PREFLOP_BETTING:
                 self._reset_bets_for_new_round()
-            # Set first action player for preflop if not set
+            # Set first action player
             if new_state == PokerState.PREFLOP_BETTING:
-                self.action_player_index = self._find_first_active_after_dealer()
+                # Preflop: First action is UTG (player after big blind)
+                # Don't override - action player was already set correctly in start_hand()
+                pass
             else:
+                # Postflop: First action is player after dealer (SB if active)
                 self.action_player_index = self._find_first_active_after_dealer()
             first_player = self.game_state.players[self.action_player_index].name
             self.session_logger.log_system("INFO", "STATE_MACHINE", 

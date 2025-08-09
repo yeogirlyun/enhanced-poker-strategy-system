@@ -119,8 +119,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if (last_player.get("name") != current_player.get("name") or
                 last_player.get("stack") != current_player.get("stack") or
                 last_player.get("current_bet") != current_player.get("current_bet") or
-                last_player.get("cards") != current_player.get("cards") or
                 last_player.get("has_folded") != current_player.get("has_folded")):
+                return True
+            
+            # Special handling for cards - don't trigger redraw if cards go from real to hidden
+            last_cards = last_player.get("cards", [])
+            current_cards = current_player.get("cards", [])
+            
+            # Only consider it a change if cards go from hidden/empty to real cards
+            # Don't redraw when real cards become hidden (preserve visual state)
+            if (last_cards != current_cards and 
+                not (last_cards and current_cards == ["**", "**"])):  # Don't trigger on real→hidden
                 return True
         
         return False  # No meaningful changes detected
@@ -580,10 +589,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 # Also show graphical money display for existing bets (like blinds)
                 self._show_bet_display_for_player(player_index, "bet", bet_amount)
         
-        # Only update cards if they changed
-        if last_state.get("cards") != cards:
+        # Only update cards if they changed (with preservation logic)
+        last_cards = last_state.get("cards", [])
+        if (last_cards != cards and 
+            not (last_cards and cards == ["**", "**"])):  # Don't clear real cards with hidden
             self._set_player_cards_from_display_state(player_index, cards)
-            print(f"🎴 Updated player {player_index} cards: {cards}")
+            print(f"🎴 Updated player {player_index} cards: {last_cards} → {cards}")
+        elif last_cards and cards == ["**", "**"]:
+            print(f"🎴 Preserving player {player_index} cards: {last_cards} (ignoring hidden card data)")
         
         # Only update folded status if it changed
         if last_state.get("has_folded", False) != has_folded:
@@ -627,6 +640,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         except tk.TclError:
                             # Widget was destroyed, skip
                             pass
+                    elif card == "**" and current_card:
+                        # Preserve current card when state says hidden but we already have a card
+                        print(f"🎴 Player {player_index} card {i}: preserved {current_card} (ignoring ** placeholder)")
                     elif current_card != "":
                         # Only clear cards if they were previously set - preserve cards during transitions
                         # Don't clear cards just because the display state has empty cards temporarily
