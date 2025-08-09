@@ -591,11 +591,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if i < len(self.player_seats) and self.player_seats[i]:
                 self._update_player_from_display_state(i, player_info)
         
-        # ALWAYS redraw community cards
+        # ALWAYS redraw community cards (filter out placeholder cards)
         board_cards = display_state.get("board", [])
-        print(f"🎴 FORCE updating community cards: {board_cards}")
+        # Filter out placeholder cards ("**") and ensure we have valid cards
+        filtered_board_cards = [card for card in board_cards if card and card != "**" and len(card) >= 2]
+        print(f"🎴 FORCE updating community cards: {board_cards} → filtered: {filtered_board_cards}")
         self._draw_community_card_area()
-        self._update_community_cards_from_display_state(board_cards)
+        self._update_community_cards_from_display_state(filtered_board_cards)
         
         # ALWAYS redraw pot
         pot_amount = display_state.get("pot", 0.0)
@@ -691,15 +693,35 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 if current_card != card:
                     if card and card != "**" and card != "" and card is not None:
                         try:
-                            card_widgets[i].set_card(card, is_folded=False)
+                            # Check if player has folded - if so, show card backs
+                            player_has_folded = False
+                            if player_index < len(self.last_player_states) and self.last_player_states[player_index]:
+                                player_has_folded = self.last_player_states[player_index].get("has_folded", False)
+                            
+                            card_widgets[i].set_card(card, is_folded=player_has_folded)
                             card_widgets[i]._current_card = card
-                            print(f"🎴 Player {player_index} card {i}: {current_card} → {card}")
+                            if player_has_folded:
+                                print(f"🎴 Player {player_index} card {i}: {current_card} → {card} (FOLDED - showing card back)")
+                            else:
+                                print(f"🎴 Player {player_index} card {i}: {current_card} → {card}")
                         except tk.TclError:
                             # Widget was destroyed, skip
                             pass
-                    elif card == "**" and current_card:
-                        # Preserve current card when state says hidden but we already have a card
-                        print(f"🎴 Player {player_index} card {i}: preserved {current_card} (ignoring ** placeholder)")
+                    elif card == "**":
+                        # Card is hidden - show empty card (no back) unless in hands review mode
+                        # In hands review mode, preserve existing cards for simulation
+                        if current_card and hasattr(self, 'state_machine') and self.state_machine and self.state_machine.config.show_all_cards:
+                            # In hands review mode with show_all_cards=True, preserve the card
+                            print(f"🎴 Player {player_index} card {i}: preserved {current_card} (hands review mode)")
+                        else:
+                            # Normal game mode - hide the card by clearing it
+                            try:
+                                card_widgets[i].set_card("", is_folded=False)  # Empty card, not card back
+                                card_widgets[i]._current_card = ""
+                                print(f"🎴 Player {player_index} card {i}: {current_card} → hidden (empty card)")
+                            except tk.TclError:
+                                # Widget was destroyed, skip
+                                pass
                     elif current_card != "":
                         # Only clear cards if they were previously set - preserve cards during transitions
                         # Don't clear cards just because the display state has empty cards temporarily

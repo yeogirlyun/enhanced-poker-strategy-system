@@ -587,14 +587,15 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     self.historical_actions.append({
                         'street': street,
                         'actor': action.get('actor'),
-                        'type': action.get('type', '').upper(),
-                        'amount': action.get('amount', 0)
+                        'action_type': action.get('action_type', action.get('type', '')),
+                        'amount': action.get('amount', 0),
+                        'to_amount': action.get('to_amount', action.get('amount', 0))
                     })
         
         self.use_historical_actions = True
         print(f"🎯 Prepared {len(self.historical_actions)} historical actions for legendary hand")
         for i, action in enumerate(self.historical_actions):
-            print(f"  [{i}] {action['street']}: Actor {action['actor']} {action['type']} ${action['amount']}")
+            print(f"  [{i}] {action['street']}: Actor {action['actor']} {action.get('action_type', action.get('type', 'UNKNOWN'))} ${action['amount']}")
     
     def setup_hand_for_simulation(self):
         """Setup the hand for simulation using FPSM."""
@@ -629,8 +630,8 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 except Exception as e:
                     print(f"⚠️ Error parsing stakes '{stakes_str}': {e}")
             
-            # Create FPSM with simulation configuration using real stakes
-            num_players = max(6, len(self.current_hand.players))
+            # Create FPSM with simulation configuration using real stakes (no forced padding)
+            num_players = len(self.current_hand.players)
             config = GameConfig(
                 num_players=num_players,
                 big_blind=big_blind,
@@ -652,19 +653,25 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             
             # Use actual legendary hand players
             for i, player_info in enumerate(players_data):
-                # Extract cards - they should be in 'cards' field
-                cards = player_info.get('cards', [])
+                # Extract cards - try both 'hole_cards' and 'cards' fields
+                cards = player_info.get('hole_cards', player_info.get('cards', []))
                 if len(cards) < 2:
-                    # Fallback to sample cards if insufficient data
-                    sample_cards = [["Ah", "Ks"], ["Qd", "Jc"], ["Th", "9s"], ["8d", "7c"], ["6h", "5s"], ["4d", "3c"]]
-                    cards = sample_cards[i] if i < len(sample_cards) else ["**", "**"]
+                    # In hands review mode, we need to see everyone's cards
+                    # If player has no cards in legendary hand data, generate random cards for visualization
+                    # This ensures all players have visible cards in hands review
+                    sample_hole_cards = [
+                        ["As", "Ks"], ["Qd", "Jc"], ["Tc", "9h"], ["8s", "7d"], 
+                        ["6h", "5c"], ["4s", "3d"], ["2h", "Ac"], ["Kd", "Qh"]
+                    ]
+                    cards = sample_hole_cards[i % len(sample_hole_cards)]
+                    print(f"🎯 Player {i} had no cards in legendary hand data - assigned sample cards: {cards} for visualization")
                 elif len(cards) > 2:
                     # Only take first 2 cards (hole cards)
                     cards = cards[:2]
                 
-                # Calculate estimated stack based on pot and betting amounts
-                # For legendary hands, use high stakes stacks
-                estimated_stack = starting_stack
+                # Use actual starting stack from hand data if available
+                estimated_stack = player_info.get('starting_stack', starting_stack)
+                print(f"👤 Created legendary player {i}: {player_info.get('name', f'Player {i+1}')} with cards: {cards} stack: ${estimated_stack:,.0f}")
                 
                 # Create player with real name and cards from legendary hand
                 player = Player(
@@ -676,56 +683,99 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     cards=cards
                 )
                 fpsm_players.append(player)
-                print(f"👤 Created legendary player {i}: {player.name} with cards: {cards} stack: ${player.stack:,.0f}")
             
-            # Ensure we have exactly 6 players (pad with default players if needed)
-            while len(fpsm_players) < 6:
-                i = len(fpsm_players)
-                sample_cards = [["Ah", "Ks"], ["Qd", "Jc"], ["Th", "9s"], ["8d", "7c"], ["6h", "5s"], ["4d", "3c"]]
-                player = Player(
-                    name=f"Player {i+1}", 
-                    stack=1000.0, 
-                    position="", 
-                    is_human=False, 
-                    is_active=True, 
-                    cards=sample_cards[i] if i < len(sample_cards) else ["**", "**"]
-                )
-                fpsm_players.append(player)
-                print(f"👤 Added default player {i}: {player.name} with cards: {player.cards}")
+            # Use actual number of players from the hand (no padding for heads-up)
+            actual_player_count = len(self.current_hand.players)
+            print(f"🎯 Using actual player count: {actual_player_count} (no dummy padding)")
+            
+            # Only pad if we have fewer than 2 players (minimum for poker)
+            if len(fpsm_players) < 2:
+                print(f"⚠️ Only {len(fpsm_players)} players found, padding to minimum of 2")
+                while len(fpsm_players) < 2:
+                    i = len(fpsm_players)
+                    sample_cards = [["Ah", "Ks"], ["Qd", "Jc"]]
+                    player = Player(
+                        name=f"Player {i+1}", 
+                        stack=1000.0, 
+                        position="", 
+                        is_human=False, 
+                        is_active=True, 
+                        cards=sample_cards[i] if i < len(sample_cards) else ["**", "**"]
+                    )
+                    fpsm_players.append(player)
+                    print(f"👤 Added default player {i}: {player.name} with cards: {player.cards}")
             
             # Extract board cards from legendary hand data
             board_cards = []
             if hasattr(self.current_hand, 'board') and self.current_hand.board:
                 # Handle both dict and list formats for board
                 if isinstance(self.current_hand.board, dict):
-                    # Convert dict format to list
-                    for street in ['flop', 'turn', 'river']:
-                        if street in self.current_hand.board:
-                            street_data = self.current_hand.board[street]
-                            if isinstance(street_data, dict):
-                                if 'cards' in street_data:
-                                    board_cards.extend(street_data['cards'])
-                                elif 'card' in street_data:
-                                    board_cards.append(street_data['card'])
-                            elif isinstance(street_data, list):
-                                board_cards.extend(street_data)
-                            elif isinstance(street_data, str):
-                                board_cards.append(street_data)
-                    print(f"🎯 Converted board dict to list: {board_cards}")
+                    # Try to use all_cards first if available and complete
+                    if 'all_cards' in self.current_hand.board:
+                        all_cards = self.current_hand.board['all_cards']
+                        if len(all_cards) >= 5:
+                            board_cards = all_cards[:5]  # Use first 5 cards
+                            print(f"🎯 Using complete all_cards: {board_cards}")
+                        else:
+                            print(f"🎯 Incomplete all_cards ({len(all_cards)} cards), generating full board")
+                            board_cards = []
+                    
+                    # If all_cards is incomplete or missing, try street-by-street
+                    if not board_cards:
+                        for street in ['flop', 'turn', 'river']:
+                            if street in self.current_hand.board:
+                                street_data = self.current_hand.board[street]
+                                if isinstance(street_data, dict):
+                                    if 'cards' in street_data:
+                                        board_cards.extend(street_data['cards'])
+                                    elif 'card' in street_data:
+                                        board_cards.append(street_data['card'])
+                                elif isinstance(street_data, list):
+                                    board_cards.extend(street_data)
+                                elif isinstance(street_data, str):
+                                    board_cards.append(street_data)
+                        print(f"🎯 Converted board dict to list: {board_cards}")
+                        
                 elif isinstance(self.current_hand.board, list):
                     board_cards = self.current_hand.board.copy()
-            elif hasattr(self.current_hand, 'actions') and self.current_hand.actions:
-                # For legendary hands, board cards may need to be inferred from actions
-                # For now, use a sample board that works with the betting pattern
-                if 'flop' in self.current_hand.actions:
-                    board_cards.extend(['Ah', '8c', '7h'])  # Sample flop
-                if 'turn' in self.current_hand.actions:
-                    board_cards.append('3s')  # Sample turn
-                if 'river' in self.current_hand.actions:
-                    board_cards.append('9d')  # Sample river
-                print(f"🎯 Using sample board cards for legendary hand: {board_cards}")
             
-            print(f"🎯 Board cards extracted: {board_cards}")
+            # If we don't have 5 board cards, generate the missing ones for a complete simulation
+            if len(board_cards) < 5:
+                print(f"🎯 Incomplete board data ({len(board_cards)} cards), generating missing community cards")
+                
+                # Always generate 5 cards for complete simulation (needed for showdown)
+                needed_cards = 5
+                
+                # Use existing cards as base and generate missing ones that don't conflict with player hole cards
+                all_player_cards = []
+                if hasattr(self.current_hand, 'players'):
+                    for player in self.current_hand.players:
+                        hole_cards = player.get('hole_cards', player.get('cards', []))
+                        all_player_cards.extend(hole_cards)
+                
+                sample_cards = ['As', 'Kh', 'Qc', 'Jd', '9d', '7s', '5h', '3c', '2d']
+                while len(board_cards) < needed_cards:
+                    # Add cards that don't conflict with existing board cards or player hole cards
+                    for card in sample_cards:
+                        if (card not in board_cards and 
+                            card not in all_player_cards and 
+                            len(board_cards) < needed_cards):
+                            board_cards.append(card)
+                            break
+                    # Fallback if we run out of sample cards
+                    if len(board_cards) < needed_cards and len([c for c in sample_cards if c not in board_cards and c not in all_player_cards]) == 0:
+                        # Use more sample cards
+                        extra_cards = ['4h', '6c', '8s', 'Tc', 'Jh', 'Qs', 'Kd', 'Ad']
+                        for card in extra_cards:
+                            if (card not in board_cards and 
+                                card not in all_player_cards and 
+                                len(board_cards) < needed_cards):
+                                board_cards.append(card)
+                                break
+                
+                print(f"🎯 Generated complete board with {len(board_cards)} cards: {board_cards}")
+            
+            print(f"🎯 Final board cards: {board_cards}")
             
             # Start the hand with existing players
             self.fpsm.start_hand(existing_players=fpsm_players)
@@ -748,7 +798,8 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             
             self.poker_game_widget = ReusablePokerGameWidget(
                 self.game_container,
-                state_machine=self.fpsm
+                state_machine=self.fpsm,
+                debug_mode=False  # Enable sounds and animations
             )
             self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
@@ -1026,32 +1077,46 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 break
                 
             next_action = self.historical_actions[check_index]
-            print(f"🎯 Checking historical action [{check_index}]: Actor {next_action['actor']} {next_action['type']} ${next_action['amount']}")
+            print(f"🎯 Checking historical action [{check_index}]: Actor {next_action['actor']} {next_action.get('action_type', next_action.get('type', 'UNKNOWN'))} ${next_action['amount']}")
             print(f"🎯 Current player: {player.name} (FPSM index {fpsm_player_index} → Actor {player_actor_id})")
             
-            # Check if this action belongs to the current player
-            if next_action['actor'] == player_actor_id:
-                # Map action string to ActionType
+            # Check if this action belongs to the current player (ensure same type comparison)
+            print(f"🔍 Comparing: next_action['actor']={next_action['actor']} (type: {type(next_action['actor'])}) vs player_actor_id={player_actor_id} (type: {type(player_actor_id)})")
+            if str(next_action['actor']) == str(player_actor_id):
+                # Map action string to ActionType (support both uppercase and lowercase)
                 action_type_map = {
                     'FOLD': ActionType.FOLD,
+                    'fold': ActionType.FOLD,
                     'CHECK': ActionType.CHECK,
+                    'check': ActionType.CHECK,
                     'CALL': ActionType.CALL,
+                    'call': ActionType.CALL,
                     'BET': ActionType.BET,
+                    'bet': ActionType.BET,
                     'RAISE': ActionType.RAISE,
+                    'raise': ActionType.RAISE,
                     'ALL-IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET,
-                    'ALL_IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET
+                    'ALL_IN': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET,
+                    'all-in': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET,
+                    'all_in': ActionType.ALL_IN if hasattr(ActionType, 'ALL_IN') else ActionType.BET
                 }
                 
-                action_type_str = next_action['type']
+                action_type_str = next_action.get('action_type', next_action.get('type', 'UNKNOWN'))
                 if action_type_str in action_type_map:
-                    print(f"✅ MATCH! Historical action: {player.name} (actor {player_actor_id}) {action_type_str} ${next_action['amount']:,.0f}")
+                    # Use to_amount for raises if available, otherwise use amount
+                    action_amount = next_action.get('to_amount', next_action['amount'])
+                    print(f"✅ MATCH! Historical action: {player.name} (actor {player_actor_id}) {action_type_str} ${action_amount:,.0f}")
                     # Advance the historical index to this action + 1
                     self.historical_action_index = check_index + 1
                     print(f"🎯 Advanced historical index to {self.historical_action_index}")
                     return {
                         'type': action_type_map[action_type_str],
-                        'amount': next_action['amount']
+                        'amount': action_amount
                     }
+                else:
+                    print(f"❌ Unknown action type: {action_type_str}")
+            else:
+                print(f"❌ Actor mismatch: {next_action['actor']} != {player_actor_id}")
             
             # If we didn't find a match and this is the first action we checked, show the mismatch
             if lookahead == 0:
@@ -1157,10 +1222,21 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             fpsm_player_index = self.get_player_fpsm_index(player)
             player_actor_id = fpsm_to_actor.get(fpsm_player_index)
             
-            # Actors 3,4,5,6 should fold preflop in the legendary hand
-            # Also fold players with no actor mapping (Actor None)
-            if player_actor_id in [3, 4, 5, 6] or player_actor_id is None:
-                print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - should have folded preflop")
+            # Only force fold if this actor has NO historical actions in the entire hand
+            # This prevents dummy players from participating, but allows real players to play
+            if player_actor_id is None:
+                print(f"🎯 Forcing fold for {player.name} (no actor mapping) - not in hand")
+                return {'type': ActionType.FOLD, 'amount': 0}
+            
+            # Check if this actor has ANY historical actions in the hand
+            has_historical_actions = False
+            for action in self.historical_actions:
+                if action.get('actor_id') == player_actor_id:
+                    has_historical_actions = True
+                    break
+            
+            if not has_historical_actions:
+                print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - no historical actions found")
                 return {'type': ActionType.FOLD, 'amount': 0}
         
         # Fallback to original logic for non-legendary hands or when no historical action matches
@@ -1359,7 +1435,19 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         elif event.event_type == "hand_complete":
             winners = event.data.get('winners', [])
-            winner_names = [w.name for w in winners] if winners else ["No winners"]
+            # Handle both string and object winner formats
+            winner_names = []
+            for w in winners:
+                if isinstance(w, str):
+                    winner_names.append(w)
+                elif hasattr(w, 'name'):
+                    winner_names.append(w.name)
+                else:
+                    winner_names.append(str(w))
+            
+            if not winner_names:
+                winner_names = ["No winners"]
+                
             pot_amount = event.data.get('pot_amount', 0.0)
             hand_msg = f"Hand complete - Winners: {', '.join(winner_names)}, Pot: ${pot_amount:,.0f}"
             print(f"🎯 {hand_msg}")

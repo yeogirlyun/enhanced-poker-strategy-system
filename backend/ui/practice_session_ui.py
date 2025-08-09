@@ -45,16 +45,18 @@ class CardWidget(tk.Canvas):
         print(f"🎴 CardWidget.set_card called with: '{card_str}', is_folded={is_folded}")
         
         self.delete("all") # Clear previous drawing
-        if not card_str or card_str == "**" or is_folded:
-            self._draw_card_back(is_folded=is_folded)
-            self.update()
-            return
-
-        # Set normal white background
-        self.config(bg="white")
         
-        # Draw the card content
-        self._draw_card_content(card_str)
+        # Handle different card states
+        if is_folded:
+            # Player has folded - show dark folded card back
+            self._draw_card_back(is_folded=True)
+        elif not card_str or card_str == "**":
+            # Card is hidden/empty - show transparent/empty space instead of card back
+            self._draw_empty_card()
+        else:
+            # Valid card - show the actual card
+            self.config(bg="white")
+            self._draw_card_content(card_str)
         
         # Force update to ensure the drawing is applied
         self.update()
@@ -115,6 +117,19 @@ class CardWidget(tk.Canvas):
             center_x, center_y = self.width // 2, self.height // 2
             self.create_oval(center_x-8, center_y-8, center_x+8, center_y+8, 
                             fill=light_red, outline=border_color, width=1)
+    
+    def _draw_empty_card(self):
+        """Draw an empty/transparent card space (no visible card)."""
+        # Clear any existing content
+        self.delete("all")
+        
+        # Set transparent/matching background
+        parent_bg = "#1a1a1a"  # Match the player pod background
+        self.config(bg=parent_bg)
+        
+        # Draw a subtle dashed border to indicate card space exists
+        self.create_rectangle(2, 2, self.width-2, self.height-2, 
+                            fill="", outline="#404040", width=1, dash=(3, 3))
     
 
     def set_folded(self):
