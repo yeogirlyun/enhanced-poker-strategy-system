@@ -70,6 +70,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_action_player = -1
         self.table_drawn = False
         
+        # Store poker game configuration for dynamic positioning
+        self.poker_game_config = None
+        
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
         print("🔄 Resetting change tracking for new hand")
@@ -84,6 +87,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Clear bet displays for new hand
         self._clear_all_bet_displays_permanent()
+    
+    def set_poker_game_config(self, config):
+        """Set poker game configuration for dynamic positioning."""
+        self.poker_game_config = config
+        print(f"🎯 Set poker game config: {getattr(config, 'num_players', 'unknown')} players")
     
     def _display_state_changed(self, new_state: Dict[str, Any]) -> bool:
         """Check if display state has meaningfully changed (LAZY REDRAW OPTIMIZATION)."""
@@ -1649,20 +1657,86 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         print(f"🎯 Drawing player seats - canvas size: {width}x{height}")
         
-        positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        # Get dynamic positions based on current display state
+        dynamic_positions = self._get_dynamic_player_positions()
+        num_players = len(dynamic_positions)
         
-        # Initialize player seats list
-        self.player_seats = [None] * 6
+        # Initialize player seats list for actual number of players
+        self.player_seats = [None] * num_players
         
         # Use layout manager for positioning
-        player_positions = self.layout_manager.calculate_player_positions(width, height, 6)
+        player_positions = self.layout_manager.calculate_player_positions(width, height, num_players)
         
-        for i in range(6):
+        for i in range(num_players):
             seat_x, seat_y = player_positions[i]
-            self._create_player_seat_widget(seat_x, seat_y, f"Player {i+1}", positions[i], i)
+            player_name = dynamic_positions[i].get('name', f"Player {i+1}")
+            player_position = dynamic_positions[i].get('position', '')
+            self._create_player_seat_widget(seat_x, seat_y, player_name, player_position, i)
         
         # Store canvas size for next comparison
         self.last_seats_canvas_size = current_size
+    
+    def _get_dynamic_player_positions(self):
+        """Get dynamic player positions from current display state (NO HARDCODING)."""
+        # If we have display state, use actual player data
+        if hasattr(self, 'last_display_state') and self.last_display_state:
+            players = self.last_display_state.get('players', [])
+            if players:
+                return [
+                    {
+                        'name': player.get('name', f"Player {i+1}"),
+                        'position': player.get('position', '')
+                    }
+                    for i, player in enumerate(players)
+                ]
+        
+        # If we have a poker game config (from FPSM), use that
+        if hasattr(self, 'poker_game_config') and self.poker_game_config:
+            num_players = getattr(self.poker_game_config, 'num_players', 6)
+            return [
+                {
+                    'name': f"Player {i+1}",
+                    'position': self._calculate_position_for_seat(i, num_players)
+                }
+                for i in range(num_players)
+            ]
+        
+        # Default fallback for 6 players with calculated positions
+        default_num_players = 6
+        return [
+            {
+                'name': f"Player {i+1}",
+                'position': self._calculate_position_for_seat(i, default_num_players)
+            }
+            for i in range(default_num_players)
+        ]
+    
+    def _calculate_position_for_seat(self, seat_index: int, total_players: int) -> str:
+        """Calculate position name based on seat index and total players (DYNAMIC)."""
+        if total_players == 2:
+            # Heads-up
+            return "SB" if seat_index == 0 else "BB"
+        elif total_players == 3:
+            # 3-handed
+            positions = ["BTN", "SB", "BB"]
+            return positions[seat_index] if seat_index < len(positions) else ""
+        elif total_players == 4:
+            # 4-handed
+            positions = ["UTG", "BTN", "SB", "BB"]
+            return positions[seat_index] if seat_index < len(positions) else ""
+        elif total_players == 5:
+            # 5-handed
+            positions = ["UTG", "CO", "BTN", "SB", "BB"]
+            return positions[seat_index] if seat_index < len(positions) else ""
+        elif total_players >= 6:
+            # 6+ handed (standard)
+            positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+            if total_players > 6:
+                # For more than 6 players, add more MP positions
+                positions = ["UTG"] + [f"MP{i}" for i in range(1, total_players-4)] + ["CO", "BTN", "SB", "BB"]
+            return positions[seat_index] if seat_index < len(positions) else f"Seat{seat_index+1}"
+        else:
+            return f"Seat{seat_index+1}"
     
     def _create_player_seat_widget(self, x, y, name, position, index):
         """Create a player seat widget with all components controlled by RPGW."""

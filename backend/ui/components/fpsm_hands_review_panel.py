@@ -738,6 +738,10 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             )
             self.poker_game_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
+            # Set poker game config for dynamic positioning
+            if self.fpsm and hasattr(self.fpsm, 'config'):
+                self.poker_game_widget.set_poker_game_config(self.fpsm.config)
+            
             # Reset change tracking for flicker-free updates
             self.poker_game_widget.reset_change_tracking()
             
