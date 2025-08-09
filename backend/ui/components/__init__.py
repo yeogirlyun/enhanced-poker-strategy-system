@@ -15,6 +15,7 @@ from .dynamic_position_manager import DynamicPositionManager
 from .card_widget import CardWidget
 from .reusable_poker_game_widget import ReusablePokerGameWidget
 from .hands_review_poker_widget import HandsReviewPokerWidget
+from .practice_session_poker_widget import PracticeSessionPokerWidget
 
 __all__ = [
     'TierPanel',
@@ -29,5 +30,6 @@ __all__ = [
     'DynamicPositionManager',
     'CardWidget',
     'ReusablePokerGameWidget',
-    'HandsReviewPokerWidget'
+    'HandsReviewPokerWidget',
+    'PracticeSessionPokerWidget'
 ] 

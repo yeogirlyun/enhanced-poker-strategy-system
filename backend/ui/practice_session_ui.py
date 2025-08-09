@@ -17,10 +17,14 @@ import sys
 from enum import Enum
 from typing import Dict, List, Optional, Any
 
+# Import event listener interface
+from core.flexible_poker_state_machine import EventListener, GameEvent
+
 # Add the backend directory to the path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 
-from core.poker_state_machine import ImprovedPokerStateMachine, ActionType, PokerState
+from core.flexible_poker_state_machine import ActionType, PokerState, GameConfig
+from core.practice_session_poker_state_machine import PracticeSessionPokerStateMachine
 # from sound_manager import SoundManager  # Removed in cleanup
 from core.gui_models import THEME, FONTS
 from ui.components.tooltips import ToolTip
@@ -160,7 +164,7 @@ class PlayerPod(tk.Frame):
             self.chip_canvas.create_oval(x_offset + 2, y_offset - 3, x_offset + chip_width - 2, y_offset - chip_height + 3, 
                                        fill="", outline="white", width=1)
 
-class PracticeSessionUI(ttk.Frame):
+class PracticeSessionUI(ttk.Frame, EventListener):
     """
     A graphical, interactive practice session tab that correctly follows the
     state machine's flow.
@@ -224,29 +228,62 @@ class PracticeSessionUI(ttk.Frame):
         from utils.sound_manager import SoundManager
         self.sfx = SoundManager()
         
-        # Initialize state machine with proper root reference
-        from core.poker_state_machine_adapter import PokerStateMachineAdapter
-        self.state_machine = PokerStateMachineAdapter(
+        # Initialize specialized practice session state machine
+        
+        config = GameConfig(
             num_players=6,
-            strategy_data=strategy_data,
-            root_tk=self.root,  # Use the actual root window
-            test_mode=False
+            big_blind=1.0,
+            small_blind=0.5,
+            starting_stack=100.0
         )
         
-        # Set up callbacks after initialization
-        self.state_machine.on_action_required = self.prompt_human_action
-        self.state_machine.on_state_change = self._on_state_change
-        self.state_machine.on_hand_complete = self.handle_hand_complete
-        self.state_machine.on_action_player_changed = self.update_action_player_highlighting
-        self.state_machine.on_action_executed = self._handle_action_executed  # NEW: Selective updates for player actions
-        self.state_machine.on_round_complete = self._handle_round_complete  # NEW: Handle street completion
-        self.state_machine.on_dealing_cards = self._handle_dealing_start  # NEW: Handle card dealing start
-        self.state_machine.on_single_card_dealt = self._handle_single_card_dealt  # NEW: Handle single card dealt
-        self.state_machine.on_dealing_complete = self._handle_dealing_complete  # NEW: Handle dealing completion
-        self.state_machine.on_log_entry = self.add_game_message
+        self.state_machine = PracticeSessionPokerStateMachine(config, strategy_data)
+        
+        # Add this UI as an event listener to the state machine
+        self.state_machine.add_event_listener(self)
         
         # Setup UI
         self._setup_ui()
+    
+    def on_event(self, event: GameEvent):
+        """Handle events from the state machine (EventListener interface)."""
+        try:
+            # Map old callback-style events to new event-driven approach
+            if event.event_type == "action_required":
+                self.prompt_human_action()
+            elif event.event_type == "state_changed":
+                self._on_state_change()
+            elif event.event_type == "hand_complete":
+                self.handle_hand_complete()
+            elif event.event_type == "action_executed":
+                self._handle_action_executed(event)
+            elif event.event_type == "round_complete":
+                self._handle_round_complete()
+            elif event.event_type == "dealing_cards":
+                self._handle_dealing_start()
+            elif event.event_type == "single_card_dealt":
+                self._handle_single_card_dealt(event)
+            elif event.event_type == "dealing_complete":
+                self._handle_dealing_complete()
+            elif event.event_type == "practice_feedback":
+                self._handle_practice_feedback(event)
+            elif event.event_type == "practice_analysis":
+                self._handle_practice_analysis(event)
+            else:
+                # Default: update display for any event
+                self.update_display()
+        except Exception as e:
+            print(f"⚠️ Error handling event {event.event_type}: {e}")
+    
+    def _handle_practice_feedback(self, event: GameEvent):
+        """Handle practice-specific feedback events."""
+        if hasattr(event, 'data') and event.data and 'feedback' in event.data:
+            self.add_game_message(f"🎓 {event.data['feedback']}")
+    
+    def _handle_practice_analysis(self, event: GameEvent):
+        """Handle practice-specific analysis events.""" 
+        if hasattr(event, 'data') and event.data and 'analysis' in event.data:
+            self.add_game_message(f"💡 {event.data['analysis']}")
 
     def _setup_ui(self):
         """Sets up the UI layout with a responsive grid."""
@@ -1472,23 +1509,16 @@ class PracticeSessionUI(ttk.Frame):
         """Reset the entire game state."""
         try:
             # Reset the state machine
-            self.state_machine = ImprovedPokerStateMachine(
+            config = GameConfig(
                 num_players=self.num_players,
-                strategy_data=self.strategy_data,
-                root_tk=self.root
+                big_blind=1.0,
+                small_blind=0.5,
+                starting_stack=100.0
             )
+            self.state_machine = PracticeSessionPokerStateMachine(config, self.strategy_data)
             
-            # Set up callbacks
-            self.state_machine.on_action_required = self.prompt_human_action
-            self.state_machine.on_state_change = self._on_state_change
-            self.state_machine.on_hand_complete = self.handle_hand_complete
-            self.state_machine.on_action_player_changed = self.update_action_player_highlighting
-            self.state_machine.on_action_executed = self._handle_action_executed
-            self.state_machine.on_log_entry = self._log_message
-            self.state_machine.on_round_complete = self._handle_round_complete
-            self.state_machine.on_dealing_cards = self._handle_dealing_start
-            self.state_machine.on_single_card_dealt = self._handle_single_card_dealt
-            self.state_machine.on_dealing_complete = self._handle_dealing_complete
+            # Set up event listener
+            self.state_machine.add_event_listener(self)
             
             # Reset UI
             self._reset_ui_for_new_hand()
