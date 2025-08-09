@@ -541,9 +541,23 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.auto_play = False
         self.status_label.config(text="Simulation paused")
     
+    def pause_simulation_at_end(self):
+        """Pause the simulation at the end of hand without resetting action index."""
+        print("🏁 Hand simulation complete")
+        self.is_simulation_running = False
+        self.auto_play = False
+        self.status_label.config(text="Hand complete - all actions executed")
+    
     def next_action(self):
         """Execute the next action in the hand."""
         if not self.hand_actions:
+            return
+        
+        # Check if we're at the end of all actions
+        total_actions = sum(len(actions) for actions in self.hand_actions.values())
+        if self.current_action_index >= total_actions:
+            print(f"🏁 Already at end of hand ({self.current_action_index}/{total_actions})")
+            self.status_label.config(text="Hand complete - all actions executed")
             return
         
         # Find current action
@@ -584,7 +598,7 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Check if action is None (end of hand)
         if action is None:
             print("🎮 Reached end of hand - stopping simulation")
-            self.pause_simulation()
+            self.pause_simulation_at_end()
             return
             
         player_name = action.get('player_name', action.get('player', ''))
