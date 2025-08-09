@@ -673,34 +673,46 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _render_from_display_state(self, display_state: Dict[str, Any]):
         """Render the widget based on the FPSM's display state (LAZY REDRAW OPTIMIZATION)."""
         
-        # Clear animation flag if it's been stuck too long (failsafe)
+        # Protect ongoing bet animations (don't interrupt them with excessive redraws)
         if self.animating_bets_to_pot:
-            print("🎯 CLEARING STUCK ANIMATION FLAG - allowing normal rendering")
-            self.animating_bets_to_pot = False  # Force clear to prevent blocking
+            print("🛡️ PROTECTING BET ANIMATION - skipping excessive redraw")
+            return  # Don't redraw while animations are in progress
         
-        print("🎯 Rendering from FPSM display state (ALWAYS redraw - no lazy optimization)")
+        print("🎯 Rendering from FPSM display state (LAZY redraw optimization enabled)")
         
-        # ALWAYS redraw everything - remove lazy optimization completely
-        self._draw_table()
+        # Only redraw table if needed (lazy optimization to prevent flicker)
+        if not hasattr(self, '_table_drawn') or not self._table_drawn:
+            self._draw_table()
+            self._table_drawn = True
         
         # Update all players
         for i, player_info in enumerate(display_state.get("players", [])):
             if i < len(self.player_seats) and self.player_seats[i]:
                 self._update_player_from_display_state(i, player_info)
         
-        # ALWAYS redraw community cards (filter out placeholder cards)
+        # LAZY redraw community cards (only when changed)
         board_cards = display_state.get("board", [])
         # Filter out placeholder cards ("**") and ensure we have valid cards
         filtered_board_cards = [card for card in board_cards if card and card != "**" and len(card) >= 2]
-        print(f"🎴 FORCE updating community cards: {board_cards} → filtered: {filtered_board_cards}")
-        self._draw_community_card_area()
-        self._update_community_cards_from_display_state(filtered_board_cards)
         
-        # ALWAYS redraw pot
+        # Only update if cards actually changed
+        if not hasattr(self, '_last_board_cards') or self._last_board_cards != filtered_board_cards:
+            print(f"🎴 LAZY updating community cards: {getattr(self, '_last_board_cards', [])} → {filtered_board_cards}")
+            if not hasattr(self, '_community_area_drawn') or not self._community_area_drawn:
+                self._draw_community_card_area()
+                self._community_area_drawn = True
+            self._update_community_cards_from_display_state(filtered_board_cards)
+            self._last_board_cards = filtered_board_cards[:]
+        
+        # LAZY redraw pot (only when changed)
         pot_amount = display_state.get("pot", 0.0)
-        print(f"💰 FORCE updating pot display: ${pot_amount:,.2f}")
-        self._draw_pot_display()
-        self.update_pot_amount(pot_amount)
+        if not hasattr(self, '_last_pot_amount') or self._last_pot_amount != pot_amount:
+            print(f"💰 LAZY updating pot display: ${getattr(self, '_last_pot_amount', 0)} → ${pot_amount:,.2f}")
+            if not hasattr(self, '_pot_area_drawn') or not self._pot_area_drawn:
+                self._draw_pot_display()
+                self._pot_area_drawn = True
+            self.update_pot_amount(pot_amount)
+            self._last_pot_amount = pot_amount
         
         # Update current action player
         action_player_index = display_state.get("action_player", -1)
