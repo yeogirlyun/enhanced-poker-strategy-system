@@ -31,8 +31,8 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
     
     def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the hands review poker widget."""
-        # Force debug mode for faster animations in review
-        kwargs['debug_mode'] = True
+        # Enable normal mode for full animations and sounds
+        kwargs['debug_mode'] = False
         
         # Initialize the parent widget
         super().__init__(parent, state_machine=state_machine, **kwargs)
@@ -41,7 +41,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         self.always_show_cards = True
         self.review_mode = True
         
-        print("🎯 HandsReviewPokerWidget initialized - specialized for hands review")
+        print("🎯 HandsReviewPokerWidget initialized - full animations and sounds enabled")
     
     def _set_player_cards_from_display_state(self, player_index: int, cards: List[str]):
         """Override: Always show cards in hands review mode."""
@@ -49,6 +49,13 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
             return
         
         card_widgets = self.player_seats[player_index]["card_widgets"]
+        
+        # In hands review mode, get the actual player cards from FPSM directly
+        # This bypasses any display state filtering
+        actual_cards = self._get_actual_player_cards(player_index)
+        if actual_cards and len(actual_cards) >= 2:
+            cards = actual_cards
+            print(f"🎴 Hands Review: Using actual cards for player {player_index}: {cards}")
         
         if len(cards) >= 2 and len(card_widgets) >= 2:
             # In hands review mode, always show the first 2 cards
@@ -81,16 +88,36 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
                             pass
                     elif card == "**":
                         # In hands review, even hidden cards should be preserved if we have them
-                        if current_card:
+                        if current_card and current_card != "":
                             print(f"🎴 Hands Review: Player {player_index} card {i}: preserved {current_card} (ignoring ** in review mode)")
                         else:
-                            # If we truly don't have a card, show empty
+                            # If we truly don't have a card, show empty (not card back)
                             try:
-                                card_widgets[i].set_card("", is_folded=False)
+                                card_widgets[i].set_card("", is_folded=False)  # Empty, not card back
                                 card_widgets[i]._current_card = ""
-                                print(f"🎴 Hands Review: Player {player_index} card {i}: no card available")
+                                print(f"🎴 Hands Review: Player {player_index} card {i}: showing empty space (no card back)")
                             except tk.TclError:
                                 pass
+    
+    def _get_actual_player_cards(self, player_index: int) -> List[str]:
+        """Get actual player cards directly from FPSM, bypassing display state filtering."""
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            return []
+        
+        try:
+            if (hasattr(self.state_machine, 'game_state') and 
+                self.state_machine.game_state and 
+                player_index < len(self.state_machine.game_state.players)):
+                
+                player = self.state_machine.game_state.players[player_index]
+                if hasattr(player, 'cards') and player.cards:
+                    # If cards are not placeholders, return them
+                    if len(player.cards) >= 2 and player.cards[0] != "**":
+                        return player.cards[:2]  # Return first 2 cards (hole cards)
+        except Exception as e:
+            print(f"⚠️ Error getting actual player cards for player {player_index}: {e}")
+        
+        return []
     
     def _add_folded_overlay(self, card_widget):
         """Add a subtle visual indicator that this player folded without hiding the card."""
@@ -167,7 +194,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         print(f"🎯 Hands Review: Player {player_index} cards restored for new hand")
     
     def _handle_action_executed(self, event: GameEvent):
-        """Override: Simplified action handling for review mode."""
+        """Override: Enhanced action handling for review mode with sounds and animations."""
         print(f"🎯 Hands Review: Action executed - {event.action} by {event.player_name} for ${event.amount}")
         
         # Find player index
@@ -184,21 +211,32 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
             # Clear action indicators
             self._clear_action_indicators(player_index)
             
-            # Skip complex animations in review mode - just update display
-            # Show bet display if there's an amount
+            # Play sound based on action (re-enabled for better experience)
+            if event.action:
+                if event.action.value == "fold":
+                    self.play_sound("fold")
+                elif event.action.value == "call":
+                    self.play_sound("call") 
+                elif event.action.value == "bet":
+                    self.play_sound("bet")
+                elif event.action.value == "raise":
+                    self.play_sound("raise")
+                elif event.action.value == "check":
+                    self.play_sound("check")
+            
+            # Show bet display with normal animations
             if event.amount > 0:
                 self._show_bet_display_for_player(player_index, event.action.value if event.action else "bet", event.amount)
         
-        # Call parent's logging functionality but skip heavy animations
+        # Call parent's logging functionality
         self._log_event(event)
     
     def _animate_bet_to_pot(self, player_index, amount):
-        """Override: Simplified animation for review mode."""
-        # In review mode, skip complex animations and just update displays
-        print(f"🎯 Hands Review: Simplified bet animation - ${amount} from player {player_index}")
+        """Override: Re-enable animations for better hands review experience."""
+        print(f"🎯 Hands Review: Animating ${amount} from player {player_index} to pot")
         
-        # Just flash the pot instead of full animation
-        self._flash_pot_update(amount)
+        # Use parent's full animation for better visual feedback
+        super()._animate_bet_to_pot(player_index, amount)
     
     def _animate_street_progression(self, street_name, board_cards):
         """Override: Immediate street progression for review."""
@@ -208,10 +246,10 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         self._update_community_cards_from_display_state(board_cards)
     
     def play_sound(self, sound_type: str, **kwargs):
-        """Override: Disable sounds in review mode for focused study."""
-        # Hands review should be quiet for concentration
-        print(f"🔇 Hands Review: Sound disabled - {sound_type}")
-        pass
+        """Override: Re-enable sounds for better hands review experience."""
+        print(f"🔊 Hands Review: Playing sound - {sound_type}")
+        # Use parent's sound system for full audio feedback
+        super().play_sound(sound_type, **kwargs)
     
     def reveal_all_cards(self):
         """Override: Enhanced card revelation for study purposes."""
