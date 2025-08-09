@@ -264,12 +264,20 @@ class LegendaryHandsPHHLoader:
                 current_street = 'turn'
             elif stripped.startswith('[board.river]') and current_hand:
                 current_street = 'river'
-            elif stripped.startswith('cards =') and current_street and current_hand:
-                # Add board cards
+            elif (stripped.startswith('cards =') or stripped.startswith('card =')) and current_street and current_hand:
+                # Add board cards (handle both "cards" for flop and "card" for turn/river)
                 cards_str = stripped.split('=', 1)[1].strip()
                 try:
-                    cards = eval(cards_str)  # Parse the list
-                    current_board[current_street] = cards
+                    if stripped.startswith('cards ='):
+                        # Multiple cards (flop)
+                        cards = eval(cards_str)  # Parse the list
+                        current_board[current_street] = cards
+                    else:
+                        # Single card (turn/river)
+                        card = cards_str.strip().strip('"')
+                        if current_street not in current_board:
+                            current_board[current_street] = []
+                        current_board[current_street].append(card)
                 except (ValueError, SyntaxError):
                     pass
             
@@ -307,6 +315,11 @@ class LegendaryHandsPHHLoader:
                 amount = float(stripped.split('=', 1)[1].strip())
                 if current_actions[current_street]:
                     current_actions[current_street][-1]['amount'] = amount
+            elif stripped.startswith('to =') and current_street and current_hand and current_actions.get(current_street):
+                # Add "to" amount (for raises) to the last action
+                to_amount = float(stripped.split('=', 1)[1].strip())
+                if current_actions[current_street]:
+                    current_actions[current_street][-1]['to'] = to_amount
         
         # Add final hand (with conversion)
         if current_hand:
