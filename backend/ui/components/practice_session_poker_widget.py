@@ -36,15 +36,22 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self.suggestion_label = None
         self.stats_display = None
         
-        self._setup_practice_ui()
+        # Setup practice UI after parent initialization
+        self.after_idle(self._setup_practice_ui)
         
         print("🎓 PracticeSessionPokerWidget initialized - enhanced for learning")
     
     def _setup_practice_ui(self):
         """Set up practice-specific UI elements."""
-        # Create feedback area at the bottom
-        self.feedback_frame = tk.Frame(self, bg=self.table_color)
-        self.feedback_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
+        # Get table color or use default
+        table_bg = getattr(self, 'table_color', '#2F4F2F')
+        
+        # Create feedback area at the bottom using grid (parent uses grid)
+        self.feedback_frame = tk.Frame(self, bg=table_bg)
+        
+        # Configure grid to add feedback at bottom
+        self.grid_rowconfigure(1, weight=0)  # Feedback area (fixed height)
+        self.feedback_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
         
         # Strategy feedback label
         self.feedback_label = tk.Label(
@@ -75,7 +82,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self.suggestion_label.pack(fill=tk.X, pady=2)
         
         # Session stats display (initially hidden)
-        self.stats_frame = tk.Frame(self.feedback_frame, bg=self.table_color)
+        self.stats_frame = tk.Frame(self.feedback_frame, bg=table_bg)
         
         self.stats_label = tk.Label(
             self.stats_frame,
@@ -358,3 +365,18 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             "hands_played": 0,
             "performance": "No data available"
         }
+    
+    def increase_table_size(self):
+        """Increase the table size (inherited from RPGW)."""
+        # Implementation depends on parent class
+        print("🎓 Table size increase requested")
+    
+    def decrease_table_size(self):
+        """Decrease the table size (inherited from RPGW)."""
+        # Implementation depends on parent class  
+        print("🎓 Table size decrease requested")
+    
+    def change_table_felt(self, felt_color: str):
+        """Change the table felt color (inherited from RPGW)."""
+        # Implementation depends on parent class
+        print(f"🎓 Table felt change requested: {felt_color}")
