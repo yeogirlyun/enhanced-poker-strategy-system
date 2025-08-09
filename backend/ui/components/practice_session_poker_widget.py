@@ -551,7 +551,10 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def highlight_action_player(self, player_index: int):
         """Override: Enhanced action player highlighting for practice."""
-        super().highlight_action_player(player_index)
+        # DON'T call super() - we'll handle highlighting ourselves to distinguish human vs bot
+        
+        # Use the parent's highlighting method but with custom logic
+        self._highlight_current_player(player_index)
         
         # Play notification sound when highlighting any player
         print(f"🔊 Playing turn notification sound for player {player_index}")
@@ -584,6 +587,76 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             else:
                 # It's not the human player's turn - disable action buttons
                 self._disable_action_buttons()
+    
+    def _highlight_current_player(self, player_index):
+        """Override: Practice-specific player highlighting that distinguishes human vs bot."""
+        for i, player_seat in enumerate(self.player_seats):
+            if player_seat:
+                player_frame = player_seat["frame"]
+                
+                # Reset all player highlighting first
+                player_frame.config(
+                    highlightbackground="#2F4F2F",
+                    highlightthickness=1,
+                    bg="#2F4F2F"
+                )
+                
+                # Remove any existing action indicators
+                for widget in player_frame.winfo_children():
+                    if hasattr(widget, '_action_indicator'):
+                        widget.destroy()
+        
+        # Now highlight the current action player
+        if player_index < len(self.player_seats) and self.player_seats[player_index]:
+            player_frame = self.player_seats[player_index]["frame"]
+            
+            # Check if this player is human
+            is_human_player = False
+            if (hasattr(self, 'state_machine') and 
+                self.state_machine and 
+                player_index < len(self.state_machine.game_state.players)):
+                is_human_player = self.state_machine.game_state.players[player_index].is_human
+            
+            if is_human_player:
+                # Human player highlighting - bright gold with "YOUR TURN"
+                player_frame.config(
+                    highlightbackground="#FFD700",  # Bright gold
+                    highlightthickness=6,           # Much thicker border
+                    bg="#2A2A00"                    # Darker background for contrast
+                )
+                
+                # Add "YOUR TURN" indicator for human player
+                action_label = tk.Label(
+                    player_frame,
+                    text="⚡ YOUR TURN ⚡",
+                    bg="#FFD700",
+                    fg="#000000",
+                    font=("Arial", 10, "bold"),
+                    relief="raised",
+                    bd=2
+                )
+                action_label.pack(side=tk.TOP, pady=(0, 2))
+                action_label._action_indicator = True
+            else:
+                # Bot player highlighting - blue with "BOT THINKING"
+                player_frame.config(
+                    highlightbackground="#4169E1",  # Royal blue
+                    highlightthickness=4,           # Thinner than human
+                    bg="#000A1A"                    # Dark blue background
+                )
+                
+                # Add "BOT THINKING" indicator for bot player
+                action_label = tk.Label(
+                    player_frame,
+                    text="🤖 BOT THINKING",
+                    bg="#4169E1",
+                    fg="white",
+                    font=("Arial", 9, "bold"),
+                    relief="raised",
+                    bd=2
+                )
+                action_label.pack(side=tk.TOP, pady=(0, 2))
+                action_label._action_indicator = True
     
     def reset_practice_session(self):
         """Reset the practice session and clear displays."""
