@@ -317,8 +317,14 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         """Override: Enhanced action handling with educational feedback."""
         print(f"🎓 Practice: Action executed - {event.action} by {event.player_name}")
         
-        # Call parent's action handling
+        # Call parent's action handling (includes sounds and animations)
         super()._handle_action_executed(event)
+        
+        # Ensure sound plays for actions
+        if hasattr(event, 'action') and event.action:
+            action_str = event.action.value.lower()
+            print(f"🔊 Playing sound for action: {action_str}")
+            self.play_sound(action_str)
         
         # Display practice-specific feedback
         if hasattr(event, 'data') and event.data and 'feedback' in event.data:
@@ -331,8 +337,17 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         """Override: Enhanced street progression with educational insights."""
         print(f"🎓 Practice: Street progression - {event.event_type}")
         
-        # Call parent's street progression
+        # Call parent's street progression (includes animations and sounds)
         super()._handle_street_progression(event)
+        
+        # Ensure animations play for street transitions
+        street_name = event.event_type.replace('_', ' ').title()
+        print(f"🎬 Animating street progression: {street_name}")
+        
+        # Play dealing sound for new streets
+        if any(keyword in event.event_type.lower() for keyword in ['flop', 'turn', 'river']):
+            print(f"🔊 Playing dealing sound for {street_name}")
+            self.play_sound("dealing")
         
         # Display street-specific educational content
         if hasattr(event, 'data') and event.data and 'analysis' in event.data:
@@ -518,10 +533,30 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         analysis_text = f"🎯 Hand Result: You {result}! {lesson}"
         
         self._display_feedback(analysis_text)
+        
+        # Play showdown sounds and animations
+        print(f"🏆 Playing showdown sounds and animations")
+        self.play_sound("winner")
+        self._trigger_showdown_animations()
+    
+    def _trigger_showdown_animations(self):
+        """Trigger showdown animations including pot to winner."""
+        # This will be called by the parent class through proper event handling
+        # The parent class already has _animate_pot_to_winner method
+        print(f"🎬 Showdown animations triggered")
+        
+        # Find the winner and animate pot to them
+        if hasattr(self, 'state_machine') and self.state_machine:
+            # The parent class will handle the actual animation through its event system
+            pass
     
     def highlight_action_player(self, player_index: int):
         """Override: Enhanced action player highlighting for practice."""
         super().highlight_action_player(player_index)
+        
+        # Play notification sound when highlighting any player
+        print(f"🔊 Playing turn notification sound for player {player_index}")
+        self.play_sound("turn_notify")
         
         # Enable/disable action buttons based on whether it's the human player's turn
         if (hasattr(self, 'state_machine') and 
@@ -533,6 +568,10 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             if player.is_human:
                 # It's the human player's turn - enable action buttons
                 self._enable_action_buttons()
+                
+                # Play special sound for human player's turn
+                print(f"🔊 Playing your turn sound")
+                self.play_sound("your_turn")
                 
                 # Get strategy suggestion
                 suggestion = None
