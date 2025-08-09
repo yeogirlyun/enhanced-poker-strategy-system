@@ -62,6 +62,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Sound manager
         self.sound_manager = SoundManager(test_mode=False)
         
+        # Animation protection flag
+        self.animating_bets_to_pot = False
+        
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
         print("🔄 Resetting change tracking for new hand")
@@ -164,8 +167,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # If state machine is provided, add this widget as a listener
         if self.state_machine:
             self.state_machine.add_event_listener(self)
-            # Wait for player seats to be created before updating
-            self.after(200, self._update_from_fpsm_state)
+            # Wait for UI to be ready, then create seats and update
+            self.after(100, self._ensure_seats_created_and_update)
     
     def on_event(self, event: GameEvent):
         """Handle events from the FPSM."""
@@ -450,6 +453,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _render_from_display_state(self, display_state: Dict[str, Any]):
         """Render the widget based on the FPSM's display state."""
+        # Skip rendering during bet animations to prevent interference
+        if self.animating_bets_to_pot:
+            print("🎯 Skipping display state render - bet animation in progress")
+            return
+        
         print("🎯 Rendering from FPSM display state")
         
         # Update players
@@ -505,6 +513,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             player_seat["bet_label"].config(text=bet_text)
             if bet_amount > 0:
                 print(f"💸 Updated player {player_index} bet: ${bet_amount:,.2f}")
+                # Also show graphical money display for existing bets (like blinds)
+                self._show_bet_display_for_player(player_index, "bet", bet_amount)
         
         # Only update cards if they changed
         if last_state.get("cards") != cards:
@@ -516,6 +526,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if has_folded:
                 self._mark_player_folded(player_index)
                 print(f"❌ Player {player_index} folded")
+            else:
+                # Player is no longer folded (new hand), restore normal card display
+                self._restore_player_cards(player_index)
         
         # Store the current state for next comparison
         self.last_player_states[player_index] = {
@@ -550,14 +563,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         except tk.TclError:
                             # Widget was destroyed, skip
                             pass
-                    else:
-                        try:
-                            card_widgets[i].set_card("", is_folded=False)
-                            card_widgets[i]._current_card = ""
-                            print(f"🎴 Player {player_index} card {i}: cleared")
-                        except tk.TclError:
-                            # Widget was destroyed, skip
-                            pass
+                    elif current_card != "":
+                        # Only clear cards if they were previously set - preserve cards during transitions
+                        # Don't clear cards just because the display state has empty cards temporarily
+                        print(f"🎴 Player {player_index} card {i}: preserved {current_card} (avoiding clear during transition)")
+        else:
+            # Handle case where player has folded but we want to preserve their cards visually
+            # Only clear if explicitly folded, not during street transitions
+            pass
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
@@ -666,6 +679,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         for card_widget in card_widgets:
             card_widget.set_folded()
     
+    def _restore_player_cards(self, player_index):
+        """Restore player cards to normal display (unfold them)."""
+        if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
+            return
+        
+        card_widgets = self.player_seats[player_index]["card_widgets"]
+        for card_widget in card_widgets:
+            # Restore the card to unfolded state if it has a card
+            current_card = getattr(card_widget, '_current_card', "")
+            if current_card:
+                card_widget.set_card(current_card, is_folded=False)
+    
     def update_display(self, update_type: str, **kwargs):
         """Update the display based on FPSM events."""
         print(f"🎯 Display update requested: {update_type}")
@@ -772,6 +797,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             
             print(f"🎯 Round complete on {street} - animating {len(players)} player bets to pot")
             
+            # Set animation flag to protect bet displays
+            self.animating_bets_to_pot = True
+            
             # Animate each player's current bet to the pot
             animation_delay = 0
             for i, player in enumerate(players):
@@ -786,9 +814,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     animation_delay += 300  # 300ms between each animation (more visible)
             
             # Clear all bet displays after all animations complete
-            total_delay = animation_delay + 500  # Extra delay for last animation
-            self.after(total_delay, self._clear_all_bet_displays)
-            self.after(total_delay, self._clear_all_bet_displays_permanent)
+            total_delay = animation_delay + 1000  # Extra delay for last animation
+            self.after(total_delay, lambda: self._finish_bet_animations())
+            print(f"💰 Scheduled bet clearing in {total_delay}ms")
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -960,9 +988,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _clear_all_bet_displays(self):
         """Clear all bet displays at once."""
+        if self.animating_bets_to_pot:
+            print("🧹 Skipping bet clearing - animation in progress")
+            return
         print("🧹 Clearing all bet displays")
         for player_index in list(self.bet_labels.keys()):
             self._remove_bet_display(player_index)
+    
+    def _finish_bet_animations(self):
+        """Finish bet animations and clear displays."""
+        print("💰 Finishing bet animations - clearing displays")
+        self.animating_bets_to_pot = False
+        self._clear_all_bet_displays()
+        self._clear_all_bet_displays_permanent()
     
     def update_pot_amount(self, amount):
         """Update the pot amount display (FLICKER-FREE VERSION)."""
@@ -1211,6 +1249,32 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not self.player_seats or all(seat is None for seat in self.player_seats):
             self._draw_player_seats()
     
+    def _ensure_seats_created_and_update(self):
+        """Ensure seats are created and then update from FPSM."""
+        print("🎯 Ensuring seats are created and updating from FPSM...")
+        
+        # Force update to get actual canvas size
+        self.update_idletasks()
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        
+        print(f"🎯 Canvas size: {canvas_width}x{canvas_height}")
+        
+        # Check if canvas is ready - if not, use reasonable default size for creation
+        if canvas_width <= 1 or canvas_height <= 1:
+            print("🎯 Canvas not ready, using default size for seat creation...")
+            # Don't return - create seats anyway with default positioning
+        
+        # Force creation of player seats if needed
+        if not self.player_seats or all(seat is None for seat in self.player_seats):
+            print("🎯 Creating player seats...")
+            self._draw_player_seats()
+        
+        # Update display from FPSM
+        self._update_from_fpsm_state()
+        
+        print(f"🎯 Seats created and updated. Player seats: {len([s for s in self.player_seats if s])}/6")
+    
     def reveal_all_cards(self):
         """Reveal all cards (for simulation mode) - now driven by FPSM."""
         print("🎴 Revealing all cards for simulation mode")
@@ -1414,6 +1478,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _draw_player_seats(self):
         """Draw player seats around the table."""
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        
+        # Use default size if canvas not ready
+        if width <= 1 or height <= 1:
+            width, height = 800, 600
+            print(f"🎯 Using default canvas size for seat positioning: {width}x{height}")
+        
         positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
         
         # Use layout manager for positioning

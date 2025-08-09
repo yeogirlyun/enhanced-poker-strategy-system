@@ -1175,6 +1175,16 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             if hasattr(self, 'simulation_status_label'):
                 self.simulation_status_label.configure(text=action_req_msg)
         
+        elif event.event_type == "round_complete":
+            street = event.data.get("street", "")
+            round_msg = f"Round complete: {street}"
+            print(f"🎯 {round_msg}")
+            self.add_log_entry("INFO", "ROUND_COMPLETE", round_msg)
+            
+            # Update simulation status
+            if hasattr(self, 'simulation_status_label'):
+                self.simulation_status_label.configure(text=f"Round complete: {street}")
+        
         # For any other event, just log it
         else:
             print(f"🎯 Unhandled event type: {event.event_type}")
