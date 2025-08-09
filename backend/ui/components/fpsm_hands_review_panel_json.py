@@ -255,8 +255,8 @@ class FPSMHandsReviewPanelJSON(ttk.Frame, EventListener):
             
             # Update hand info
             info_text = f"ID: {hand.metadata.id}\\nName: {hand.metadata.name}"
-            if hand.metadata.notes:
-                info_text += f"\\n\\nLesson: {hand.metadata.notes}"
+            if hand.metadata.study_notes:
+                info_text += f"\\n\\nLesson: {hand.metadata.study_notes}"
             
             self.hand_info_label.config(text=info_text)
             
