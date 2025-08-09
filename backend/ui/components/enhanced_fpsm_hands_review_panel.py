@@ -461,15 +461,23 @@ class EnhancedFPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Add event listener
         fpsm.add_event_listener(self)
         
-        # Setup players
+        # Prepare players for the hand
         players_data = hand_data.get('players', [])
-        for player_data in players_data:
+        players = []
+        for i, player_data in enumerate(players_data):
             player = Player(
                 name=player_data.get('name', 'Unknown'),
                 stack=player_data.get('starting_stack', 1000),
-                seat=player_data.get('seat', 1)
+                position=player_data.get('position', f'Player {i+1}'),
+                is_human=False,  # All players are AI for simulation
+                is_active=True,
+                cards=[]  # Cards will be set by FPSM
             )
-            fpsm.add_player(player)
+            players.append(player)
+        
+        # Start the hand with custom players
+        if players:
+            fpsm.start_hand(existing_players=players)
         
         # Set board cards if available
         board_data = hand_data.get('board', {})
