@@ -110,11 +110,25 @@ class LegendaryHandsPHHLoader:
         current_board = {}    # Track board cards
         current_street = None
         
-        for line in lines:
+        for line_idx, line in enumerate(lines):
             stripped = line.strip()
             
-            # Detect start of new hand
-            if stripped.startswith('# Hand ') and '—' in stripped:
+            # Detect start of new hand (multiple formats)
+            is_old_format = stripped.startswith('# Hand ') and '—' in stripped
+            is_new_format = stripped.startswith('[hand.meta]')
+            
+            # Skip [hand.meta] if we just processed a # Hand line (they're the same hand)
+            if is_new_format and hand_counter > 0:
+                # Check if the previous non-empty line was an old format header
+                for prev_line in reversed(lines[max(0, line_idx-5):line_idx]):
+                    prev_stripped = prev_line.strip()
+                    if prev_stripped:  # Skip empty lines
+                        if prev_stripped.startswith('# Hand ') and '—' in prev_stripped:
+                            # This [hand.meta] follows a # Hand line, skip it
+                            is_new_format = False
+                        break
+            
+            if is_old_format or is_new_format:
                 # Save previous hand if exists (with conversion)
                 if current_hand:
                     # Add actions and board to the hand
@@ -126,8 +140,14 @@ class LegendaryHandsPHHLoader:
                 
                 # Start new hand
                 hand_counter += 1
-                hand_name = (stripped.split('—', 1)[1].strip() 
-                           if '—' in stripped else f"Legendary Hand {hand_counter}")
+                
+                # Handle different hand name formats
+                if is_old_format:
+                    hand_name = (stripped.split('—', 1)[1].strip() 
+                               if '—' in stripped else f"Legendary Hand {hand_counter}")
+                else:  # new format - will get name from id field later
+                    hand_name = f"Hand {hand_counter}"
+                
                 current_players = []  # Reset players list
                 current_actions = {}  # Reset actions
                 current_board = {}    # Reset board
@@ -173,7 +193,18 @@ class LegendaryHandsPHHLoader:
                     raw_data={}
                 )
             
-            # Extract category information
+            # Extract metadata information (new format)
+            elif stripped.startswith('id =') and current_hand:
+                hand_id = stripped.split('=', 1)[1].strip().strip('"')
+                current_hand.metadata.id = hand_id
+                # Update hand name with ID
+                if hand_id:
+                    hand_name = hand_id
+                    
+            elif stripped.startswith('note =') and current_hand:
+                note = stripped.split('=', 1)[1].strip().strip('"')
+                current_hand.metadata.description = note
+                
             elif stripped.startswith('category =') and current_hand:
                 category = stripped.split('=', 1)[1].strip().strip('"')
                 current_hand.metadata.subcategory = category
