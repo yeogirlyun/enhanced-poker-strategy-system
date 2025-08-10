@@ -850,78 +850,66 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             action_panel.grid_columnconfigure(i, weight=1)
         
         # CHECK/CALL button
-        check_frame = tk.Frame(action_panel, bg='#1976D2', relief='raised', bd=4, cursor='hand2')
-        check_frame.grid(row=0, column=0, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
-        
-        check_label = tk.Label(
-            check_frame,
+        check_button = tk.Button(
+            action_panel,
             text="CHECK",
             bg='#1976D2',
             fg='white',
             font=('Arial', 14, 'bold'),
-            relief='flat'
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground='#1565C0',  # Darker blue when pressed
+            activeforeground='white',
+            highlightthickness=0,  # Remove focus border
+            command=lambda: self._handle_action_click('check_call') if self.action_button_states.get('check_call', False) else None
         )
-        check_label.pack(expand=True, fill='both', padx=4, pady=6)
+        check_button.grid(row=0, column=0, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
         
-        def check_click(event):
-            if self.action_button_states.get('check_call', False):
-                self._handle_action_click('check_call')
-        
-        check_frame.bind("<Button-1>", check_click)
-        check_label.bind("<Button-1>", check_click)
-        
-        self.action_buttons['check_call'] = check_frame
-        self.action_labels['check_call'] = check_label
+        self.action_buttons['check_call'] = check_button
+        self.action_labels['check_call'] = check_button  # Same reference for consistency
         self.action_button_states['check_call'] = False
         
         # FOLD button
-        fold_frame = tk.Frame(action_panel, bg='#616161', relief='raised', bd=4, cursor='hand2')
-        fold_frame.grid(row=0, column=1, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
-        
-        fold_label = tk.Label(
-            fold_frame,
+        fold_button = tk.Button(
+            action_panel,
             text="FOLD",
             bg='#616161',
             fg='white',
             font=('Arial', 14, 'bold'),
-            relief='flat'
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground='#424242',  # Darker gray when pressed
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('fold') if self.action_button_states.get('fold', False) else None
         )
-        fold_label.pack(expand=True, fill='both', padx=4, pady=6)
+        fold_button.grid(row=0, column=1, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
         
-        def fold_click(event):
-            if self.action_button_states.get('fold', False):
-                self._handle_action_click('fold')
-        
-        fold_frame.bind("<Button-1>", fold_click)
-        fold_label.bind("<Button-1>", fold_click)
-        
-        self.action_buttons['fold'] = fold_frame
-        self.action_labels['fold'] = fold_label
+        self.action_buttons['fold'] = fold_button
+        self.action_labels['fold'] = fold_button
         self.action_button_states['fold'] = False
         
         # BET/RAISE button
-        bet_frame = tk.Frame(action_panel, bg='#D32F2F', relief='raised', bd=4, cursor='hand2')
-        bet_frame.grid(row=0, column=2, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
-        
-        bet_label = tk.Label(
-            bet_frame,
+        bet_button = tk.Button(
+            action_panel,
             text="BET",
             bg='#D32F2F',
             fg='white',
             font=('Arial', 14, 'bold'),
-            relief='flat'
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground='#C62828',  # Darker red when pressed
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('bet_raise') if self.action_button_states.get('bet_raise', False) else None
         )
-        bet_label.pack(expand=True, fill='both', padx=4, pady=6)
+        bet_button.grid(row=0, column=2, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
         
-        def bet_click(event):
-            if self.action_button_states.get('bet_raise', False):
-                self._handle_action_click('bet_raise')
-        
-        bet_frame.bind("<Button-1>", bet_click)
-        bet_label.bind("<Button-1>", bet_click)
-        
-        self.action_buttons['bet_raise'] = bet_frame
-        self.action_labels['bet_raise'] = bet_label
+        self.action_buttons['bet_raise'] = bet_button
+        self.action_labels['bet_raise'] = bet_button
         self.action_button_states['bet_raise'] = False
         
         # Bet amount section
@@ -944,28 +932,24 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             btn.grid(row=0, column=i, padx=1)
         
         # ALL IN button
-        allin_frame = tk.Frame(action_panel, bg='#FF6F00', relief='raised', bd=4, cursor='hand2')
-        allin_frame.grid(row=0, column=4, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
-        
-        allin_label = tk.Label(
-            allin_frame,
+        allin_button = tk.Button(
+            action_panel,
             text="ALL IN",
             bg='#FF6F00',
             fg='white',
             font=('Arial', 14, 'bold'),
-            relief='flat'
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground='#F57C00',  # Darker orange when pressed
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('all_in') if self.action_button_states.get('all_in', False) else None
         )
-        allin_label.pack(expand=True, fill='both', padx=4, pady=6)
+        allin_button.grid(row=0, column=4, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
         
-        def allin_click(event):
-            if self.action_button_states.get('all_in', False):
-                self._handle_action_click('all_in')
-        
-        allin_frame.bind("<Button-1>", allin_click)
-        allin_label.bind("<Button-1>", allin_click)
-        
-        self.action_buttons['all_in'] = allin_frame
-        self.action_labels['all_in'] = allin_label
+        self.action_buttons['all_in'] = allin_button
+        self.action_labels['all_in'] = allin_button
         self.action_button_states['all_in'] = False
         
         # Initially disable all action buttons
@@ -1030,11 +1014,24 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             'all_in': '#FF6F00'         # Orange for all-in
         }
         
+        active_colors = {
+            'check_call': '#1565C0',    # Darker blue for active state
+            'fold': '#424242',          # Darker gray for active state
+            'bet_raise': '#C62828',     # Darker red for active state
+            'all_in': '#F57C00'         # Darker orange for active state
+        }
+        
         for key, button_widget in self.action_buttons.items():
             color = button_colors.get(key, '#1976D2')
-            button_widget.config(bg=color, relief='raised')
-            if key in self.action_labels:
-                self.action_labels[key].config(bg=color, fg='white')
+            active_color = active_colors.get(key, '#1565C0')
+            button_widget.config(
+                bg=color, 
+                fg='white',
+                relief='raised',
+                activebackground=active_color,
+                activeforeground='white',
+                state='normal'  # Enable the button
+            )
             self.action_button_states[key] = True
         
         debug_log("Poker action buttons enabled for human player", "PRACTICE_UI")
@@ -1045,9 +1042,14 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         disabled_text = '#4A4F5C'   # Muted text color
         
         for key, button_widget in self.action_buttons.items():
-            button_widget.config(bg=disabled_color, relief='sunken')
-            if key in self.action_labels:
-                self.action_labels[key].config(bg=disabled_color, fg=disabled_text)
+            button_widget.config(
+                bg=disabled_color, 
+                fg=disabled_text,
+                relief='sunken',
+                activebackground=disabled_color,
+                activeforeground=disabled_text,
+                state='disabled'  # Disable the button
+            )
             self.action_button_states[key] = False
         
         debug_log("Poker action buttons disabled", "PRACTICE_UI")
