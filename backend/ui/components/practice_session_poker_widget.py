@@ -211,12 +211,16 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         # Get table background color
         table_bg = getattr(self, 'table_color', '#2F4F2F')
         
-        # Create action buttons container at bottom of widget
-        action_container = tk.Frame(self, bg=table_bg)
-        action_container.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        # Create action buttons container overlaid on the poker table canvas
+        # This ensures the buttons are part of the table area, not separate
+        action_container = tk.Frame(self.canvas, bg=table_bg, relief="raised", bd=2)
         
-        # Configure grid weight
-        self.grid_rowconfigure(1, weight=0)
+        # We'll position this container at the bottom of the canvas when canvas is ready
+        self.action_container = action_container
+        self.after(200, self._position_action_container)
+        
+        # Setup will add session control buttons when callbacks are provided
+        self.after(300, self._check_for_session_callbacks)
         
         # Pre-bet size buttons section
         prebet_frame = tk.Frame(action_container, bg=table_bg)
@@ -305,9 +309,9 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         )
         self.action_buttons['all_in'].grid(row=1, column=3, padx=5, pady=5)
         
-        # Modern bet slider section
+        # Compact bet slider section - reduced padding for better space utilization
         slider_frame = tk.Frame(action_container, bg=table_bg)
-        slider_frame.grid(row=2, column=0, columnspan=4, pady=10)
+        slider_frame.grid(row=2, column=0, columnspan=4, pady=5)
         
         # Create bet slider widget
         self.bet_slider = BetSliderWidget(
@@ -324,11 +328,95 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         
         # Initially disable all buttons
         self._disable_action_buttons()
+        
+        # Session control callbacks (will be set by parent UI)
+        self.start_new_hand_callback = None
+        self.reset_session_callback = None
+    
+    def _position_action_container(self):
+        """Position the action container at the bottom of the canvas."""
+        if not hasattr(self, 'action_container') or not hasattr(self, 'canvas'):
+            self.after(200, self._position_action_container)  # Try again later
+            return
+            
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        
+        if canvas_width <= 1 or canvas_height <= 1:
+            self.after(200, self._position_action_container)  # Canvas not ready yet
+            return
+        
+        # Position action container at bottom center of canvas
+        container_x = canvas_width // 2
+        container_y = canvas_height - 120  # 120 pixels from bottom
+        
+        # Create window on canvas for the action container
+        self.canvas.create_window(container_x, container_y, window=self.action_container, anchor="center")
+        debug_log(f"Action container positioned at ({container_x}, {container_y})", "UI_LAYOUT")
     
     def _on_bet_amount_change(self, amount: float):
         """Handle bet amount changes from the slider."""
         self.bet_amount_var.set(str(amount))
         debug_log(f"Bet amount changed to: ${amount:.2f}", "BET_SLIDER")
+    
+    def set_session_callbacks(self, start_new_hand=None, reset_session=None):
+        """Set session control callbacks and create session control buttons."""
+        self.start_new_hand_callback = start_new_hand
+        self.reset_session_callback = reset_session
+        
+        # Add session control buttons to the action container
+        if hasattr(self, 'action_container'):
+            self._add_session_control_buttons()
+    
+    def _add_session_control_buttons(self):
+        """Add compact session control buttons to the action container."""
+        if not hasattr(self, 'action_container'):
+            return
+            
+        # Session control buttons in a separate row
+        session_frame = tk.Frame(self.action_container, bg='#2F4F2F')
+        session_frame.grid(row=3, column=0, columnspan=4, pady=(5, 0))
+        
+        # Compact button style
+        session_btn_config = {
+            'font': ('Arial', 12, 'bold'),
+            'height': 1,
+            'bd': 2,
+            'cursor': 'hand2',
+            'relief': 'raised'
+        }
+        
+        # Start New Hand button
+        if self.start_new_hand_callback:
+            start_btn = tk.Button(
+                session_frame,
+                text="🎯 NEW HAND",
+                command=self.start_new_hand_callback,
+                bg="#38A169",
+                fg="white",
+                activebackground="#2F855A",
+                **session_btn_config
+            )
+            start_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Reset Session button
+        if self.reset_session_callback:
+            reset_btn = tk.Button(
+                session_frame,
+                text="🔄 RESET",
+                command=self.reset_session_callback,
+                bg="#D97706",
+                fg="white",
+                activebackground="#B45309",
+                **session_btn_config
+            )
+            reset_btn.pack(side=tk.LEFT, padx=5)
+    
+    def _check_for_session_callbacks(self):
+        """Check if session callbacks have been set and add buttons if needed."""
+        if (hasattr(self, 'start_new_hand_callback') and 
+            (self.start_new_hand_callback or self.reset_session_callback)):
+            self._add_session_control_buttons()
     
     def _create_feedback_display(self):
         """Create educational feedback display."""

@@ -2062,13 +2062,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Clear canvas
         self.canvas.delete("all")
         
-        # Draw table felt
+        # Draw table felt - more compact oval for better space utilization
         self.canvas.create_oval(
-            width*0.05, height*0.1, width*0.95, height*0.9, 
-            fill="#0B6623", outline=THEME["border"], width=10
+            width*0.1, height*0.15, width*0.9, height*0.85, 
+            fill=THEME["table_felt"], outline=THEME["border"], width=8
         )
         self.canvas.create_oval(
-            width*0.06, height*0.11, width*0.94, height*0.89, 
+            width*0.11, height*0.16, width*0.89, height*0.84, 
             fill="#228B22", outline="#222222", width=2
         )
         
@@ -2202,15 +2202,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bd=1
         )
         
-        # Create info frame for name and cards with modern colors
+        # Create info frame for name and cards with modern colors - increased padding
         info_frame = tk.Frame(player_frame, bg=THEME["secondary_bg"])
-        info_frame.pack(pady=(8, 0), padx=12)
+        info_frame.pack(pady=(10, 2), padx=15)
         
-        # Create name label with modern font and colors
+        # Create name label with larger font for better readability
+        name_font = THEME.get("player_name", ("Segoe UI", 13, "bold"))
+        if isinstance(name_font, tuple) and len(name_font) >= 2:
+            larger_font = (name_font[0], name_font[1] + 2, name_font[2] if len(name_font) > 2 else "bold")
+        else:
+            larger_font = ("Segoe UI", 15, "bold")
+        
         name_label = tk.Label(
             info_frame, 
             text=f"{name} ({position})", 
-            font=THEME["player_name"] if "player_name" in THEME else ("Segoe UI", 13, "bold"), 
+            font=larger_font, 
             bg=THEME["secondary_bg"], 
             fg=THEME["text"]
         )
@@ -2274,20 +2280,20 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             """Calculate player seat positions with proper spacing."""
             center_x, center_y = width / 2, height / 2
             
-            # Dynamic radius based on table size and number of players
-            base_radius_x = width * 0.42
-            base_radius_y = height * 0.35
+            # More compact radius for better space utilization
+            base_radius_x = width * 0.35  # Reduced from 0.42 for compact layout
+            base_radius_y = height * 0.28  # Reduced from 0.35 for compact layout
             
             # Adjust for different player counts
             if num_players <= 4:
-                radius_x = base_radius_x * 0.9
-                radius_y = base_radius_y * 0.9
+                radius_x = base_radius_x * 0.85
+                radius_y = base_radius_y * 0.85
             elif num_players <= 6:
                 radius_x = base_radius_x
                 radius_y = base_radius_y
             else:
-                radius_x = base_radius_x * 1.1
-                radius_y = base_radius_y * 1.1
+                radius_x = base_radius_x * 1.05
+                radius_y = base_radius_y * 1.05
             
             positions = []
             for i in range(num_players):
@@ -2299,9 +2305,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return positions
         
         def calculate_community_card_position(self, width, height):
-            """Calculate community card position."""
-            return width / 2, height / 2 - 50
+            """Calculate community card position - more compact layout."""
+            return width / 2, height / 2 - 35  # Moved closer to center
         
         def calculate_pot_position(self, width, height):
-            """Calculate pot position."""
-            return width / 2, height / 2 + 50
+            """Calculate pot position - more compact layout."""
+            return width / 2, height / 2 + 35  # Moved closer to center

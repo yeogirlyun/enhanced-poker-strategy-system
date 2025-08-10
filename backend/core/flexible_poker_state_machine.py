@@ -682,12 +682,30 @@ class FlexiblePokerStateMachine:
         )
         self._emit_event(action_event)
         
+        # Add debug logging for action flow
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system("DEBUG", "ACTION_FLOW", f"After {player.name}'s {action.value}: checking round completion", {
+                "player": player.name,
+                "action": action.value,
+                "amount": amount,
+                "current_action_player": self.action_player_index
+            })
+        
         # Check if round is complete BEFORE advancing action player
-        if self._is_round_complete():
+        round_complete = self._is_round_complete()
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system("DEBUG", "ACTION_FLOW", f"Round complete check result: {round_complete}", {
+                "round_complete": round_complete,
+                "actions_this_round": self.actions_this_round
+            })
+        
+        if round_complete:
             # Round complete detected
             self._handle_round_complete()
         else:
             # Round not complete - advance to next player
+            if hasattr(self, 'session_logger') and self.session_logger:
+                self.session_logger.log_system("DEBUG", "ACTION_FLOW", "Advancing to next action player", {})
             self._advance_action_player()
             # Only emit display state event if round is not complete to avoid conflicts
             self._emit_display_state_event()

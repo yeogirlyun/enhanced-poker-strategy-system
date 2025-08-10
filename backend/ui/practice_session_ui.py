@@ -129,20 +129,26 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     
     def _setup_ui(self):
         """Setup the clean UI layout."""
-        # Configure main layout
+        # Configure main layout - poker table takes up 2/3 of window
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=3)  # Table area
-        self.grid_columnconfigure(1, weight=1)  # Controls area
+        self.grid_columnconfigure(0, weight=2)  # Table area (2/3)
+        self.grid_columnconfigure(1, weight=1)  # Controls area (1/3)
         
         # === LEFT: Practice Poker Widget (Table Display) ===
         table_frame = ttk.Frame(self)
         table_frame.grid(row=0, column=0, sticky="nsew", padx=(5, 2), pady=5)
         
-        # Use specialized practice session poker widget
+        # Use specialized practice session poker widget with session controls
         self.poker_widget = PracticeSessionPokerWidget(
             table_frame,
             state_machine=self.state_machine,
             strategy_data=self.strategy_data
+        )
+        
+        # Pass session control callbacks to the poker widget
+        self.poker_widget.set_session_callbacks(
+            start_new_hand=self._start_new_hand,
+            reset_session=self._reset_session
         )
         self.poker_widget.pack(fill=tk.BOTH, expand=True)
         

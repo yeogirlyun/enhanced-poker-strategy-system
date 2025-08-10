@@ -576,8 +576,8 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                             "action_player_index": self.action_player_index,
                             "scheduled_flag": getattr(self, '_scheduled_bot_action', False)
                         })
-                    # Schedule next bot action immediately - let _schedule_bot_actions handle the delay
-                    self._schedule_bot_actions()
+                    # Don't schedule immediately - let _advance_action_player handle it
+                    # This prevents race conditions and double-scheduling
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
                     if self.logger:
