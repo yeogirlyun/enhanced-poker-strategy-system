@@ -17,7 +17,7 @@ from .card_widget import CardWidget
 
 # Import theme and modern widgets
 from core.gui_models import THEME
-from .modern_poker_widgets import ChipStackDisplay
+from .modern_poker_widgets import ChipStackDisplay, PlayerSeatWidget
 
 def debug_log(message: str, category: str = "UI_DEBUG"):
     """Log debug messages to file instead of console."""
@@ -312,8 +312,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bet_y = player_y + 80  # Move 80 pixels lower to avoid seat overlap
         else:
             # Other players: standard positioning
-            bet_x = player_x + (center_x - player_x) * 0.25
-            bet_y = player_y + (center_y - player_y) * 0.25
+        bet_x = player_x + (center_x - player_x) * 0.25
+        bet_y = player_y + (center_y - player_y) * 0.25
         
         # Create modern chip stack display for bets
         chip_display = ChipStackDisplay(
@@ -2018,7 +2018,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Create canvas for the poker table
         self.canvas = tk.Canvas(
             self,
-            bg=THEME["primary_bg"],
+            bg=THEME["table_felt"],
             highlightthickness=0
         )
         self.canvas.grid(row=0, column=0, sticky="nsew")
@@ -2191,57 +2191,64 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return f"Seat{seat_index+1}"
     
     def _create_player_seat_widget(self, x, y, name, position, index):
-        """Create a player seat widget with all components controlled by RPGW."""
-        # Create a frame for the player pod
-        player_frame = tk.Frame(self.canvas, bg="#1a1a1a", highlightbackground="#006400", highlightthickness=2)
+        """Create a modern player seat widget with professional card room aesthetics."""
+        # Create a frame for the player pod with modern styling
+        player_frame = tk.Frame(
+            self.canvas, 
+            bg=THEME["secondary_bg"], 
+            highlightbackground=THEME["border_inactive"], 
+            highlightthickness=2,
+            relief="solid",
+            bd=1
+        )
         
-        # Create info frame for name and cards
-        info_frame = tk.Frame(player_frame, bg="#1a1a1a")
-        info_frame.pack(pady=(5, 0), padx=10)
+        # Create info frame for name and cards with modern colors
+        info_frame = tk.Frame(player_frame, bg=THEME["secondary_bg"])
+        info_frame.pack(pady=(8, 0), padx=12)
         
-        # Create name label
+        # Create name label with modern font and colors
         name_label = tk.Label(
             info_frame, 
             text=f"{name} ({position})", 
-            font=("Helvetica", 10, "bold"), 
-            bg="#1a1a1a", 
-            fg="white"
+            font=THEME["player_name"] if "player_name" in THEME else ("Segoe UI", 13, "bold"), 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text"]
         )
         name_label.pack(fill='x')
         
-        # Create cards frame
-        cards_frame = tk.Frame(info_frame, bg="#1a1a1a")
-        cards_frame.pack(pady=(5, 10), padx=10)
+        # Create cards frame with modern styling
+        cards_frame = tk.Frame(info_frame, bg=THEME["secondary_bg"])
+        cards_frame.pack(pady=(8, 12), padx=10)
         
-        # Create card widgets (not initialized with card backs)
-        card1 = CardWidget(cards_frame, width=50, height=70)
-        card1.pack(side="left", padx=3)
-        card2 = CardWidget(cards_frame, width=50, height=70)
-        card2.pack(side="left", padx=3)
+        # Create card widgets with improved sizing
+        card1 = CardWidget(cards_frame, width=55, height=75)
+        card1.pack(side="left", padx=4)
+        card2 = CardWidget(cards_frame, width=55, height=75)
+        card2.pack(side="left", padx=4)
         
-        # Create stack frame
-        stack_frame = tk.Frame(player_frame, bg="#1a1a1a")
+        # Create stack frame with modern styling
+        stack_frame = tk.Frame(player_frame, bg=THEME["secondary_bg"])
         stack_frame.pack()
         
-        # Create stack label
+        # Create stack label with modern font and gold color
         stack_label = tk.Label(
             stack_frame, 
             text="$1000.00", 
-            font=("Helvetica", 12, "bold"), 
-            bg="#1a1a1a", 
-            fg="white"
+            font=THEME.get("stack_amount", ("Segoe UI", 16, "bold")), 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text_gold"]
         )
-        stack_label.pack(fill='x', pady=(0, 2))
+        stack_label.pack(fill='x', pady=(0, 4))
         
-        # Create bet label
+        # Create bet label with modern styling
         bet_label = tk.Label(
             stack_frame, 
             text="", 
-            font=("Helvetica", 10, "bold"), 
-            bg="#1a1a1a", 
-            fg="gold"
+            font=THEME.get("bet_amount", ("Segoe UI", 12, "bold")), 
+            bg=THEME["secondary_bg"], 
+            fg=THEME["text_gold"]
         )
-        bet_label.pack(fill='x')
+        bet_label.pack(fill='x', pady=(0, 8))
         
         # Store references for updates
         self.player_seats[index] = {
