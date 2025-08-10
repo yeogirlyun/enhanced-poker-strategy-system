@@ -500,7 +500,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Use after_idle to schedule bot actions so UI can update first
         if getattr(self, '_scheduled_bot_action', False):
             if self.logger:
-                self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Bot action already scheduled", {})
+                self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Bot action already scheduled - skipping", {"current_player_index": self.action_player_index})
             return  # Already scheduled
         
         self._scheduled_bot_action = True
@@ -508,9 +508,9 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         # Schedule bot action after a short delay for realism
         def execute_bot_action():
             try:
-                self._scheduled_bot_action = False
                 if self.logger:
-                    self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Executing scheduled bot action", {})
+                    self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Executing scheduled bot action", {"resetting_flag": True})
+                self._scheduled_bot_action = False
                 self._execute_bot_action_if_needed()
             except Exception as e:
                 if self.logger:
@@ -525,7 +525,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         timer.daemon = True  # Make it a daemon thread
         timer.start()
         if self.logger:
-            self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Started bot action timer", {"delay": 1.0})
+            self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Started bot action timer", {"delay": 1.0, "current_player_index": self.action_player_index, "scheduled_flag": self._scheduled_bot_action})
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
