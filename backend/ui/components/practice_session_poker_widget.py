@@ -15,6 +15,9 @@ from typing import List, Dict, Any
 # Import the base widget
 from .reusable_poker_game_widget import ReusablePokerGameWidget
 
+# Import modern UI components
+from .modern_poker_widgets import ModernActionButton, BetSliderWidget, ChipStackDisplay
+
 # Import FPSM components
 from core.flexible_poker_state_machine import GameEvent
 
@@ -266,79 +269,66 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
             'cursor': 'hand2'
         }
         
-        # FOLD button
-        self.action_buttons['fold'] = tk.Button(
+        # FOLD button (modern style)
+        self.action_buttons['fold'] = ModernActionButton(
             action_container,
+            action_type="fold",
             text="FOLD",
-            command=lambda: self._handle_action_click('fold'),
-            bg='#DC143C',  # Red
-            fg='white',
-            activebackground='#B22222',
-            activeforeground='white',
-            **{k: v for k, v in button_config.items() if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
+            command=lambda: self._handle_action_click('fold')
         )
         self.action_buttons['fold'].grid(row=1, column=0, padx=5, pady=5)
         
-        # CHECK/CALL button
-        self.action_buttons['check_call'] = tk.Button(
+        # CHECK/CALL button (modern style)
+        self.action_buttons['check_call'] = ModernActionButton(
             action_container,
+            action_type="check",
             text="CHECK",
-            command=lambda: self._handle_action_click('check_call'),
-            **button_config
+            command=lambda: self._handle_action_click('check_call')
         )
         self.action_buttons['check_call'].grid(row=1, column=1, padx=5, pady=5)
         
-        # BET/RAISE button
-        self.action_buttons['bet_raise'] = tk.Button(
+        # BET/RAISE button (modern style)
+        self.action_buttons['bet_raise'] = ModernActionButton(
             action_container,
+            action_type="bet",
             text="BET",
-            command=lambda: self._handle_action_click('bet_raise'),
-            **button_config
+            command=lambda: self._handle_action_click('bet_raise')
         )
         self.action_buttons['bet_raise'].grid(row=1, column=2, padx=5, pady=5)
         
-        # ALL IN button
-        self.action_buttons['all_in'] = tk.Button(
+        # ALL IN button (modern style)
+        self.action_buttons['all_in'] = ModernActionButton(
             action_container,
+            action_type="all_in",
             text="ALL IN",
-            command=lambda: self._handle_action_click('all_in'),
-            bg='#FF8C00',  # Orange
-            fg='white',
-            activebackground='#FF7F00',
-            activeforeground='white',
-            **{k: v for k, v in button_config.items() if k not in ['bg', 'fg', 'activebackground', 'activeforeground']}
+            command=lambda: self._handle_action_click('all_in')
         )
         self.action_buttons['all_in'].grid(row=1, column=3, padx=5, pady=5)
         
-        # Amount entry section
-        entry_frame = tk.Frame(action_container, bg=table_bg)
-        entry_frame.grid(row=2, column=0, columnspan=4, pady=5)
+        # Modern bet slider section
+        slider_frame = tk.Frame(action_container, bg=table_bg)
+        slider_frame.grid(row=2, column=0, columnspan=4, pady=10)
         
-        bet_label = tk.Label(
-            entry_frame,
-            text="AMOUNT:",
-            font=('Arial', 12, 'bold'),
-            bg=table_bg,
-            fg="white"
+        # Create bet slider widget
+        self.bet_slider = BetSliderWidget(
+            slider_frame,
+            min_bet=2.0,  # Default minimum bet
+            max_bet=200.0,  # Default maximum (will be updated based on stack)
+            current_bet=2.0,
+            on_change=self._on_bet_amount_change
         )
-        bet_label.pack(side=tk.LEFT, padx=(0, 5))
+        self.bet_slider.pack()
         
+        # Store bet amount for compatibility
         self.bet_amount_var = tk.StringVar(value="2.0")
-        self.bet_entry = tk.Entry(
-            entry_frame,
-            textvariable=self.bet_amount_var,
-            font=('Arial', 16, 'bold'),
-            width=8,
-            justify=tk.CENTER,
-            bg="white",
-            fg="black",
-            relief='sunken',
-            bd=3
-        )
-        self.bet_entry.pack(side=tk.LEFT, padx=5)
         
         # Initially disable all buttons
         self._disable_action_buttons()
+    
+    def _on_bet_amount_change(self, amount: float):
+        """Handle bet amount changes from the slider."""
+        self.bet_amount_var.set(str(amount))
+        debug_log(f"Bet amount changed to: ${amount:.2f}", "BET_SLIDER")
     
     def _create_feedback_display(self):
         """Create educational feedback display."""
@@ -517,17 +507,22 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 self.action_buttons['check_call'].config(text="CHECK", state=tk.NORMAL)
                 self.action_buttons['bet_raise'].config(text="BET", state=tk.NORMAL)
         
-        # Enable all buttons
+        # Enable all modern action buttons
         for button in self.action_buttons.values():
-            button.config(state=tk.NORMAL)
+            if hasattr(button, 'set_enabled'):
+                button.set_enabled(True)
+            else:
+                button.config(state=tk.NORMAL)
         
         # Enable pre-bet buttons
         if hasattr(self, 'prebet_buttons'):
             for button in self.prebet_buttons.values():
                 button.config(state=tk.NORMAL)
         
-        if hasattr(self, 'bet_entry'):
-            self.bet_entry.config(state=tk.NORMAL)
+        # Enable bet slider
+        if hasattr(self, 'bet_slider'):
+            # Bet slider is always enabled when action buttons are enabled
+            pass
         
         debug_log("Action buttons enabled for human player", "PRACTICE_UI")
     
@@ -536,15 +531,18 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         if not hasattr(self, 'action_buttons'):
             return
         
+        # Disable all modern action buttons
         for button in self.action_buttons.values():
-            button.config(state=tk.DISABLED)
+            if hasattr(button, 'set_enabled'):
+                button.set_enabled(False)
+            else:
+                button.config(state=tk.DISABLED)
         
         if hasattr(self, 'prebet_buttons'):
             for button in self.prebet_buttons.values():
                 button.config(state=tk.DISABLED)
         
-        if hasattr(self, 'bet_entry'):
-            self.bet_entry.config(state=tk.DISABLED)
+        # Bet slider remains enabled but grayed out during opponent turns
         
         # Action buttons disabled for practice session
     
