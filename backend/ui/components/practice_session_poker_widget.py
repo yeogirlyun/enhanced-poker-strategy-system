@@ -832,13 +832,18 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
 
     def _create_action_buttons_panel(self):
         """Create the modern action buttons panel at the bottom of the poker table."""
-        # Create a frame at the bottom for action buttons
+        # Create a frame at the bottom for action buttons using grid
         action_frame = tk.Frame(self, bg=THEME["primary_bg"])
-        action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
+        action_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=10)
         
         # Action buttons panel
         action_panel = tk.Frame(action_frame, bg=THEME["primary_bg"])
-        action_panel.pack(fill=tk.X)
+        action_panel.grid(row=0, column=0, sticky="ew")
+        
+        # Configure the parent grid to expand the action frame
+        self.grid_rowconfigure(1, weight=0)  # Action buttons don't expand
+        self.grid_columnconfigure(0, weight=1)  # Fill width
+        action_frame.grid_columnconfigure(0, weight=1)
         
         # Configure grid for equal button distribution
         for i in range(5):  # 4 buttons + 1 bet amount area
