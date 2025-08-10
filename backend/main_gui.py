@@ -162,10 +162,29 @@ class EnhancedMainGUI:
 
         # --- Notebook (Tabs) Style ---
         style.configure("TNotebook", background=THEME["primary_bg"], borderwidth=0)
-        style.configure("TNotebook.Tab", background=THEME["secondary_bg"], foreground=THEME["text_dark"], font=FONTS["main"], padding=[10, 5], borderwidth=0)
+        # Updated tab style with dark charcoal background and 50% larger size
+        tab_font_size = int(FONTS["main"][1] * 1.5)  # 50% larger font
+        # Handle font style safely - use "normal" if no style specified
+        font_style = FONTS["main"][2] if len(FONTS["main"]) > 2 else "normal"
+        style.configure("TNotebook.Tab", 
+            background="#191C22",      # Dark charcoal background
+            foreground="#6B7380",      # 50% brighter gray text (was #25282D)
+            font=(FONTS["main"][0], tab_font_size, font_style), 
+            padding=[15, 8],           # 50% larger padding (was [10, 5])
+            borderwidth=0
+        )
         style.map("TNotebook.Tab",
-            background=[("selected", THEME["accent_primary"]), ("active", THEME["widget_bg"])],
-            foreground=[("selected", "white"), ("active", THEME["text"])]
+            background=[("selected", "#3980A6"), ("active", "#191C22")],  # Teal background for selected, dark charcoal for hover
+            foreground=[("selected", "#FFD700"), ("active", "#6B7380")]    # Gold text for selected, 50% brighter gray for hover
+        )
+
+        # --- Status Bar (Footer) Style ---
+        style.configure("StatusBar.TLabel", 
+            background="#2E4F76",     # Dark Steel Blue footer
+            foreground="white",       # White text for contrast
+            font=FONTS["main"],
+            padding=5,
+            relief="sunken"
         )
 
         # --- Custom Button Styles ---
@@ -185,7 +204,7 @@ class EnhancedMainGUI:
         style.configure("TCombobox", fieldbackground=THEME["widget_bg"], foreground=THEME["text"], background=THEME["widget_bg"])
 
         # --- Status Bar Style ---
-        style.configure("StatusBar.TLabel", background=THEME["accent_primary"], foreground="white")
+        style.configure("StatusBar.TLabel", background="#2E4F76", foreground="white")
 
     def _create_menu(self):
         """Create the menu bar."""
