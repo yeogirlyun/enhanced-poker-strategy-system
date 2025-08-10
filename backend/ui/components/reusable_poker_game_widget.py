@@ -221,7 +221,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def set_poker_game_config(self, config):
         """Set poker game configuration for dynamic positioning."""
         self.poker_game_config = config
-        print(f"🎯 Set poker game config: {getattr(config, 'num_players', 'unknown')} players")
+        # Log configuration change to session logger instead of console
+        if self.session_logger:
+            self.session_logger.log_system(
+                "INFO", 
+                "CONFIG_CHANGE", 
+                f"Poker game config updated: "
+                f"{getattr(config, 'num_players', 'unknown')} players", 
+                {"config": str(config)}
+            )
     
     def _display_state_changed(self, new_state: Dict[str, Any]) -> bool:
         """Check if display state has meaningfully changed (LAZY REDRAW OPTIMIZATION)."""
@@ -352,7 +360,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def on_event(self, event: GameEvent):
         """Handle events from the FPSM."""
-        print(f"🎯 Received event: {event.event_type}")
+        # Event logging is handled by specific event handlers, no console output needed
         
         # ENHANCED Event deduplication to prevent infinite loops
         if not hasattr(self, 'last_processed_events'):
@@ -433,7 +441,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     player_index = i
                     break
         
-        print(f"🎯 Handling action executed: {action_type} by {player_name} for ${amount:.2f}")
+        # Action execution logging handled by session logger, no console output needed
         
         # Show bet amount for betting actions
         if action_type in ["bet", "raise", "call"] and amount > 0 and player_index >= 0:
@@ -442,9 +450,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Clear any existing action indicator for this player
         if player_index >= 0:
-            print(f"🎯 Found player {player_name} at index {player_index}")
-            print(f"🎯 Clearing action indicator for player {player_index}")
+            # Player found, proceed with action indicator clearing
+            # Action indicator cleared for player
             # Clear action indicator (you can enhance this later)
+            pass
         
         # Play sound for the action
         if action_type and hasattr(self, 'play_sound'):
@@ -721,7 +730,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             print("🛡️ PROTECTING BET ANIMATION - skipping excessive redraw")
             return  # Don't redraw while animations are in progress
         
-        print("🎯 Rendering from FPSM display state (LAZY redraw optimization enabled)")
+        # Rendering from FPSM display state with lazy redraw optimization
         
         # Only redraw table if needed (lazy optimization to prevent flicker)
         if not hasattr(self, '_table_drawn') or not self._table_drawn:
@@ -784,7 +793,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         name_text = f"{name} ({position})"
         if last_state.get("name_text") != name_text:
             player_seat["name_label"].config(text=name_text)
-            print(f"🎯 Updated player {player_index} name: {name_text}")
+            # Player name updated successfully
         
         # Only update stack if it changed
         if last_state.get("stack", 0.0) != stack_amount:
@@ -1073,7 +1082,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 player_frame = self.player_seats[player_index]["frame"]
                 for widget in player_frame.winfo_children():
                     if hasattr(widget, '_action_indicator'):
-                        print(f"🎯 Clearing action indicator for player {player_index}")
+                        # Action indicator cleared for player
                         widget.destroy()
         else:
             # Clear for all players
@@ -1133,7 +1142,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def update_display(self, update_type: str, **kwargs):
         """Update the display based on FPSM events."""
-        print(f"🎯 Display update requested: {update_type}")
+        # Display update requested
         
         if update_type == "full_update":
             self._update_from_fpsm_state()
@@ -1153,7 +1162,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _handle_action_executed(self, event: GameEvent):
         """Handle action execution events."""
-        print(f"🎯 Handling action executed: {event.action} by {event.player_name} for ${event.amount}")
+        # Action executed event handled
         
         action = event.action
         amount = event.amount
@@ -1168,7 +1177,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 seat_name = seat_text.split(' (')[0]
                 if player_name == seat_name or player_name in seat_text:
                     player_index = i
-                    print(f"🎯 Found player {player_name} at index {i} (seat text: {seat_text})")
+                    # Player found at specified index
                     break
         
         if player_index >= 0:
@@ -1197,7 +1206,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _handle_state_change(self, event: GameEvent):
         """Handle state change events."""
         new_state = event.data.get("new_state", "")
-        print(f"🎯 Handling state change: {new_state}")
+        # State change event handled
         
         # Play sounds for street progression
         if "DEAL_FLOP" in new_state:
@@ -1236,7 +1245,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             print(f"🛑 INFINITE LOOP DETECTED: {street} round_complete repeated {len(recent_street_events)} times - STOPPING")
             return
         
-        print(f"🎯 Round complete: {street}")
+        # Round complete event handled
         
         # Log round completion
         if self.session_logger:
@@ -1258,7 +1267,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             display_state = self.state_machine.get_game_info()
             players = display_state.get("players", [])
             
-            print(f"🎯 Round complete on {street} - animating {len(players)} player bets to pot")
+            # Round complete animation started
             
             # Set animation flag to protect bet displays
             self.animating_bets_to_pot = True
@@ -1312,7 +1321,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if winner_info and pot_amount > 0:
             self.animate_pot_to_winner(winner_info, pot_amount)
         else:
-            print("⚠️ No valid winner info or pot amount for animation")
+            # Log to session logger instead of console
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "WARNING", 
+                    "HAND_COMPLETE", 
+                    "No valid winner info or pot amount for animation", 
+                    {
+                        "winner_info": winner_info,
+                        "pot_amount": pot_amount,
+                        "event_data": event.data
+                    }
+                )
     
     def _handle_player_action(self, **kwargs):
         """Handle player action updates from FPSM."""
@@ -1320,7 +1340,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         action = kwargs.get("action", "")
         amount = kwargs.get("amount", 0.0)
         
-        print(f"🎯 Player action: {player_name} {action} ${amount}")
+        # Player action event handled
         
         # Log player action
         if self.session_logger:
@@ -1560,7 +1580,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _animate_street_progression(self, street_name, board_cards):
         """Animate street progression."""
-        print(f"🎯 Animating street progression: {street_name} with cards {board_cards}")
+        # Street progression animation started
         self._update_community_cards_from_display_state(board_cards)
     
     def _animate_bet_to_pot(self, player_index, amount):
@@ -1779,40 +1799,41 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.player_seats and 
             all(seat is not None for seat in self.player_seats) and
             expected_player_count and len(self.player_seats) == expected_player_count):
-            print("🎯 Seats already exist - skipping creation, proceeding to update")
+            # Seats already exist, proceeding to update
             self._update_from_fpsm_state()
             return
         
-        print("🎯 Ensuring seats are created and updating from FPSM...")
+        # Ensuring seats are created and updating from FPSM
         
         # Force update to get actual canvas size
         self.update_idletasks()
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
         
-        print(f"🎯 Canvas size: {canvas_width}x{canvas_height}")
+        # Canvas size determined for seat positioning
         
         # Check if canvas is ready - if not, use reasonable default size for creation
         if canvas_width <= 1 or canvas_height <= 1:
-            print("🎯 Canvas not ready, using default size for seat creation...")
+            # Canvas not ready, using default size for seat creation
             # Don't return - create seats anyway with default positioning
+            pass
         
         # Force creation of player seats if needed
         if not self.player_seats or all(seat is None for seat in self.player_seats):
-            print("🎯 Creating player seats...")
+            # Creating player seats
             self._draw_player_seats()
         elif expected_player_count and len(self.player_seats) != expected_player_count:
-            print(f"🎯 Player count changed ({len(self.player_seats)} → {expected_player_count}), recreating seats...")
+            # Player count changed, recreating seats
             self._draw_player_seats()
         
         # Update display from FPSM
         self._update_from_fpsm_state()
         
-        print(f"🎯 Seats created and updated. Player seats: {len([s for s in self.player_seats if s])}/{len(self.player_seats)}")
+        # Seats created and updated successfully
     
     def reveal_all_cards(self):
         """Reveal all cards (for simulation mode) - now driven by FPSM."""
-        print("🎴 Revealing all cards for simulation mode")
+        # Revealing all cards for simulation mode
         # This is now handled by FPSM state, so just update from FPSM
         self._update_from_fpsm_state()
     
@@ -1846,10 +1867,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.community_card_widgets and
             hasattr(self, 'last_community_canvas_size') and
             self.last_community_canvas_size == current_size):
-            print("🎯 Skipping community card area redraw - already exists and no size changes")
+            # Skipping community card area redraw - already exists and no size changes
             return
         
-        print(f"🎯 Drawing community card area - canvas size: {width}x{height}")
+        # Drawing community card area
         
         # Use layout manager for positioning
         community_x, community_y = self.layout_manager.calculate_community_card_position(width, height)
@@ -1895,10 +1916,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.pot_frame and 
             hasattr(self, 'last_pot_canvas_size') and
             self.last_pot_canvas_size == current_size):
-            print("🎯 Skipping pot display redraw - already exists and no size changes")
+            # Skipping pot display redraw - already exists and no size changes
             return
         
-        print(f"🎯 Drawing pot display - canvas size: {width}x{height}")
+        # Drawing pot display
         
         # Use layout manager for positioning
         pot_x, pot_y = self.layout_manager.calculate_pot_position(width, height)
@@ -1941,7 +1962,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _force_complete_redraw(self):
         """Force a complete redraw of all UI elements (used on resize)."""
-        print("🎯 Forcing complete redraw (resize detected)")
+        # Forcing complete redraw due to resize
         
         # Reset all canvas size tracking to force redraw
         if hasattr(self, 'last_canvas_size'):
@@ -1971,7 +1992,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not self.state_machine:
             return
         
-        print("🎯 Updating display from FPSM state")
+        # Updating display from FPSM state
         
         # Get current game info from FPSM
         game_info = self.state_machine.get_game_info()
@@ -2041,13 +2062,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if (hasattr(self, 'last_canvas_size') and 
             self.last_canvas_size == current_size and 
             self.table_drawn):
-            print("🎯 Skipping table redraw - no size changes detected")
+            # Skipping table redraw - no size changes detected
             return
             
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
         
-        print(f"🎯 Drawing table - canvas size: {width}x{height}")
+        # Drawing table
         
         # Clear canvas
         self.canvas.delete("all")
@@ -2082,7 +2103,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Use default size if canvas not ready
         if width <= 1 or height <= 1:
             width, height = 800, 600
-            print(f"🎯 Using default canvas size for seat positioning: {width}x{height}")
+            # Using default canvas size for seat positioning
         
         # Check if seats already exist and canvas size hasn't changed
         current_size = (width, height)
@@ -2091,10 +2112,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             all(seat is not None for seat in self.player_seats) and
             hasattr(self, 'last_seats_canvas_size') and
             self.last_seats_canvas_size == current_size):
-            print("🎯 Skipping player seats redraw - already exist and no size changes")
+            # Skipping player seats redraw - already exist and no size changes
             return
         
-        print(f"🎯 Drawing player seats - canvas size: {width}x{height}")
+        # Drawing player seats
         
         # Get dynamic positions based on current display state
         dynamic_positions = self._get_dynamic_player_positions()

@@ -461,12 +461,36 @@ class FlexiblePokerStateMachine:
             for player in self.game_state.players:
                 player.current_bet = 0.0
 
+            # Create winner_info structure that matches what the UI expects
+            winner_info = {
+                "name": ", ".join([w.name for w in winners]) if winners else "Unknown",
+                "amount": self.game_state.pot,
+                "board": self.game_state.board.copy(),
+                "hand": "Unknown"  # Will be filled by hand evaluator if available
+            }
+            
+            # Try to get hand description for the first winner
+            if winners and hasattr(self, 'hand_evaluator'):
+                try:
+                    first_winner = winners[0]
+                    if first_winner.cards and len(first_winner.cards) == 2:
+                        hand_eval = self.hand_evaluator.evaluate_hand(
+                            first_winner.cards, self.game_state.board)
+                        if isinstance(hand_eval, dict) and 'hand_description' in hand_eval:
+                            winner_info["hand"] = hand_eval['hand_description']
+                        elif isinstance(hand_eval, dict) and 'hand_rank' in hand_eval:
+                            winner_info["hand"] = hand_eval['hand_rank'].name.replace('_', ' ').title()
+                except Exception as e:
+                    self._safe_print(f"Warning: Could not evaluate winning hand: {e}")
+            
             self._emit_event(GameEvent(
                 event_type="hand_complete",
                 timestamp=time.time(),
                 data={
                     "hand_number": self.hand_number,
-                    "winners": [w.name for w in winners]
+                    "winners": [w.name for w in winners],
+                    "winner_info": winner_info,
+                    "pot_amount": self.game_state.pot
                 }
             ))
             
@@ -632,7 +656,7 @@ class FlexiblePokerStateMachine:
         
         # Check if round is complete BEFORE advancing action player
         if self._is_round_complete():
-            self._safe_print(f"🎯 Round complete detected on {self.game_state.street}")
+            # Round complete detected
             self._handle_round_complete()
         else:
             # Round not complete - advance to next player
@@ -663,22 +687,28 @@ class FlexiblePokerStateMachine:
         if len(active_players) <= 1:
             return True
         
-        # Check if all active players have acted
-        acted_count = sum(1 for p in active_players 
-                         if p.name in self.players_acted_this_round)
-        if acted_count < len(active_players):
-            return False
-        
-        # Check if bets are equalized
+        # Check if bets are equalized first (this is the key poker rule)
         max_bet = max(p.current_bet for p in active_players)
         all_equal = all(p.current_bet == max_bet or p.is_all_in 
                        for p in active_players)
         
-        return all_equal
+        if not all_equal:
+            return False
+        
+        # If bets are equalized, check if we've gone around the table
+        # This prevents infinite loops while ensuring proper round completion
+        if self.actions_this_round >= len(active_players):
+            return True
+        
+        # Special case: if everyone checked/called and no bets were made
+        if max_bet == 0 and self.actions_this_round > 0:
+            return True
+        
+        return False
     
     def _handle_round_complete(self):
         """Handle completion of a betting round."""
-        self._safe_print(f"🎯 Round complete on {self.game_state.street} street")
+        # Round complete on current street
         self._safe_print(f"   Current state: {self.current_state}")
         self._safe_print(f"   Actions this round: {self.actions_this_round}")
         self._safe_print(f"   Players acted: {len(self.players_acted_this_round)}")
