@@ -81,6 +81,7 @@ THEME = {
     "fg": "#ffffff",
     "accent": "#4CAF50",
     "accent_primary": "#2196F3",  # Legacy accent_primary (blue)
+    "accent_secondary": "#4CAF50", # Legacy accent_secondary (green)
     "border": "#555555",         # Legacy border color
     "font_family": "Arial",
     "font_size": 11,
