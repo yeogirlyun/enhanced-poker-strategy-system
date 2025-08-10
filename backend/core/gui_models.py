@@ -79,6 +79,7 @@ THEME = {
     "bg_light": "#3a3a3a",
     "fg": "#ffffff",
     "accent": "#4CAF50",
+    "border": "#555555",         # Legacy border color
     "font_family": "Arial",
     "font_size": 11,
     "tier_colors": {
