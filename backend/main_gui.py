@@ -1013,11 +1013,11 @@ class EnhancedMainGUI:
         
         blind_entry_frame = ttk.Frame(blind_frame)
         blind_entry_frame.pack(side=tk.RIGHT, anchor="e")
-        self.small_blind = tk.StringVar(value="10")
+        self.small_blind = tk.StringVar(value="5")
         small_blind_entry = ttk.Entry(blind_entry_frame, textvariable=self.small_blind, width=5)
         small_blind_entry.pack(side=tk.LEFT, padx=(0, 2))
         ttk.Label(blind_entry_frame, text="/").pack(side=tk.LEFT)
-        self.big_blind = tk.StringVar(value="20")
+        self.big_blind = tk.StringVar(value="10")
         big_blind_entry = ttk.Entry(blind_entry_frame, textvariable=self.big_blind, width=5)
         big_blind_entry.pack(side=tk.LEFT, padx=(2, 0))
 

@@ -54,6 +54,10 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         self.action_buttons = {}
         self.prebet_buttons = {}
         
+        # Setup UI controller for state machine sound calls
+        if self.state_machine:
+            self._setup_ui_controller()
+        
         # Setup practice-specific UI after parent initialization
         self.after_idle(self._setup_practice_ui)
         
@@ -461,11 +465,20 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     return
             elif action_type == 'all_in':
                 stack = self.state_machine.game_state.players[0].stack
-                success = self.state_machine.execute_action(
-                    self.state_machine.game_state.players[0],
-                    ActionType.ALL_IN,
-                    stack
-                )
+                # For all-in, we use BET or RAISE with the full stack amount
+                current_bet = self.state_machine.game_state.current_bet
+                if current_bet > 0:
+                    success = self.state_machine.execute_action(
+                        self.state_machine.game_state.players[0],
+                        ActionType.RAISE,
+                        stack
+                    )
+                else:
+                    success = self.state_machine.execute_action(
+                        self.state_machine.game_state.players[0],
+                        ActionType.BET,
+                        stack
+                    )
             
             if not success:
                 print(f"🚫 Action {action_type} failed")
@@ -632,6 +645,33 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         """Override: Enhanced event handling with animations for practice sessions."""
         super().on_event(event)
         
+        # Handle state changes that should disable action buttons
+        if event.event_type == "state_change":
+            try:
+                new_state = getattr(event, 'new_state', None)
+                if hasattr(event, 'data') and event.data:
+                    new_state = event.data.get("new_state", new_state)
+                
+                # Disable action buttons during showdown and hand completion
+                if new_state in ["SHOWDOWN", "END_HAND"]:
+                    self._disable_action_buttons()
+                    debug_log(f"🎓 Practice: Disabled action buttons for state {new_state}", "STATE_CHANGE")
+                    
+                    # Also disable pre-bet buttons
+                    for btn in self.prebet_buttons.values():
+                        btn.config(state=tk.DISABLED)
+                        
+            except Exception as e:
+                debug_log(f"⚠️ Error handling state change: {e}", "STATE_CHANGE")
+        
+        # Handle hand completion events
+        if event.event_type == "hand_complete":
+            self._disable_action_buttons()
+            # Disable pre-bet buttons as well
+            for btn in self.prebet_buttons.values():
+                btn.config(state=tk.DISABLED)
+            debug_log("🎓 Practice: Disabled all action buttons for hand completion", "HAND_COMPLETE")
+        
         # Add bet animations for practice sessions
         if event.event_type == "action_executed":
             try:
@@ -656,6 +696,42 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     debug_log(f"🎓 Practice: No animation needed - action: {action_type}, amount: {amount}, player: {player_index}", "BET_ANIMATION")
             except Exception as e:
                 debug_log(f"⚠️ Error handling bet animation: {e}", "BET_ANIMATION")
+
+    def _setup_ui_controller(self):
+        """Setup UI controller to handle state machine sound and animation calls."""
+        # Create a simple UI controller that the state machine can use
+        class SimpleUIController:
+            def __init__(self, widget):
+                self.widget = widget
+            
+            def play_sound(self, sound_type: str, **kwargs):
+                """Play sound through the widget's sound system."""
+                if hasattr(self.widget, 'play_sound'):
+                    # Map state machine sound names to widget sound names
+                    sound_mapping = {
+                        'check_sound': 'check',
+                        'call_sound': 'call', 
+                        'bet_sound': 'bet',
+                        'raise_sound': 'raise',
+                        'fold_sound': 'fold',
+                        'all_in_sound': 'all_in'
+                    }
+                    mapped_sound = sound_mapping.get(sound_type, sound_type)
+                    self.widget.play_sound(mapped_sound, **kwargs)
+            
+            def animate(self, animation_type: str, **kwargs):
+                """Trigger animation through the widget's animation system."""
+                if hasattr(self.widget, 'play_animation'):
+                    self.widget.play_animation(animation_type, **kwargs)
+            
+            def update_ui(self, update_type: str, **kwargs):
+                """Handle UI updates from state machine."""
+                pass  # Widget handles its own updates
+        
+        # Set the UI controller on the state machine
+        if hasattr(self.state_machine, 'set_ui_controller'):
+            self.state_machine.set_ui_controller(SimpleUIController(self))
+            debug_log("UI controller set up for state machine", "UI_CONTROLLER")
 
 
 # ==============================

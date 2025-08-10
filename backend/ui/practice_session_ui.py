@@ -60,9 +60,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             # Fallback to defaults if no config provided
             config = GameConfig(
                 num_players=6,
-                big_blind=1.0,
-                small_blind=0.5,
-                starting_stack=100.0
+                big_blind=10.0,
+                small_blind=5.0,
+                starting_stack=1000.0
             )
             if self.logger:
                 self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Using default poker configuration", {

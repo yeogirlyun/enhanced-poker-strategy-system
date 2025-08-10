@@ -304,59 +304,72 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         center_y = self.canvas.winfo_height() // 2
         
         # Bet display positioned only 25% toward center from player (was 60%, too close to community cards)
-        bet_x = player_x + (center_x - player_x) * 0.25
-        bet_y = player_y + (center_y - player_y) * 0.25
+        # For Player 1 (bottom), move bet display even lower to avoid seat overlap
+        if player_index == 0:  # Player 1 (bottom position)
+            # Move bet display much lower for Player 1 to avoid seat overlap
+            bet_x = player_x + (center_x - player_x) * 0.15  # Only 15% toward center
+            bet_y = player_y + 80  # Move 80 pixels lower to avoid seat overlap
+        else:
+            # Other players: standard positioning
+            bet_x = player_x + (center_x - player_x) * 0.25
+            bet_y = player_y + (center_y - player_y) * 0.25
         
-        # Create bet display widget
-        bet_widget = tk.Label(
+        # Create bet display frame with larger size (was 120x80, now 180x120)
+        bet_frame = tk.Frame(
             self.canvas,
-            text="",
-            bg="#2c3e50",  # Dark blue background
-            fg="gold",     # Gold text
-            font=("Arial", 12, "bold"),
-            bd=2,
+            width=180,  # Increased from 120
+            height=120,  # Increased from 80
+            bg="#2F4F2F",
             relief="raised",
-            padx=8,
-            pady=4
+            bd=3
         )
         
-        bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_widget, anchor="center")
+        # Position the bet display
+        bet_frame.place(x=bet_x - 90, y=bet_y - 60)  # Center the larger frame
         
-        # Store the bet display
-        self.player_bet_displays[player_index] = {
-            "widget": bet_widget,
-            "window": bet_window,
-            "amount": 0.0
+        # Create bet title with larger font
+        bet_title = tk.Label(
+            bet_frame,
+            text="Bet",
+            bg="#2F4F2F",
+            fg="white",
+            font=("Helvetica", 16, "bold")  # Increased from 12 to 16
+        )
+        bet_title.pack(pady=5)
+        
+        # Create bet amount label with larger font
+        bet_label = tk.Label(
+            bet_frame,
+            text="$0.00",
+            bg="#2F4F2F",
+            fg="yellow",
+            font=("Helvetica", 20, "bold")  # Increased from 16 to 20
+        )
+        bet_label.pack(pady=5)
+        
+        # Store reference to bet display
+        if not hasattr(self, 'bet_displays'):
+            self.bet_displays = {}
+        self.bet_displays[player_index] = {
+            "frame": bet_frame,
+            "label": bet_label,
+            "visible": False
         }
-        
-        # Initially hidden
-        self.canvas.itemconfig(bet_window, state="hidden")
-        
-        # Bet display creation debug removed
     
     def _show_bet_display_for_player(self, player_index: int, action: str, amount: float):
-        """Show money graphics in front of a player when they bet/call."""
-        # Create bet display if it doesn't exist
-        if player_index not in self.player_bet_displays:
-            self._create_bet_display_for_player(player_index)
-        
-        if player_index not in self.player_bet_displays:
+        """Show bet display for a player with the given action and amount."""
+        if player_index not in self.bet_displays:
             return
         
-        bet_display = self.player_bet_displays[player_index]
-        bet_widget = bet_display["widget"]
-        bet_window = bet_display["window"]
+        bet_display = self.bet_displays[player_index]
+        bet_display["label"].config(text=f"${amount:,.0f}")
         
-        if amount > 0:
-            # Show the money amount in front of player
-            bet_widget.config(text=f"💰 ${amount:,.0f}")
-            self.canvas.itemconfig(bet_window, state="normal")
-            bet_display["amount"] = amount
-            # Bet amount display debug removed
-        else:
-            # Hide for non-betting actions
-            self.canvas.itemconfig(bet_window, state="hidden")
-            bet_display["amount"] = 0.0
+        # Show the bet display
+        bet_display["frame"].pack()
+        bet_display["visible"] = True
+        
+        # Schedule fade out after 3 seconds
+        self.after(3000, lambda: self._fade_bet_display(player_index))
     
     def _clear_all_bet_displays_permanent(self):
         """Clear all bet displays for new hand."""
@@ -1454,39 +1467,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.bet_labels[player_index] = bet_window
             self.after(3000, lambda: self._remove_bet_display(player_index))
     
-    def _fade_bet_display(self, player_index):
-        """Fade out a bet display before removing it."""
-        if player_index in self.bet_labels:
-            # Simple fade by changing to a dimmer color
-            bet_window = self.bet_labels[player_index]
-            try:
-                widget = self.canvas.nametowidget(self.canvas.itemcget(bet_window, "window"))
-                if widget:
-                    # Change to a faded appearance
-                    for child in widget.winfo_children():
-                        if isinstance(child, tk.Label):
-                            child.config(bg="gray", fg="darkgray")
-                    # Remove after fade effect
-                    self.after(500, lambda: self._remove_bet_display(player_index))
-            except Exception:
-                # If fade fails, just remove
-                self._remove_bet_display(player_index)
-    
-    def _remove_bet_display(self, player_index):
-        """Remove a bet display for a player."""
-        if player_index in self.bet_labels:
-            bet_window = self.bet_labels[player_index]
-            self.canvas.delete(bet_window)
-            del self.bet_labels[player_index]
+    def _fade_bet_display(self, player_index: int):
+        """Fade out bet display for a player."""
+        if player_index in self.bet_displays:
+            bet_display = self.bet_displays[player_index]
+            if bet_display["visible"]:
+                bet_display["frame"].pack_forget()
+                bet_display["visible"] = False
     
     def _clear_all_bet_displays(self):
-        """Clear all bet displays at once."""
-        if self.animating_bets_to_pot:
-            debug_log("Skipping bet clearing - animation in progress", "BET_ANIMATION")
-            return
-        debug_log("Clearing all bet displays", "BET_DISPLAY")
-        for player_index in list(self.bet_labels.keys()):
-            self._remove_bet_display(player_index)
+        """Clear all bet displays."""
+        for player_index in self.bet_displays:
+            bet_display = self.bet_displays[player_index]
+            if bet_display["visible"]:
+                bet_display["frame"].pack_forget()
+                bet_display["visible"] = False
     
     def _finish_bet_animations(self):
         """Finish bet animations and clear displays."""
@@ -1943,7 +1938,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             text="Pot",
             bg=THEME["secondary_bg"],
             fg="white",
-            font=("Helvetica", 10, "bold")
+            font=("Helvetica", 14, "bold")  # Increased from 10 to 14
         )
         pot_title.pack(pady=2)
         
@@ -1953,7 +1948,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             text="$0.00",
             bg=THEME["secondary_bg"],
             fg="yellow",
-            font=("Helvetica", 12, "bold")
+            font=("Helvetica", 18, "bold")  # Increased from 12 to 18
         )
         self.pot_label.pack(pady=2)
         
