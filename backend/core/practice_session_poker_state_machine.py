@@ -507,13 +507,25 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         
         # Schedule bot action after a short delay for realism
         def execute_bot_action():
-            self._scheduled_bot_action = False
-            self._execute_bot_action_if_needed()
+            try:
+                self._scheduled_bot_action = False
+                if self.logger:
+                    self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Executing scheduled bot action", {})
+                self._execute_bot_action_if_needed()
+            except Exception as e:
+                if self.logger:
+                    self.logger.log_system("ERROR", "BOT_SCHEDULING", f"Error in scheduled bot action: {e}", {"error": str(e)})
+                print(f"🚫 Error in scheduled bot action: {e}")
+                # Reset the flag so future scheduling can work
+                self._scheduled_bot_action = False
         
-        # Use threading timer for delayed execution
+        # Use threading timer for delayed execution with better error handling
         import threading
-        timer = threading.Timer(0.5, execute_bot_action)  # Reduced to 500ms for faster play
+        timer = threading.Timer(1.0, execute_bot_action)  # 1 second delay for turn visualization
+        timer.daemon = True  # Make it a daemon thread
         timer.start()
+        if self.logger:
+            self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Started bot action timer", {"delay": 1.0})
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
@@ -544,22 +556,8 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 if success:
                     if self.logger:
                         self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {})
-                    # Schedule next bot action with proper delay for turn visualization
-                    # Use after() method instead of threading for better UI integration
-                    def delayed_next_bot():
-                        try:
-                            self._schedule_bot_actions()
-                        except Exception as e:
-                            if self.logger:
-                                self.logger.log_system("ERROR", "BOT_ACTION", f"Error in delayed bot action: {e}", {})
-                    
-                    # Use a UI-safe delay method if available, otherwise fallback to timer
-                    if hasattr(self, 'after'):
-                        self.after(1500, delayed_next_bot)  # 1.5 second delay
-                    else:
-                        import threading
-                        timer = threading.Timer(1.5, delayed_next_bot)
-                        timer.start()
+                    # Schedule next bot action immediately - let _schedule_bot_actions handle the delay
+                    self._schedule_bot_actions()
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
                     if self.logger:
