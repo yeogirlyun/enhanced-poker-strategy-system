@@ -15,8 +15,9 @@ import time
 # Import shared components
 from .card_widget import CardWidget
 
-# Import theme
+# Import theme and modern widgets
 from core.gui_models import THEME
+from .modern_poker_widgets import ChipStackDisplay
 
 def debug_log(message: str, category: str = "UI_DEBUG"):
     """Log debug messages to file instead of console."""
@@ -314,48 +315,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bet_x = player_x + (center_x - player_x) * 0.25
             bet_y = player_y + (center_y - player_y) * 0.25
         
-        # Create bet display frame with larger size (was 120x80, now 180x120)
-        bet_frame = tk.Frame(
+        # Create modern chip stack display for bets
+        chip_display = ChipStackDisplay(
             self.canvas,
-            width=180,  # Increased from 120
-            height=120,  # Increased from 80
-            bg="#2F4F2F",
-            relief="raised",
-            bd=3
+            amount=0.0,
+            title="Bet"
         )
         
-        # Position the bet display using canvas create_window for proper positioning
-        bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_frame, anchor="center")
+        # Position the chip display using canvas create_window for proper positioning
+        bet_window = self.canvas.create_window(bet_x, bet_y, window=chip_display, anchor="center")
         
         # Initially hide the bet display
         self.canvas.itemconfig(bet_window, state="hidden")
-        
-        # Create bet title with larger font
-        bet_title = tk.Label(
-            bet_frame,
-            text="Bet",
-            bg="#2F4F2F",
-            fg="white",
-            font=("Helvetica", 16, "bold")  # Increased from 12 to 16
-        )
-        bet_title.pack(pady=5)
-        
-        # Create bet amount label with larger font
-        bet_label = tk.Label(
-            bet_frame,
-            text="$0.00",
-            bg="#2F4F2F",
-            fg="yellow",
-            font=("Helvetica", 20, "bold")  # Increased from 16 to 20
-        )
-        bet_label.pack(pady=5)
         
         # Store reference to bet display
         if not hasattr(self, 'bet_displays'):
             self.bet_displays = {}
         self.bet_displays[player_index] = {
-            "frame": bet_frame,
-            "label": bet_label,
+            "chip_display": chip_display,
             "window": bet_window,
             "visible": False
         }
@@ -372,7 +349,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return
         
         bet_display = self.bet_displays[player_index]
-        bet_display["label"].config(text=f"${amount:,.0f}")
+        
+        # Update the chip display with the new amount and action
+        chip_display = bet_display["chip_display"]
+        chip_display.set_amount(amount)
+        chip_display.set_title(action.title() if action else "Bet")
         
         # Show the bet display
         self.canvas.itemconfig(bet_display["window"], state="normal")
@@ -1553,15 +1534,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Update the pot amount display (FLICKER-FREE VERSION)."""
         # Only update if pot amount actually changed
         if self.last_pot_amount != amount:
-            if hasattr(self, 'pot_label') and self.pot_label:
-                self.pot_label.config(text=f"${amount:,.2f}")
+            if hasattr(self, 'pot_display') and self.pot_display:
+                self.pot_display.set_amount(amount)
                 debug_log(f"Updated pot: ${self.last_pot_amount:,.2f} → ${amount:,.2f}", "POT_DISPLAY")
+            elif hasattr(self, 'pot_label') and self.pot_label:
+                # Fallback for legacy pot label
+                self.pot_label.config(text=f"${amount:,.2f}")
+                debug_log(f"Updated pot (legacy): ${self.last_pot_amount:,.2f} → ${amount:,.2f}", "POT_DISPLAY")
             else:
                 # Pot display doesn't exist yet - ensure it's created
                 debug_log(f"Creating pot display for amount: ${amount:,.2f}", "POT_DISPLAY")
                 self._draw_pot_display()
-                if hasattr(self, 'pot_label') and self.pot_label:
-                    self.pot_label.config(text=f"${amount:,.2f}")
+                if hasattr(self, 'pot_display') and self.pot_display:
+                    self.pot_display.set_amount(amount)
             self.last_pot_amount = amount
     
     def play_sound(self, sound_type: str, **kwargs):
@@ -1941,32 +1926,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Use layout manager for positioning
         pot_x, pot_y = self.layout_manager.calculate_pot_position(width, height)
         
-        # Create pot frame
-        pot_frame = tk.Frame(self.canvas, bg=THEME["secondary_bg"], bd=0)
-        
-        # Create pot title
-        pot_title = tk.Label(
-            pot_frame,
-            text="Pot",
-            bg=THEME["secondary_bg"],
-            fg="white",
-            font=("Helvetica", 14, "bold")  # Increased from 10 to 14
+        # Create modern pot chip display
+        self.pot_display = ChipStackDisplay(
+            self.canvas,
+            amount=0.0,
+            title="Pot"
         )
-        pot_title.pack(pady=2)
         
-        # Create pot amount label
-        self.pot_label = tk.Label(
-            pot_frame,
-            text="$0.00",
-            bg=THEME["secondary_bg"],
-            fg="yellow",
-            font=("Helvetica", 18, "bold")  # Increased from 12 to 18
-        )
-        self.pot_label.pack(pady=2)
+        # Store reference to pot label for compatibility
+        self.pot_label = self.pot_display.amount_label
         
-        # Store the pot frame
-        self.pot_frame = pot_frame
-        self.canvas.create_window(pot_x, pot_y, window=pot_frame, anchor="center")
+        # Store the pot frame for compatibility
+        self.pot_frame = self.pot_display
+        self.canvas.create_window(pot_x, pot_y, window=self.pot_display, anchor="center")
         
         # Store canvas size for next comparison
         self.last_pot_canvas_size = current_size
