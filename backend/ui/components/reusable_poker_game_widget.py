@@ -312,8 +312,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bet_y = player_y + 80  # Move 80 pixels lower to avoid seat overlap
         else:
             # Other players: standard positioning
-        bet_x = player_x + (center_x - player_x) * 0.25
-        bet_y = player_y + (center_y - player_y) * 0.25
+            bet_x = player_x + (center_x - player_x) * 0.25
+            bet_y = player_y + (center_y - player_y) * 0.25
         
         # Create modern chip stack display for bets
         chip_display = ChipStackDisplay(
