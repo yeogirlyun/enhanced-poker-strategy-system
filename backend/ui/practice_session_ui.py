@@ -128,15 +128,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             print(f"⚠️ Error handling event {event.event_type}: {e}")
     
     def _setup_ui(self):
-        """Setup the clean UI layout."""
-        # Configure main layout - poker table takes up ~80% of window
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=4)  # Table area (~80%)
-        self.grid_columnconfigure(1, weight=1)  # Controls area (~20%)
+        """Setup the full-width layout with bottom control strip."""
+        # Configure main layout - poker table takes full width, bottom strip for controls
+        self.grid_rowconfigure(0, weight=1)  # Poker table area (expandable)
+        self.grid_rowconfigure(1, weight=0)  # Bottom control strip (fixed height)
+        self.grid_columnconfigure(0, weight=1)  # Full width
         
-        # === LEFT: Practice Poker Widget (Table Display) ===
+        # === TOP: Full-width Practice Poker Widget (Table Display) ===
         table_frame = ttk.Frame(self)
-        table_frame.grid(row=0, column=0, sticky="nsew", padx=(5, 2), pady=5)
+        table_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=(5, 0))
         
         # Use specialized practice session poker widget with session controls
         self.poker_widget = PracticeSessionPokerWidget(
@@ -152,13 +152,211 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         )
         self.poker_widget.pack(fill=tk.BOTH, expand=True)
         
-        # === RIGHT: Session Management Panel ===
-        controls_frame = ttk.Frame(self)
-        controls_frame.grid(row=0, column=1, sticky="nsew", padx=(2, 5), pady=5)
-        
-        self._setup_session_controls(controls_frame)
-        self._setup_statistics_panel(controls_frame)
+        # === BOTTOM: Control Strip (Session | Action Buttons | Statistics) ===
+        self._setup_bottom_control_strip()
     
+    def _setup_bottom_control_strip(self):
+        """Setup the bottom control strip with session controls, action buttons, and statistics."""
+        # Create bottom control strip frame
+        bottom_frame = ttk.Frame(self, style='Dark.TFrame')
+        bottom_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=(0, 5))
+        
+        # Configure three columns in bottom strip
+        bottom_frame.grid_columnconfigure(0, weight=1)  # Left: Session controls
+        bottom_frame.grid_columnconfigure(1, weight=2)  # Center: Action buttons (wider)
+        bottom_frame.grid_columnconfigure(2, weight=1)  # Right: Statistics
+        
+        # === LEFT: Session Controls ===
+        session_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
+        session_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        self._setup_session_controls_bottom(session_frame)
+        
+        # === CENTER: Action Buttons ===
+        action_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
+        action_frame.grid(row=0, column=1, sticky="nsew", padx=5)
+        self._setup_action_buttons(action_frame)
+        
+        # === RIGHT: Statistics ===
+        stats_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
+        stats_frame.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
+        self._setup_statistics_panel_bottom(stats_frame)
+    
+    def _setup_session_controls_bottom(self, parent):
+        """Setup session controls for bottom strip layout."""
+        # Start New Hand button - horizontal layout
+        self.start_btn = tk.Button(
+            parent,
+            text="🎯 START NEW HAND",
+            command=self._start_new_hand,
+            bg=THEME["chip_green"],         # Medium Green (win/positive indicator)
+            fg="white",
+            activebackground=THEME["table_felt"],  # Emerald Green on hover
+            font=FONTS["main"],
+            height=2,
+            bd=2,
+            cursor='hand2',
+            relief='raised'
+        )
+        self.start_btn.pack(side=tk.LEFT, padx=(0, 5), fill=tk.Y)
+        
+        # Reset Session button
+        self.reset_btn = tk.Button(
+            parent,
+            text="🔄 RESET SESSION",
+            command=self._reset_session,
+            bg=THEME["button_allin"],       # Orange for reset (matches ALL IN)
+            fg="white",
+            activebackground=THEME["button_allin_hover"],  # Darker orange on hover
+            font=FONTS["main"],
+            height=2,
+            bd=2,
+            cursor='hand2',
+            relief='raised'
+        )
+        self.reset_btn.pack(side=tk.LEFT, fill=tk.Y)
+    
+    def _setup_statistics_panel_bottom(self, parent):
+        """Setup statistics panel for bottom strip layout."""
+        # Session Statistics in horizontal layout
+        stats_text = tk.Text(
+            parent,
+            height=3,
+            width=25,
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            font=FONTS["small"],
+            wrap=tk.WORD,
+            state=tk.DISABLED
+        )
+        stats_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Store reference for updates
+        self.stats_text = stats_text
+        
+        # Initialize with default stats
+        self._update_session_stats()
+    
+    def _setup_action_buttons(self, parent):
+        """Setup modern action buttons in the bottom center area."""
+        # Action buttons panel
+        action_panel = tk.Frame(parent, bg=THEME["primary_bg"])
+        action_panel.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure grid for equal button distribution
+        for i in range(5):  # 4 buttons + 1 bet amount area
+            action_panel.grid_columnconfigure(i, weight=1)
+        
+        # CHECK/CALL button
+        check_button = tk.Button(
+            action_panel,
+            text="CHECK",
+            bg=THEME['button_check'],
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground=THEME['button_check_hover'],
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('check_call')
+        )
+        check_button.grid(row=0, column=0, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        # FOLD button
+        fold_button = tk.Button(
+            action_panel,
+            text="FOLD",
+            bg=THEME['button_fold'],
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground=THEME['button_fold_hover'],
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('fold')
+        )
+        fold_button.grid(row=0, column=1, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        # BET/RAISE button
+        bet_button = tk.Button(
+            action_panel,
+            text="BET",
+            bg=THEME['button_raise'],
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground=THEME['button_raise_hover'],
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('bet_raise')
+        )
+        bet_button.grid(row=0, column=2, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        # Bet amount area
+        bet_frame = tk.Frame(action_panel, bg=THEME["primary_bg"])
+        bet_frame.grid(row=0, column=3, padx=5, pady=10, sticky="ew")
+        
+        tk.Label(bet_frame, text="Bet Amount", bg=THEME["primary_bg"], fg=THEME["text"], font=FONTS["small"]).pack()
+        self.bet_amount = tk.StringVar(value="2")
+        bet_entry = tk.Entry(bet_frame, textvariable=self.bet_amount, width=8, justify='center')
+        bet_entry.pack()
+        
+        # ALL IN button
+        allin_button = tk.Button(
+            action_panel,
+            text="ALL IN",
+            bg=THEME['button_allin'],
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='raised',
+            bd=3,
+            cursor='hand2',
+            activebackground=THEME['button_allin_hover'],
+            activeforeground='white',
+            highlightthickness=0,
+            command=lambda: self._handle_action_click('all_in')
+        )
+        allin_button.grid(row=0, column=4, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        # Store button references for enabling/disabling
+        self.action_buttons = {
+            'check_call': check_button,
+            'fold': fold_button,
+            'bet_raise': bet_button,
+            'all_in': allin_button
+        }
+        
+        # Initially disable all action buttons
+        self._disable_action_buttons()
+    
+    def _handle_action_click(self, action_key: str):
+        """Handle action button clicks and delegate to poker widget."""
+        if hasattr(self.poker_widget, '_handle_action_click'):
+            self.poker_widget._handle_action_click(action_key)
+    
+    def _enable_action_buttons(self):
+        """Enable action buttons for human player interaction."""
+        for button_widget in self.action_buttons.values():
+            button_widget.config(relief='raised', state='normal')
+    
+    def _disable_action_buttons(self):
+        """Disable action buttons (not human player's turn)."""
+        disabled_color = THEME['button_fold']  # Use theme gray
+        disabled_text = THEME['text_muted']    # Use theme muted text
+        
+        for button_widget in self.action_buttons.values():
+            button_widget.config(
+                bg=disabled_color, 
+                fg=disabled_text,
+                relief='sunken',
+                state='disabled'
+            )
+
     def _setup_session_controls(self, parent):
         """Setup industry-standard session control buttons."""
         controls_frame = ttk.LabelFrame(parent, text="Session Controls", padding=10)

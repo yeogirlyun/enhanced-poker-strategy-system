@@ -310,10 +310,11 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         pass
     
     def _create_action_buttons_panel(self):
-        """Create the modern action buttons panel at the bottom of the poker table."""
-        # Create a frame at the bottom for action buttons using grid
-        action_frame = tk.Frame(self, bg=THEME["primary_bg"])
-        action_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=10)
+        """Create the modern action buttons panel in the bottom center area."""
+        # For now, let's remove the action buttons from the poker widget entirely
+        # They will be handled separately in the bottom control strip
+        debug_log("Action buttons will be created in bottom control strip", "PRACTICE_UI")
+            return
         
         # Action buttons panel
         action_panel = tk.Frame(action_frame, bg=THEME["primary_bg"])
@@ -522,6 +523,6 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         if player_index == 0:  # Human player
             self._enable_action_buttons()
             debug_log("Human player turn - buttons enabled", "PRACTICE_UI")
-        else:
+                else:
             self._disable_action_buttons()
             debug_log(f"Bot player {player_index + 1} turn - buttons disabled", "PRACTICE_UI")
