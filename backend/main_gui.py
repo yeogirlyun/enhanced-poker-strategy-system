@@ -44,6 +44,16 @@ from ui.practice_session_ui import PracticeSessionUI
 
 class EnhancedMainGUI:
     def __init__(self):
+        from core.session_logger import get_session_logger
+        
+        # Get logger instance
+        try:
+            self.logger = get_session_logger()
+            self.logger.log_system("INFO", "GUI_INIT", "EnhancedMainGUI initialization started", {})
+        except Exception as e:
+            print(f"⚠️ Could not get logger in GUI init: {e}")
+            self.logger = None
+        
         # Set process name for macOS before creating the window
         try:
             import platform
@@ -54,14 +64,23 @@ class EnhancedMainGUI:
                 try:
                     import setproctitle
                     setproctitle.setproctitle("PokerPro Trainer")
+                    if self.logger:
+                        self.logger.log_system("INFO", "GUI_INIT", "Process title set to PokerPro Trainer", {})
                 except ImportError:
                     # Fallback: try to set argv[0]
                     if len(sys.argv) > 0:
                         sys.argv[0] = "PokerPro Trainer"
-        except:
-            pass
+                    if self.logger:
+                        self.logger.log_system("INFO", "GUI_INIT", "Process name set via argv[0]", {})
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("WARNING", "GUI_INIT", f"Could not set process name: {e}", {})
         
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Creating Tkinter root window", {})
         self.root = tk.Tk()
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Tkinter root window created", {})
         
         # Set app name for macOS menu bar
         try:
@@ -101,13 +120,20 @@ class EnhancedMainGUI:
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
         # Initialize strategy data
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Initializing strategy data", {})
         self.strategy_data = StrategyData()
 
         # Load strategy - will generate default if file doesn't exist
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Loading strategy from file", {"file": "modern_strategy.json"})
         self.strategy_data.load_strategy_from_file("modern_strategy.json")
+        
         # --- NEW: Status Bar Variable ---
         self.status_bar_text = tk.StringVar()
 
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Setting up GUI components", {})
         self._setup_styles()
         self._create_menu()
         self._create_widgets()
@@ -119,6 +145,9 @@ class EnhancedMainGUI:
         
         # Initialize the overview with current strategy data
         self._update_overview()
+        
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "EnhancedMainGUI initialization completed successfully", {})
 
     def _setup_styles(self):
         """Setup custom styles for the application."""
@@ -499,8 +528,21 @@ class EnhancedMainGUI:
         ToolTip(larger_btn, "Make table larger")
         
         # Create the graphical practice session UI
-        self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
-        self.practice_ui.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Creating PracticeSessionUI", {"strategy_data": bool(self.strategy_data)})
+        
+        try:
+            self.practice_ui = PracticeSessionUI(practice_frame, self.strategy_data)
+            self.practice_ui.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+            if self.logger:
+                self.logger.log_system("INFO", "GUI_INIT", "PracticeSessionUI created successfully", {})
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "GUI_INIT", f"Failed to create PracticeSessionUI: {e}", {
+                    "error_type": type(e).__name__,
+                    "error_message": str(e)
+                })
+            raise
 
         # Tab 7: Game Dashboard & Setup (NEW)
         enhanced_game_frame = ttk.Frame(self.notebook)
@@ -1159,7 +1201,33 @@ Ready to track performance...
     def _start_practice_game(self):
         """Start a new practice game."""
         if hasattr(self, 'practice_ui'):
-            self.practice_ui.start_new_hand()
+            # First update the configuration with current GUI values
+            try:
+                players = int(self.enhanced_player_count.get())
+                stack = int(self.starting_stack.get())
+                small_blind = int(self.small_blind.get())
+                big_blind = int(self.big_blind.get())
+                
+                # Create new config with current GUI values
+                from core.flexible_poker_state_machine import GameConfig
+                new_config = GameConfig(
+                    num_players=players,
+                    big_blind=float(big_blind),
+                    small_blind=float(small_blind),
+                    starting_stack=float(stack)
+                )
+                
+                # Update the practice session with new config
+                self.practice_ui.update_poker_config(new_config)
+                
+            except ValueError as e:
+                messagebox.showerror("Invalid Input", f"Please check your input values: {e}")
+                return
+            except Exception as e:
+                print(f"⚠️ Error updating configuration: {e}")
+            
+            # Start the new hand
+            self.practice_ui._start_new_hand()
             self.set_status("🎯 New poker hand started!")
     def _reset_practice_game(self):
         """Reset the practice game."""
@@ -1353,17 +1421,38 @@ These settings can be configured in the main strategy panels."""
 
 def main():
     """Main entry point with enhanced graceful shutdown handling."""
+    from core.session_logger import get_session_logger
+    
     print("🚀 Starting Poker Training System...")
+    
+    # Initialize logger early to capture all startup activity
+    try:
+        logger = get_session_logger()
+        logger.log_system("INFO", "STARTUP", "Main application starting", {
+            "python_version": sys.version,
+            "working_directory": os.getcwd()
+        })
+        print("📝 Logger initialized - logs in backend/logs/")
+    except Exception as e:
+        print(f"⚠️ Logger initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
+        # Continue without logger rather than crash
+        logger = None
     
     # Setup enhanced graceful shutdown
     def signal_handler(signum, frame):
         print(f"\n🔄 Received shutdown signal {signum} - gracefully exiting...")
+        if logger:
+            logger.log_system("INFO", "SHUTDOWN", f"Received signal {signum}", {"signal": signum})
         print("💾 Session data will be saved automatically...")
         # The SessionLogger will handle the actual cleanup
         sys.exit(0)
     
     def cleanup_on_exit():
         print("👋 Thank you for using Poker Training System!")
+        if logger:
+            logger.log_system("INFO", "SHUTDOWN", "Application exit cleanup", {})
     
     # Register handlers
     signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
@@ -1373,18 +1462,35 @@ def main():
     atexit.register(cleanup_on_exit)
     
     try:
+        if logger:
+            logger.log_system("INFO", "STARTUP", "Creating EnhancedMainGUI instance", {})
+        print("🎮 Creating main GUI...")
         app = EnhancedMainGUI()
+        
+        if logger:
+            logger.log_system("INFO", "STARTUP", "EnhancedMainGUI created successfully", {})
+        print("🎮 Starting main GUI loop...")
         app.run()
+        
     except KeyboardInterrupt:
         print("\n🔄 Keyboard interrupt detected - shutting down gracefully...")
+        if logger:
+            logger.log_system("WARNING", "SHUTDOWN", "Keyboard interrupt", {})
         print("💾 Saving session data...")
     except Exception as e:
         print(f"❌ Application error: {e}")
+        if logger:
+            logger.log_system("ERROR", "STARTUP", f"Application error: {e}", {
+                "error_type": type(e).__name__,
+                "error_message": str(e)
+            })
         import traceback
         traceback.print_exc()
         print("💾 Attempting to save session data despite error...")
     finally:
         print("🔄 Application cleanup complete")
+        if logger:
+            logger.log_system("INFO", "SHUTDOWN", "Application cleanup complete", {})
         print("👋 Thank you for using Poker Training System!")
 
 

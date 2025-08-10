@@ -28,29 +28,83 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     - Focuses on session management and educational features
     """
     
-    def __init__(self, parent, strategy_data: StrategyData, **kwargs):
+    def __init__(self, parent, strategy_data: StrategyData, poker_config=None, **kwargs):
+        from core.session_logger import get_session_logger
+        
         super().__init__(parent, **kwargs)
+        
+        # Get logger instance
+        try:
+            self.logger = get_session_logger()
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionUI initialization started", {
+                "strategy_data": bool(strategy_data)
+            })
+        except Exception as e:
+            print(f"⚠️ Could not get logger in PracticeSessionUI init: {e}")
+            self.logger = None
         
         self.strategy_data = strategy_data
         self.session_start_time = datetime.now()
         
-        # Initialize specialized state machine
-        config = GameConfig(
-            num_players=6,
-            big_blind=1.0,
-            small_blind=0.5,
-            starting_stack=100.0
-        )
+        # Initialize specialized state machine with GUI config or defaults
+        if poker_config:
+            config = poker_config
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Using provided poker configuration", {
+                    "num_players": config.num_players,
+                    "big_blind": config.big_blind,
+                    "small_blind": config.small_blind,
+                    "starting_stack": config.starting_stack
+                })
+        else:
+            # Fallback to defaults if no config provided
+            config = GameConfig(
+                num_players=6,
+                big_blind=1.0,
+                small_blind=0.5,
+                starting_stack=100.0
+            )
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Using default poker configuration", {
+                    "num_players": config.num_players,
+                    "big_blind": config.big_blind,
+                    "small_blind": config.small_blind,
+                    "starting_stack": config.starting_stack
+                })
         
-        self.state_machine = PracticeSessionPokerStateMachine(config, strategy_data)
+        if self.logger:
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Creating PracticeSessionPokerStateMachine", {
+                "num_players": config.num_players,
+                "big_blind": config.big_blind,
+                "small_blind": config.small_blind,
+                "starting_stack": config.starting_stack
+            })
+        
+        try:
+            self.state_machine = PracticeSessionPokerStateMachine(config, strategy_data)
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionPokerStateMachine created successfully", {})
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI_INIT", f"Failed to create PracticeSessionPokerStateMachine: {e}", {
+                    "error_type": type(e).__name__,
+                    "error_message": str(e)
+                })
+            raise
         
         # Add this UI as an event listener
+        if self.logger:
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Adding UI as event listener", {})
         self.state_machine.add_event_listener(self)
         
         # Setup UI
+        if self.logger:
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Setting up UI components", {})
         self._setup_ui()
         
-        print("🎓 PracticeSessionUI initialized - clean architecture with specialized components")
+        if self.logger:
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionUI initialization completed successfully", {})
+        print("🎓 Practice Session UI ready")
     
     def on_event(self, event: GameEvent):
         """Handle events from the specialized state machine."""
@@ -395,12 +449,47 @@ Total Winnings: ${stats['total_winnings']:.2f}
         except Exception as e:
             print(f"⚠️ Error updating session stats: {e}")
     
+    def update_poker_config(self, new_config):
+        """Update the poker configuration for the practice session."""
+        try:
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_UI_CONFIG", "Updating poker configuration", {
+                    "old_big_blind": self.state_machine.config.big_blind,
+                    "new_big_blind": new_config.big_blind,
+                    "old_small_blind": self.state_machine.config.small_blind,
+                    "new_small_blind": new_config.small_blind,
+                    "old_starting_stack": self.state_machine.config.starting_stack,
+                    "new_starting_stack": new_config.starting_stack
+                })
+            
+            # Update the state machine configuration
+            self.state_machine.config = new_config
+            
+            # Reset stacks for all players to the new starting amount
+            for player in self.state_machine.game_state.players:
+                player.stack = new_config.starting_stack
+            
+            # Force UI refresh to show new values
+            if hasattr(self, 'poker_widget'):
+                self.poker_widget.force_display_update()
+                
+            self._add_educational_message(f"🔧 Updated game settings: ${new_config.small_blind}/${new_config.big_blind} blinds, ${new_config.starting_stack} starting stack")
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI_CONFIG", f"Error updating poker configuration: {e}", {})
+            print(f"⚠️ Error updating poker configuration: {e}")
+
     def update_font_size(self, font_size: int):
         """Update font sizes for the educational and stats panels."""
         try:
             new_font = (FONTS["main"][0], font_size)
             self.edu_text.config(font=new_font)
             self.stats_text.config(font=new_font)
+            
+            # Also update poker widget font size
+            if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'update_font_size'):
+                self.poker_widget.update_font_size(font_size)
         except Exception as e:
             print(f"⚠️ Error updating font size: {e}")
     

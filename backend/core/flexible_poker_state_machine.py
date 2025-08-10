@@ -586,14 +586,30 @@ class FlexiblePokerStateMachine:
         if not player.is_active or player.has_folded:
             return False
         
+        # CRITICAL FIX: Only allow actions during betting states
+        betting_states = [
+            PokerState.PREFLOP_BETTING, 
+            PokerState.FLOP_BETTING, 
+            PokerState.TURN_BETTING, 
+            PokerState.RIVER_BETTING
+        ]
+        if self.current_state not in betting_states:
+            self._safe_print(f"❌ Action rejected: {action.value} not allowed during {self.current_state}")
+            return False
+        
         # Validate action
         valid_actions = self.get_valid_actions_for_player(player)
         if not self._is_action_valid(action, amount, valid_actions):
             return False
         
-        # Log current state
-        self._safe_print(f"   Current state: {self.current_state}, Street: {self.game_state.street}")
-        self._safe_print(f"   Current bet: ${self.game_state.current_bet}, Player bet: ${player.current_bet}")
+        # Log current state (reduced verbosity)
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system("DEBUG", "GAME_STATE", f"Action executed: {self.current_state}, Street: {self.game_state.street}", {
+                "current_bet": self.game_state.current_bet,
+                "player_bet": player.current_bet,
+                "player": player.name,
+                "action": action.value
+            })
         
         # Execute the action
         if action == ActionType.FOLD:
@@ -608,20 +624,24 @@ class FlexiblePokerStateMachine:
             call_amount = self.game_state.current_bet - player.current_bet
             if call_amount > 0:
                 actual_call = min(call_amount, player.stack)
-                player.current_bet += actual_call
-                player.stack -= actual_call
-                self.game_state.pot += actual_call
-                self._safe_print(f"   {player.name} calls ${actual_call}")
+                # POKER FIX: Round all money amounts to avoid float precision issues
+                actual_call = round(actual_call, 2)
+                player.current_bet = round(player.current_bet + actual_call, 2)
+                player.stack = round(player.stack - actual_call, 2)
+                self.game_state.pot = round(self.game_state.pot + actual_call, 2)
+                self._safe_print(f"   {player.name} calls ${actual_call:.2f}")
             
         elif action == ActionType.BET:
             if amount > 0:
                 # No Limit Hold'em: Allow any bet amount (capped at stack if needed)
                 actual_amount = min(amount, player.stack)
-                player.current_bet += actual_amount
-                player.stack -= actual_amount
-                self.game_state.pot += actual_amount
+                # POKER FIX: Round all money amounts to avoid float precision issues
+                actual_amount = round(actual_amount, 2)
+                player.current_bet = round(player.current_bet + actual_amount, 2)
+                player.stack = round(player.stack - actual_amount, 2)
+                self.game_state.pot = round(self.game_state.pot + actual_amount, 2)
                 self.game_state.current_bet = player.current_bet
-                self._safe_print(f"   {player.name} bets ${actual_amount}")
+                self._safe_print(f"   {player.name} bets ${actual_amount:.2f}")
             
         elif action == ActionType.RAISE:
             if amount >= self.game_state.current_bet:
@@ -630,18 +650,26 @@ class FlexiblePokerStateMachine:
                 actual_total = min(total_needed, player.stack)
                 actual_amount = player.current_bet + actual_total
                 
+                # POKER FIX: Round all money amounts to avoid float precision issues
+                actual_total = round(actual_total, 2)
+                actual_amount = round(actual_amount, 2)
                 player.current_bet = actual_amount
-                player.stack -= actual_total
-                self.game_state.pot += actual_total
+                player.stack = round(player.stack - actual_total, 2)
+                self.game_state.pot = round(self.game_state.pot + actual_total, 2)
                 self.game_state.current_bet = actual_amount
-                self._safe_print(f"   {player.name} raises to ${actual_amount}")
+                self._safe_print(f"   {player.name} raises to ${actual_amount:.2f}")
         
         # Mark player as acted this round
         self.players_acted_this_round.add(player.name)
         self.actions_this_round += 1
         
-        self._safe_print(f"   Actions this round: {self.actions_this_round}")
-        self._safe_print(f"   Players acted: {len(self.players_acted_this_round)}")
+        # Reduced verbosity: only log round completion status to session logger
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system("DEBUG", "ROUND_PROGRESS", f"Round progress: {self.actions_this_round} actions, {len(self.players_acted_this_round)} players acted", {
+                "actions_this_round": self.actions_this_round,
+                "players_acted": len(self.players_acted_this_round),
+                "street": self.game_state.street
+            })
         
         # Emit action event
         import time
@@ -708,10 +736,14 @@ class FlexiblePokerStateMachine:
     
     def _handle_round_complete(self):
         """Handle completion of a betting round."""
-        # Round complete on current street
-        self._safe_print(f"   Current state: {self.current_state}")
-        self._safe_print(f"   Actions this round: {self.actions_this_round}")
-        self._safe_print(f"   Players acted: {len(self.players_acted_this_round)}")
+        # Round complete on current street (reduced console verbosity)
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system("INFO", "ROUND_COMPLETE", f"Round complete: {self.current_state}", {
+                "current_state": self.current_state.name,
+                "actions_this_round": self.actions_this_round,
+                "players_acted": len(self.players_acted_this_round),
+                "street": self.game_state.street
+            })
         
         self._reset_bets_for_new_round()
         self.actions_this_round = 0
@@ -738,19 +770,19 @@ class FlexiblePokerStateMachine:
             self._safe_print("🔄 Preflop betting complete, transitioning to DEAL_FLOP")
             self.transition_to(PokerState.DEAL_FLOP)
         elif self.current_state == PokerState.DEAL_FLOP:
-            self._safe_print("🔄 Flop dealing complete, transitioning to FLOP_BETTING")
+            # Flop dealing complete, transitioning to FLOP_BETTING (logged via session_logger)
             self.transition_to(PokerState.FLOP_BETTING)
         elif self.current_state == PokerState.FLOP_BETTING:
             self._safe_print("🔄 Flop betting complete, transitioning to DEAL_TURN")
             self.transition_to(PokerState.DEAL_TURN)
         elif self.current_state == PokerState.DEAL_TURN:
-            self._safe_print("🔄 Turn dealing complete, transitioning to TURN_BETTING")
+            # Turn dealing complete, transitioning to TURN_BETTING (logged via session_logger)
             self.transition_to(PokerState.TURN_BETTING)
         elif self.current_state == PokerState.TURN_BETTING:
             self._safe_print("🔄 Turn betting complete, transitioning to DEAL_RIVER")
             self.transition_to(PokerState.DEAL_RIVER)
         elif self.current_state == PokerState.DEAL_RIVER:
-            self._safe_print("🔄 River dealing complete, transitioning to RIVER_BETTING")
+            # River dealing complete, transitioning to RIVER_BETTING (logged via session_logger)
             self.transition_to(PokerState.RIVER_BETTING)
         elif self.current_state == PokerState.RIVER_BETTING:
             self._safe_print("🔄 River betting complete, transitioning to SHOWDOWN")

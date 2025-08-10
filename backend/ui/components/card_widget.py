@@ -9,6 +9,17 @@ Moved to separate module to avoid circular imports.
 import tkinter as tk
 
 
+def debug_log(message: str, category: str = "CARD_WIDGET"):
+    """Log debug messages to file instead of console."""
+    try:
+        from core.session_logger import get_session_logger
+        logger = get_session_logger()
+        logger.log_system("DEBUG", category, message, {})
+    except:
+        # Fallback to silent operation if logger not available
+        pass
+
+
 class CardWidget(tk.Canvas):
     """A custom widget to display a single, styled playing card."""
     def __init__(self, parent, width=50, height=70):
@@ -25,7 +36,7 @@ class CardWidget(tk.Canvas):
         # Store the current card string
         self.current_card_str = card_str
         
-        print(f"🎴 CardWidget.set_card called with: '{card_str}', is_folded={is_folded}")
+        # Card display updates are too verbose for logging
         
         self.delete("all") # Clear previous drawing
         
@@ -50,7 +61,7 @@ class CardWidget(tk.Canvas):
     def _draw_card_content(self, card_str):
         """Draw the card content (rank and suit) on the canvas."""
         if not card_str or len(card_str) < 2:
-            print(f"🎴 Invalid card string: '{card_str}'")
+            # Skipping invalid card debug - too verbose
             return
             
         rank, suit = card_str[0], card_str[1]
@@ -58,7 +69,7 @@ class CardWidget(tk.Canvas):
         suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
         color = suit_colors.get(suit, "black")
         
-        print(f"🎴 Drawing card: rank='{rank}', suit='{suit}', color='{color}'")
+        # Card drawing debug removed to reduce log spam
         
         # Use larger, clearer fonts
         self.create_text(self.width / 2, self.height / 2 - 5, text=rank, font=("Helvetica", 22, "bold"), fill=color)

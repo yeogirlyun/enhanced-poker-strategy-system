@@ -19,6 +19,17 @@ from .reusable_poker_game_widget import ReusablePokerGameWidget
 from core.flexible_poker_state_machine import GameEvent
 
 
+def debug_log(message: str, category: str = "PRACTICE_WIDGET"):
+    """Log debug messages to file instead of console."""
+    try:
+        from core.session_logger import get_session_logger
+        logger = get_session_logger()
+        logger.log_system("DEBUG", category, message, {})
+    except:
+        # Fallback to silent operation if logger not available
+        pass
+
+
 class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     """
     A specialized poker widget for practice sessions using hook-based architecture.
@@ -46,7 +57,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         # Setup practice-specific UI after parent initialization
         self.after_idle(self._setup_practice_ui)
         
-        print("🎓 PracticeSessionPokerWidget initialized with hook-based architecture")
+        # Initialization debug removed to reduce log spam
     
     # ==============================
     # HOOK OVERRIDES
@@ -68,14 +79,15 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     
                     player = self.state_machine.game_state.players[player_index]
                     if hasattr(player, 'is_human') and player.is_human:
-                        print(f"🎓 Hook: Human player {player_index} card '{card}' -> SHOW (will transform if **)")
+                        # Card hook debug removed to reduce log spam
                         return True  # Always show human player cards (including **)
             except Exception as e:
-                print(f"⚠️ Hook error for player {player_index}: {e}")
+                # Card transform error debug removed
+                pass
         
         # For bot players, use default behavior (hide ** cards)
         result = card != "**" and card != ""
-        print(f"🤖 Hook: Bot player {player_index} card '{card}' -> {'SHOW' if result else 'HIDE'}")
+        # Card hook debug removed to reduce log spam
         return result
     
     def _transform_card_data(self, player_index: int, card: str, card_index: int = 0) -> str:
@@ -84,7 +96,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         
         This ensures human players can always see their cards for learning.
         """
-        print(f"🎯 Transform hook called: player {player_index}, card '{card}', index {card_index}")
+        # Card transform debug removed to reduce log spam
         
         if hasattr(self, 'state_machine') and self.state_machine:
             try:
@@ -94,20 +106,22 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     
                     player = self.state_machine.game_state.players[player_index]
                     is_human = hasattr(player, 'is_human') and player.is_human
-                    print(f"🎯 Player {player_index} is_human: {is_human}")
+                    # Player type debug removed
                     
                     if is_human:
                         # For human player, ALWAYS return actual cards (even if not **)
                         if hasattr(player, 'cards') and player.cards and card_index < len(player.cards):
                             actual_card = player.cards[card_index]
-                            print(f"🎓 Practice: Human player {player_index} card {card_index}: '{card}' → '{actual_card}'")
+                            # Card transform debug removed
                             return actual_card
                         else:
-                            print(f"⚠️ Human player {player_index} missing cards or invalid index {card_index}")
-            except Exception as e:
-                print(f"⚠️ Error transforming card for player {player_index}: {e}")
+                            # Card error debug removed
+                            return card
+            except Exception:
+                # Error debug removed to reduce log spam
+                pass
         
-        print(f"🤖 Bot player {player_index}: returning '{card}' as-is")
+        # Bot card debug removed to reduce log spam
         return card  # Return as-is for bot players
     
     def _should_update_display(self, player_index: int, old_cards: list, new_cards: list) -> bool:
@@ -159,7 +173,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         
         Hand strength analysis, strategy suggestions, etc.
         """
-        print(f"🎓 Practice: Card interaction - Player {player_index}, Card {card_index}: {card}")
+        debug_log(f"Practice: Card interaction - Player {player_index}, Card {card_index}: {card}", "CARD_INTERACTION")
         
         # Add hand strength analysis for human player
         if self._is_human_player(player_index):
@@ -172,7 +186,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _setup_practice_ui(self):
         """Setup practice-specific UI elements."""
-        print("🎓 Setting up practice session UI")
+        debug_log("Setting up practice session UI", "PRACTICE_INIT")
         
         # Create action buttons container
         self._create_action_buttons()
@@ -185,7 +199,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _create_action_buttons(self):
         """Create interactive action buttons for human player."""
-        print("🎓 Creating action buttons for practice session")
+        debug_log("Creating action buttons for practice session", "PRACTICE_INIT")
         
         # Get table background color
         table_bg = getattr(self, 'table_color', '#2F4F2F')
@@ -324,14 +338,14 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _create_feedback_display(self):
         """Create educational feedback display."""
-        print("🎓 Creating feedback display for practice session")
+        debug_log("Creating feedback display for practice session", "PRACTICE_INIT")
         
         # Implementation would go here
         pass
     
     def _create_performance_display(self):
         """Create performance tracking display."""
-        print("🎓 Creating performance display for practice session")
+        debug_log("Creating performance display for practice session", "PRACTICE_INIT")
         
         # Implementation would go here
         pass
@@ -352,7 +366,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _add_card_analysis(self, player_index: int, card_index: int, card: str):
         """Add educational card analysis."""
-        print(f"🎓 Adding card analysis for {card}")
+        debug_log(f"Adding card analysis for {card}", "CARD_ANALYSIS")
         
         # Implementation would analyze hand strength, provide suggestions, etc.
         pass
@@ -411,9 +425,21 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                         0.0
                     )
             elif action_type == 'bet_raise':
-                # Get amount from entry
+                # Get amount from entry (POKER FIX: Only accept integers)
                 try:
-                    amount = float(self.bet_amount_var.get())
+                    # Parse as float first, then convert to integer (proper poker bet sizing)
+                    raw_amount = float(self.bet_amount_var.get())
+                    amount = int(round(raw_amount))  # Round to nearest integer
+                    
+                    # Validate minimum bet size (must be at least big blind)
+                    big_blind = self.state_machine.config.big_blind
+                    if amount < big_blind:
+                        debug_log(f"⚠️ Bet amount ${amount} below minimum (${big_blind}), adjusting to ${big_blind}", "BET_VALIDATION")
+                        amount = int(big_blind)
+                    
+                    # Update the entry to show the corrected amount
+                    self.bet_amount_var.set(str(amount))
+                    
                     current_bet = self.state_machine.game_state.current_bet
                     
                     if current_bet > 0:
@@ -490,7 +516,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         if hasattr(self, 'bet_entry'):
             self.bet_entry.config(state=tk.NORMAL)
         
-        print("🎓 Action buttons enabled for human player")
+        debug_log("Action buttons enabled for human player", "PRACTICE_UI")
     
     def _disable_action_buttons(self):
         """Disable action buttons when it's not the human player's turn."""
@@ -507,7 +533,27 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         if hasattr(self, 'bet_entry'):
             self.bet_entry.config(state=tk.DISABLED)
         
-        print("🎓 Action buttons disabled")
+        # Action buttons disabled for practice session
+    
+    # ==============================
+    # HELPER METHODS
+    # ==============================
+    
+    def _clear_all_player_highlights(self):
+        """Clear highlights from all player seats."""
+        for i, player_seat in enumerate(self.player_seats):
+            if player_seat:
+                player_frame = player_seat["frame"]
+                # Reset to normal appearance
+                player_frame.config(
+                    highlightbackground="#006400",  # Dark green
+                    highlightthickness=2,
+                    bg="#1a1a1a"  # Normal background
+                )
+                # Remove any action indicators
+                for widget in player_frame.winfo_children():
+                    if hasattr(widget, '_action_indicator'):
+                        widget.destroy()
     
     # ==============================
     # OVERRIDE PARENT HIGHLIGHTING METHOD
@@ -515,19 +561,17 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def _highlight_current_player(self, player_index):
         """Override: Enhanced player highlighting for practice sessions."""
-        print(f"🎓 PRACTICE HIGHLIGHTING: Player {player_index}")
-        
-        # Call parent's highlighting first
-        super()._highlight_current_player(player_index)
+        # Don't call parent's highlighting - we'll handle it completely here
+        # Clear any existing highlights first
+        self._clear_all_player_highlights()
         
         # Add practice-specific highlighting
         if self._is_human_player(player_index):
-            print(f"🎓 HUMAN PLAYER TURN: Enabling action buttons")
+            # Human player turn - enable action buttons and provide feedback
             self._enable_action_buttons()
             
-            # Play turn notification sounds
+            # Play turn notification sound
             self.play_sound("turn_notify")
-            self.play_sound("your_turn")
             
             # Add visual indicator
             if player_index < len(self.player_seats) and self.player_seats[player_index]:
@@ -555,7 +599,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 turn_label._action_indicator = True
                 turn_label.pack(side=tk.TOP, pady=2)
         else:
-            print(f"🤖 BOT PLAYER TURN: Disabling action buttons")
+            # Bot player turn - disable action buttons
             self._disable_action_buttons()
             
             # Add bot indicator
@@ -609,9 +653,9 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                                                                 player_index=player_index, 
                                                                 amount=amount))
                 else:
-                    print(f"🎓 Practice: No animation needed - action: {action_type}, amount: {amount}, player: {player_index}")
+                    debug_log(f"🎓 Practice: No animation needed - action: {action_type}, amount: {amount}, player: {player_index}", "BET_ANIMATION")
             except Exception as e:
-                print(f"⚠️ Error handling bet animation: {e}")
+                debug_log(f"⚠️ Error handling bet animation: {e}", "BET_ANIMATION")
 
 
 # ==============================

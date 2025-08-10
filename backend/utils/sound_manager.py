@@ -39,7 +39,7 @@ class SoundManager:
             pygame.mixer.init(
                 frequency=44100, size=-16, channels=2, buffer=512
             )
-            print("🔊 Sound system initialized successfully")
+            # Sound system initialized successfully
             self._load_sound_mapping()
         except (pygame.error, OSError) as e:
             print(f"Warning: Could not initialize sound system: {e}")

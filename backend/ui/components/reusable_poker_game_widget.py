@@ -18,6 +18,16 @@ from .card_widget import CardWidget
 # Import theme
 from core.gui_models import THEME
 
+def debug_log(message: str, category: str = "UI_DEBUG"):
+    """Log debug messages to file instead of console."""
+    try:
+        from core.session_logger import get_session_logger
+        logger = get_session_logger()
+        logger.log_system("DEBUG", category, message, {})
+    except:
+        # Fallback to silent operation if logger not available
+        pass
+
 # Import sound manager
 from utils.sound_manager import SoundManager
 
@@ -205,7 +215,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
     def reset_change_tracking(self):
         """Reset all change tracking for a new hand (prevents false change detection)."""
-        print("🔄 Resetting change tracking for new hand")
+        # Hand reset debug removed to reduce log spam
         self.last_player_states.clear()
         self.last_pot_amount = 0.0
         if hasattr(self, 'last_board_cards'):
@@ -289,13 +299,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         player_seat = self.player_seats[player_index]
         player_x, player_y = player_seat["position"]
         
-        # Position bet display closer to table center
+        # Position bet display closer to player (much further from center to avoid community cards)
         center_x = self.canvas.winfo_width() // 2
         center_y = self.canvas.winfo_height() // 2
         
-        # Bet display positioned 60% toward center from player
-        bet_x = player_x + (center_x - player_x) * 0.6
-        bet_y = player_y + (center_y - player_y) * 0.6
+        # Bet display positioned only 25% toward center from player (was 60%, too close to community cards)
+        bet_x = player_x + (center_x - player_x) * 0.25
+        bet_y = player_y + (center_y - player_y) * 0.25
         
         # Create bet display widget
         bet_widget = tk.Label(
@@ -322,7 +332,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Initially hidden
         self.canvas.itemconfig(bet_window, state="hidden")
         
-        print(f"💰 Created bet display for player {player_index} at ({bet_x:.0f}, {bet_y:.0f})")
+        # Bet display creation debug removed
     
     def _show_bet_display_for_player(self, player_index: int, action: str, amount: float):
         """Show money graphics in front of a player when they bet/call."""
@@ -342,7 +352,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bet_widget.config(text=f"💰 ${amount:,.0f}")
             self.canvas.itemconfig(bet_window, state="normal")
             bet_display["amount"] = amount
-            print(f"💸 Showing ${amount:,.0f} in front of player {player_index}")
+            # Bet amount display debug removed
         else:
             # Hide for non-betting actions
             self.canvas.itemconfig(bet_window, state="hidden")
@@ -350,7 +360,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _clear_all_bet_displays_permanent(self):
         """Clear all bet displays for new hand."""
-        print("🧹 Clearing all player bet displays")
+        # Bet display clearing debug removed
         for player_index, bet_display in self.player_bet_displays.items():
             bet_window = bet_display["window"]
             self.canvas.itemconfig(bet_window, state="hidden")
@@ -389,7 +399,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 
                 # Block if too many rapid events
                 if self.rapid_event_count[event_key] > 2:
-                    print(f"🛑 BLOCKING rapid-fire event: {event.event_type} (#{self.rapid_event_count[event_key]}) within {time_diff*1000:.1f}ms")
+                    # Event filtering debug removed
                     return
                 else:
                     print(f"⚠️  Skipping duplicate event: {event.event_type} (within {time_diff*1000:.1f}ms)")
@@ -445,7 +455,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Show bet amount for betting actions
         if action_type in ["bet", "raise", "call"] and amount > 0 and player_index >= 0:
-            print(f"💰 Displaying bet ${amount:.2f} for player {player_index}")
+            # Bet display debug removed
             self.show_bet_display(player_index, action_type, amount)
         
         # Clear any existing action indicator for this player
@@ -749,7 +759,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Only update if cards actually changed
         if not hasattr(self, '_last_board_cards') or self._last_board_cards != filtered_board_cards:
-            print(f"🎴 LAZY updating community cards: {getattr(self, '_last_board_cards', [])} → {filtered_board_cards}")
+            # Card display update debug removed
             if not hasattr(self, '_community_area_drawn') or not self._community_area_drawn:
                 self._draw_community_card_area()
                 self._community_area_drawn = True
@@ -759,7 +769,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # LAZY redraw pot (only when changed)
         pot_amount = display_state.get("pot", 0.0)
         if not hasattr(self, '_last_pot_amount') or self._last_pot_amount != pot_amount:
-            print(f"💰 LAZY updating pot display: ${getattr(self, '_last_pot_amount', 0)} → ${pot_amount:,.2f}")
+            # Pot display update debug removed
             if not hasattr(self, '_pot_area_drawn') or not self._pot_area_drawn:
                 self._draw_pot_display()
                 self._pot_area_drawn = True
@@ -798,14 +808,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Only update stack if it changed
         if last_state.get("stack", 0.0) != stack_amount:
             player_seat["stack_label"].config(text=f"${stack_amount:,.2f}")
-            print(f"💰 Updated player {player_index} stack: ${stack_amount:,.2f}")
+            debug_log(f"Updated player {player_index} stack: ${stack_amount:,.2f}", "STACK_DISPLAY")
         
         # Only update bet if it changed
         bet_text = f"Bet: ${bet_amount:,.2f}" if bet_amount > 0 else ""
         if last_state.get("bet_text") != bet_text:
             player_seat["bet_label"].config(text=bet_text)
             if bet_amount > 0:
-                print(f"💸 Updated player {player_index} bet: ${bet_amount:,.2f}")
+                debug_log(f"Updated player {player_index} bet: ${bet_amount:,.2f}", "BET_DISPLAY")
                 # Also show graphical money display for existing bets (like blinds)
                 self._show_bet_display_for_player(player_index, "bet", bet_amount)
         
@@ -813,11 +823,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         last_cards = last_state.get("cards", [])
         if last_cards != cards:
             self._set_player_cards_from_display_state(player_index, cards)
-            print(f"🎴 Updated player {player_index} cards: {last_cards} → {cards}")
+            debug_log(f"Updated player {player_index} cards: {last_cards} → {cards}", "CARD_DISPLAY")
         elif last_cards and cards == ["**", "**"]:
             # Still call the method - specialized widgets may want to override ** behavior
             self._set_player_cards_from_display_state(player_index, cards)
-            print(f"🎴 Calling card update with hidden data: {cards} (specialized widgets may override)")
+            debug_log(f"Calling card update with hidden data: {cards} (specialized widgets may override)", "CARD_DISPLAY")
         
         # Only update folded status if it changed
         if last_state.get("has_folded", False) != has_folded:
@@ -849,7 +859,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Ask child class if we should update
         if not self._should_update_display(player_index, old_cards, cards):
-            print(f"🎴 HOOK: Child class blocked card update for player {player_index}")
+            debug_log(f"HOOK: Child class blocked card update for player {player_index}", "CARD_HOOK")
             return
         
         if len(cards) >= 2 and len(card_widgets) >= 2:
@@ -877,7 +887,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                             
                             card_widgets[i].set_card(display_card, is_folded=player_has_folded)
                             card_widgets[i]._current_card = display_card
-                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → {display_card} (shown)")
+                            debug_log(f"HOOK: Player {player_index} card {i}: {current_card} → {display_card} (shown)", "CARD_HOOK")
                             
                             # Call interaction hook
                             self._handle_card_interaction(player_index, i, display_card)
@@ -891,13 +901,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                             card_widgets[i].set_card("**", is_folded=player_has_folded)
                             card_widgets[i]._current_card = "**"
                             color = "GRAY" if player_has_folded else "RED"
-                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → {color} card back")
+                            debug_log(f"HOOK: Player {player_index} card {i}: {current_card} → {color} card back", "CARD_HOOK")
                             
                         else:
                             # Empty card or hook decided to hide
                             card_widgets[i].set_card("", is_folded=False)
                             card_widgets[i]._current_card = ""
-                            print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → empty")
+                            debug_log(f"HOOK: Player {player_index} card {i}: {current_card} → empty", "CARD_HOOK")
                     
                     except tk.TclError:
                         # Widget was destroyed, skip
@@ -907,24 +917,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     try:
                         card_widgets[i].set_card("", is_folded=False)
                         card_widgets[i]._current_card = ""
-                        print(f"🎴 HOOK: Player {player_index} card {i}: {current_card} → hidden by hook")
+                        debug_log(f"HOOK: Player {player_index} card {i}: {current_card} → hidden by hook", "CARD_HOOK")
                     except tk.TclError:
                         pass
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
-        print(f"🎴 COMMUNITY CARD UPDATE: Input cards: {board_cards}")
+        debug_log(f"COMMUNITY CARD UPDATE: Input cards: {board_cards}", "CARD_DISPLAY")
         
         # Ensure community card widgets are created
         if not self.community_card_widgets:
-            print(f"🎴 No community card widgets, creating them...")
+            debug_log("No community card widgets, creating them...", "CARD_DISPLAY")
             self._draw_community_card_area()
         
         if not self.community_card_widgets:
             print(f"❌ COMMUNITY CARD WIDGETS STILL NOT CREATED!")
             return
         
-        print(f"🎴 Community card widgets exist: {len(self.community_card_widgets)} widgets")
+        debug_log(f"Community card widgets exist: {len(self.community_card_widgets)} widgets", "CARD_DISPLAY")
         
         # Initialize tracking if not exists
         if not hasattr(self, 'last_board_cards'):
@@ -946,19 +956,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 print(f"🚫 Preflop: Showing {cards_to_show} community cards (state: {current_state})")
             elif 'FLOP' in current_state or 'DEAL_FLOP' in current_state:
                 cards_to_show = 3  # Show first 3 cards during flop
-                print(f"🎴 Flop: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"Flop: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
             elif 'TURN' in current_state or 'DEAL_TURN' in current_state:
                 cards_to_show = 4  # Show first 4 cards during turn
-                print(f"🎴 Turn: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"Turn: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
             elif 'RIVER' in current_state or 'DEAL_RIVER' in current_state:
                 cards_to_show = 5  # Show all 5 cards during river
-                print(f"🎴 River: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"River: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
             elif 'END_HAND' in current_state or 'SHOWDOWN' in current_state:
                 cards_to_show = 5  # Show only 5 community cards during showdown/end
-                print(f"🎴 Showdown/End: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"Showdown/End: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
             else:
                 cards_to_show = min(5, len(board_cards))  # Max 5 community cards for unknown states
-                print(f"🎴 Other state: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"Other state: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
         
         # Limit board cards to only the first N cards that should be visible
         visible_board_cards = board_cards[:cards_to_show] if board_cards else []
@@ -975,12 +985,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return
         
         # Use hook to determine if community cards should update
-        print(f"🎴 CHANGE CHECK: visible_board_cards={visible_board_cards}, last_board_cards={self.last_board_cards}")
+        debug_log(f"CHANGE CHECK: visible_board_cards={visible_board_cards}, last_board_cards={self.last_board_cards}", "CARD_DISPLAY")
         if not self._should_update_community_cards(self.last_board_cards, visible_board_cards):
-            print(f"🎴 HOOK: Child class blocked community card update")
+            debug_log("HOOK: Child class blocked community card update", "CARD_HOOK")
             return  # Child class decided not to update
         
-        print(f"🎴 Board changed: {self.last_board_cards} → {visible_board_cards} (showing {cards_to_show}/{len(board_cards)} cards)")
+        debug_log(f"Board changed: {self.last_board_cards} → {visible_board_cards} (showing {cards_to_show}/{len(board_cards)} cards)", "CARD_DISPLAY")
         
         # EFFICIENT UPDATE: Only change cards that are different
         for i, card_widget in enumerate(self.community_card_widgets):
@@ -994,7 +1004,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         # Set actual card
                         card_widget.set_card(new_card, is_folded=False)
                         card_widget._current_card = new_card
-                        print(f"🎴 Updated community card {i}: {current_card} → {new_card}")
+                        debug_log(f"Updated community card {i}: {current_card} → {new_card}", "CARD_DISPLAY")
                     else:
                         # Set empty card (for cards beyond what should be shown)
                         card_widget.set_card("", is_folded=False)
@@ -1278,7 +1288,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 current_bet = player.get("current_bet", 0)
                 if current_bet > 0:
                     player_name = player.get('name', f'Player {i+1}')
-                    print(f"💰 Scheduling animation: {player_name}'s ${current_bet:,.0f} to pot (delay: {animation_delay}ms)")
+                    debug_log(f"Scheduling animation: {player_name}'s ${current_bet:,.0f} to pot (delay: {animation_delay}ms)", "BET_ANIMATION")
                     
                     # Schedule staggered animations
                     self.after(animation_delay, lambda idx=i, amt=current_bet: 
@@ -1288,7 +1298,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Clear all bet displays after all animations complete
             total_delay = animation_delay + 500  # Shorter delay for better responsiveness
             self.after(total_delay, lambda: self._finish_bet_animations())
-            print(f"💰 Scheduled bet clearing in {total_delay}ms")
+            debug_log(f"Scheduled bet clearing in {total_delay}ms", "BET_ANIMATION")
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -1472,34 +1482,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _clear_all_bet_displays(self):
         """Clear all bet displays at once."""
         if self.animating_bets_to_pot:
-            print("🧹 Skipping bet clearing - animation in progress")
+            debug_log("Skipping bet clearing - animation in progress", "BET_ANIMATION")
             return
-        print("🧹 Clearing all bet displays")
+        debug_log("Clearing all bet displays", "BET_DISPLAY")
         for player_index in list(self.bet_labels.keys()):
             self._remove_bet_display(player_index)
     
     def _finish_bet_animations(self):
         """Finish bet animations and clear displays."""
-        print("💰 Finishing bet animations - clearing displays")
+        debug_log("Finishing bet animations - clearing displays", "BET_ANIMATION")
         self.animating_bets_to_pot = False
         self._clear_all_bet_displays()
         self._clear_all_bet_displays_permanent()
         
         # Force a display update after animation completes
-        print("🔄 Forcing display update after bet animation completion")
+        debug_log("Forcing display update after bet animation completion", "DISPLAY_UPDATE")
         self.after_idle(self._force_display_refresh)
     
     def _force_display_refresh(self):
         """Force a complete display refresh after animations."""
-        print("🔄 Forcing complete display refresh")
+        debug_log("Forcing complete display refresh", "DISPLAY_UPDATE")
         if hasattr(self, 'state_machine') and self.state_machine:
             # Force a complete canvas refresh
-            print("🔄 Forcing canvas update and refresh")
+            debug_log("Forcing canvas update and refresh", "DISPLAY_UPDATE")
             self.canvas.update()
             self.canvas.update_idletasks()
             
             # Force redraw all table components - reset all lazy redraw flags
-            print("🔄 Force redrawing all components with complete table refresh")
+            debug_log("Force redrawing all components with complete table refresh", "DISPLAY_UPDATE")
             
             # Reset ALL drawing flags to force complete redraw
             self.table_drawn = False
@@ -1514,10 +1524,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             
             # Force clear community card and pot existence flags
             if hasattr(self, 'community_card_widgets'):
-                print("🔄 Clearing community card widgets for forced redraw")
+                debug_log("Clearing community card widgets for forced redraw", "DISPLAY_UPDATE")
                 self.community_card_widgets = []
             if hasattr(self, 'pot_label'):
-                print("🔄 Clearing pot label for forced redraw")
+                debug_log("Clearing pot label for forced redraw", "DISPLAY_UPDATE")
                 self.pot_label = None
             if hasattr(self, 'last_seats_canvas_size'):
                 delattr(self, 'last_seats_canvas_size')
@@ -1529,7 +1539,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # No need to manually trigger display state events - FPSM will emit them
             # when needed. This prevents duplicate rendering cycles.
             # Final canvas refresh
-            print("🔄 Final canvas refresh completed")
+            debug_log("Final canvas refresh completed", "DISPLAY_UPDATE")
             self.canvas.update()
     
     def update_pot_amount(self, amount):
@@ -1538,10 +1548,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if self.last_pot_amount != amount:
             if hasattr(self, 'pot_label') and self.pot_label:
                 self.pot_label.config(text=f"${amount:,.2f}")
-                print(f"💰 Updated pot: ${self.last_pot_amount:,.2f} → ${amount:,.2f}")
+                debug_log(f"Updated pot: ${self.last_pot_amount:,.2f} → ${amount:,.2f}", "POT_DISPLAY")
             else:
                 # Pot display doesn't exist yet - ensure it's created
-                print(f"💰 Creating pot display for amount: ${amount:,.2f}")
+                debug_log(f"Creating pot display for amount: ${amount:,.2f}", "POT_DISPLAY")
                 self._draw_pot_display()
                 if hasattr(self, 'pot_label') and self.pot_label:
                     self.pot_label.config(text=f"${amount:,.2f}")
@@ -1553,7 +1563,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             print(f"🔇 No sound manager available for {sound_type}")
             return
         
-        print(f"🔊 Playing sound: {sound_type}")
+        debug_log(f"Playing sound: {sound_type}", "SOUND")
         
         # Map sound types to the appropriate SoundManager methods
         if sound_type in ["fold", "call", "bet", "raise", "check", "all_in"]:
@@ -1667,7 +1677,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if not winner_info or pot_amount <= 0:
             return
         
-        print(f"🏆 Animating ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}")
+        debug_log(f"🏆 Animating ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}", "POT_ANIMATION")
         
         # Find winner's seat
         winner_name = winner_info.get('name', '')
@@ -1683,7 +1693,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     break
         
         if winner_seat_index == -1:
-            print(f"⚠️ Could not find winner seat for {winner_name}")
+            debug_log(f"⚠️ Could not find winner seat for {winner_name}", "POT_ANIMATION")
             return
         
         # Get positions
@@ -2000,7 +2010,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Debug: Print the cards being returned by FPSM
         for i, player_info in enumerate(game_info.get("players", [])):
             cards = player_info.get("cards", [])
-            print(f"🎴 FPSM returned cards for player {i}: {cards}")
+            debug_log(f"FPSM returned cards for player {i}: {cards}", "CARD_DISPLAY")
         
         # Update players
         for i, player_info in enumerate(game_info.get("players", [])):

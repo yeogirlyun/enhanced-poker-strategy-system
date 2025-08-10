@@ -189,6 +189,7 @@ class GTOStrategyEngine:
                 if random.random() <= position_ranges["rfi"]["freq"]:
                     # FIXED: Ensure raise meets minimum requirement
                     raise_amount = max(min_raise_total, game_state.big_blind * 3)
+                    raise_amount = int(round(raise_amount))  # Ensure integer bet sizes
                     if raise_amount <= player.stack:
                         return ActionType.RAISE, raise_amount
                     else:
@@ -212,6 +213,7 @@ class GTOStrategyEngine:
                     if strength >= 80:
                         # FIXED: Ensure raise meets minimum requirement
                         raise_amount = max(min_raise_total, game_state.current_bet * 3)
+                        raise_amount = int(round(raise_amount))  # Ensure integer bet sizes
                         if raise_amount <= player.stack:
                             return ActionType.RAISE, raise_amount
                         else:
@@ -230,6 +232,7 @@ class GTOStrategyEngine:
                     if strength >= 80:  # Lower threshold for 3-bet defense
                         # FIXED: Ensure raise meets minimum requirement
                         raise_amount = max(min_raise_total, game_state.current_bet * 2.5)
+                        raise_amount = int(round(raise_amount))  # Ensure integer bet sizes
                         if raise_amount <= player.stack:
                             return ActionType.RAISE, raise_amount
                         else:
@@ -268,14 +271,27 @@ class GTOStrategyEngine:
         stack_mult = min(1.0, max(0.3, spr / 5))
         bet_size *= stack_mult
         
-        # FIXED: Ensure bet size meets minimum requirements
+        # POKER FIX: Round bet sizes to proper poker amounts (integers, BB multiples)
+        big_blind = game_state.big_blind
+        
+        def round_to_poker_bet(amount):
+            """Round amount to proper poker bet size (integer, BB multiples)."""
+            if amount < big_blind:
+                return int(big_blind)
+            # Round to nearest big blind for bets > 2BB, otherwise round to nearest integer
+            if amount >= 2 * big_blind:
+                return int(round(amount / big_blind)) * int(big_blind)
+            else:
+                return int(round(amount))
+        
         if facing_bet:
             # Facing a bet
             value_thresh = 70  # Raise nuts only
             call_thresh = pot_odds * 100
             if strength >= value_thresh:
-                # FIXED: Ensure raise meets minimum requirement
+                # FIXED: Ensure raise meets minimum requirement and round to proper poker bet
                 raise_amount = max(min_raise_total, bet_size)
+                raise_amount = round_to_poker_bet(raise_amount)
                 if raise_amount <= player.stack:
                     return ActionType.RAISE, raise_amount
                 else:
@@ -289,8 +305,9 @@ class GTOStrategyEngine:
         else:
             # No bet to call
             if strength >= 70:
-                # FIXED: Ensure bet meets minimum requirement
+                # FIXED: Ensure bet meets minimum requirement and round to proper poker bet
                 bet_amount = max(game_state.min_raise, bet_size)
+                bet_amount = round_to_poker_bet(bet_amount)
                 if bet_amount <= player.stack:
                     return ActionType.BET, bet_amount
                 else:

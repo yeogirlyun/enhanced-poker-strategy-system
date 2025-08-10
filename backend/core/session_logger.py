@@ -147,23 +147,51 @@ class SessionLogger:
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(exist_ok=True)
         
-        # Current session
-        self.session: Optional[SessionLog] = None
+        # Generate unique session ID and start session immediately
+        self.session_id = str(uuid.uuid4())
+        self.session_start_time = time.time()
+        
+        # Initialize session data immediately
+        self.session = SessionLog(
+            session_id=self.session_id,
+            start_time=self.session_start_time,
+            num_players=6,  # Default, can be updated later
+            starting_stack=100.0,  # Default, can be updated later
+            bot_players=[f"Player {i+2}" for i in range(5)]  # Default 6 players
+        )
+        
         self.current_hand: Optional[HandLog] = None
         self.hand_start_time: Optional[float] = None
         
         # Timing tracking
         self.action_start_times: Dict[str, float] = {}
         
-        # File paths
-        self.session_file: Optional[Path] = None
-        self.system_log_file: Optional[Path] = None
+        # Initialize log files immediately
+        session_datetime = datetime.fromtimestamp(self.session_start_time).strftime("%Y%m%d_%H%M%S")
+        self.session_file = self.log_directory / f"session_{self.session_id}_{session_datetime}.json"
+        self.system_log_file = self.log_directory / f"system_{self.session_id}_{session_datetime}.log"
         
-        # Session logging ready
-        
-        # Graceful shutdown setup
+        # Initialize graceful shutdown BEFORE any logging
         self._shutdown_handlers_registered = False
         self._register_shutdown_handlers()
+        
+        # Now safe to log - session is initialized
+        self._write_session_header()
+    
+    def _write_session_header(self):
+        """Write session header to log files."""
+        # Write minimal session header - detailed logs will be in system log
+        try:
+            with open(self.session_file, 'w') as f:
+                header_data = {
+                    "session_id": self.session_id,
+                    "start_time": datetime.fromtimestamp(self.session_start_time).isoformat(),
+                    "log_type": "session_header"
+                }
+                json.dump(header_data, f, indent=2)
+                f.write("\n")
+        except Exception as e:
+            print(f"Error writing session header: {e}")
     
     # PHH export functionality removed - using JSON-based hands database
     
@@ -451,8 +479,46 @@ class SessionLogger:
         debug_print(f"✅ DEBUG: Session terminated successfully")
     
     def log_system(self, level: str, category: str, message: str, data: Optional[Dict] = None):
-        """Log system-level messages with immediate flush."""
+        """Log system-level messages with smart console/file routing."""
+        timestamp_str = datetime.now().isoformat()
+        
+        # FILTER: Only log essential game flow categories to reduce spam
+        essential_categories = {
+            "STARTUP", "SHUTDOWN", "ERROR", "WARNING", "CRITICAL",
+            "HAND_START", "HAND_END", "STATE_TRANSITION", 
+            "BOT_ACTION", "POKER_ACTION", "GAME_ACTION",
+            "BETTING_ROUND", "SHOWDOWN", "HAND_RESULT"
+        }
+        
+        # Skip non-essential categories entirely to reduce log file size
+        if category not in essential_categories and level not in ["ERROR", "WARNING", "CRITICAL"]:
+            return
+        
+        # Only show poker game flow in console
+        console_categories = {
+            "STATE_TRANSITION", "BOT_ACTION", "POKER_ACTION", 
+            "HAND_START", "HAND_END", "BETTING_ROUND", "SHOWDOWN",
+            "ERROR", "WARNING", "CRITICAL"
+        }
+        essential_levels = ["ERROR", "WARNING", "CRITICAL"]
+        
+        show_in_console = (
+            level in essential_levels or 
+            category in console_categories or
+            "error" in message.lower() or
+            "warning" in message.lower() or
+            "failed" in message.lower()
+        )
+        
+        if show_in_console:
+            console_msg = f"[{timestamp_str}] {level} | {category} | {message}"
+            if data and level in ["ERROR", "WARNING"]:
+                console_msg += f" | {json.dumps(data, default=str)}"
+            debug_print(console_msg)
+        
         if not self.session:
+            if show_in_console:
+                debug_print(f"WARNING: No session available for logging")
             return
             
         system_log = SystemLog(
@@ -466,9 +532,25 @@ class SessionLogger:
         
         self.session.system_logs.append(system_log)
         
-        # IMMEDIATE FLUSH - critical for debugging
-        self._save_system_logs()
-        self._force_flush_all()
+        # Write to system log file immediately (all messages go here)
+        self._write_system_log_entry(system_log)
+        
+        # Only flush frequently for errors/warnings
+        if level in ["ERROR", "WARNING"]:
+            self._force_flush_all()
+    
+    def _write_system_log_entry(self, log_entry: SystemLog):
+        """Write a single system log entry to file."""
+        try:
+            log_line = f"[{datetime.fromtimestamp(log_entry.timestamp).isoformat()}] {log_entry.level} | {log_entry.category} | {log_entry.message}"
+            if log_entry.data:
+                log_line += f" | {json.dumps(log_entry.data, default=str)}"
+            
+            with open(self.system_log_file, 'a') as f:
+                f.write(log_line + "\n")
+                f.flush()
+        except Exception as e:
+            debug_print(f"Error writing system log: {e}")
     
     def _save_session(self):
         """Save session data to JSON file."""
@@ -522,14 +604,14 @@ class SessionLogger:
             signal.signal(signal.SIGINT, self._signal_handler)  # Ctrl+C
             signal.signal(signal.SIGTERM, self._signal_handler)  # Termination
             
-            # Register atexit handler for normal program exit
+            # Register atexit handler for normal program exit (including Cmd+Q)
             atexit.register(self._cleanup_on_exit)
             
             self._shutdown_handlers_registered = True
-            print("DEBUG: Shutdown handlers registered successfully")
+            debug_print("✅ Shutdown handlers registered successfully")
             
         except Exception as e:
-            print(f"Warning: Could not register shutdown handlers: {e}")
+            debug_print(f"⚠️ Warning: Could not register shutdown handlers: {e}")
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals (Ctrl+C, etc.)."""
@@ -552,14 +634,30 @@ class SessionLogger:
         exit(0)
     
     def _cleanup_on_exit(self):
-        """Cleanup function called on normal program exit."""
+        """Cleanup function called on normal program exit (including Cmd+Q)."""
         try:
             if self.session:
-                print("🔄 Normal exit detected - saving final session data...")
-                self.end_session()
-                print("✅ Final session data saved!")
+                debug_print("🔄 Normal exit detected - saving final session data...")
+                self.log_system("INFO", "SHUTDOWN", "Normal application exit - saving session data", {})
+                self._save_final_session_data()
+                debug_print("✅ Final session data saved!")
         except Exception as e:
-            print(f"Warning: Error during exit cleanup: {e}")
+            debug_print(f"⚠️ Warning: Error during exit cleanup: {e}")
+    
+    def _save_final_session_data(self):
+        """Save all session data immediately."""
+        if not self.session:
+            return
+            
+        # Update session end time
+        self.session.end_time = time.time()
+        if self.session.start_time:
+            self.session.session_duration_ms = int((self.session.end_time - self.session.start_time) * 1000)
+        
+        # Save all data
+        self._save_session()
+        self._save_system_logs()
+        self._force_flush_all()
     
     def _force_flush_all(self):
         """Force immediate flush of all log files."""
