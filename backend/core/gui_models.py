@@ -21,43 +21,92 @@ import os
 from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
 
-# --- Professional Theme Definition ---
+# --- Modern Poker App Theme (Inspired by PokerStars, 888poker, partypoker) ---
 THEME = {
-    "primary_bg": "#1e1e1e",      # A slightly softer black for the main background
-    "secondary_bg": "#2d2d2d",    # For panels and frames
-    "widget_bg": "#3c3c3c",       # For buttons, entries, etc.
-    "text": "#d4d4d4",           # A softer white for text
-    "text_dark": "#a0a0a0",       # For less important text
-    "accent_primary": "#0e639c",  # A strong blue for primary actions
-    "accent_secondary": "#4CAF50",# Green for success or positive feedback
-    "accent_danger": "#d13438",   # Red for warnings or negative actions
-    "border": "#555555",
+    # Base Colors - Dark poker table aesthetic
+    "table_felt": "#0F5132",      # Deep poker green felt
+    "table_rail": "#2C1810",      # Dark wood rail
+    "primary_bg": "#1a1a1a",      # Almost black main background
+    "secondary_bg": "#2a2a2a",    # Card panels and overlays
+    "widget_bg": "#3a3a3a",       # Interactive elements
     
-    # Legacy compatibility
-    "bg": "#1e1e1e",          # Dark background
-    "bg_dark": "#2d2d2d",      # Slightly lighter dark
-    "bg_light": "#3c3c3c",     # Light gray for buttons
-    "fg": "#d4d4d4",           # White text
-    "accent": "#4CAF50",       # Green accent
+    # Text Colors
+    "text": "#ffffff",            # Pure white primary text
+    "text_secondary": "#cccccc", # Light gray secondary text
+    "text_muted": "#888888",     # Muted text for less important info
+    "text_gold": "#FFD700",      # Gold text for winnings/pot
+    
+    # Action Button Colors (Modern poker app style)
+    "button_call": "#2E7D32",    # Professional green for call
+    "button_call_hover": "#388E3C",
+    "button_raise": "#D32F2F",   # Strong red for raise/bet
+    "button_raise_hover": "#F44336",
+    "button_fold": "#616161",    # Gray for fold
+    "button_fold_hover": "#757575",
+    "button_check": "#1976D2",   # Blue for check
+    "button_check_hover": "#2196F3",
+    "button_allin": "#FF6F00",   # Orange for all-in
+    "button_allin_hover": "#FF8F00",
+    
+    # Chip and Money Colors
+    "chip_green": "#4CAF50",     # Small denomination chips
+    "chip_red": "#F44336",       # Medium denomination chips  
+    "chip_blue": "#2196F3",      # Large denomination chips
+    "chip_black": "#424242",     # Highest denomination chips
+    "chip_gold": "#FFD700",      # Tournament/special chips
+    
+    # Card and Table Elements
+    "card_back": "#1565C0",      # Classic blue card backs
+    "card_face": "#FFFFFF",      # White card faces
+    "card_red": "#D32F2F",       # Red suits
+    "card_black": "#212121",     # Black suits
+    
+    # Status and Feedback Colors
+    "success": "#4CAF50",        # Success/positive actions
+    "warning": "#FF9800",        # Warnings
+    "error": "#F44336",          # Errors/negative actions
+    "info": "#2196F3",           # Information
+    
+    # Betting and Pot Elements
+    "pot_gold": "#FFD700",       # Gold pot display
+    "bet_chip": "#4CAF50",       # Bet chip color
+    "border_active": "#FFD700",  # Active player border (gold)
+    "border_inactive": "#555555", # Inactive elements
+    
+    # Legacy compatibility (maintain existing functionality)
+    "bg": "#1a1a1a",
+    "bg_dark": "#2a2a2a", 
+    "bg_light": "#3a3a3a",
+    "fg": "#ffffff",
+    "accent": "#4CAF50",
     "font_family": "Arial",
     "font_size": 11,
     "tier_colors": {
-        "Elite": "#D13438",     # Strong Red
-        "Premium": "#0E639C",   # Strong Blue
-        "Gold": "#FF8C00",      # Dark Orange
-        "Silver": "#4CAF50",    # Green
-        "Bronze": "#8A3FFC",    # Purple
+        "Elite": "#D32F2F",     # Red for premium hands
+        "Premium": "#2196F3",   # Blue for strong hands
+        "Gold": "#FF9800",      # Orange for good hands
+        "Silver": "#4CAF50",    # Green for playable hands
+        "Bronze": "#9C27B0",    # Purple for speculative hands
     },
 }
 
 FONTS = {
-    "main": ("Arial", 11),
-    "title": ("Arial", 16, "bold"),
-    "header": ("Arial", 12, "bold"),
-    "small": ("Arial", 9),
-    "player_name": ("Arial", 14, "bold"),  # Bigger font for player names
-    "stack_bet": ("Arial", 16, "bold"),    # Much bigger font for stack and betting amounts
-    "cards": ("Arial", 12, "bold"),        # Font for card display
+    # Modern poker app fonts (clean, readable, professional)
+    "main": ("Segoe UI", 12),
+    "title": ("Segoe UI", 18, "bold"),
+    "header": ("Segoe UI", 14, "bold"),
+    "small": ("Segoe UI", 10),
+    
+    # Poker-specific fonts
+    "player_name": ("Segoe UI", 13, "bold"),    # Player names
+    "stack_amount": ("Segoe UI", 16, "bold"),   # Stack amounts
+    "bet_amount": ("Segoe UI", 18, "bold"),     # Bet/pot amounts (prominent)
+    "action_button": ("Segoe UI", 14, "bold"), # Action button text
+    "cards": ("Consolas", 14, "bold"),          # Monospace for cards
+    "pot_display": ("Segoe UI", 20, "bold"),    # Large pot display
+    
+    # Legacy compatibility
+    "stack_bet": ("Segoe UI", 16, "bold"),
 }
 
 # --- COMPREHENSIVE PREFLOP EQUITY TABLE ---
