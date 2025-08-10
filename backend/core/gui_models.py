@@ -34,6 +34,7 @@ THEME = {
     "text": "#ffffff",            # Pure white primary text
     "text_secondary": "#cccccc", # Light gray secondary text
     "text_muted": "#888888",     # Muted text for less important info
+    "text_dark": "#888888",      # Legacy text_dark (same as text_muted)
     "text_gold": "#FFD700",      # Gold text for winnings/pot
     
     # Action Button Colors (Modern poker app style)
