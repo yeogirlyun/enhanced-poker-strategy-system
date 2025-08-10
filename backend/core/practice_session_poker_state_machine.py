@@ -545,7 +545,20 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 # Log only when a bot is actually about to act
                 if self.logger:
                     self.logger.log_system("DEBUG", "BOT_ACTION", f"Bot execution check: {current_player.name} ready to act", {"player": current_player.name, "action_player_index": self.action_player_index})
-                action, amount = self._get_bot_strategy_decision(current_player)
+                
+                try:
+                    if self.logger:
+                        self.logger.log_system("DEBUG", "BOT_ACTION", f"Getting strategy decision for {current_player.name}", {"player": current_player.name})
+                    action, amount = self._get_bot_strategy_decision(current_player)
+                    if self.logger:
+                        self.logger.log_system("DEBUG", "BOT_ACTION", f"Strategy decision complete: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
+                except Exception as e:
+                    if self.logger:
+                        self.logger.log_system("ERROR", "BOT_ACTION", f"Error getting strategy decision for {current_player.name}: {e}", {"player": current_player.name, "error": str(e)})
+                    print(f"🚫 Strategy decision error for {current_player.name}: {e}")
+                    # Fallback to fold
+                    from core.types import ActionType
+                    action, amount = ActionType.FOLD, 0.0
                 
                 if self.logger:
                     self.logger.log_system("INFO", "BOT_ACTION", f"Bot {current_player.name} auto-playing: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
@@ -586,11 +599,46 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             else:
                 return ActionType.FOLD, 0.0
         
-        # Use the existing GTO strategy engine
+        # Use the existing GTO strategy engine with timeout protection
         try:
-            action, amount = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
-            if self.logger:
-                self.logger.log_system("DEBUG", "GTO_STRATEGY", f"GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}", {"player": bot_player.name, "action": action.value, "amount": amount})
+            import signal
+            import threading
+            
+            # Set up timeout mechanism
+            result = [None]
+            exception = [None]
+            
+            def strategy_call():
+                try:
+                    result[0] = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
+                except Exception as e:
+                    exception[0] = e
+            
+            # Run strategy engine with timeout
+            thread = threading.Thread(target=strategy_call)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=5.0)  # 5 second timeout
+            
+            if thread.is_alive():
+                # Strategy engine timed out
+                if self.logger:
+                    self.logger.log_system("ERROR", "GTO_STRATEGY", f"Strategy engine timeout for {bot_player.name}, using fallback", {"player": bot_player.name})
+                print(f"⏰ Strategy engine timeout for {bot_player.name}, using fallback")
+                return self._get_simple_gto_decision(bot_player)
+            elif exception[0]:
+                # Strategy engine threw exception
+                raise exception[0]
+            elif result[0]:
+                # Strategy engine succeeded
+                action, amount = result[0]
+                if self.logger:
+                    self.logger.log_system("DEBUG", "GTO_STRATEGY", f"GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}", {"player": bot_player.name, "action": action.value, "amount": amount})
+            else:
+                # No result
+                if self.logger:
+                    self.logger.log_system("ERROR", "GTO_STRATEGY", f"No result from strategy engine for {bot_player.name}", {"player": bot_player.name})
+                return self._get_simple_gto_decision(bot_player)
             
             # Early prevention: Limit raising after 5 actions
             if self.actions_this_round >= 5 and action in [ActionType.BET, ActionType.RAISE]:
