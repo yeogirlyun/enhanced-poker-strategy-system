@@ -7,6 +7,7 @@ Moved to separate module to avoid circular imports.
 """
 
 import tkinter as tk
+from core.gui_models import THEME
 
 
 def debug_log(message: str, category: str = "CARD_WIDGET"):
@@ -66,7 +67,7 @@ class CardWidget(tk.Canvas):
             
         rank, suit = card_str[0], card_str[1]
         suit_symbols = {'h': '♥', 'd': '♦', 'c': '♣', 's': '♠'}
-        suit_colors = {'h': '#c0392b', 'd': '#c0392b', 'c': 'black', 's': 'black'}
+        suit_colors = {'h': THEME['card_red'], 'd': THEME['card_red'], 'c': THEME['card_black'], 's': THEME['card_black']}
         color = suit_colors.get(suit, "black")
         
         # Card drawing debug removed to reduce log spam
@@ -82,14 +83,14 @@ class CardWidget(tk.Canvas):
         
         if is_folded:
             # Draw folded card back - dark gray with no border
-            dark_gray = "#404040"  # Dark gray for folded cards
+            dark_gray = THEME["button_fold"]  # Gray for folded cards
             self.config(bg=dark_gray)
             
             # Draw a simple dark gray card with no border
             self.create_rectangle(0, 0, self.width, self.height, 
                                 fill=dark_gray, outline="")
         else:
-            # Define colors for regular card back
+            # Define colors for regular card back - restore original red style
             dark_red = "#a51d2d"
             light_red = "#c0392b"
             border_color = "#8b0000"
@@ -121,12 +122,12 @@ class CardWidget(tk.Canvas):
         self.delete("all")
         
         # Set transparent/matching background
-        parent_bg = "#1a1a1a"  # Match the player pod background
+        parent_bg = THEME["primary_bg"]  # Dark Charcoal background
         self.config(bg=parent_bg)
         
         # Draw a subtle dashed border to indicate card space exists
         self.create_rectangle(2, 2, self.width-2, self.height-2, 
-                            fill="", outline="#404040", width=1, dash=(3, 3))
+                            fill="", outline=THEME["menu_separator"], width=1, dash=(3, 3))
     
 
     def set_folded(self):

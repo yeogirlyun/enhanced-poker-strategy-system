@@ -1040,18 +1040,18 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 if i == player_index and not has_folded_indicator:
                     # STRONG highlighting for active player (only if not folded)
                     player_frame.config(
-                        highlightbackground="#FFD700",  # Bright gold
+                        highlightbackground=THEME["text_gold"],  # Gold
                         highlightthickness=6,           # Much thicker border
-                        bg="#2A2A00"                    # Darker background for contrast
+                        bg=THEME["primary_bg"]          # Dark Charcoal background
                     )
                     # Add blinking effect for extra visibility
                     self._add_action_indicator(player_frame)
                 elif not has_folded_indicator:
                     # Normal appearance for inactive players (only if not folded)
                     player_frame.config(
-                        highlightbackground="#006400",  # Dark green
+                        highlightbackground=THEME["table_felt"],  # Emerald Green
                         highlightthickness=2,
-                        bg="#1a1a1a"                    # Normal background
+                        bg=THEME["secondary_bg"]        # Deep Navy Slate background
                     )
                 # Note: Folded players keep their gray styling set by _mark_player_folded
     
@@ -1066,8 +1066,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         action_label = tk.Label(
             player_frame,
             text="⚡ YOUR TURN ⚡",
-            bg="#FFD700",
-            fg="#000000",
+            bg=THEME["text_gold"],
+            fg=THEME["primary_bg"],
             font=("Arial", 10, "bold"),
             relief="raised",
             bd=2
@@ -1082,9 +1082,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Create a blinking effect for the action indicator."""
         if label.winfo_exists():
             if visible:
-                label.config(bg="#FFD700", fg="#000000")
+                label.config(bg=THEME["text_gold"], fg=THEME["primary_bg"])
             else:
-                label.config(bg="#FF4500", fg="#FFFFFF")  # Orange flash
+                label.config(bg=THEME["button_allin"], fg="white")  # Orange flash
             
             # Continue blinking every 500ms
             self.after(500, lambda: self._blink_action_indicator(label, not visible))
@@ -1127,7 +1127,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         folded_label = tk.Label(
             player_frame,
             text="💤 FOLDED 💤",
-            bg="#808080",  # Gray background
+            bg=THEME["button_fold"],  # Gray background
             fg="#FFFFFF",  # White text
             font=("Arial", 10, "bold"),
             relief="sunken",

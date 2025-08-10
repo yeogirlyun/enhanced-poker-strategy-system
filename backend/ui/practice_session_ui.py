@@ -129,10 +129,10 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     
     def _setup_ui(self):
         """Setup the clean UI layout."""
-        # Configure main layout - poker table takes up 2/3 of window
+        # Configure main layout - poker table takes up ~80% of window
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=2)  # Table area (2/3)
-        self.grid_columnconfigure(1, weight=1)  # Controls area (1/3)
+        self.grid_columnconfigure(0, weight=4)  # Table area (~80%)
+        self.grid_columnconfigure(1, weight=1)  # Controls area (~20%)
         
         # === LEFT: Practice Poker Widget (Table Display) ===
         table_frame = ttk.Frame(self)
@@ -157,7 +157,6 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         controls_frame.grid(row=0, column=1, sticky="nsew", padx=(2, 5), pady=5)
         
         self._setup_session_controls(controls_frame)
-        self._setup_educational_panel(controls_frame)
         self._setup_statistics_panel(controls_frame)
     
     def _setup_session_controls(self, parent):
@@ -180,9 +179,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             controls_frame,
             text="🎯 START NEW HAND",
             command=self._start_new_hand,
-            bg="#38A169",                   # Professional green (same as BET button)
+            bg=THEME["chip_green"],         # Medium Green (win/positive indicator)
             fg="white",
-            activebackground="#2F855A",     # Darker green on hover
+            activebackground=THEME["table_felt"],  # Emerald Green on hover
             **control_button_config
         )
         self.start_btn.pack(fill=tk.X, pady=(0, 8))
@@ -192,9 +191,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             controls_frame,
             text="🔄 RESET SESSION",
             command=self._reset_session,
-            bg="#D97706",                   # Professional amber (Chakra UI orange.600)
+            bg=THEME["button_allin"],       # Orange for reset (matches ALL IN)
             fg="white",
-            activebackground="#B45309",     # Darker amber on hover
+            activebackground=THEME["button_allin_hover"],  # Darker orange on hover
             **control_button_config
         )
         self.reset_btn.pack(fill=tk.X, pady=(0, 8))
@@ -403,30 +402,14 @@ Pot: ${self.state_machine.game_state.pot:.2f}
             self.poker_widget.display_showdown_analysis(event.data)
     
     def _add_educational_message(self, message: str):
-        """Add a message to the educational content area."""
-        try:
-            self.edu_text.config(state=tk.NORMAL)
-            
-            # Add timestamp
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            formatted_message = f"[{timestamp}] {message}\n\n"
-            
-            self.edu_text.insert(tk.END, formatted_message)
-            self.edu_text.see(tk.END)  # Auto-scroll to bottom
-            
-            self.edu_text.config(state=tk.DISABLED)
-            
-        except Exception as e:
-            print(f"⚠️ Error adding educational message: {e}")
+        """Add a message to the educational content area - DISABLED (Educational Features removed)."""
+        # Educational features have been removed, this method is now a no-op
+        pass
     
     def _clear_educational_content(self):
-        """Clear the educational content area."""
-        try:
-            self.edu_text.config(state=tk.NORMAL)
-            self.edu_text.delete(1.0, tk.END)
-            self.edu_text.config(state=tk.DISABLED)
-        except Exception as e:
-            print(f"⚠️ Error clearing educational content: {e}")
+        """Clear the educational content area - DISABLED (Educational Features removed)."""
+        # Educational features have been removed, this method is now a no-op
+        pass
     
     def _update_session_stats(self):
         """Update the session statistics display."""

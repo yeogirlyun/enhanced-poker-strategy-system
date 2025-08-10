@@ -174,11 +174,11 @@ class EnhancedMainGUI:
 
         # Primary Action Button (e.g., "Start Game")
         style.configure("Primary.TButton", font=FONTS["header"], background=THEME["accent_primary"], foreground="white")
-        style.map("Primary.TButton", background=[("active", "#1177bb")])
+        style.map("Primary.TButton", background=[("active", THEME["menu_active"])])
 
         # Danger Action Button (e.g., "Reset")
         style.configure("Danger.TButton", font=FONTS["main"], background=THEME["accent_danger"], foreground="white")
-        style.map("Danger.TButton", background=[("active", "#e54c51")])
+        style.map("Danger.TButton", background=[("active", THEME["chip_red"])])
 
         # --- Entry and Combobox Styles ---
         style.configure("TEntry", fieldbackground=THEME["widget_bg"], foreground=THEME["text"], borderwidth=1)

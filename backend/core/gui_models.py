@@ -21,46 +21,54 @@ import os
 from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
 
-# --- Modern Poker App Theme (Inspired by PokerStars, 888poker, partypoker) ---
+# --- Professional Poker App Theme (User's Final Design) ---
 THEME = {
-    # Base Colors - Dark poker table aesthetic
-    "table_felt": "#0F5132",      # Deep poker green felt
-    "table_rail": "#2C1810",      # Dark wood rail
-    "primary_bg": "#1a1a1a",      # Almost black main background
-    "secondary_bg": "#2a2a2a",    # Card panels and overlays
-    "widget_bg": "#3a3a3a",       # Interactive elements
+    # Base Colors - User's final professional color scheme
+    "table_felt": "#35654D",      # Emerald Green (traditional poker feel)
+    "table_rail": "#2E4F76",      # Dark Steel Blue (table border)
+    "primary_bg": "#191C22",      # Dark Charcoal (main app background)
+    "secondary_bg": "#2E3C54",    # Deep Navy Slate (menu bar background)
+    "widget_bg": "#191C22",       # Dark Charcoal (interactive elements)
     
-    # Text Colors
-    "text": "#ffffff",            # Pure white primary text
-    "text_secondary": "#cccccc", # Light gray secondary text
-    "text_muted": "#888888",     # Muted text for less important info
-    "text_dark": "#888888",      # Legacy text_dark (same as text_muted)
-    "text_gold": "#FFD700",      # Gold text for winnings/pot
+    # Text Colors - User's final professional scheme
+    "text": "#8A98A8",            # Light Slate Gray (player name text)
+    "text_secondary": "#697287",  # Slate Gray (menu separator)
+    "text_muted": "#80A7B5",      # Light Steel Blue (menu inactive item)
+    "text_dark": "#25282D",       # Very Dark Gray (code file name text)
+    "text_gold": "#FFD700",       # Gold (chips/money positive)
+    "text_hover": "#A0BBCD",      # Pale Steel Blue (menu hover item)
     
-    # Action Button Colors (Modern poker app style)
-    "button_call": "#2E7D32",    # Professional green for call
-    "button_call_hover": "#388E3C",
-    "button_raise": "#D32F2F",   # Strong red for raise/bet
-    "button_raise_hover": "#F44336",
-    "button_fold": "#616161",    # Gray for fold
-    "button_fold_hover": "#757575",
-    "button_check": "#1976D2",   # Blue for check
-    "button_check_hover": "#2196F3",
-    "button_allin": "#FF6F00",   # Orange for all-in
-    "button_allin_hover": "#FF8F00",
+    # Action Button Colors - Target image styling
+    "button_call": "#1976D2",     # Blue for CALL (like target image)
+    "button_call_hover": "#1565C0",  # Darker blue on hover
+    "button_raise": "#D32F2F",    # Red for RAISE (like target image)  
+    "button_raise_hover": "#C62828", # Darker red on hover
+    "button_fold": "#616161",     # Gray for FOLD (like target image)
+    "button_fold_hover": "#424242",  # Darker gray on hover
+    "button_check": "#1976D2",    # Blue for CHECK (same as call)
+    "button_check_hover": "#1565C0", # Darker blue on hover
+    "button_allin": "#FF6F00",    # Orange for ALL IN (like target image)
+    "button_allin_hover": "#F57C00", # Darker orange on hover
     
-    # Chip and Money Colors
-    "chip_green": "#4CAF50",     # Small denomination chips
-    "chip_red": "#F44336",       # Medium denomination chips  
-    "chip_blue": "#2196F3",      # Large denomination chips
-    "chip_black": "#424242",     # Highest denomination chips
-    "chip_gold": "#FFD700",      # Tournament/special chips
+    # Card and Table Elements - User's final scheme
+    "card_back": "#2E4F76",      # Dark Steel Blue (unified with border)
+    "card_face": "#FFFFFF",      # White (clean, legible)
+    "card_outline": "#191C22",   # Dark Charcoal (adds depth)
+    "card_red": "#C0392B",       # Muted Crimson (softer on eyes)
+    "card_black": "#2C3E50",     # Muted Black (matches theme darkness)
     
-    # Card and Table Elements
-    "card_back": "#1565C0",      # Classic blue card backs
-    "card_face": "#FFFFFF",      # White card faces
-    "card_red": "#D32F2F",       # Red suits
-    "card_black": "#212121",     # Black suits
+    # Menu Elements - User's final scheme
+    "menu_active": "#3980A6",    # Teal Blue (selected menu highlight)
+    "menu_inactive": "#80A7B5",  # Light Steel Blue (unselected menu text)
+    "menu_hover": "#A0BBCD",     # Pale Steel Blue (on hover)
+    "menu_separator": "#697287", # Slate Gray (thin divider)
+    "menu_alt_bg": "#95C1D2",    # Light Blue Background (alternative)
+    "menu_alt_text": "#191C22",  # Dark Charcoal text on light background
+    
+    # Chip and Money Colors - User's final scheme
+    "chip_gold": "#FFD700",      # Gold (high visibility)
+    "chip_green": "#4CAF50",     # Medium Green (win/positive indicator)
+    "chip_red": "#E53935",       # Bright Red (loss/negative indicator)
     
     # Status and Feedback Colors
     "success": "#4CAF50",        # Success/positive actions

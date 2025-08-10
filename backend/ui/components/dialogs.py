@@ -111,7 +111,7 @@ class TierEditDialog:
         
         # Add helpful info about auto-detection
         info_label = ttk.Label(range_frame, text="Note: Hands will be auto-detected based on HS range", 
-                              style='Dark.TLabel', foreground='#888888')
+                              style='Dark.TLabel', foreground=THEME['text_muted'])
         info_label.pack(pady=(5, 0))
         
         # Color selection with preset options
@@ -126,9 +126,9 @@ class TierEditDialog:
         
         # Define preset colors
         preset_colors = [
-            ("Red", "#FF4444"), ("Blue", "#4444FF"), ("Green", "#44FF44"),
-            ("Orange", "#FF8844"), ("Purple", "#8844FF"), ("Yellow", "#FFFF44"),
-            ("Pink", "#FF44FF"), ("Cyan", "#44FFFF"), ("Brown", "#884444")
+            ("Crimson", THEME["card_red"]), ("Steel Blue", THEME["card_back"]), ("Green", THEME["chip_green"]),
+            ("Orange", THEME["button_allin"]), ("Call Blue", THEME["button_call"]), ("Gold", THEME["text_gold"]),
+            ("Raise Red", THEME["button_raise"]), ("Fold Gray", THEME["button_fold"]), ("Emerald", THEME["table_felt"])
         ]
         
         color_buttons_frame = ttk.Frame(preset_frame)
