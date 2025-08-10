@@ -324,8 +324,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             bd=3
         )
         
-        # Position the bet display
-        bet_frame.place(x=bet_x - 90, y=bet_y - 60)  # Center the larger frame
+        # Position the bet display using canvas create_window for proper positioning
+        bet_window = self.canvas.create_window(bet_x, bet_y, window=bet_frame, anchor="center")
+        
+        # Initially hide the bet display
+        self.canvas.itemconfig(bet_window, state="hidden")
         
         # Create bet title with larger font
         bet_title = tk.Label(
@@ -353,6 +356,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.bet_displays[player_index] = {
             "frame": bet_frame,
             "label": bet_label,
+            "window": bet_window,
             "visible": False
         }
     
@@ -371,7 +375,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         bet_display["label"].config(text=f"${amount:,.0f}")
         
         # Show the bet display
-        bet_display["frame"].pack()
+        self.canvas.itemconfig(bet_display["window"], state="normal")
         bet_display["visible"] = True
         
         # Schedule fade out after 3 seconds
@@ -383,7 +387,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if hasattr(self, 'bet_displays'):
             for player_index, bet_display in self.bet_displays.items():
                 if bet_display["visible"]:
-                    bet_display["frame"].pack_forget()
+                    self.canvas.itemconfig(bet_display["window"], state="hidden")
                     bet_display["visible"] = False
         
 
@@ -1479,16 +1483,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if player_index in self.bet_displays:
             bet_display = self.bet_displays[player_index]
             if bet_display["visible"]:
-                bet_display["frame"].pack_forget()
+                self.canvas.itemconfig(bet_display["window"], state="hidden")
                 bet_display["visible"] = False
     
     def _clear_all_bet_displays(self):
         """Clear all bet displays."""
-        for player_index in self.bet_displays:
-            bet_display = self.bet_displays[player_index]
-            if bet_display["visible"]:
-                bet_display["frame"].pack_forget()
-                bet_display["visible"] = False
+        if hasattr(self, 'bet_displays'):
+            for player_index in self.bet_displays:
+                bet_display = self.bet_displays[player_index]
+                if bet_display["visible"]:
+                    self.canvas.itemconfig(bet_display["window"], state="hidden")
+                    bet_display["visible"] = False
     
     def _finish_bet_animations(self):
         """Finish bet animations and clear displays."""

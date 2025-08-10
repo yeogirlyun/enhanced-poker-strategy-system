@@ -545,11 +545,21 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                     if self.logger:
                         self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {})
                     # Schedule next bot action with proper delay for turn visualization
-                    import threading
+                    # Use after() method instead of threading for better UI integration
                     def delayed_next_bot():
-                        self._schedule_bot_actions()
-                    timer = threading.Timer(1.5, delayed_next_bot)  # 1.5 second delay for turn visualization
-                    timer.start()
+                        try:
+                            self._schedule_bot_actions()
+                        except Exception as e:
+                            if self.logger:
+                                self.logger.log_system("ERROR", "BOT_ACTION", f"Error in delayed bot action: {e}", {})
+                    
+                    # Use a UI-safe delay method if available, otherwise fallback to timer
+                    if hasattr(self, 'after'):
+                        self.after(1500, delayed_next_bot)  # 1.5 second delay
+                    else:
+                        import threading
+                        timer = threading.Timer(1.5, delayed_next_bot)
+                        timer.start()
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
                     if self.logger:
