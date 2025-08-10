@@ -18,6 +18,9 @@ from .reusable_poker_game_widget import ReusablePokerGameWidget
 # Import modern UI components
 from .modern_poker_widgets import ModernActionButton, BetSliderWidget, ChipStackDisplay
 
+# Import theme
+from core.gui_models import THEME
+
 # Import FPSM components
 from core.flexible_poker_state_machine import GameEvent
 
@@ -818,6 +821,267 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         if hasattr(self.state_machine, 'set_ui_controller'):
             self.state_machine.set_ui_controller(SimpleUIController(self))
             debug_log("UI controller set up for state machine", "UI_CONTROLLER")
+        
+        # Initialize action button state tracking
+        self.action_buttons = {}
+        self.action_labels = {}
+        self.action_button_states = {}
+        
+        # Create action buttons panel
+        self._create_action_buttons_panel()
+
+    def _create_action_buttons_panel(self):
+        """Create the modern action buttons panel at the bottom of the poker table."""
+        # Create a frame at the bottom for action buttons
+        action_frame = tk.Frame(self, bg=THEME["primary_bg"])
+        action_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
+        
+        # Action buttons panel
+        action_panel = tk.Frame(action_frame, bg=THEME["primary_bg"])
+        action_panel.pack(fill=tk.X)
+        
+        # Configure grid for equal button distribution
+        for i in range(5):  # 4 buttons + 1 bet amount area
+            action_panel.grid_columnconfigure(i, weight=1)
+        
+        # CHECK/CALL button
+        check_frame = tk.Frame(action_panel, bg='#1976D2', relief='raised', bd=4, cursor='hand2')
+        check_frame.grid(row=0, column=0, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        check_label = tk.Label(
+            check_frame,
+            text="CHECK",
+            bg='#1976D2',
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='flat'
+        )
+        check_label.pack(expand=True, fill='both', padx=4, pady=6)
+        
+        def check_click(event):
+            if self.action_button_states.get('check_call', False):
+                self._handle_action_click('check_call')
+        
+        check_frame.bind("<Button-1>", check_click)
+        check_label.bind("<Button-1>", check_click)
+        
+        self.action_buttons['check_call'] = check_frame
+        self.action_labels['check_call'] = check_label
+        self.action_button_states['check_call'] = False
+        
+        # FOLD button
+        fold_frame = tk.Frame(action_panel, bg='#616161', relief='raised', bd=4, cursor='hand2')
+        fold_frame.grid(row=0, column=1, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        fold_label = tk.Label(
+            fold_frame,
+            text="FOLD",
+            bg='#616161',
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='flat'
+        )
+        fold_label.pack(expand=True, fill='both', padx=4, pady=6)
+        
+        def fold_click(event):
+            if self.action_button_states.get('fold', False):
+                self._handle_action_click('fold')
+        
+        fold_frame.bind("<Button-1>", fold_click)
+        fold_label.bind("<Button-1>", fold_click)
+        
+        self.action_buttons['fold'] = fold_frame
+        self.action_labels['fold'] = fold_label
+        self.action_button_states['fold'] = False
+        
+        # BET/RAISE button
+        bet_frame = tk.Frame(action_panel, bg='#D32F2F', relief='raised', bd=4, cursor='hand2')
+        bet_frame.grid(row=0, column=2, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        bet_label = tk.Label(
+            bet_frame,
+            text="BET",
+            bg='#D32F2F',
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='flat'
+        )
+        bet_label.pack(expand=True, fill='both', padx=4, pady=6)
+        
+        def bet_click(event):
+            if self.action_button_states.get('bet_raise', False):
+                self._handle_action_click('bet_raise')
+        
+        bet_frame.bind("<Button-1>", bet_click)
+        bet_label.bind("<Button-1>", bet_click)
+        
+        self.action_buttons['bet_raise'] = bet_frame
+        self.action_labels['bet_raise'] = bet_label
+        self.action_button_states['bet_raise'] = False
+        
+        # Bet amount section
+        bet_amount_frame = tk.Frame(action_panel, bg='#2a2a2a', relief='sunken', bd=2)
+        bet_amount_frame.grid(row=0, column=3, padx=5, pady=10, sticky="ew")
+        
+        # Bet amount buttons
+        amounts = [2, 5, 10, 20, 50]
+        self.bet_amount = tk.StringVar(value="2")
+        
+        for i, amount in enumerate(amounts):
+            btn = tk.Button(
+                bet_amount_frame,
+                text=f"${amount}",
+                font=('Arial', 10),
+                bg='#4A5568',
+                fg='white',
+                command=lambda a=amount: self.bet_amount.set(str(a))
+            )
+            btn.grid(row=0, column=i, padx=1)
+        
+        # ALL IN button
+        allin_frame = tk.Frame(action_panel, bg='#FF6F00', relief='raised', bd=4, cursor='hand2')
+        allin_frame.grid(row=0, column=4, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        
+        allin_label = tk.Label(
+            allin_frame,
+            text="ALL IN",
+            bg='#FF6F00',
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            relief='flat'
+        )
+        allin_label.pack(expand=True, fill='both', padx=4, pady=6)
+        
+        def allin_click(event):
+            if self.action_button_states.get('all_in', False):
+                self._handle_action_click('all_in')
+        
+        allin_frame.bind("<Button-1>", allin_click)
+        allin_label.bind("<Button-1>", allin_click)
+        
+        self.action_buttons['all_in'] = allin_frame
+        self.action_labels['all_in'] = allin_label
+        self.action_button_states['all_in'] = False
+        
+        # Initially disable all action buttons
+        self._disable_action_buttons()
+        
+        debug_log("Action buttons panel created with professional styling", "PRACTICE_UI")
+
+    def _handle_action_click(self, action_key: str):
+        """Handle action button clicks with safety checks."""
+        debug_log(f"Action button clicked: {action_key}", "PRACTICE_UI")
+        
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            debug_log("No state machine available", "PRACTICE_UI")
+            return
+        
+        # Determine the action and amount
+        if action_key == 'check_call':
+            # Check if we need to call or check
+            current_player = self.state_machine.get_current_player()
+            if current_player and hasattr(current_player, 'get_call_amount'):
+                call_amount = current_player.get_call_amount()
+                if call_amount > 0:
+                    action = 'call'
+                    amount = call_amount
+                else:
+                    action = 'check'
+                    amount = 0
+            else:
+                action = 'check'
+                amount = 0
+        elif action_key == 'fold':
+            action = 'fold'
+            amount = 0
+        elif action_key == 'bet_raise':
+            action = 'bet'
+            amount = float(self.bet_amount.get())
+        elif action_key == 'all_in':
+            action = 'all_in'
+            current_player = self.state_machine.get_current_player()
+            amount = current_player.stack if current_player else 100
+        else:
+            debug_log(f"Unknown action: {action_key}", "PRACTICE_UI")
+            return
+        
+        # Execute the action
+        try:
+            self.state_machine.execute_action(action, amount)
+            debug_log(f"Action executed: {action} ${amount}", "PRACTICE_UI")
+            
+            # Disable buttons after action
+            self._disable_action_buttons()
+            
+        except Exception as e:
+            debug_log(f"Error executing action {action}: {e}", "PRACTICE_UI")
+
+    def _enable_action_buttons(self):
+        """Enable action buttons for human player interaction."""
+        button_colors = {
+            'check_call': '#1976D2',    # Blue for check/call
+            'fold': '#616161',          # Gray for fold
+            'bet_raise': '#D32F2F',     # Red for bet/raise
+            'all_in': '#FF6F00'         # Orange for all-in
+        }
+        
+        for key, button_widget in self.action_buttons.items():
+            color = button_colors.get(key, '#1976D2')
+            button_widget.config(bg=color, relief='raised')
+            if key in self.action_labels:
+                self.action_labels[key].config(bg=color, fg='white')
+            self.action_button_states[key] = True
+        
+        debug_log("Poker action buttons enabled for human player", "PRACTICE_UI")
+
+    def _disable_action_buttons(self):
+        """Disable action buttons (not human player's turn)."""
+        disabled_color = '#2A2D35'  # Dark muted background
+        disabled_text = '#4A4F5C'   # Muted text color
+        
+        for key, button_widget in self.action_buttons.items():
+            button_widget.config(bg=disabled_color, relief='sunken')
+            if key in self.action_labels:
+                self.action_labels[key].config(bg=disabled_color, fg=disabled_text)
+            self.action_button_states[key] = False
+        
+        debug_log("Poker action buttons disabled", "PRACTICE_UI")
+
+    # ==============================
+    # GAME STATE INTEGRATION
+    # ==============================
+    
+    def _handle_player_turn_change(self, player_index: int):
+        """Handle when it becomes a player's turn."""
+        super()._handle_player_turn_change(player_index)
+        
+        # Enable action buttons for human player (Player 1 = index 0)
+        if player_index == 0:  # Human player
+            self._enable_action_buttons()
+            debug_log("Human player turn - buttons enabled", "PRACTICE_UI")
+        else:
+            self._disable_action_buttons()
+            debug_log(f"Bot player {player_index + 1} turn - buttons disabled", "PRACTICE_UI")
+
+    def _should_show_card(self, player_index: int, card_data: str) -> bool:
+        """Override: Human player cards always visible in practice mode."""
+        if player_index == 0:  # Human player
+            return True
+        return super()._should_show_card(player_index, card_data)
+
+    def _customize_player_styling(self, player_index: int, base_style: Dict[str, Any]) -> Dict[str, Any]:
+        """Override: Enhanced styling for human player in practice mode."""
+        style = super()._customize_player_styling(player_index, base_style)
+        
+        if player_index == 0:  # Human player
+            # Make human player stand out with special border
+            style.update({
+                "border_color": THEME["border_active"],
+                "border_width": 3,
+                "name_color": THEME["text_gold"]
+            })
+        
+        return style
 
 
 # ==============================
