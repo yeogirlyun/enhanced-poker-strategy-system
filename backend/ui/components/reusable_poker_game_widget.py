@@ -73,7 +73,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_pot_amount = 0.0
         
         # Bet display system (money graphics in front of players)
-        self.player_bet_displays = {}  # Store bet display widgets for each player
+        self.bet_displays = {}  # Store bet display widgets for each player
         
         # Sound manager
         self.sound_manager = SoundManager()
@@ -358,6 +358,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _show_bet_display_for_player(self, player_index: int, action: str, amount: float):
         """Show bet display for a player with the given action and amount."""
+        # Create bet display if it doesn't exist
+        if not hasattr(self, 'bet_displays'):
+            self.bet_displays = {}
+        if player_index not in self.bet_displays:
+            self._create_bet_display_for_player(player_index)
+        
         if player_index not in self.bet_displays:
             return
         
@@ -374,10 +380,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _clear_all_bet_displays_permanent(self):
         """Clear all bet displays for new hand."""
         # Bet display clearing debug removed
-        for player_index, bet_display in self.player_bet_displays.items():
-            bet_window = bet_display["window"]
-            self.canvas.itemconfig(bet_window, state="hidden")
-            bet_display["amount"] = 0.0
+        if hasattr(self, 'bet_displays'):
+            for player_index, bet_display in self.bet_displays.items():
+                if bet_display["visible"]:
+                    bet_display["frame"].pack_forget()
+                    bet_display["visible"] = False
         
 
     
