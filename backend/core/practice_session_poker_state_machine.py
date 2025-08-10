@@ -484,7 +484,10 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         ]
         if self.current_state not in betting_states:
             if self.logger:
-                self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Not a betting state (state: {self.current_state})", {"state": self.current_state.name})
+                self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Not a betting state (state: {self.current_state})", {
+                    "state": self.current_state.name,
+                    "action_player_index": self.action_player_index
+                })
             return
         
         # Check if current player is actually a bot that needs to act
@@ -568,7 +571,11 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 
                 if success:
                     if self.logger:
-                        self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {})
+                        self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {
+                            "current_state": self.current_state.name,
+                            "action_player_index": self.action_player_index,
+                            "scheduled_flag": getattr(self, '_scheduled_bot_action', False)
+                        })
                     # Schedule next bot action immediately - let _schedule_bot_actions handle the delay
                     self._schedule_bot_actions()
                 else:
