@@ -544,8 +544,12 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 if success:
                     if self.logger:
                         self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {})
-                    # Schedule next bot action if needed (chain bot actions)
-                    self._schedule_bot_actions()
+                    # Schedule next bot action with proper delay for turn visualization
+                    import threading
+                    def delayed_next_bot():
+                        self._schedule_bot_actions()
+                    timer = threading.Timer(1.5, delayed_next_bot)  # 1.5 second delay for turn visualization
+                    timer.start()
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
                     if self.logger:
