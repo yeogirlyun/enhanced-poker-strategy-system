@@ -80,6 +80,7 @@ THEME = {
     "bg_light": "#3a3a3a",
     "fg": "#ffffff",
     "accent": "#4CAF50",
+    "accent_primary": "#2196F3",  # Legacy accent_primary (blue)
     "border": "#555555",         # Legacy border color
     "font_family": "Arial",
     "font_size": 11,
