@@ -1256,14 +1256,22 @@ Ready to track performance...
             self.set_status("🔄 Practice game reset successfully")
     def _increase_table_size(self):
         """Increase the table size."""
+        print(f"🔍 MainGUI._increase_table_size() called")
         if hasattr(self, 'practice_ui'):
+            print(f"🔍 practice_ui exists, calling increase_table_size()")
             self.practice_ui.increase_table_size()
             self.set_status("🔍 Table size increased")
+        else:
+            print(f"❌ practice_ui does not exist")
     def _decrease_table_size(self):
         """Decrease the table size."""
+        print(f"🔍 MainGUI._decrease_table_size() called")
         if hasattr(self, 'practice_ui'):
+            print(f"🔍 practice_ui exists, calling decrease_table_size()")
             self.practice_ui.decrease_table_size()
             self.set_status("🔍 Table size decreased")
+        else:
+            print(f"❌ practice_ui does not exist")
     def _change_table_felt(self, felt_color):
         """Change the table felt color."""
         if hasattr(self, 'practice_ui'):

@@ -15,6 +15,7 @@ from datetime import datetime
 from core.practice_session_poker_state_machine import PracticeSessionPokerStateMachine
 from core.flexible_poker_state_machine import GameConfig, EventListener, GameEvent
 from core.gui_models import StrategyData, THEME, FONTS
+from core.types import Player, ActionType
 
 # Import specialized components
 from ui.components.practice_session_poker_widget import PracticeSessionPokerWidget
@@ -57,13 +58,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                     "starting_stack": config.starting_stack
                 })
         else:
-            # Fallback to defaults if no config provided
+            # Fallback to defaults if no config provided (use standard GameConfig defaults)
             config = GameConfig(
                 num_players=6,
-                big_blind=2.0,
-                small_blind=1.0,
+                big_blind=2.0,  # Standard $2 big blind (no floating point)
+                small_blind=1.0,  # Standard $1 small blind (no floating point)
                 starting_stack=200.0
             )
+            if self.logger:
+                self.logger.log_system("DEBUG", "PRACTICE_UI_CONFIG", f"Using default config: starting_stack={config.starting_stack}", {})
             if self.logger:
                 self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Using default poker configuration", {
                     "num_players": config.num_players,
@@ -81,7 +84,13 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             })
         
         try:
+            if self.logger:
+                self.logger.log_system("DEBUG", "PRACTICE_UI_CONFIG", f"Creating state machine with config starting_stack={config.starting_stack}", {})
             self.state_machine = PracticeSessionPokerStateMachine(config, strategy_data)
+            if self.logger:
+                self.logger.log_system("DEBUG", "PRACTICE_UI_CONFIG", "State machine created, checking player stacks", {})
+                for i, p in enumerate(self.state_machine.game_state.players):
+                    self.logger.log_system("DEBUG", "PRACTICE_UI_CONFIG", f"Player {i+1}: ${p.stack}, is_human={p.is_human}", {})
             if self.logger:
                 self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionPokerStateMachine created successfully", {})
         except Exception as e:
@@ -112,6 +121,12 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             # Handle practice-specific events
             if event.event_type == "practice_hand_started":
                 self._handle_hand_started(event)
+                # Start new hand with buttons disabled
+                self._disable_action_buttons()
+                # Update action buttons for new hand
+                self._update_action_buttons_for_game_state()
+                # Check if human should have action
+                self._check_and_enable_human_turn()
             elif event.event_type == "practice_feedback":
                 self._handle_practice_feedback(event)
             elif event.event_type == "practice_analysis":
@@ -120,9 +135,46 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 self._handle_showdown_analysis(event)
             elif event.event_type == "practice_stats_reset":
                 pass  # Statistics panel removed
+            elif event.event_type == "action_executed":
+                # Add user-friendly action messages
+                self._handle_action_message(event)
+                # Disable buttons immediately after human action
+                self._disable_action_buttons()
+                # Update action buttons when game state changes
+                self._update_action_buttons_for_game_state()
+                # Check if it's now human's turn and enable buttons
+                self._check_and_enable_human_turn()
+                # Forward events to poker widget so it can handle button states
+                if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'on_event'):
+                    self.poker_widget.on_event(event)
+            elif event.event_type == "state_change":
+                # Handle street transitions (flop, turn, river)
+                self._handle_street_change_message(event)
+                # Check button state on state changes
+                self._check_and_enable_human_turn()
+                # Forward to poker widget
+                if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'on_event'):
+                    self.poker_widget.on_event(event)
+            elif event.event_type == "hand_complete":
+                # Handle showdown results
+                self._handle_hand_complete_message(event)
+                # Forward to poker widget
+                if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'on_event'):
+                    self.poker_widget.on_event(event)
+                # Make Start New Hand clickable immediately after hand ends
+                self._enable_start_button()
+                # Toast message to guide the user
+                self._add_action_message("✅ Hand complete. Click START NEW HAND to continue.")
+            elif event.event_type in ["action_required", "display_state_update"]:
+                # Update action buttons when game state changes
+                self._update_action_buttons_for_game_state()
+                # Forward events to poker widget so it can handle button states
+                if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'on_event'):
+                    self.poker_widget.on_event(event)
             else:
-                # Let the poker widget handle game events
-                pass
+                # Forward all other events to the poker widget
+                if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'on_event'):
+                    self.poker_widget.on_event(event)
                 
         except Exception as e:
             print(f"⚠️ Error handling event {event.event_type}: {e}")
@@ -203,7 +255,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             start_frame,
             text="🎯 START NEW HAND",
             bg=THEME['chip_green'],  # Green background
-            fg='white',  # White text like other action buttons
+            fg='#2B2F39',  # Dark desaturated blue-gray text (RGB: 43, 47, 57)
             font=('Arial', 14, 'bold'),  # Same font as action buttons
             cursor='hand2'
         )
@@ -213,8 +265,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         start_frame.bind("<Button-1>", lambda e: self._start_new_hand())
         start_label.bind("<Button-1>", lambda e: self._start_new_hand())
         
-        # Store reference
+        # Store references for state management
         self.start_btn = start_frame
+        self.start_label = start_label
     
     def _setup_action_message_area(self, parent):
         """Setup action message area for game notifications."""
@@ -236,12 +289,81 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         self._add_action_message("Welcome! Start a new hand to begin playing.")
     
     def _add_action_message(self, message: str):
-        """Add a message to the action message area."""
+        """Add a message to the action message area (exactly 2 lines, well-centered)."""
         if hasattr(self, 'action_message_text'):
             self.action_message_text.config(state='normal')
-            self.action_message_text.insert(tk.END, message + "\n")
-            self.action_message_text.see(tk.END)  # Auto-scroll to bottom
+            
+            # Get current content and split into lines
+            current_content = self.action_message_text.get("1.0", tk.END).strip()
+            lines = current_content.split('\n') if current_content else []
+            
+            # Add new message
+            lines.append(message)
+            
+            # Keep only the last 2 lines
+            lines = lines[-2:]
+            
+            # Ensure we always have exactly 2 lines (pad with empty line if needed)
+            while len(lines) < 2:
+                lines.insert(0, "")  # Pad at the beginning for better centering
+            
+            # Clear and set new content
+            self.action_message_text.delete("1.0", tk.END)
+            self.action_message_text.insert("1.0", '\n'.join(lines))
+            
             self.action_message_text.config(state='disabled')
+
+    def _handle_action_message(self, event):
+        """Convert action_executed events to user-friendly messages."""
+        if hasattr(event, 'data') and event.data:
+            player_name = event.data.get('player_name', 'Unknown')
+            action = event.data.get('action', 'unknown')
+            amount = event.data.get('amount', 0)
+            
+            if action == 'fold':
+                self._add_action_message(f"{player_name} folds")
+            elif action == 'check':
+                self._add_action_message(f"{player_name} checks")
+            elif action == 'call':
+                self._add_action_message(f"{player_name} calls ${amount:.2f}")
+            elif action == 'bet':
+                self._add_action_message(f"{player_name} bets ${amount:.2f}")
+            elif action == 'raise':
+                self._add_action_message(f"{player_name} raises to ${amount:.2f}")
+            else:
+                self._add_action_message(f"{player_name} {action}")
+
+    def _handle_street_change_message(self, event):
+        """Convert state_change events to street transition messages."""
+        if hasattr(event, 'data') and event.data:
+            new_state = event.data.get('new_state', '')
+            if 'DEAL_FLOP' in new_state:
+                # Get board cards from state machine
+                if hasattr(self, 'state_machine'):
+                    board = getattr(self.state_machine.game_state, 'board', [])
+                    if len(board) >= 3:
+                        flop = ' '.join(board[:3])
+                        self._add_action_message(f"🃏 Flop: {flop}")
+            elif 'DEAL_TURN' in new_state:
+                if hasattr(self, 'state_machine'):
+                    board = getattr(self.state_machine.game_state, 'board', [])
+                    if len(board) >= 4:
+                        turn = board[3]
+                        self._add_action_message(f"🃏 Turn: {turn}")
+            elif 'DEAL_RIVER' in new_state:
+                if hasattr(self, 'state_machine'):
+                    board = getattr(self.state_machine.game_state, 'board', [])
+                    if len(board) >= 5:
+                        river = board[4]
+                        self._add_action_message(f"🃏 River: {river}")
+
+    def _handle_hand_complete_message(self, event):
+        """Convert hand_complete events to showdown result messages."""
+        if hasattr(event, 'data') and event.data:
+            winner = event.data.get('winner', 'Unknown')
+            pot_amount = event.data.get('pot_amount', 0)
+            winning_hand = event.data.get('winning_hand', '')
+            self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {winning_hand}")
     
     def _setup_quick_bet_buttons(self, parent):
         """Setup quick bet buttons for faster gameplay."""
@@ -330,9 +452,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         )
         check_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
         
-        # Bind click events to both frame and label
+        # Bind click events to both frame and label with focus protection
         check_frame.bind("<Button-1>", lambda e: self._handle_action_click('check_call'))
         check_label.bind("<Button-1>", lambda e: self._handle_action_click('check_call'))
+        
+        # DISABLE KEYBOARD TRIGGERS to prevent accidental activation
+        check_frame.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        check_label.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        check_frame.focus_set = lambda: None  # Disable focus
+        check_label.focus_set = lambda: None  # Disable focus
         
         check_button = check_frame  # Reference for enable/disable
         
@@ -356,9 +484,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         )
         fold_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
         
-        # Bind click events to both frame and label
+        # Bind click events to both frame and label with focus protection
         fold_frame.bind("<Button-1>", lambda e: self._handle_action_click('fold'))
         fold_label.bind("<Button-1>", lambda e: self._handle_action_click('fold'))
+        
+        # DISABLE KEYBOARD TRIGGERS to prevent accidental activation
+        fold_frame.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        fold_label.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        fold_frame.focus_set = lambda: None  # Disable focus
+        fold_label.focus_set = lambda: None  # Disable focus
         
         fold_button = fold_frame  # Reference for enable/disable
         
@@ -382,9 +516,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         )
         bet_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
         
-        # Bind click events to both frame and label
+        # Bind click events to both frame and label with focus protection
         bet_frame.bind("<Button-1>", lambda e: self._handle_action_click('bet_raise'))
         bet_label.bind("<Button-1>", lambda e: self._handle_action_click('bet_raise'))
+        
+        # DISABLE KEYBOARD TRIGGERS to prevent accidental activation
+        bet_frame.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        bet_label.bind("<Key>", lambda e: "break")  # Block all keyboard events
+        bet_frame.focus_set = lambda: None  # Disable focus
+        bet_label.focus_set = lambda: None  # Disable focus
         
         bet_button = bet_frame  # Reference for enable/disable
         
@@ -393,6 +533,20 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             'check_call': check_button,
             'fold': fold_button,
             'bet_raise': bet_button
+        }
+        
+        # Store original colors for restoring when enabling
+        self.original_button_colors = {
+            'check_call': THEME['button_check'],
+            'fold': THEME['button_fold'], 
+            'bet_raise': THEME['button_raise']
+        }
+        
+        # Store labels for color updates
+        self.action_button_labels = {
+            'check_call': check_label,
+            'fold': fold_label,
+            'bet_raise': bet_label
         }
         
         # Store label references and original colors for restoration
@@ -408,62 +562,261 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             'bet_raise': THEME['button_raise']
         }
         
-        # Initially enable all action buttons (human player starts)
-        self._enable_action_buttons()
+        # Store original button configurations for dynamic updates
+        self.button_configs = {
+            'check': {'text': 'CHECK', 'color': THEME['button_check']},
+            'call': {'text': 'CALL', 'color': THEME.get('button_call', THEME['button_check'])},
+            'bet': {'text': 'BET', 'color': THEME['button_raise']},
+            'raise': {'text': 'RAISE', 'color': THEME['button_raise']}
+        }
+        
+        # Start with buttons disabled until it's human's turn
+        self._disable_action_buttons()
+        # Set initial button state (will show CHECK/BET/FOLD by default) 
+        self._update_action_buttons_for_game_state()
     
+    def _disable_action_buttons(self):
+        """Disable all action buttons - only human's turn should enable them."""
+        disabled_color = '#2A2A2A'  # Dark gray for disabled state
+        disabled_text_color = '#666666'  # Gray text for disabled state
+        
+        print("🔒 DISABLING all action buttons")
+        
+        for button_key, button_frame in self.action_buttons.items():
+            if hasattr(button_frame, 'config'):
+                button_frame.config(bg=disabled_color, cursor='', relief='flat')
+                
+            # Disable the label inside the frame
+            if button_key in self.action_button_labels:
+                label = self.action_button_labels[button_key]
+                if hasattr(label, 'config'):
+                    label.config(bg=disabled_color, fg=disabled_text_color, cursor='')
+            
+            # Unbind all click events to make truly non-clickable
+            button_frame.unbind("<Button-1>")
+            if button_key in self.action_button_labels:
+                self.action_button_labels[button_key].unbind("<Button-1>")
+    
+    def _enable_action_buttons(self):
+        """Enable action buttons for human player's turn."""
+        print("🔓 ENABLING action buttons for human turn")
+        
+        for button_key, button_frame in self.action_buttons.items():
+            # Restore original colors
+            original_color = self.original_button_colors.get(button_key, THEME['button_check'])
+            
+            if hasattr(button_frame, 'config'):
+                button_frame.config(bg=original_color, cursor='hand2', relief='raised')
+                
+            # Enable the label inside the frame
+            if button_key in self.action_button_labels:
+                label = self.action_button_labels[button_key]
+                if hasattr(label, 'config'):
+                    label.config(bg=original_color, fg='white', cursor='hand2')
+            
+            # Re-bind click events with proper closure
+            def make_handler(action):
+                return lambda e: self._handle_action_click(action)
+            
+            handler = make_handler(button_key)
+            button_frame.bind("<Button-1>", handler)
+            if button_key in self.action_button_labels:
+                self.action_button_labels[button_key].bind("<Button-1>", handler)
+
+    def _check_and_enable_human_turn(self):
+        """Check if it's human's turn and enable buttons accordingly."""
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            return
+            
+        try:
+            # Check if game is in a valid state for human actions
+            if hasattr(self.state_machine, 'current_state'):
+                invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
+                state_name = str(self.state_machine.current_state).split('.')[-1]
+                if state_name in invalid_states:
+                    print(f"🔒 Keeping buttons disabled - game in {state_name} state")
+                    return
+            
+            # Check if current player is human
+            current_player = self.state_machine.get_action_player()
+            if current_player and hasattr(current_player, 'is_human') and current_player.is_human:
+                print(f"🔓 Human turn detected - enabling buttons for {current_player.name}")
+                self._enable_action_buttons()
+            else:
+                player_name = getattr(current_player, 'name', 'Unknown') if current_player else 'None'
+                print(f"🔒 Not human turn - keeping buttons disabled (current: {player_name})")
+                
+        except Exception as e:
+            print(f"⚠️ Error checking human turn: {e}")
+
     def _handle_action_click(self, action_key: str):
-        """Handle action button clicks and delegate to poker widget."""
-        if hasattr(self.poker_widget, '_handle_action_click'):
-            self.poker_widget._handle_action_click(action_key)
+        """Handle action button clicks directly with anti-auto-click protection."""
+        import time
+        
+        # ANTI-AUTO-CLICK PROTECTION: Add small delay and confirmation
+        current_time = time.time()
+        if hasattr(self, '_last_action_time') and hasattr(self, '_last_action_key'):
+            time_since_last = current_time - self._last_action_time
+            
+            # Block rapid clicks (within 500ms)
+            if time_since_last < 0.5:
+                print(f"🛡️ AUTO-CLICK PROTECTION: Action blocked (too fast: {time_since_last:.3f}s)")
+                if self.logger:
+                    self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - too fast: {time_since_last:.3f}s", {"action": action_key})
+                return
+            
+            # Block repeated identical actions within 2 seconds (likely accidental/auto-clicks)
+            if self._last_action_key == action_key and time_since_last < 2.0:
+                print(f"🛡️ REPEAT-CLICK PROTECTION: Identical action blocked (repeated {action_key} within {time_since_last:.3f}s)")
+                if self.logger:
+                    self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - repeated {action_key} within {time_since_last:.3f}s", {"action": action_key})
+                return
+        
+        self._last_action_time = current_time
+        self._last_action_key = action_key
+        
+        if self.logger:
+            self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Action button clicked: {action_key}", {"timestamp": current_time})
+        
+        print(f"🎯 HUMAN ACTION: {action_key} button clicked at {current_time}")
+        
+        # ADDITIONAL DEBUGGING: Log call stack to see what triggered this
+        import traceback
+        stack_trace = ''.join(traceback.format_stack()[-3:-1])  # Get last 2 stack frames
+        print(f"📋 ACTION TRIGGERED BY:\\n{stack_trace}")
+        
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", "No state machine available", {})
+            return
+        
+        # Check if game is in a valid state for human actions
+        if hasattr(self.state_machine, 'current_state'):
+            invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
+            if str(self.state_machine.current_state).split('.')[-1] in invalid_states:
+                print(f"🚫 ACTION BLOCKED: Game in {self.state_machine.current_state} state")
+                if self.logger:
+                    self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - invalid state: {self.state_machine.current_state}", {"action": action_key})
+                return
+        
+        # Check if it's the human player's turn
+        current_player = self.state_machine.get_action_player()
+        if not current_player:
+            if self.logger:
+                self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", "No current player", {})
+            return
+        
+        # Robust type checking - ensure we have a Player object
+        if not hasattr(current_player, 'is_human') or isinstance(current_player, str):
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"current_player is {type(current_player)}, not Player object: {current_player}", {})
+                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Action player index: {getattr(self.state_machine, 'action_player_index', 'unknown')}, Players count: {len(getattr(self.state_machine.game_state, 'players', []))}", {})
+            return
+            
+        if not current_player.is_human:
+            print(f"🚫 ACTION BLOCKED: Not human's turn (current: {getattr(current_player, 'name', 'Unknown')})")
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - not human's turn: {getattr(current_player, 'name', 'Unknown')}", {"action": action_key})
+            return
+            
+        if self.logger:
+            self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Human player's turn, executing action: {action_key}", {})
+        
+        # Determine the action and amount based on the button clicked
+        if action_key == 'check_call':
+            # Check if we need to call or check
+            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
+            player_bet = getattr(current_player, 'current_bet', 0)
+            call_amount = current_bet - player_bet
+            if self.logger:
+                self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Bet calculation: current_bet={current_bet}, player_bet={player_bet}, call_amount={call_amount}", {})
+            
+            if call_amount > 0:
+                action = 'call'
+                amount = call_amount
+            else:
+                action = 'check'
+                amount = 0
+        elif action_key == 'fold':
+            action = 'fold'
+            amount = 0
+        elif action_key == 'bet_raise':
+            # Use the current bet amount set by bet size controls
+            amount = getattr(self, 'current_bet_amount', self.state_machine.config.big_blind * 2)
+            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
+            if current_bet > 0:
+                action = 'raise'
+            else:
+                action = 'bet'
+        else:
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Unknown action: {action_key}", {})
+            return
+        
+        # Execute the action through the state machine
+        try:
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_UI_ACTION", f"Executing {action} with amount {amount}", {})
+            
+            # Convert string action to ActionType enum
+            action_type_map = {
+                'fold': ActionType.FOLD,
+                'check': ActionType.CHECK, 
+                'call': ActionType.CALL,
+                'bet': ActionType.BET,
+                'raise': ActionType.RAISE
+            }
+            action_type = action_type_map.get(action)
+            if not action_type:
+                if self.logger:
+                    self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Unknown action type: {action}", {})
+                return
+                
+            # Final safety check before executing action
+            if not isinstance(current_player, Player):
+                if self.logger:
+                    self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Final check failed: current_player is {type(current_player)}, expected Player object", {})
+                return
+            
+            # CRITICAL DEBUGGING: Log the actual action execution
+            print(f"🚨 EXECUTING ACTION: {current_player.name} ({action_type.value}) ${amount}")
+            print(f"   Player is human: {current_player.is_human}")
+            print(f"   Action player index: {self.state_machine.action_player_index}")
+            
+            self.state_machine.execute_action(current_player, action_type, amount)
+            
+            print(f"✅ ACTION COMPLETED: {action_type.value} executed successfully")
+            
+            # Immediately disable buttons after human action
+            print("🔒 Disabling buttons after human action")
+            self._disable_action_buttons()
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Error executing action: {e}", {})
     
     def _handle_quick_bet(self, bet_type: str):
-        """Handle quick bet button clicks and set the bet amount accordingly."""
+        """Handle quick bet button clicks and delegate calculation to state machine."""
         try:
-            # Get current pot size (this will need to be implemented based on your state machine)
-            current_pot = 0  # Default value
+            # Delegate bet calculation to the state machine (proper architecture)
             if hasattr(self, 'state_machine') and self.state_machine:
-                # Try to get pot size from state machine
-                current_pot = getattr(self.state_machine, 'pot', 0)
-                if current_pot == 0:
-                    current_pot = 20  # Default small pot for calculations
-            
-            # Calculate bet amount based on type
-            if bet_type == "one_third":
-                bet_amount = max(2, int(current_pot * 0.33))
-            elif bet_type == "half":
-                bet_amount = max(2, int(current_pot * 0.5))
-            elif bet_type == "two_thirds":
-                bet_amount = max(2, int(current_pot * 0.67))
-            elif bet_type == "pot":
-                bet_amount = max(2, current_pot)
-            elif bet_type == "two_x_pot":
-                bet_amount = max(2, current_pot * 2)
-            elif bet_type == "all_in":
-                # For ALL IN, get player's full stack
-                if hasattr(self, 'state_machine') and self.state_machine:
-                    current_player = getattr(self.state_machine, 'current_player', None)
-                    if current_player and hasattr(current_player, 'stack'):
-                        bet_amount = current_player.stack
-                    else:
-                        bet_amount = 1000  # Default stack
+                bet_amount = self.state_machine.calculate_quick_bet_amount(bet_type)
+                self.current_bet_amount = bet_amount
+                
+                # Execute the appropriate action based on bet type
+                if bet_type == "all_in":
+                    self._handle_action_click('all_in')
                 else:
-                    bet_amount = 1000  # Default stack
+                    self._handle_action_click('bet_raise')
+                    
+                print(f"🎯 Quick bet executed: {bet_type} = ${bet_amount}")
             else:
-                bet_amount = 2
-            
-            # Store the calculated bet amount for use by bet/raise actions
-            self.current_bet_amount = bet_amount
-            
-            # Execute the appropriate action based on bet type
-            if bet_type == "all_in":
-                self._handle_action_click('all_in')
-            else:
-                self._handle_action_click('bet_raise')
+                print("⚠️ No state machine available for bet calculation")
+                self.current_bet_amount = 10  # Safe fallback
             
         except Exception as e:
-            print(f"Error in quick bet: {e}")
-            # Fallback to default bet
-            self.current_bet_amount = 2
+            print(f"⚠️ Error handling quick bet: {e}")
+            # Set a default bet amount if calculation fails
+            self.current_bet_amount = 10
     
     def _enable_action_buttons(self):
         """Enable action buttons for human player interaction."""
@@ -557,7 +910,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             self.state_machine.start_hand()
             
             # Update UI state
-            self.start_btn.config(state="disabled")
+            self._disable_start_button()
             self._add_educational_message("🎯 New hand started! Observe the cards and consider your position.")
             
         except Exception as e:
@@ -576,7 +929,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                     self.poker_widget.reset_practice_session()
                 
                 # Reset UI
-                self.start_btn.config(state="normal")
+                self._enable_start_button()
                 self._clear_educational_content()
                 self._update_session_stats()
                 
@@ -599,8 +952,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     def _get_strategy_hint(self):
         """Get a strategy hint for the current situation."""
         try:
-            # Find human player
-            human_player = next((p for p in self.state_machine.game_state.players if p.is_human), None)
+            # Delegate to state machine's encapsulated method
+            human_player = self.state_machine.get_human_player()
             
             if human_player:
                 suggestion = self.state_machine.get_strategy_suggestion(human_player)
@@ -617,26 +970,12 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     def _analyze_current_hand(self):
         """Analyze the current hand situation."""
         try:
-            if self.state_machine.hands_played > 0:
-                stats = self.state_machine.get_practice_stats()
-                
-                analysis = f"""📊 Current Hand Analysis:
-                
-Hands Played: {stats['hands_played']}
-Win Rate: {stats['win_rate']:.1f}%
-Decision Accuracy: {stats['decision_accuracy']:.1f}%
-
-Position: {self.state_machine._get_human_player_position() or 'Unknown'}
-Street: {self.state_machine.game_state.street}
-Pot: ${self.state_machine.game_state.pot:.2f}
-"""
-                
-                self._add_educational_message(analysis)
-            else:
-                self._add_educational_message("📊 Start a hand first to get analysis.")
+            # Delegate to state machine's encapsulated analysis method
+            analysis = self.state_machine.get_current_analysis()
+            self._add_educational_message(analysis)
                 
         except Exception as e:
-            print(f"⚠️ Error analyzing hand: {e}")
+            print(f"⚠️ Error analyzing current hand: {e}")
     
     def _handle_hand_started(self, event: GameEvent):
         """Handle practice hand started event."""
@@ -648,7 +987,7 @@ Pot: ${self.state_machine.game_state.pot:.2f}
             self._add_educational_message(message)
         
         # Re-enable start button when hand is complete
-        self.start_btn.config(state="normal")
+        self._enable_start_button()
     
     def _handle_practice_feedback(self, event: GameEvent):
         """Handle practice feedback events."""
@@ -744,11 +1083,21 @@ Total Winnings: ${stats['total_winnings']:.2f}
             print(f"⚠️ Error updating poker configuration: {e}")
 
     def update_font_size(self, font_size: int):
-        """Update font sizes for the educational and stats panels."""
+        """Update font sizes for all text widgets in the practice session UI."""
         try:
             new_font = (FONTS["main"][0], font_size)
-            self.edu_text.config(font=new_font)
-            self.stats_text.config(font=new_font)
+            
+            # Update game message area font to sync with app font size
+            if hasattr(self, 'action_message_text') and self.action_message_text:
+                self.action_message_text.config(font=new_font)
+            
+            # Update educational panel if it exists
+            if hasattr(self, 'edu_text') and self.edu_text:
+                self.edu_text.config(font=new_font)
+            
+            # Update statistics panel if it exists
+            if hasattr(self, 'stats_text') and self.stats_text:
+                self.stats_text.config(font=new_font)
             
             # Also update poker widget font size
             if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'update_font_size'):
@@ -758,18 +1107,124 @@ Total Winnings: ${stats['total_winnings']:.2f}
     
     def increase_table_size(self):
         """Increase the poker table size."""
-        if hasattr(self.poker_widget, 'increase_table_size'):
-            self.poker_widget.increase_table_size()
-    
+        if self.logger:
+            self.logger.log_system("DEBUG", "PRACTICE_UI_TABLE_SIZE", "increase_table_size() called", {})
+        if hasattr(self, 'poker_widget') and self.poker_widget:
+            if hasattr(self.poker_widget, 'increase_table_size'):
+                self.poker_widget.increase_table_size()
+                if self.logger:
+                    self.logger.log_system("DEBUG", "PRACTICE_UI_TABLE_SIZE", "Table size increased", {})
+            else:
+                if self.logger:
+                    self.logger.log_system("WARNING", "PRACTICE_UI_TABLE_SIZE", "poker_widget missing increase_table_size method", {})
+        else:
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_TABLE_SIZE", "poker_widget does not exist", {})
+
     def decrease_table_size(self):
         """Decrease the poker table size."""
-        if hasattr(self.poker_widget, 'decrease_table_size'):
-            self.poker_widget.decrease_table_size()
+        if self.logger:
+            self.logger.log_system("DEBUG", "PRACTICE_UI_TABLE_SIZE", "decrease_table_size() called", {})
+        if hasattr(self, 'poker_widget') and self.poker_widget:
+            if hasattr(self.poker_widget, 'decrease_table_size'):
+                self.poker_widget.decrease_table_size()
+                if self.logger:
+                    self.logger.log_system("DEBUG", "PRACTICE_UI_TABLE_SIZE", "Table size decreased", {})
+            else:
+                if self.logger:
+                    self.logger.log_system("WARNING", "PRACTICE_UI_TABLE_SIZE", "poker_widget missing decrease_table_size method", {})
+        else:
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_TABLE_SIZE", "poker_widget does not exist", {})
     
     def change_table_felt(self, felt_color: str):
         """Change the poker table felt color."""
         if hasattr(self.poker_widget, 'change_table_felt'):
             self.poker_widget.change_table_felt(felt_color)
+    
+    def _disable_start_button(self):
+        """Disable the start button (custom Frame+Label implementation)."""
+        if hasattr(self, 'start_label'):
+            self.start_label.config(
+                bg=THEME.get('button_disabled', '#666666'),
+                cursor=''
+            )
+            # Unbind click events
+            self.start_btn.unbind("<Button-1>")
+            self.start_label.unbind("<Button-1>")
+    
+    def _enable_start_button(self):
+        """Enable the start button (custom Frame+Label implementation)."""
+        if hasattr(self, 'start_label'):
+            self.start_label.config(
+                bg=THEME['chip_green'],
+                cursor='hand2'
+            )
+            # Rebind click events
+            self.start_btn.bind("<Button-1>", lambda e: self._start_new_hand())
+            self.start_label.bind("<Button-1>", lambda e: self._start_new_hand())
+
+    def _update_action_buttons_for_game_state(self):
+        """Update action button text and appearance based on current game state."""
+        if not hasattr(self, 'state_machine') or not self.state_machine:
+            return
+            
+        try:
+            # Get current game state information
+            human_player = self.state_machine.get_human_player()
+            if not human_player:
+                return
+                
+            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
+            player_bet = getattr(human_player, 'current_bet', 0)
+            call_amount = current_bet - player_bet
+            
+            # Determine what the first button should be: CHECK or CALL
+            if call_amount > 0:
+                # There's a bet to call - show CALL button
+                self._update_check_call_button('call', call_amount)
+                # Third button should be RAISE (since there's a bet to raise)
+                self._update_bet_raise_button('raise')
+            else:
+                # No bet to call - show CHECK button  
+                self._update_check_call_button('check')
+                # Third button should be BET (since there's no current bet)
+                self._update_bet_raise_button('bet')
+                
+        except Exception as e:
+            print(f"⚠️ Error updating action buttons: {e}")
+    
+    def _update_check_call_button(self, action_type: str, amount: float = 0):
+        """Update the check/call button dynamically."""
+        if action_type not in ['check', 'call']:
+            return
+            
+        config = self.button_configs[action_type]
+        label = self.action_labels['check_call']
+        frame = self.action_buttons['check_call']
+        
+        # Update button text
+        if action_type == 'call' and amount > 0:
+            button_text = f"CALL ${amount:.0f}"
+        else:
+            button_text = config['text']
+            
+        # Update label and frame appearance
+        label.config(text=button_text, bg=config['color'])
+        frame.config(bg=config['color'])
+        
+    def _update_bet_raise_button(self, action_type: str):
+        """Update the bet/raise button dynamically."""
+        if action_type not in ['bet', 'raise']:
+            return
+            
+        config = self.button_configs[action_type]
+        label = self.action_labels['bet_raise']
+        frame = self.action_buttons['bet_raise']
+        
+        # Update label and frame appearance
+        label.config(text=config['text'], bg=config['color'])
+        frame.config(bg=config['color'])
 
 
 # Clean architecture practice session UI is now the main implementation

@@ -8,7 +8,7 @@ and provides practice-specific functionality for learning and skill development.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-# Removed unused imports: random, time
+import random
 from .flexible_poker_state_machine import (
     FlexiblePokerStateMachine, GameConfig, PokerState, Player, GameEvent
 )
@@ -48,26 +48,29 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Calling parent FlexiblePokerStateMachine constructor", {})
         super().__init__(config)
         
-        # CRITICAL: Enable auto_advance for smooth dealing state transitions
-        # This ensures DEAL_FLOP/DEAL_TURN/DEAL_RIVER automatically advance to betting states
-        self.config.auto_advance = True
+        # FIXED: Enable auto_advance for dealing states but control betting manually
+        # This prevents DEAL_FLOP from getting stuck while maintaining control over betting
+        self.config.auto_advance = True  # Allow auto-advance for dealing states 
         if self.logger:
-            self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Enabled auto_advance for smooth state transitions", {"auto_advance": True})
+            self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Auto_advance enabled for dealing states", {"auto_advance": True})
         
         # Practice session specific properties
         self.strategy_data = strategy_data
         self.practice_mode = True
         
-        # Initialize strategy engine for bot decision making
+        # Initialize improved GTO strategy engine for bot decision making
         if self.logger:
-            self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Creating GTOStrategyEngine", {})
+            self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Creating ImprovedGTOStrategy", {})
         try:
+            from .improved_gto_strategy import ImprovedGTOStrategy
+            self.improved_gto_strategy = ImprovedGTOStrategy(self.config.num_players)
+            # Keep old strategy engine as fallback
             self.strategy_engine = GTOStrategyEngine(self.config.num_players, strategy_data)
             if self.logger:
-                self.logger.log_system("INFO", "PRACTICE_SM_INIT", "GTOStrategyEngine created successfully", {})
+                self.logger.log_system("INFO", "PRACTICE_SM_INIT", "ImprovedGTOStrategy created successfully", {})
         except Exception as e:
             if self.logger:
-                self.logger.log_system("ERROR", "PRACTICE_SM_INIT", f"Failed to create GTOStrategyEngine: {e}", {
+                self.logger.log_system("ERROR", "PRACTICE_SM_INIT", f"Failed to create ImprovedGTOStrategy: {e}", {
                     "error_type": type(e).__name__,
                     "error_message": str(e)
                 })
@@ -105,6 +108,67 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             self.logger.log_system("INFO", "PRACTICE_SM_INIT", "PracticeSessionPokerStateMachine initialization completed successfully", {})
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Practice Session State Machine ready", {})
+    
+    def calculate_quick_bet_amount(self, bet_type: str) -> float:
+        """Calculate quick bet amount based on pot and player stack (encapsulates bet logic)."""
+        try:
+            # Get current pot size from game state
+            current_pot = self.game_state.pot if self.game_state.pot > 0 else 20.0
+            
+            # Get human player's stack for all-in calculations
+            human_player = self.get_human_player()
+            human_stack = human_player.stack if human_player else 1000.0
+            
+            # Calculate bet amount based on type
+            if bet_type == "one_third":
+                return max(2.0, current_pot * 0.33)
+            elif bet_type == "half":
+                return max(2.0, current_pot * 0.5)
+            elif bet_type == "two_thirds":
+                return max(2.0, current_pot * 0.67)
+            elif bet_type == "pot":
+                return max(2.0, current_pot)
+            elif bet_type == "two_x_pot":
+                return max(2.0, current_pot * 2)
+            elif bet_type == "all_in":
+                return human_stack
+            else:
+                return 10.0  # Default bet
+                
+        except Exception as e:
+            print(f"⚠️ Error calculating quick bet amount: {e}")
+            return 10.0  # Safe fallback
+    
+    def get_human_player(self):
+        """Get the human player from the game state."""
+        try:
+            return next((p for p in self.game_state.players if p.is_human), None)
+        except Exception:
+            return None
+    
+    def get_current_analysis(self) -> str:
+        """Get analysis of current hand situation (encapsulates analysis logic)."""
+        try:
+            if self.hands_played <= 0:
+                return "📊 Start a hand first to get analysis."
+            
+            stats = self.get_practice_stats()
+            human_player = self.get_human_player()
+            position = human_player.position if human_player else "Unknown"
+            
+            return f"""📊 Current Hand Analysis:
+                
+Hands Played: {stats['hands_played']}
+Win Rate: {stats['win_rate']:.1f}%
+Decision Accuracy: {stats['decision_accuracy']:.1f}%
+
+Position: {position}
+Street: {self.game_state.street}
+Pot: ${self.game_state.pot:.2f}"""
+            
+        except Exception as e:
+            print(f"⚠️ Error getting current analysis: {e}")
+            return "📊 Analysis unavailable."
     
     def start_hand(self, existing_players: List[Player] = None):
         """Override: Enhanced hand starting for practice sessions."""
@@ -151,10 +215,10 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 ))
             
             # Schedule bot actions after any successful action (to handle action player changes)
+            # FIXED: Only include actual betting states, not dealing states
             betting_states = [
-                PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
-                PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
-                PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+                PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING,
+                PokerState.TURN_BETTING, PokerState.RIVER_BETTING
             ]
             if self.current_state in betting_states:
                 if self.logger:
@@ -175,24 +239,25 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         if self.logger:
             self.logger.log_system("DEBUG", "ACTION_ADVANCE", f"Action player advanced: {old_action_player} → {new_action_player}", {"old": old_action_player, "new": new_action_player})
         
-        # Schedule bot actions after action player advancement
+        # Schedule bot actions after action player advancement (betting streets only)
         betting_states = [
-            PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
-            PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
-            PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+            PokerState.PREFLOP_BETTING,
+            PokerState.FLOP_BETTING,
+            PokerState.TURN_BETTING,
+            PokerState.RIVER_BETTING,
         ]
         if (self.current_state in betting_states and
             new_action_player >= 0 and new_action_player < len(self.game_state.players)):
             next_player = self.game_state.players[new_action_player]
             if self.logger:
-                self.logger.log_system("DEBUG", "ACTION_ADVANCE", f"Next player: {next_player.name} (is_human={next_player.is_human})", {"player": next_player.name, "is_human": next_player.is_human})
+                self.logger.log_system("DEBUG", "PRACTICE_ACTION_ADVANCE", f"[PRACTICE_PSM] Next player: {next_player.name} (is_human={next_player.is_human})", {"player": next_player.name, "is_human": next_player.is_human})
             if not next_player.is_human:
                 if self.logger:
-                    self.logger.log_system("DEBUG", "BOT_ACTION", f"Scheduling bot action for {next_player.name}", {"player": next_player.name})
+                    self.logger.log_system("DEBUG", "PRACTICE_BOT_SCHEDULING", f"[PRACTICE_PSM] Scheduling bot action for {next_player.name}", {"player": next_player.name})
                 self._schedule_bot_actions()
             else:
                 if self.logger:
-                    self.logger.log_system("DEBUG", "HUMAN_TURN", f"Human turn: {next_player.name} - not scheduling bot actions", {"player": next_player.name})
+                    self.logger.log_system("DEBUG", "PRACTICE_HUMAN_TURN", f"[PRACTICE_PSM] Human turn: {next_player.name} - not scheduling bot actions", {"player": next_player.name})
     
     def transition_to(self, new_state: PokerState):
         """Override: Enhanced state transitions with educational insights."""
@@ -210,11 +275,12 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         if self.logger:
             self.logger.log_system("DEBUG", "STATE_TRANSITION", f"Practice state transition: {old_state.name} → {new_state.name}", {"old_state": old_state.name, "new_state": new_state.name})
         
-        # Handle bot auto-play after state transitions
+        # Handle bot auto-play after state transitions (betting streets only)
         betting_states = [
-            PokerState.PREFLOP_BETTING, PokerState.DEAL_FLOP, PokerState.FLOP_BETTING,
-            PokerState.DEAL_TURN, PokerState.TURN_BETTING, 
-            PokerState.DEAL_RIVER, PokerState.RIVER_BETTING
+            PokerState.PREFLOP_BETTING,
+            PokerState.FLOP_BETTING,
+            PokerState.TURN_BETTING,
+            PokerState.RIVER_BETTING,
         ]
         if new_state in betting_states:
             if self.logger:
@@ -497,7 +563,8 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             if current_player.is_human:
                 # Don't schedule bot actions when it's human's turn
                 if self.logger:
-                    self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: It's human player {current_player.name}'s turn", {"player": current_player.name})
+                    self.logger.log_system("INFO", "PRACTICE_BOT_SCHEDULING", f"[PRACTICE_PSM] HUMAN TURN: Not scheduling bot - {current_player.name}'s turn", {"player": current_player.name, "action_index": self.action_player_index})
+                print(f"🧑 HUMAN TURN: {current_player.name} - waiting for manual input (no bot scheduling)")
                 return
         
         # Use after_idle to schedule bot actions so UI can update first
@@ -524,18 +591,20 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         
         # Use threading timer for delayed execution with better error handling
         import threading
-        timer = threading.Timer(1.0, execute_bot_action)  # 1 second delay for turn visualization
+        bot_delay = 1.5  # Reduced from 3.0 to 1.5 seconds for better pacing
+        timer = threading.Timer(bot_delay, execute_bot_action)  # Moderate delay for human players to see and react
         timer.daemon = True  # Make it a daemon thread
         timer.start()
         if self.logger:
-            self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Started bot action timer", {"delay": 1.0, "current_player_index": self.action_player_index, "scheduled_flag": self._scheduled_bot_action})
+            self.logger.log_system("DEBUG", "PRACTICE_BOT_SCHEDULING", "[PRACTICE_PSM] Started bot action timer", {"delay": bot_delay, "current_player_index": self.action_player_index, "scheduled_flag": self._scheduled_bot_action})
+        print(f"⏱️ Bot action scheduled in {bot_delay} seconds for player {self.action_player_index + 1}")
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
         # Don't execute bot actions in end game states
         if self.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
             if self.logger:
-                self.logger.log_system("DEBUG", "BOT_ACTION", f"Not executing: Hand is ending (state: {self.current_state})", {"state": self.current_state.name})
+                self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Not executing: Hand is ending (state: {self.current_state})", {"state": self.current_state.name})
             return
         
         if (self.action_player_index >= 0 and 
@@ -543,35 +612,48 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             
             current_player = self.game_state.players[self.action_player_index]
             
+            # CRITICAL: Double-check that this is NOT a human player
+            if current_player.is_human:
+                if self.logger:
+                    self.logger.log_system("ERROR", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] CRITICAL PROTECTION: Bot execution attempted for HUMAN player {current_player.name}!", {"player": current_player.name, "action_index": self.action_player_index})
+                print(f"🚨 CRITICAL HUMAN PROTECTION: Bot execution blocked for {current_player.name}!")
+                print(f"   This should NEVER happen - investigating...")
+                
+                # Add stack trace to see what's calling this
+                import traceback
+                stack_trace = ''.join(traceback.format_stack()[-5:])
+                print(f"📋 CALL STACK:\\n{stack_trace}")
+                return
+            
             # Only auto-play for non-human players
             if not current_player.is_human and current_player.is_active and not current_player.has_folded:
                 # Log only when a bot is actually about to act
                 if self.logger:
-                    self.logger.log_system("DEBUG", "BOT_ACTION", f"Bot execution check: {current_player.name} ready to act", {"player": current_player.name, "action_player_index": self.action_player_index})
+                    self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Bot execution check: {current_player.name} ready to act", {"player": current_player.name, "action_player_index": self.action_player_index})
                 
                 try:
                     if self.logger:
-                        self.logger.log_system("DEBUG", "BOT_ACTION", f"Getting strategy decision for {current_player.name}", {"player": current_player.name})
+                        self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Getting strategy decision for {current_player.name}", {"player": current_player.name})
                     action, amount = self._get_bot_strategy_decision(current_player)
                     if self.logger:
-                        self.logger.log_system("DEBUG", "BOT_ACTION", f"Strategy decision complete: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
+                        self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Strategy decision complete: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
                 except Exception as e:
                     if self.logger:
-                        self.logger.log_system("ERROR", "BOT_ACTION", f"Error getting strategy decision for {current_player.name}: {e}", {"player": current_player.name, "error": str(e)})
+                        self.logger.log_system("ERROR", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Error getting strategy decision for {current_player.name}: {e}", {"player": current_player.name, "error": str(e)})
                     print(f"🚫 Strategy decision error for {current_player.name}: {e}")
                     # Fallback to fold
                     from core.types import ActionType
                     action, amount = ActionType.FOLD, 0.0
                 
                 if self.logger:
-                    self.logger.log_system("INFO", "BOT_ACTION", f"Bot {current_player.name} auto-playing: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
+                    self.logger.log_system("INFO", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Bot {current_player.name} auto-playing: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
                 
                 # Execute the bot's decision
                 success = self.execute_action(current_player, action, amount)
                 
                 if success:
                     if self.logger:
-                        self.logger.log_system("DEBUG", "BOT_ACTION", "Bot action successful, checking for next bot", {
+                        self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", "[PRACTICE_PSM] Bot action successful, checking for next bot", {
                             "current_state": self.current_state.name,
                             "action_player_index": self.action_player_index,
                             "scheduled_flag": getattr(self, '_scheduled_bot_action', False)
@@ -581,16 +663,16 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
                 else:
                     print(f"🚫 Bot action failed: {action.value}")
                     if self.logger:
-                        self.logger.log_system("ERROR", "BOT_ACTION", f"Bot action failed: {action.value}", {"action": action.value, "player": current_player.name})
+                        self.logger.log_system("ERROR", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Bot action failed: {action.value}", {"action": action.value, "player": current_player.name})
             else:
                 # Human player's turn - log only if debug needed
                 if self.logger and current_player.is_human:
-                    self.logger.log_system("DEBUG", "HUMAN_TURN", f"Waiting for human player {current_player.name} to act", {"player": current_player.name})
+                    self.logger.log_system("DEBUG", "PRACTICE_HUMAN_TURN", f"[PRACTICE_PSM] Waiting for human player {current_player.name} to act", {"player": current_player.name})
                 elif self.logger:
-                    self.logger.log_system("DEBUG", "BOT_ACTION", f"Bot not eligible: active={current_player.is_active}, folded={current_player.has_folded}", {"player": current_player.name, "active": current_player.is_active, "folded": current_player.has_folded})
+                    self.logger.log_system("DEBUG", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Bot not eligible: active={current_player.is_active}, folded={current_player.has_folded}", {"player": current_player.name, "active": current_player.is_active, "folded": current_player.has_folded})
         else:
             if self.logger:
-                self.logger.log_system("WARNING", "BOT_ACTION", f"Invalid action_player_index: {self.action_player_index}", {"action_player_index": self.action_player_index, "total_players": len(self.game_state.players)})
+                self.logger.log_system("WARNING", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Invalid action_player_index: {self.action_player_index}", {"action_player_index": self.action_player_index, "total_players": len(self.game_state.players)})
     
     def _get_bot_strategy_decision(self, bot_player: Player) -> tuple[ActionType, float]:
         """Get bot's strategic decision using existing GTO strategy engine."""
@@ -606,77 +688,36 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             else:
                 return ActionType.FOLD, 0.0
         
-        # Use the existing GTO strategy engine with timeout protection
+        # Use the improved GTO strategy engine first
         try:
-            import signal
-            import threading
-            
-            # Set up timeout mechanism
-            result = [None]
-            exception = [None]
-            
-            def strategy_call():
-                try:
-                    result[0] = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
-                except Exception as e:
-                    exception[0] = e
-            
-            # Run strategy engine with timeout
-            thread = threading.Thread(target=strategy_call)
-            thread.daemon = True
-            thread.start()
-            thread.join(timeout=5.0)  # 5 second timeout
-            
-            if thread.is_alive():
-                # Strategy engine timed out
-                if self.logger:
-                    self.logger.log_system("ERROR", "GTO_STRATEGY", f"Strategy engine timeout for {bot_player.name}, using fallback", {"player": bot_player.name})
-                print(f"⏰ Strategy engine timeout for {bot_player.name}, using fallback")
-                return self._get_simple_gto_decision(bot_player)
-            elif exception[0]:
-                # Strategy engine threw exception
-                raise exception[0]
-            elif result[0]:
-                # Strategy engine succeeded
-                action, amount = result[0]
-                if self.logger:
-                    self.logger.log_system("DEBUG", "GTO_STRATEGY", f"GTO Strategy Engine: {bot_player.name} -> {action.value} ${amount:.2f}", {"player": bot_player.name, "action": action.value, "amount": amount})
-            else:
-                # No result
-                if self.logger:
-                    self.logger.log_system("ERROR", "GTO_STRATEGY", f"No result from strategy engine for {bot_player.name}", {"player": bot_player.name})
-                return self._get_simple_gto_decision(bot_player)
-            
-            # Early prevention: Limit raising after 5 actions
-            if self.actions_this_round >= 5 and action in [ActionType.BET, ActionType.RAISE]:
-                print(f"🛑 EARLY LIMIT: Too many actions ({self.actions_this_round}), downgrading {action.value} to call/check")
-                call_amount = self.game_state.current_bet - bot_player.current_bet
-                if call_amount <= 0:
-                    return ActionType.CHECK, 0.0
-                elif call_amount <= bot_player.stack * 0.3:
-                    return ActionType.CALL, call_amount
-                else:
-                    return ActionType.FOLD, 0.0
-            
-            # Additional check: If pot is already very large relative to stacks, be more conservative
-            if action in [ActionType.BET, ActionType.RAISE]:
-                pot_to_stack_ratio = self.game_state.pot / bot_player.stack
-                if pot_to_stack_ratio > 2.0:  # Pot is more than 2x the bot's stack
-                    print(f"🛑 CONSERVATIVE: Large pot detected, switching {action.value} to CALL/CHECK")
-                    call_amount = self.game_state.current_bet - bot_player.current_bet
-                    if call_amount <= 0:
-                        return ActionType.CHECK, 0.0
-                    else:
-                        return ActionType.CALL, call_amount
-            
+            action, amount = self.improved_gto_strategy.get_gto_action(bot_player, self.game_state)
+            if self.logger:
+                self.logger.log_system("DEBUG", "IMPROVED_GTO_STRATEGY", f"Improved GTO Strategy: {bot_player.name} -> {action.value} ${amount:.2f}", {"player": bot_player.name, "action": action.value, "amount": amount})
+            print(f"🚀 Improved GTO: {bot_player.name} -> {action.value} ${amount:.2f}")
             return action, amount
+        
         except Exception as e:
-            print(f"🚫 GTO Strategy engine error: {e}")
-            # Fallback to simple logic
-            return self._get_simple_gto_decision(bot_player)
+            # Improved strategy failed - try fallback to old strategy engine
+            if self.logger:
+                self.logger.log_system("WARNING", "IMPROVED_GTO_STRATEGY", f"Improved strategy error for {bot_player.name}: {e}, trying fallback", {"player": bot_player.name, "error": str(e)})
+            print(f"⚠️ Improved strategy error for {bot_player.name}: {e}, trying fallback")
+            
+            try:
+                action, amount = self.strategy_engine.get_gto_bot_action(bot_player, self.game_state)
+                if self.logger:
+                    self.logger.log_system("DEBUG", "GTO_STRATEGY", f"Fallback GTO Strategy: {bot_player.name} -> {action.value} ${amount:.2f}", {"player": bot_player.name, "action": action.value, "amount": amount})
+                print(f"🔄 Fallback GTO: {bot_player.name} -> {action.value} ${amount:.2f}")
+                return action, amount
+            except Exception as e2:
+                # Both strategies failed - use simple fallback
+                if self.logger:
+                    self.logger.log_system("ERROR", "GTO_STRATEGY", f"All strategies failed for {bot_player.name}: {e2}, using simple fallback", {"player": bot_player.name, "error": str(e2)})
+                print(f"❌ All strategies failed for {bot_player.name}: {e2}, using simple fallback")
+                return self._get_simple_gto_decision(bot_player)
+
     
     def _get_simple_gto_decision(self, bot_player: Player) -> tuple[ActionType, float]:
-        """Simple fallback decision making when GTO engine fails."""
+        """Improved fallback decision making when GTO engine fails."""
         
         # Get valid actions first
         valid_actions = self.get_valid_actions_for_player(bot_player)
@@ -684,16 +725,24 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         player_bet = bot_player.current_bet
         call_amount = current_bet - player_bet
         
-        # Simple conservative fallback logic
+        # More realistic fallback logic - bots should play reasonably, not ultra-tight
         if call_amount == 0:
             # No bet to call - can check or bet
             if valid_actions.get('check', False):
-                return ActionType.CHECK, 0.0
+                # Sometimes bet for value (30% of the time)
+                if random.random() < 0.3 and valid_actions.get('bet', False):
+                    bet_amount = min(self.game_state.pot * 0.5, bot_player.stack * 0.2)
+                    return ActionType.BET, bet_amount
+                else:
+                    return ActionType.CHECK, 0.0
             else:
                 return ActionType.FOLD, 0.0
         else:
-            # Facing a bet - conservative approach: fold unless small call
-            if call_amount <= bot_player.stack * 0.1 and valid_actions.get('call', False):
+            # Facing a bet - call reasonable amounts, fold only when call is large
+            pot_odds = call_amount / (self.game_state.pot + call_amount) if call_amount > 0 else 0
+            call_threshold = min(bot_player.stack * 0.3, self.game_state.pot * 2.0)  # Much more reasonable
+            
+            if call_amount <= call_threshold and valid_actions.get('call', False):
                 return ActionType.CALL, call_amount
             else:
                 return ActionType.FOLD, 0.0

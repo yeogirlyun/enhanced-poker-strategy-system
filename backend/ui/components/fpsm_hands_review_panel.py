@@ -19,7 +19,7 @@ from core.hands_review_poker_state_machine import HandsReviewPokerStateMachine
 
 # Import UI components
 from .hands_review_poker_widget import HandsReviewPokerWidget
-from core.gui_models import THEME
+from core.gui_models import THEME, FONTS
 
 
 class FPSMHandsReviewPanel(ttk.Frame, EventListener):
@@ -85,14 +85,18 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         parent.add(left_frame, weight=30)
         
         # Title
-        self.title_label = ttk.Label(left_frame, text="🎯 FPSM Hands Review")
+        self.title_label = ttk.Label(
+            left_frame, 
+            text="🎯 FPSM Hands Review",
+            font=FONTS["header"]
+        )
         self.title_label.pack(pady=(0, 10))
         
         # Category selection
         category_frame = ttk.Frame(left_frame)
         category_frame.pack(fill=tk.X, pady=(0, 10))
         
-        ttk.Label(category_frame, text="Category:").pack(side=tk.LEFT)
+        ttk.Label(category_frame, text="Category:", font=FONTS["main"]).pack(side=tk.LEFT)
         self.category_var = tk.StringVar(value="Legendary Hands")
         self.category_combo = ttk.Combobox(
             category_frame, 
@@ -108,7 +112,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         subcategory_frame = ttk.Frame(left_frame)
         subcategory_frame.pack(fill=tk.X, pady=(0, 10))
         
-        ttk.Label(subcategory_frame, text="Filter:").pack(side=tk.LEFT)
+        ttk.Label(subcategory_frame, text="Filter:", font=FONTS["main"]).pack(side=tk.LEFT)
         self.subcategory_var = tk.StringVar(value="All")
         self.subcategory_combo = ttk.Combobox(
             subcategory_frame,
@@ -123,13 +127,22 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         list_frame = ttk.Frame(left_frame)
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
-        ttk.Label(list_frame, text="Select Hand to Review:").pack(anchor=tk.W)
+        ttk.Label(list_frame, text="Select Hand to Review:", font=FONTS["main"]).pack(anchor=tk.W)
         
         # Listbox with scrollbar
         list_container = ttk.Frame(list_frame)
         list_container.pack(fill=tk.BOTH, expand=True)
         
-        self.hands_listbox = tk.Listbox(list_container)
+        self.hands_listbox = tk.Listbox(
+            list_container,
+            bg=THEME["secondary_bg"],
+            fg=THEME["text"],
+            font=FONTS["small"],
+            selectbackground=THEME["accent_primary"],
+            selectforeground=THEME["text"],
+            highlightbackground=THEME["border"],
+            relief="flat"
+        )
         hands_scrollbar = ttk.Scrollbar(list_container, orient=tk.VERTICAL, command=self.hands_listbox.yview)
         self.hands_listbox.configure(yscrollcommand=hands_scrollbar.set)
         
@@ -146,9 +159,13 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             info_frame,
             height=8,
             width=40,
-            font=("Consolas", 10),
+            font=FONTS["small"],
             bg=THEME["secondary_bg"],
             fg=THEME["text"],
+            wrap=tk.WORD,
+            relief="flat",
+            highlightbackground=THEME["border"],
+            insertbackground=THEME["text"],
             state=tk.DISABLED
         )
         self.hand_info_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -183,15 +200,16 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Start simulation button
         self.start_simulation_btn = ttk.Button(
             controls_frame, 
-            text="Start Simulation", 
-            command=self.start_hand_simulation
+            text="🎮 Start Simulation", 
+            command=self.start_hand_simulation,
+            style="Primary.TButton"
         )
         self.start_simulation_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Next action button
         self.next_action_btn = ttk.Button(
             controls_frame, 
-            text="Next Action", 
+            text="▶️ Next Action", 
             command=self.next_action,
             state="disabled"
         )
@@ -200,7 +218,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Auto play button
         self.auto_play_btn = ttk.Button(
             controls_frame, 
-            text="Auto Play", 
+            text="⚡ Auto Play", 
             command=self.toggle_auto_play,
             state="disabled"
         )
@@ -209,7 +227,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Reset button
         self.reset_simulation_btn = ttk.Button(
             controls_frame, 
-            text="Reset", 
+            text="🔄 Reset", 
             command=self.reset_hand_simulation,
             state="disabled"
         )
@@ -218,16 +236,18 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Quit button
         self.quit_simulation_btn = ttk.Button(
             controls_frame, 
-            text="Quit", 
+            text="❌ Quit", 
             command=self.quit_simulation,
-            state="disabled"
+            state="disabled",
+            style="Danger.TButton"
         )
         self.quit_simulation_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Status label
         self.simulation_status_label = ttk.Label(
             controls_frame, 
-            text="No simulation active"
+            text="No simulation active",
+            font=FONTS["main"]
         )
         self.simulation_status_label.pack(side=tk.RIGHT)
         
@@ -239,7 +259,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.placeholder_label = ttk.Label(
             self.game_container, 
             text="Select a hand and click 'Start Simulation' to begin",
-            font=("Arial", 14)
+            font=FONTS["large"]
         )
         self.placeholder_label.pack(expand=True)
     
@@ -252,7 +272,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         study_label = ttk.Label(
             study_frame, 
             text="Study mode - Hand analysis and strategy insights",
-            font=("Arial", 12)
+            font=FONTS["main"]
         )
         study_label.pack(expand=True)
     
@@ -268,21 +288,22 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         # Clear logs button
         self.clear_logs_btn = ttk.Button(
             logging_controls_frame,
-            text="Clear Logs",
-            command=self.clear_logs
+            text="🗑️ Clear Logs",
+            command=self.clear_logs,
+            style="Danger.TButton"
         )
         self.clear_logs_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Export logs button
         self.export_logs_btn = ttk.Button(
             logging_controls_frame,
-            text="Export Logs",
+            text="📤 Export Logs",
             command=self.export_logs
         )
         self.export_logs_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # Log level filter
-        ttk.Label(logging_controls_frame, text="Log Level:").pack(
+        ttk.Label(logging_controls_frame, text="Log Level:", font=FONTS["main"]).pack(
             side=tk.LEFT, padx=(10, 5)
         )
         self.log_level_var = tk.StringVar(value="ALL")
@@ -305,10 +326,12 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         self.log_text = tk.Text(
             log_display_frame,
             wrap=tk.WORD,
-            font=("Consolas", 10),
-            bg="#1a1a1a",
-            fg="#ffffff",
-            insertbackground="#ffffff"
+            font=FONTS["small"],
+            bg=THEME["primary_bg"],
+            fg=THEME["text"],
+            insertbackground=THEME["text"],
+            relief="flat",
+            highlightbackground=THEME["border"]
         )
         
         # Scrollbar for log text
@@ -674,7 +697,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     name=player_info.get('name', f'Player {i+1}'),
                     stack=estimated_stack,
                     position=player_info.get('position', ''),
-                    is_human=player_info.get('name') == 'Chris Moneymaker',  # Moneymaker is human
+                    is_human=False,  # In hands review, ALL players are automated
                     is_active=True,
                     cards=cards
                 )
@@ -906,7 +929,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 success = self.fpsm.execute_action(action_player, action['type'], action['amount'])
                 
                 if success:
-                    print(f"✅ {action_msg}")
+                    # Action success logged to session via add_log_entry above
                     
                     # Log stack and pot after action for accuracy validation
                     new_pot = self.fpsm.game_state.pot
@@ -925,14 +948,13 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                         'pot_after': new_pot
                     })
                     
-                    print(f"🎯 Action executed: Stack {current_stack} → {new_stack}, Pot {current_pot} → {new_pot}")
-                    print(f"📊 Action history updated! Now {len(self.action_history)} actions executed")
+                    # Action execution tracking (logged to session for analysis)
                     
                     # Check if this action caused hand completion
                     self._check_for_hand_completion()
                     
                 else:
-                    print(f"❌ Failed to execute action: {action_msg}")
+                    # Failed action execution already logged via add_log_entry below
                     self.add_log_entry("ERROR", "ACTION_EXECUTION", f"Failed to execute: {action_msg}")
                     
             else:
@@ -942,7 +964,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 self._check_for_hand_completion()
             
         except Exception as e:
-            print(f"❌ Error executing action: {e}")
+            # Error already logged via add_log_entry below
             self.add_log_entry("ERROR", "SIMULATION", f"Error executing action: {e}")
             import traceback
             traceback.print_exc()
@@ -1072,11 +1094,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 break
                 
             next_action = self.historical_actions[check_index]
-            print(f"🎯 Checking historical action [{check_index}]: Actor {next_action['actor']} {next_action.get('action_type', next_action.get('type', 'UNKNOWN'))} ${next_action['amount']}")
-            print(f"🎯 Current player: {player.name} (FPSM index {fpsm_player_index} → Actor {player_actor_id})")
-            
             # Check if this action belongs to the current player (ensure same type comparison)
-            print(f"🔍 Comparing: next_action['actor']={next_action['actor']} (type: {type(next_action['actor'])}) vs player_actor_id={player_actor_id} (type: {type(player_actor_id)})")
             if str(next_action['actor']) == str(player_actor_id):
                 # Map action string to ActionType (support both uppercase and lowercase)
                 action_type_map = {
@@ -1100,24 +1118,22 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 if action_type_str in action_type_map:
                     # Use to_amount for raises if available, otherwise use amount
                     action_amount = next_action.get('to_amount', next_action['amount'])
-                    print(f"✅ MATCH! Historical action: {player.name} (actor {player_actor_id}) {action_type_str} ${action_amount:,.0f}")
+                    # Log successful match to session logger
+                    self.add_log_entry("DEBUG", "HANDS_REVIEW_HISTORICAL_ACTION", 
+                                     f"[HANDS_REVIEW_PANEL] Found historical action: {player.name} {action_type_str} ${action_amount:,.0f}")
                     # Advance the historical index to this action + 1
                     self.historical_action_index = check_index + 1
-                    print(f"🎯 Advanced historical index to {self.historical_action_index}")
                     return {
                         'type': action_type_map[action_type_str],
                         'amount': action_amount
                     }
                 else:
-                    print(f"❌ Unknown action type: {action_type_str}")
-            else:
-                print(f"❌ Actor mismatch: {next_action['actor']} != {player_actor_id}")
-            
-            # If we didn't find a match and this is the first action we checked, show the mismatch
-            if lookahead == 0:
-                print(f"❌ NO IMMEDIATE MATCH: Expected actor {player_actor_id}, but next action is for actor {next_action['actor']}")
+                    # Log unknown action type (could be important for debugging)
+                    self.add_log_entry("WARNING", "HANDS_REVIEW_HISTORICAL_ACTION", f"[HANDS_REVIEW_PANEL] Unknown action type: {action_type_str}")
         
-        print(f"🎯 No historical action found for {player.name} in next {max_lookahead} actions, using fallback")
+        # Log fallback usage (could indicate data issues)
+        self.add_log_entry("DEBUG", "HANDS_REVIEW_HISTORICAL_ACTION", 
+                         f"[HANDS_REVIEW_PANEL] No historical action found for {player.name}, using fallback")
         return None
     
     def build_actor_mapping(self):
@@ -1131,7 +1147,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         hand_players = self.current_hand.players
         fpsm_players = self.fpsm.game_state.players if self.fpsm else []
         
-        print(f"🎯 Building dynamic actor mapping for {len(hand_players)} hand players, {len(fpsm_players)} FPSM players")
+        # Building dynamic actor mapping (logged to session only)
         
         # Create mapping between hand seats and FPSM player indices based on name matching
         for fpsm_index, fpsm_player in enumerate(fpsm_players):
@@ -1145,7 +1161,6 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 if (fpsm_player.name == hand_name or 
                     self._names_match(fpsm_player.name, hand_name)):
                     fpsm_to_actor[fpsm_index] = hand_seat
-                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {hand_seat} ({hand_name}) [NAME MATCH]")
                     matched = True
                     break
             
@@ -1156,12 +1171,11 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                 if fpsm_index < len(hand_seats):
                     mapped_seat = hand_seats[fpsm_index]
                     fpsm_to_actor[fpsm_index] = mapped_seat
-                    print(f"🎯 Mapped FPSM player {fpsm_index} ({fpsm_player.name}) → Actor {mapped_seat} [POSITIONAL MATCH]")
                 else:
                     # Fallback for extra players
                     fallback_actor = fpsm_index + 1
                     fpsm_to_actor[fpsm_index] = fallback_actor
-                    print(f"🎯 Fallback mapping: FPSM player {fpsm_index} → Actor {fallback_actor}")
+                    # Fallback mapping (log only if needed for debugging data issues)
         
         return fpsm_to_actor
     
@@ -1220,7 +1234,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             # Only force fold if this actor has NO historical actions in the entire hand
             # This prevents dummy players from participating, but allows real players to play
             if player_actor_id is None:
-                print(f"🎯 Forcing fold for {player.name} (no actor mapping) - not in hand")
+                # Player not in original hand - force fold (logged to session)
+                self.add_log_entry("DEBUG", "HISTORICAL_ACTION", 
+                                 f"Forcing fold for {player.name} - not in original hand")
                 return {'type': ActionType.FOLD, 'amount': 0}
             
             # Check if this actor has ANY historical actions in the hand
@@ -1231,7 +1247,9 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     break
             
             if not has_historical_actions:
-                print(f"🎯 Forcing fold for {player.name} (Actor {player_actor_id}) - no historical actions found")
+                # Player has no actions in historical data - force fold (logged to session)
+                self.add_log_entry("DEBUG", "HISTORICAL_ACTION", 
+                                 f"Forcing fold for {player.name} - no historical actions found")
                 return {'type': ActionType.FOLD, 'amount': 0}
         
         # Fallback to original logic for non-legendary hands or when no historical action matches
@@ -1305,7 +1323,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
                     }
                     
                     if action_type_str in action_type_map:
-                        print(f"✅ MATCH! Using historical action: {player.name} (actor {action_actor}) {action_type_str} ${amount:,.0f}")
+                        # Historical action match (logged to session for analysis)
                         return {
                             'type': action_type_map[action_type_str],
                             'amount': amount
@@ -1382,22 +1400,50 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
     def update_font_size(self, new_size):
         """Update font size throughout the panel."""
         self.font_size = new_size
+        
+        # Create new font tuples based on the new size
+        header_font = (FONTS["header"][0], int(new_size * 1.3), FONTS["header"][2] if len(FONTS["header"]) > 2 else "bold")
+        main_font = (FONTS["main"][0], new_size, FONTS["main"][2] if len(FONTS["main"]) > 2 else "normal")
+        small_font = (FONTS["small"][0], int(new_size * 0.9), FONTS["small"][2] if len(FONTS["small"]) > 2 else "normal")
+        large_font = (FONTS["large"][0], int(new_size * 1.2), FONTS["large"][2] if len(FONTS["large"]) > 2 else "normal")
+        
+        # Update title
+        if hasattr(self, 'title_label'):
+            self.title_label.config(font=header_font)
+        
+        # Update hand info text
+        if hasattr(self, 'hand_info_text'):
+            self.hand_info_text.config(font=small_font)
+        
+        # Update hands listbox
+        if hasattr(self, 'hands_listbox'):
+            self.hands_listbox.config(font=small_font)
+        
+        # Update placeholder label
+        if hasattr(self, 'placeholder_label'):
+            self.placeholder_label.config(font=large_font)
+        
+        # Update log text
+        if hasattr(self, 'log_text'):
+            self.log_text.config(font=small_font)
+        
+        # Update poker game widget
         if self.poker_game_widget:
             self.poker_game_widget.update_font_size(new_size)
     
     # EventListener methods
     def on_event(self, event: GameEvent):
         """Handle events from the FPSM."""
-        print(f"🎯 FPSM Event: {event.event_type}")
+        # FPSM Event received (kept silent for clean console)
         
         # Add event to logging display
-        self.add_log_entry("INFO", "FPSM_EVENT", f"Event: {event.event_type}")
+        self.add_log_entry("INFO", "HANDS_REVIEW_FPSM_EVENT", f"[HANDS_REVIEW_PANEL] Event: {event.event_type}")
         
         # Handle display state events (new architecture)
         if event.event_type == "display_state_update":
             # The RPGW will automatically handle display state updates
             # since it's listening to the same FPSM events
-            print("🎯 Display state update received from FPSM")
+            # Display state update (keep silent for clean console)
             self.add_log_entry("INFO", "DISPLAY", "Display state updated")
             return
         
@@ -1406,7 +1452,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             action_msg = (f"Action executed: {event.player_name} "
                         f"{event.action.value if event.action else 'unknown'} "
                         f"${event.amount}")
-            print(f"🎯 {action_msg}")
+            # Action execution already logged to session via add_log_entry below
             self.add_log_entry("INFO", "ACTION", action_msg)
             
             # Update simulation status
@@ -1419,7 +1465,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         elif event.event_type == "state_change":
             state_msg = f"State changed to: {event.data.get('new_state', str(self.fpsm.current_state))}"
-            print(f"🎯 {state_msg}")
+            # State change already logged to session via add_log_entry below
             self.add_log_entry("INFO", "STATE_CHANGE", state_msg)
             
             # Update simulation status
@@ -1467,7 +1513,7 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
         
         elif event.event_type == "action_required":
             action_req_msg = f"Action required from: {event.player_name}"
-            print(f"🎯 {action_req_msg}")
+            # Action required already logged to session via add_log_entry below
             self.add_log_entry("INFO", "ACTION_REQUIRED", action_req_msg)
             
             # Update simulation status

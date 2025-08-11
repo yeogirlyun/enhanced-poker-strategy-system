@@ -28,9 +28,9 @@ from .session_logger import get_session_logger
 class GameConfig:
     """Configuration for the poker game."""
     num_players: int = 6
-    big_blind: float = 1.0
-    small_blind: float = 0.5
-    starting_stack: float = 100.0
+    big_blind: float = 2.0  # Changed from 1.0 to 2.0 (no floating point)
+    small_blind: float = 1.0  # Changed from 0.5 to 1.0 (no floating point)
+    starting_stack: float = 200.0  # Changed from 100.0 to 200.0
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -149,6 +149,10 @@ class FlexiblePokerStateMachine:
             self.game_state.players.append(player)
         
         # Assign positions
+        self._assign_positions()
+    
+    def assign_positions(self):
+        """Public method to assign positions to players."""
         self._assign_positions()
     
     def _assign_positions(self):
@@ -483,6 +487,9 @@ class FlexiblePokerStateMachine:
                 except Exception as e:
                     self._safe_print(f"Warning: Could not evaluate winning hand: {e}")
             
+            # Store pot amount before reset for event
+            final_pot_amount = self.game_state.pot
+            
             self._emit_event(GameEvent(
                 event_type="hand_complete",
                 timestamp=time.time(),
@@ -490,11 +497,14 @@ class FlexiblePokerStateMachine:
                     "hand_number": self.hand_number,
                     "winners": [w.name for w in winners],
                     "winner_info": winner_info,
-                    "pot_amount": self.game_state.pot
+                    "pot_amount": final_pot_amount  # Use stored amount before reset
                 }
             ))
             
-            # Reset pot after emitting the event (for validation purposes)
+            # Emit display state update with final pot before reset
+            self._emit_display_state_event()
+            
+            # Reset pot after emitting events (for validation purposes)
             self.game_state.pot = 0.0
         
         # For betting states, ensure actions_this_round is reset if not already
@@ -746,9 +756,12 @@ class FlexiblePokerStateMachine:
         if self.actions_this_round >= len(active_players):
             return True
         
-        # Special case: if everyone checked/called and no bets were made
-        if max_bet == 0 and self.actions_this_round > 0:
-            return True
+        # No bet in this round: require all active players to act at least once
+        # Previously this returned True after the first check, which incorrectly
+        # ended the street before other players acted. We now require a full
+        # pass of actions equal to the number of active players.
+        if max_bet == 0:
+            return self.actions_this_round >= len(active_players)
         
         return False
     
@@ -785,25 +798,29 @@ class FlexiblePokerStateMachine:
         
         # Transition to next state based on current state
         if self.current_state == PokerState.PREFLOP_BETTING:
-            self._safe_print("🔄 Preflop betting complete, transitioning to DEAL_FLOP")
+            # Log betting round completion to session (keep console clean)
+            self.session_logger.log_system("INFO", "ROUND_COMPLETE", "Preflop betting complete, transitioning to DEAL_FLOP", {})
             self.transition_to(PokerState.DEAL_FLOP)
         elif self.current_state == PokerState.DEAL_FLOP:
             # Flop dealing complete, transitioning to FLOP_BETTING (logged via session_logger)
             self.transition_to(PokerState.FLOP_BETTING)
         elif self.current_state == PokerState.FLOP_BETTING:
-            self._safe_print("🔄 Flop betting complete, transitioning to DEAL_TURN")
+            # Log betting round completion to session (keep console clean)
+            self.session_logger.log_system("INFO", "ROUND_COMPLETE", "Flop betting complete, transitioning to DEAL_TURN", {})
             self.transition_to(PokerState.DEAL_TURN)
         elif self.current_state == PokerState.DEAL_TURN:
             # Turn dealing complete, transitioning to TURN_BETTING (logged via session_logger)
             self.transition_to(PokerState.TURN_BETTING)
         elif self.current_state == PokerState.TURN_BETTING:
-            self._safe_print("🔄 Turn betting complete, transitioning to DEAL_RIVER")
+            # Log betting round completion to session (keep console clean)
+            self.session_logger.log_system("INFO", "ROUND_COMPLETE", "Turn betting complete, transitioning to DEAL_RIVER", {})
             self.transition_to(PokerState.DEAL_RIVER)
         elif self.current_state == PokerState.DEAL_RIVER:
             # River dealing complete, transitioning to RIVER_BETTING (logged via session_logger)
             self.transition_to(PokerState.RIVER_BETTING)
         elif self.current_state == PokerState.RIVER_BETTING:
-            self._safe_print("🔄 River betting complete, transitioning to SHOWDOWN")
+            # Log betting round completion to session (keep console clean)
+            self.session_logger.log_system("INFO", "ROUND_COMPLETE", "River betting complete, transitioning to SHOWDOWN", {})
             self.transition_to(PokerState.SHOWDOWN)
         
         # Note: Display state event will be emitted by transition_to method
@@ -846,9 +863,33 @@ class FlexiblePokerStateMachine:
     
     def get_action_player(self) -> Optional[Player]:
         """Get the current action player."""
-        if 0 <= self.action_player_index < len(self.game_state.players):
-            return self.game_state.players[self.action_player_index]
-        return None
+        try:
+            if not self.game_state or not self.game_state.players:
+                return None
+                
+            if 0 <= self.action_player_index < len(self.game_state.players):
+                player = self.game_state.players[self.action_player_index]
+                # Ensure we're returning a Player object, not a string
+                if hasattr(player, 'is_human'):
+                    return player
+                else:
+                    # Log the issue for debugging
+                    self.session_logger.log_system("ERROR", "STATE_MACHINE", 
+                        f"get_action_player returning non-Player object: {type(player)} - {player}", {
+                            "action_player_index": self.action_player_index,
+                            "players_count": len(self.game_state.players),
+                            "player_type": str(type(player))
+                        })
+                    return None
+            return None
+        except Exception as e:
+            # Log any exceptions that occur
+            self.session_logger.log_system("ERROR", "STATE_MACHINE", 
+                f"Exception in get_action_player: {e}", {
+                    "action_player_index": getattr(self, 'action_player_index', 'unknown'),
+                    "players_count": len(getattr(self.game_state, 'players', [])) if self.game_state else 0
+                })
+            return None
     
     def get_game_info(self) -> Dict[str, Any]:
         """Get comprehensive game information."""
@@ -917,6 +958,46 @@ class FlexiblePokerStateMachine:
         if 0 <= player_index < len(self.game_state.players):
             self.game_state.players[player_index].has_folded = folded
             self.game_state.players[player_index].is_active = not folded
+
+    def _assign_positions(self):
+        """Assign position names to players based on dealer position."""
+        position_names = self._get_position_names()
+        num_players = len(self.game_state.players)
+        
+        for i, player in enumerate(self.game_state.players):
+            # Calculate position relative to dealer
+            position_index = (i - self.dealer_position) % num_players
+            player.position = position_names[position_index]
+            
+        # Log position assignments
+        if hasattr(self, 'session_logger') and self.session_logger:
+            positions_str = ", ".join([f"{p.name}:{p.position}" for p in self.game_state.players])
+            self.session_logger.log_system("INFO", "POSITION_ASSIGNMENT", f"Positions assigned: {positions_str}", {
+                "dealer": self.dealer_position,
+                "small_blind": self.small_blind_position,
+                "big_blind": self.big_blind_position
+            })
+
+    def _get_position_names(self):
+        """Get position names based on number of players."""
+        num_players = len(self.game_state.players)
+        
+        if num_players == 2:
+            return ["BTN/SB", "BB"]
+        elif num_players == 3:
+            return ["BTN", "SB", "BB"]
+        elif num_players == 4:
+            return ["BTN", "SB", "BB", "UTG"]
+        elif num_players == 5:
+            return ["BTN", "SB", "BB", "UTG", "CO"]
+        elif num_players == 6:
+            return ["BTN", "SB", "BB", "UTG", "MP", "CO"]
+        elif num_players == 7:
+            return ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "CO"]
+        elif num_players == 8:
+            return ["BTN", "SB", "BB", "UTG", "UTG+1", "UTG+2", "MP", "CO"]
+        else:  # 9+ players
+            return ["BTN", "SB", "BB", "UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO"]
 
     def _create_basic_strategy_integration(self):
         """Create a basic strategy integration for testing."""

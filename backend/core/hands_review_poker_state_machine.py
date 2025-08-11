@@ -12,10 +12,10 @@ This state machine is designed for studying hands and provides:
 - Educational event generation
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 
-from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig, GameEvent, PokerState
+from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig, GameEvent
 from .types import ActionType, Player
 
 
@@ -36,12 +36,28 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
         
         # Hands review specific properties
         self.review_mode = True
-        self.current_hand_data = None
-        self.replay_actions = []
+        self.current_hand_data: Dict[str, Any] = {}
+        self.replay_actions: List[Dict[str, Any]] = []
         self.replay_index = 0
-        self.analysis_data = {}
+        self.analysis_data: Dict[str, Any] = {}
         
-        print("🎯 HandsReviewPokerStateMachine initialized for educational analysis")
+        # In hands review mode, ALL players are automated (including the "human" position)
+        self.simulation_mode = True
+        
+        print("🎯 [HANDS_REVIEW_PSM] HandsReviewPokerStateMachine initialized for educational analysis")
+    
+    def _initialize_players(self):
+        """Initialize players for hands review - ALL players are automated."""
+        super()._initialize_players()
+        
+        # In hands review simulation mode, treat ALL players as bots (including human position)
+        for player in self.game_state.players:
+            player.is_human = False  # Override to ensure all players are automated
+            print(f"🎯 [HANDS_REVIEW_PSM] Player {player.name} set to automated mode for hands review")
+    
+    def is_player_automated(self, player: Player) -> bool:
+        """In hands review mode, ALL players are automated."""
+        return True  # Override base class behavior
     
     def load_hand_for_review(self, hand_data: Dict[str, Any]):
         """Load a specific hand for review and analysis."""
@@ -60,9 +76,10 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                     player.cards = player_data.get('cards', [])
                     player.position = player_data.get('position', i)
         
-        # Set community cards if available
+        # Set community cards (board) if available
         if 'community_cards' in hand_data:
-            self.game_state.community_cards = hand_data['community_cards']
+            # Use the board attribute instead of community_cards
+            self.game_state.board = hand_data['community_cards']
         
         print(f"🎯 Loaded hand for review: {len(self.replay_actions)} actions to replay")
         
@@ -74,7 +91,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 'num_actions': len(self.replay_actions),
                 'num_players': len(hand_data.get('players', []))
             },
-            timestamp=datetime.now()
+            timestamp=datetime.now().timestamp()
         ))
     
     def step_forward(self) -> bool:
@@ -117,7 +134,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                             },
                             'analysis': self._analyze_action(player, action_type, amount)
                         },
-                        timestamp=datetime.now()
+                        timestamp=datetime.now().timestamp().timestamp()
                     ))
                     return True
                 else:
@@ -145,15 +162,35 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 'step': self.replay_index,
                 'total_steps': len(self.replay_actions)
             },
-            timestamp=datetime.now()
+            timestamp=datetime.now().timestamp()
         ))
         
         print(f"🎯 Stepped backward to action {self.replay_index}")
         return True
     
+    def get_game_info(self) -> Dict[str, Any]:
+        """Override to ensure all players are automated and cards visible in hands review."""
+        # Get base game info
+        base_info = super().get_game_info()
+        
+        # In hands review mode, override player automation and card visibility
+        if 'players' in base_info:
+            for i, player_info in enumerate(base_info['players']):
+                # Mark all players as automated (not human)
+                player_info['is_human'] = False
+                
+                # Always show cards for educational purposes
+                if i < len(self.game_state.players):
+                    actual_player = self.game_state.players[i]
+                    if hasattr(actual_player, 'cards') and actual_player.cards:
+                        player_info['cards'] = actual_player.cards
+                        player_info['cards_visible'] = True
+        
+        return base_info
+    
     def get_display_state(self) -> Dict[str, Any]:
         """Get display state optimized for hands review."""
-        base_state = super().get_game_info()
+        base_state = self.get_game_info()  # Use our overridden method
         
         # Enhance with hands review specific data
         review_state = {
@@ -194,7 +231,11 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
         """Analyze the positional aspects of the play."""
         # Simplified position analysis
         position_names = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB']
-        pos_name = position_names[player.position] if player.position < len(position_names) else f'Pos{player.position}'
+        # Handle both string and int position values
+        if isinstance(player.position, int) and 0 <= player.position < len(position_names):
+            pos_name = position_names[player.position]
+        else:
+            pos_name = str(player.position) if player.position else 'Unknown'
         
         if action_type in [ActionType.BET, ActionType.RAISE]:
             return f"Aggressive play from {pos_name} - shows strength"
@@ -241,7 +282,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                     return "Medium"
                 else:
                     return "Weak"
-            except:
+            except Exception:
                 return "Unknown"
         
         return "Unknown"

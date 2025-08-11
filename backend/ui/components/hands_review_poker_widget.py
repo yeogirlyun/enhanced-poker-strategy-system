@@ -66,7 +66,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
                     player = self.state_machine.game_state.players[player_index]
                     if hasattr(player, 'cards') and player.cards and card_index < len(player.cards):
                         actual_card = player.cards[card_index]
-                        print(f"🎯 Hands Review: Transformed ** to {actual_card} for player {player_index} card {card_index}")
+                        # Card transformation for hands review (keep silent for clean console)
                         return actual_card
             except Exception as e:
                 print(f"⚠️ Error transforming card for player {player_index}: {e}")

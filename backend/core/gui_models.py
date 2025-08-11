@@ -69,6 +69,10 @@ THEME = {
     "chip_gold": "#FFD700",      # Gold (high visibility)
     "chip_green": "#4CAF50",     # Medium Green (win/positive indicator)
     "chip_red": "#E53935",       # Bright Red (loss/negative indicator)
+    "chip_black": "#424242",     # Black (high value chips)
+    "chip_blue": "#2196F3",      # Blue (low value chips)
+    "chip_white": "#FFFFFF",     # White (standard chips)
+    "chip_purple": "#9C27B0",    # Purple (very high value chips)
     
     # Status and Feedback Colors
     "success": "#4CAF50",        # Success/positive actions
@@ -109,6 +113,7 @@ FONTS = {
     "title": ("Segoe UI", 18, "bold"),
     "header": ("Segoe UI", 14, "bold"),
     "small": ("Segoe UI", 10),
+    "large": ("Segoe UI", 16, "bold"),          # Large text for placeholders and emphasis
     
     # Poker-specific fonts
     "player_name": ("Segoe UI", 13, "bold"),    # Player names

@@ -10,10 +10,17 @@ from typing import List, Dict, Any, Optional, Union
 # Import dependencies
 from core.gui_models import THEME, FONTS
 from ui.components.reusable_poker_game_widget import ReusablePokerGameWidget
+from core.flexible_poker_state_machine import GameEvent
 
-def debug_log(message, category="DEBUG"):
-    """Simple debug logging function."""
-    print(f"[{category}] {message}")
+def debug_log(message: str, category: str = "PRACTICE_UI"):
+    """Log debug messages to file instead of console."""
+    try:
+        from core.session_logger import get_session_logger
+        logger = get_session_logger()
+        logger.log_system("DEBUG", category, message, {})
+    except:
+        # Fallback to silent operation if logger not available
+        pass
 
 class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     """
@@ -22,6 +29,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
     
     def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the practice session poker widget."""
+        debug_log("PracticeSessionPokerWidget.__init__ called", "PRACTICE_WIDGET_INIT")
         # Initialize attributes first
         self.action_buttons = {}
         self.action_labels = {}
@@ -168,3 +176,46 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
         else:
             self._disable_action_buttons()
             debug_log(f"Bot player {player_index + 1} turn - buttons disabled", "PRACTICE_UI")
+
+    def on_event(self, event):
+        """Handle FPSM events, including managing action button states."""
+        debug_log(f"PracticeSessionPokerWidget.on_event: {event.event_type}", "PRACTICE_WIDGET_EVENT")
+        # Call parent event handler first
+        super().on_event(event)
+        
+        # Handle action button enable/disable based on whose turn it is
+        if event.event_type == 'action_required':
+            # Enable/disable buttons based on whose turn it is
+            if hasattr(event, 'data') and 'player_index' in event.data:
+                player_index = event.data['player_index']
+                debug_log(f"Calling _handle_player_turn_change({player_index})", "PRACTICE_WIDGET_EVENT")
+                self._handle_player_turn_change(player_index)
+                debug_log(f"Action required from player {player_index + 1}", "PRACTICE_UI")
+        elif event.event_type == 'action_executed':
+            # After action executed, disable buttons until next action_required
+            self._disable_action_buttons()
+            debug_log("Action executed - disabling buttons", "PRACTICE_UI")
+
+    def _should_show_card(self, player_index: int, card: str) -> bool:
+        """Override: Use display state card visibility for practice sessions."""
+        # Hide placeholder cards
+        if card == "**" or card == "":
+            return False
+            
+        # Use display state card visibility if available
+        if (hasattr(self, 'state_machine') and self.state_machine and
+            hasattr(self.state_machine, 'get_display_state')):
+            display_state = self.state_machine.get_display_state()
+            if 'card_visibilities' in display_state:
+                visibilities = display_state['card_visibilities']
+                if 0 <= player_index < len(visibilities):
+                    return visibilities[player_index]
+        
+        # Default: show human player cards, hide others
+        if (hasattr(self, 'state_machine') and self.state_machine and
+            hasattr(self.state_machine.game_state, 'players')):
+            players = self.state_machine.game_state.players
+            if 0 <= player_index < len(players):
+                return players[player_index].is_human
+                
+        return False

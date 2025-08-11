@@ -87,6 +87,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_action_player = -1
         self.table_drawn = False
         
+        # Highlight timing control to make actions visually clearer
+        # Delay moving the highlight briefly after an action so the bet/call
+        # visual can land first
+        import time
+        self._highlight_delay_ms = 100
+        self._suppress_highlight_until = 0.0  # epoch seconds
+        self._pending_highlight_index = None
+        self._highlight_timer_active = False
+        
         # Store poker game configuration for dynamic positioning
         self.poker_game_config = None
         
@@ -462,6 +471,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if action_type in ["bet", "raise", "call"] and amount > 0 and player_index >= 0:
             # Bet display debug removed
             self.show_bet_display(player_index, action_type, amount)
+            # Hold highlight shift briefly so the bet visual can appear first
+            import time as _time
+            self._suppress_highlight_until = _time.time() + (self._highlight_delay_ms / 1000.0)
         
         # Clear any existing action indicator for this player
         if player_index >= 0:
@@ -482,6 +494,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             }
             if action_type.lower() in sound_map:
                 self.play_sound(sound_map[action_type.lower()])
+
+    def _apply_pending_highlight(self):
+        """Apply a deferred highlight update after the brief suppression window."""
+        self._highlight_timer_active = False
+        if self._pending_highlight_index is not None:
+            self._highlight_current_player(self._pending_highlight_index)
+            self._pending_highlight_index = None
     
     def _log_event(self, event: GameEvent):
         """Log all events for debugging and analysis."""
@@ -740,10 +759,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def _render_from_display_state(self, display_state: Dict[str, Any]):
         """Render the widget based on the FPSM's display state (LAZY REDRAW OPTIMIZATION)."""
         
-        # Protect ongoing bet animations (don't interrupt them with excessive redraws)
-        if self.animating_bets_to_pot:
-            print("🛡️ PROTECTING BET ANIMATION - skipping excessive redraw")
-            return  # Don't redraw while animations are in progress
+        # Note: Bet animations are now protected selectively in individual update methods
+        # rather than blocking all updates here
         
         # Rendering from FPSM display state with lazy redraw optimization
         
@@ -759,8 +776,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # LAZY redraw community cards (only when changed)
         board_cards = display_state.get("board", [])
+        print(f"🃏 TEMP: Raw board_cards from display_state: {board_cards}")
         # Filter out placeholder cards ("**") and ensure we have valid cards
         filtered_board_cards = [card for card in board_cards if card and card != "**" and len(card) >= 2]
+        print(f"🃏 TEMP: After filtering: {filtered_board_cards}")
         
         # Only update if cards actually changed
         if not hasattr(self, '_last_board_cards') or self._last_board_cards != filtered_board_cards:
@@ -773,6 +792,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # LAZY redraw pot (only when changed)
         pot_amount = display_state.get("pot", 0.0)
+        print(f"💰 TEMP: Pot amount from display_state: {pot_amount}")
         if not hasattr(self, '_last_pot_amount') or self._last_pot_amount != pot_amount:
             # Pot display update debug removed
             if not hasattr(self, '_pot_area_drawn') or not self._pot_area_drawn:
@@ -781,10 +801,20 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.update_pot_amount(pot_amount)
             self._last_pot_amount = pot_amount
         
-        # Update current action player
+        # Update current action player with a short delay if a bet just occurred
+        import time as _time
         action_player_index = display_state.get("action_player", -1)
         if action_player_index >= 0 and action_player_index < len(self.player_seats):
-            self._highlight_current_player(action_player_index)
+            now = _time.time()
+            if now < getattr(self, "_suppress_highlight_until", 0.0):
+                # Defer highlight until suppression expires
+                self._pending_highlight_index = action_player_index
+                if not getattr(self, "_highlight_timer_active", False):
+                    delay_ms = int(max(0, (self._suppress_highlight_until - now) * 1000))
+                    self._highlight_timer_active = True
+                    self.after(delay_ms, self._apply_pending_highlight)
+            else:
+                self._highlight_current_player(action_player_index)
     
     def _update_player_from_display_state(self, player_index: int, player_info: Dict[str, Any]):
         """Update a single player based on display state (FLICKER-FREE VERSION)."""
@@ -799,7 +829,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Extract new state
         name = player_info.get("name", f"Player {player_index+1}")
         position = player_info.get("position", "")
-        stack_amount = player_info.get("stack", 1000.0)
+        stack_amount = player_info.get("stack", 0.0)  # UI should not set defaults - data comes from state machine
+        # Stack debug routed to logger if needed - removed console output
         bet_amount = player_info.get("current_bet", 0.0)
         cards = player_info.get("cards", [])
         has_folded = player_info.get("has_folded", False)
@@ -812,17 +843,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Only update stack if it changed
         if last_state.get("stack", 0.0) != stack_amount:
-            player_seat["stack_label"].config(text=f"${stack_amount:,.2f}")
-            debug_log(f"Updated player {player_index} stack: ${stack_amount:,.2f}", "STACK_DISPLAY")
+            player_seat["stack_label"].config(text=f"${int(stack_amount)}")
+            debug_log(f"Updated player {player_index+1} stack: ${int(stack_amount)}", "STACK_DISPLAY")
+            print(f"🔄 STACK UPDATE: Player {player_index+1} stack updated to ${int(stack_amount)}")
+        else:
+            print(f"⚪ STACK SKIP: Player {player_index+1} stack unchanged (last: {last_state.get('stack', 0.0)}, new: {stack_amount})")
         
-        # Only update bet if it changed
-        bet_text = f"Bet: ${bet_amount:,.2f}" if bet_amount > 0 else ""
+        # Only update bet if it changed (but preserve bet displays during animations)
+        bet_text = f"Bet: ${int(bet_amount)}" if bet_amount > 0 else ""
+        
+        # Don't clear bet displays if we're in the middle of bet-to-pot animations
+        is_animating_bets = getattr(self, 'animating_bets_to_pot', False)
+        
         if last_state.get("bet_text") != bet_text:
-            player_seat["bet_label"].config(text=bet_text)
+            # Only clear bet text if we're not animating (preserve SB/BB during animations)
+            if bet_amount > 0 or not is_animating_bets:
+                player_seat["bet_label"].config(text=bet_text)
+                print(f"💰 BET UPDATE: Player {player_index+1} bet text updated to '{bet_text}' (animating: {is_animating_bets})")
+            else:
+                print(f"🛡️ BET PROTECTED: Player {player_index+1} bet protected during animation (amount: ${bet_amount})")
+                
             if bet_amount > 0:
                 debug_log(f"Updated player {player_index} bet: ${bet_amount:,.2f}", "BET_DISPLAY")
                 # Also show graphical money display for existing bets (like blinds)
                 self._show_bet_display_for_player(player_index, "bet", bet_amount)
+                print(f"🎯 BET DISPLAY: Showing bet display for Player {player_index+1}: ${bet_amount}")
         
         # Always call card update method - let specialized widgets decide how to handle **
         last_cards = last_state.get("cards", [])
@@ -928,7 +973,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
+        print(f"🃏 TEMP: _update_community_cards_from_display_state called with: {board_cards}")
         debug_log(f"COMMUNITY CARD UPDATE: Input cards: {board_cards}", "CARD_DISPLAY")
+        # Board cards debug routed to logger via debug_log above
         
         # Ensure community card widgets are created
         if not self.community_card_widgets:
@@ -958,7 +1005,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if current_state:
             if 'PREFLOP_BETTING' in current_state:
                 cards_to_show = 0  # No community cards during preflop
-                print(f"🚫 Preflop: Showing {cards_to_show} community cards (state: {current_state})")
+                debug_log(f"Preflop: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
             elif 'FLOP' in current_state or 'DEAL_FLOP' in current_state:
                 cards_to_show = 3  # Show first 3 cards during flop
                 debug_log(f"Flop: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
@@ -975,8 +1022,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 cards_to_show = min(5, len(board_cards))  # Max 5 community cards for unknown states
                 debug_log(f"Other state: Showing {cards_to_show} community cards (state: {current_state})", "CARD_DISPLAY")
         
+        # BRUTE FORCE FIX: If we have board cards, always show them (overrides state-based logic)
+        if board_cards and len(board_cards) > 0:
+            cards_to_show = max(cards_to_show, len(board_cards))
+            print(f"🔧 TEMP: FORCE OVERRIDE: Board has {len(board_cards)} cards, showing {cards_to_show}")
+            debug_log(f"🔧 FORCE OVERRIDE: Board has {len(board_cards)} cards, showing {cards_to_show}", "CARD_DISPLAY")
+        
         # Limit board cards to only the first N cards that should be visible
         visible_board_cards = board_cards[:cards_to_show] if board_cards else []
+        debug_log(f"Board visibility: {len(board_cards)} total → {len(visible_board_cards)} visible | Cards: {visible_board_cards}", "CARD_DISPLAY")
         
         # Hide cards that shouldn't be shown yet
         if cards_to_show == 0:
@@ -1006,15 +1060,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 # Only update if the card has actually changed
                 if current_card != new_card:
                     if new_card and new_card != "**":
-                        # Set actual card
+                        # Community cards should always be visible when they exist
                         card_widget.set_card(new_card, is_folded=False)
                         card_widget._current_card = new_card
-                        debug_log(f"Updated community card {i}: {current_card} → {new_card}", "CARD_DISPLAY")
+                        debug_log(f"✅ SET community card {i}: {current_card} → {new_card}", "CARD_DISPLAY")
                     else:
                         # Set empty card (for cards beyond what should be shown)
                         card_widget.set_card("", is_folded=False)
                         card_widget._current_card = ""
-                        print(f"🎴 Cleared community card {i}")
+                        debug_log(f"Cleared community card {i}", "CARD_DISPLAY")
             except tk.TclError:
                 # Widget was destroyed, skip
                 pass
@@ -1223,19 +1277,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         new_state = event.data.get("new_state", "")
         # State change event handled
         
-        # Play sounds for street progression
+        # Play sounds for street progression (keep silent for clean console)
         if "DEAL_FLOP" in new_state:
             self.play_sound("dealing")
-            print("🎴 Flop dealt - playing dealing sound")
         elif "DEAL_TURN" in new_state:
             self.play_sound("dealing")
-            print("🎴 Turn dealt - playing dealing sound")
         elif "DEAL_RIVER" in new_state:
             self.play_sound("dealing")
-            print("🎴 River dealt - playing dealing sound")
         elif "SHOWDOWN" in new_state:
             self.play_sound("winner")
-            print("🏆 Showdown - playing winner sound")
     
     def _handle_round_complete(self, event: GameEvent):
         """Handle round completion events."""
@@ -1404,10 +1454,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Create enhanced bet display frame
         bet_frame = tk.Frame(self.canvas, bg="#1a1a1a", relief="raised", bd=2)
         
-        # Create bet text with chip icon
+        # Create bet text with chip icon (no floating point display)
         bet_text = f"💰 {action.upper()}"
         if amount > 0:
-            bet_text += f" ${amount:.2f}"
+            bet_text += f" ${int(amount)}"
         
         bet_label = tk.Label(
             bet_frame,
@@ -1510,10 +1560,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if hasattr(self, 'last_pot_canvas_size'):
                 delattr(self, 'last_pot_canvas_size')
             
-            # Force clear community card and pot existence flags
-            if hasattr(self, 'community_card_widgets'):
-                debug_log("Clearing community card widgets for forced redraw", "DISPLAY_UPDATE")
-                self.community_card_widgets = []
+            # Preserve community cards through showdown/end-hand. Do NOT clear here.
+            # They will be cleared naturally when a new hand starts and the
+            # preflop state renders with cards_to_show == 0.
             if hasattr(self, 'pot_label'):
                 debug_log("Clearing pot label for forced redraw", "DISPLAY_UPDATE")
                 self.pot_label = None
@@ -1856,6 +1905,78 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if player_seat and player_seat["frame"]:
                 player_frame = player_seat["frame"]
                 player_frame.update_font_size(font_size)
+    
+    def increase_table_size(self):
+        """Increase the table size (zoom in effect using canvas scaling)."""
+        if hasattr(self, 'canvas') and self.canvas:
+            print(f"🔍 ReusablePokerGameWidget.increase_table_size() called")
+            
+            # Initialize scale factor if not exists
+            if not hasattr(self, '_table_scale'):
+                self._table_scale = 1.0
+            
+            # Increase scale by 20%, max 2.0x (larger increments for visibility)
+            old_scale = self._table_scale
+            self._table_scale = min(2.0, self._table_scale * 1.2)
+            
+            print(f"🔍 Scale changed from {old_scale:.1f}x to {self._table_scale:.1f}x")
+            
+            # Apply scaling using canvas.scale() on all items from center
+            scale_factor = self._table_scale / old_scale
+            
+            # Get canvas center point as scaling origin
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            center_x = canvas_width / 2
+            center_y = canvas_height / 2
+            
+            # Scale all canvas items from center
+            for item in self.canvas.find_all():
+                self.canvas.scale(item, center_x, center_y, scale_factor, scale_factor)
+            
+            # Update canvas scroll region to accommodate scaling
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                self.canvas.configure(scrollregion=bbox)
+            
+            debug_log(f"Table size increased to {self._table_scale:.1f}x scale", "TABLE_SIZE")
+            print(f"🔍 Table size increased to {self._table_scale:.1f}x - canvas items scaled from center ({center_x:.0f}, {center_y:.0f})")
+    
+    def decrease_table_size(self):
+        """Decrease the table size (zoom out effect using canvas scaling).""" 
+        if hasattr(self, 'canvas') and self.canvas:
+            print(f"🔍 ReusablePokerGameWidget.decrease_table_size() called")
+            
+            # Initialize scale factor if not exists
+            if not hasattr(self, '_table_scale'):
+                self._table_scale = 1.0
+            
+            # Decrease scale by 20%, min 0.5x (larger increments for visibility)
+            old_scale = self._table_scale
+            self._table_scale = max(0.5, self._table_scale * 0.8)
+            
+            print(f"🔍 Scale changed from {old_scale:.1f}x to {self._table_scale:.1f}x")
+            
+            # Apply scaling using canvas.scale() on all items from center
+            scale_factor = self._table_scale / old_scale
+            
+            # Get canvas center point as scaling origin
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            center_x = canvas_width / 2
+            center_y = canvas_height / 2
+            
+            # Scale all canvas items from center
+            for item in self.canvas.find_all():
+                self.canvas.scale(item, center_x, center_y, scale_factor, scale_factor)
+            
+            # Update canvas scroll region to accommodate scaling
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                self.canvas.configure(scrollregion=bbox)
+            
+            debug_log(f"Table size decreased to {self._table_scale:.1f}x scale", "TABLE_SIZE")
+            print(f"🔍 Table size decreased to {self._table_scale:.1f}x - canvas items scaled from center ({center_x:.0f}, {center_y:.0f})")
     
     def _draw_community_card_area(self):
         """Draw the community card area in the center (LAZY REDRAW OPTIMIZATION)."""
@@ -2236,10 +2357,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         stack_frame = tk.Frame(player_frame, bg=THEME["secondary_bg"])
         stack_frame.pack()
         
-        # Create stack label with modern font and gold color
+        # Create stack label with modern font and gold color  
+        # Get starting stack from poker game config if available
+        default_stack = 200  # fallback default
+        if hasattr(self, 'poker_game_config') and self.poker_game_config:
+            default_stack = getattr(self.poker_game_config, 'starting_stack', 200)
+        
         stack_label = tk.Label(
             stack_frame, 
-            text="$1000.00", 
+            text=f"${int(default_stack)}",  # Use config-based starting stack, will be updated by state machine data
             font=THEME.get("stack_amount", ("Segoe UI", 16, "bold")), 
             bg=THEME["secondary_bg"], 
             fg=THEME["text_gold"]

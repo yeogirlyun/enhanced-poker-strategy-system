@@ -16,13 +16,13 @@ class TestableGameConfig(GameConfig):
     """
     Extended configuration for testable poker state machine.
     
-    Removes flags from base config and handles them in specialized classes.
+    Handles test-specific flags and configuration.
     """
     
     def __init__(self, **kwargs):
-        # Remove test-specific flags before passing to parent
-        kwargs.pop('test_mode', None)
-        kwargs.pop('show_all_cards', None)
+        # Preserve test_mode for testing compatibility
+        self.test_mode = kwargs.pop('test_mode', True)  # Default to True for testable config
+        self.show_all_cards = kwargs.pop('show_all_cards', True)
         super().__init__(**kwargs)
 
 

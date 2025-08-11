@@ -54,7 +54,7 @@ class GTOStrategyEngine:
             },
             "CO": {
                 "rfi": {
-                    "range": ["AA-66", "AKs-ATs", "KQs-KTs", "QJs", "AJo+", "KQo", "KJo", "QJo"],
+                    "range": ["AA-66", "AKs-ATs", "KQs-KTs", "QJs", "ATo+", "KQo", "KJo", "QJo"],
                     "freq": 1.0
                 },
                 "vs_rfi": {
