@@ -49,6 +49,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def __init__(self, parent, state_machine=None, **kwargs):
         """Initialize the reusable poker game widget."""
+        # Extract widget-specific options that ttk.Frame doesn't understand
+        self.debug_mode = kwargs.pop('debug_mode', False)
         ttk.Frame.__init__(self, parent, **kwargs)
         EventListener.__init__(self)
         
@@ -368,8 +370,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.canvas.itemconfig(bet_display["window"], state="normal")
         bet_display["visible"] = True
         
-        # Schedule fade out after 3 seconds
-        self.after(3000, lambda: self._fade_bet_display(player_index))
+        # Do not auto-fade during the street; bet displays are cleared on round_complete
     
     def _clear_all_bet_displays_permanent(self):
         """Clear all bet displays for new hand."""
@@ -1065,10 +1066,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         card_widget._current_card = new_card
                         debug_log(f"✅ SET community card {i}: {current_card} → {new_card}", "CARD_DISPLAY")
                     else:
-                        # Set empty card (for cards beyond what should be shown)
-                        card_widget.set_card("", is_folded=False)
-                        card_widget._current_card = ""
-                        debug_log(f"Cleared community card {i}", "CARD_DISPLAY")
+                        # Show card back for hidden cards (instead of empty)
+                        card_widget.set_card("**", is_folded=False)
+                        card_widget._current_card = "**"
+                        debug_log(f"Card back set for community card {i}", "CARD_DISPLAY")
             except tk.TclError:
                 # Widget was destroyed, skip
                 pass
@@ -1256,34 +1257,40 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Play sound based on action
             if action:
                 if action.value == "fold":
-                    self.play_sound("fold")
+                    self.play_sound("fold", amount=amount)
                 elif action.value == "call":
-                    self.play_sound("call")
+                    self.play_sound("call", amount=amount)
                 elif action.value == "bet":
-                    self.play_sound("bet")
+                    self.play_sound("bet", amount=amount)
                 elif action.value == "raise":
-                    self.play_sound("raise")
+                    self.play_sound("raise", amount=amount)
                 elif action.value == "check":
-                    self.play_sound("check")
+                    self.play_sound("check", amount=amount)
             
             # Show bet display in front of player (proper money graphics)
             if amount > 0:
                 self._show_bet_display_for_player(player_index, action.value if action else "bet", amount)
         else:
-            print(f"⚠️ Could not find player index for {player_name}")
+            debug_log(f"Could not find player index for {player_name}", "ACTION_EXECUTION")
     
     def _handle_state_change(self, event: GameEvent):
         """Handle state change events."""
         new_state = event.data.get("new_state", "")
         # State change event handled
         
-        # Play sounds for street progression (keep silent for clean console)
-        if "DEAL_FLOP" in new_state:
-            self.play_sound("dealing")
+        # Sounds for state transitions
+        if "START_HAND" in new_state:
+            # Shuffle at the beginning of each hand
+            self.play_sound("shuffle")
+        elif "DEAL_FLOP" in new_state:
+            # Dealer deals the flop
+            self.play_sound("deal")
         elif "DEAL_TURN" in new_state:
-            self.play_sound("dealing")
+            # Dealer deals the turn
+            self.play_sound("deal")
         elif "DEAL_RIVER" in new_state:
-            self.play_sound("dealing")
+            # Dealer deals the river
+            self.play_sound("deal")
         elif "SHOWDOWN" in new_state:
             self.play_sound("winner")
     
@@ -1327,33 +1334,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Play sound for round completion
         self.play_sound("dealing")
         
-        # Animate all player bets to pot during street transition
-        if hasattr(self, 'state_machine') and self.state_machine:
-            display_state = self.state_machine.get_game_info()
-            players = display_state.get("players", [])
-            
-            # Round complete animation started
-            
-            # Set animation flag to protect bet displays
+        # Animate all player bets to pot during street transition using snapshot from event
+        snapshot = event.data.get("player_bets", []) if hasattr(event, 'data') else []
+        if snapshot:
             self.animating_bets_to_pot = True
-            
-            # Animate each player's current bet to the pot
             animation_delay = 0
-            for i, player in enumerate(players):
-                current_bet = player.get("current_bet", 0)
-                if current_bet > 0:
-                    player_name = player.get('name', f'Player {i+1}')
-                    debug_log(f"Scheduling animation: {player_name}'s ${current_bet:,.0f} to pot (delay: {animation_delay}ms)", "BET_ANIMATION")
-                    
-                    # Schedule staggered animations
-                    self.after(animation_delay, lambda idx=i, amt=current_bet: 
-                             self._animate_bet_to_pot(idx, amt))
-                    animation_delay += 300  # 300ms between each animation (more visible)
-            
-            # Clear all bet displays after all animations complete
-            total_delay = animation_delay + 500  # Shorter delay for better responsiveness
+            for item in snapshot:
+                idx = item.get("index", -1)
+                amt = item.get("amount", 0.0)
+                if idx >= 0 and amt > 0:
+                    self.after(animation_delay, lambda pidx=idx, pam=amt: self._animate_bet_to_pot(pidx, pam))
+                    animation_delay += 280
+            # Add a small delay after animations complete so users can perceive completion
+            total_delay = animation_delay + 800
             self.after(total_delay, lambda: self._finish_bet_animations())
-            debug_log(f"Scheduled bet clearing in {total_delay}ms", "BET_ANIMATION")
+            debug_log(f"Round complete bet-to-pot animation scheduled; total_delay={total_delay}ms", "BET_ANIMATION")
         
         # Animate street progression
         if street in ["flop", "turn", "river"]:
@@ -1368,7 +1363,24 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         winner_info = event.data.get("winner_info", {})
         pot_amount = event.data.get("pot_amount", 0.0)
         
-        print(f"🏆 Hand complete: {winner_info.get('name', 'Unknown')} wins ${pot_amount:.2f}")
+        debug_log(f"Hand complete: {winner_info.get('name', 'Unknown')} wins ${pot_amount:.2f}", "HAND_COMPLETE")
+        debug_log(f"winner_info={winner_info}, pot_amount={pot_amount}", "HAND_COMPLETE")
+        debug_log(f"event.data keys: {list(event.data.keys()) if hasattr(event, 'data') and event.data else 'No data'}", "HAND_COMPLETE")
+        debug_log(f"Current pot display amount: ${self.last_pot_amount:.2f}", "HAND_COMPLETE")
+        
+        # Check if pot amount is actually available and valid
+        if pot_amount == 0.0:
+            # Try to get pot from display state as fallback
+            if hasattr(self, 'state_machine') and self.state_machine:
+                game_info = self.state_machine.get_game_info()
+                fallback_pot = game_info.get('pot', 0.0)
+                debug_log(f"Pot amount is 0, checking fallback from game_info: ${fallback_pot:.2f}", "HAND_COMPLETE")
+                if fallback_pot > 0:
+                    pot_amount = fallback_pot
+                    debug_log(f"Using fallback pot amount: ${pot_amount:.2f}", "HAND_COMPLETE")
+        
+        # IMMEDIATELY clear all highlights when hand completes - no more action needed
+        self._reset_all_highlights()
         
         # Log hand completion
         if self.session_logger:
@@ -1382,10 +1394,23 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 showdown=True
             )
         
-        # Animate pot to winner
+        # Wait for any ongoing bet-to-pot animations to finish before starting pot-to-winner
+        # This prevents visual confusion of money moving in multiple directions
         if winner_info and pot_amount > 0:
-            self.animate_pot_to_winner(winner_info, pot_amount)
+            debug_log(f"Starting pot animation sequence for {winner_info.get('name', 'Unknown')} with ${pot_amount}", "POT_ANIMATION")
+            
+            # Update pot display to ensure it shows the correct amount before animation
+            self.update_pot_amount(pot_amount)
+            # Check if bet animations are currently running
+            is_animating_bets = getattr(self, 'animating_bets_to_pot', False)
+            delay_for_pot_animation = 1200 if is_animating_bets else 300
+            debug_log(f"is_animating_bets={is_animating_bets}, delay={delay_for_pot_animation}ms", "POT_ANIMATION")
+            
+            # Schedule pot-to-winner animation after bet animations complete
+            self.after(delay_for_pot_animation, lambda: self._start_pot_to_winner_animation(winner_info, pot_amount))
         else:
+            debug_log(f"No pot animation - winner_info valid: {bool(winner_info)}, pot_amount: {pot_amount}", "POT_ANIMATION")
+            debug_log(f"Current display pot: ${self.last_pot_amount:.2f}, Event pot: ${pot_amount:.2f}", "POT_ANIMATION")
             # Log to session logger instead of console
             if self.session_logger:
                 self.session_logger.log_system(
@@ -1398,7 +1423,64 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         "event_data": event.data
                     }
                 )
+
+    def _start_pot_to_winner_animation(self, winner_info, pot_amount):
+        """Start pot-to-winner animation after bet animations are done."""
+        debug_log(f"_start_pot_to_winner_animation called with {winner_info.get('name', 'Unknown')}, ${pot_amount}", "POT_ANIMATION")
+        
+        # Ensure pot display is on top during pot-to-winner animation
+        try:
+            if hasattr(self, 'pot_display') and self.pot_display:
+                self.canvas.tag_raise(self.pot_display)
+                debug_log("Pot display raised to front", "POT_ANIMATION")
+        except Exception as e:
+            debug_log(f"Error raising pot display: {e}", "POT_ANIMATION")
+        
+        # Start the pot-to-winner animation
+        debug_log("Calling animate_pot_to_winner...", "POT_ANIMATION")
+        self.animate_pot_to_winner(winner_info, pot_amount)
     
+    def _reset_all_highlights(self):
+        """Clear any active highlights and reset internal state."""
+        debug_log("_reset_all_highlights called", "HIGHLIGHT")
+        try:
+            cleared_count = 0
+            for i, seat in enumerate(getattr(self, 'player_seats', [])):
+                if seat and seat.get("frame"):
+                    # Force clear highlight
+                    seat["frame"].configure(
+                        highlightbackground=THEME["border_inactive"], 
+                        highlightthickness=2,
+                        bg=THEME["secondary_bg"]  # Reset background too
+                    )
+                    cleared_count += 1
+                    debug_log(f"Cleared highlight for seat {i}", "HIGHLIGHT")
+                    
+                    # Also remove any blinking "YOUR TURN" indicators that might persist
+                    for widget in seat["frame"].winfo_children():
+                        if hasattr(widget, '_action_indicator'):
+                            debug_log(f"Removing action indicator from seat {i}", "HIGHLIGHT")
+                            widget.destroy()
+            
+            # Reset all internal state variables
+            self.last_action_player = -1
+            self._pending_highlight_index = None
+            self._suppress_highlight_until = 0.0
+            self._highlight_timer_active = False
+            
+            # Cancel any pending highlight timers
+            if hasattr(self, '_pending_after_ids'):
+                for after_id in self._pending_after_ids:
+                    try:
+                        self.after_cancel(after_id)
+                    except:
+                        pass
+                self._pending_after_ids = []
+            
+            debug_log(f"All highlights cleared ({cleared_count} seats) and state reset", "HIGHLIGHT")
+        except Exception as e:
+            debug_log(f"ERROR in _reset_all_highlights: {e}", "HIGHLIGHT")
+
     def _handle_player_action(self, **kwargs):
         """Handle player action updates from FPSM."""
         player_name = kwargs.get("player_name", "")
@@ -1499,8 +1581,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Store the bet display for later removal
             self.bet_labels[player_index] = bet_window
             
-            # Make the bet display fade after showing for a few seconds
-            self.after(3000, lambda: self._fade_bet_display(player_index))
+            # Do not auto-fade; bet displays are cleared on round_complete
             
         except Exception as e:
             print(f"⚠️ Error positioning bet display: {e}")
@@ -1530,6 +1611,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Finish bet animations and clear displays."""
         debug_log("Finishing bet animations - clearing displays", "BET_ANIMATION")
         self.animating_bets_to_pot = False
+        
+        # Re-enable voice after animations
+        if self.sound_manager:
+            self.sound_manager.set_animation_mode(False)
+        
         self._clear_all_bet_displays()
         self._clear_all_bet_displays_permanent()
         
@@ -1601,15 +1687,16 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     def play_sound(self, sound_type: str, **kwargs):
         """Play a sound effect."""
         if not self.sound_manager:
-            print(f"🔇 No sound manager available for {sound_type}")
+            debug_log(f"No sound manager available for {sound_type}", "SOUND")
             return
         
         debug_log(f"Playing sound: {sound_type}", "SOUND")
         
         # Map sound types to the appropriate SoundManager methods
         if sound_type in ["fold", "call", "bet", "raise", "check", "all_in"]:
-            self.sound_manager.play_action_sound(sound_type)
-        elif sound_type in ["dealing", "shuffle", "flip"]:
+            amount = kwargs.get("amount", 0.0)
+            self.sound_manager.play_action_sound(sound_type, amount)
+        elif sound_type in ["dealing", "deal", "shuffle", "flip"]:
             self.sound_manager.play_card_sound(sound_type)
         elif sound_type in ["winner", "notification"]:
             self.sound_manager.play_ui_sound(sound_type)
@@ -1666,12 +1753,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         chip_window = self.canvas.create_window(player_x, player_y, window=chip_label)
         self.canvas.tag_raise(chip_window)  # Bring to front
         
-        # Play chip movement sound
-        self.play_sound("bet")
+        # Play chip movement sound (but not voice during animations)
+        if self.sound_manager:
+            self.sound_manager.play_chip_sound("bet")  # Only chip sound, no voice
         
         # Animate the chip to the pot with smooth movement
         def move_chip_step(step=0):
-            total_steps = 40  # Longer animation for visibility
+            # Faster animation (about ~2x faster than previous)
+            total_steps = 30
             if step <= total_steps:
                 progress = step / total_steps
                 # Smooth easing function
@@ -1686,7 +1775,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     y += bounce
                 
                 self.canvas.coords(chip_window, x, y)
-                self.after(40, lambda: move_chip_step(step + 1))  # Slower frame rate
+                # Faster frame rate
+                self.after(30, lambda: move_chip_step(step + 1))
             else:
                 # Animation complete - remove chip and update pot
                 self.canvas.delete(chip_window)
@@ -1696,29 +1786,39 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _flash_pot_update(self, amount):
         """Flash the pot to indicate chips were added."""
-        if self.pot_label:
-            original_bg = self.pot_label.cget("bg")
-            original_fg = self.pot_label.cget("fg")
-            
-            # Enhanced flash sequence for better visibility
-            def flash_sequence(step=0):
-                if step < 6:  # Flash 3 times
-                    if step % 2 == 0:
-                        self.pot_label.config(bg="gold", fg="black")  # Brighter flash
-                    else:
+        if (hasattr(self, 'pot_label') and self.pot_label and 
+            hasattr(self.pot_label, 'config')):
+            try:
+                original_bg = self.pot_label.cget("bg")
+                original_fg = self.pot_label.cget("fg")
+                
+                # Enhanced flash sequence for better visibility
+                def flash_sequence(step=0):
+                    if (hasattr(self, 'pot_label') and self.pot_label and 
+                        hasattr(self.pot_label, 'config') and step < 8):
+                        if step % 2 == 0:
+                            self.pot_label.config(bg="gold", fg="black")  # Brighter flash
+                        else:
+                            self.pot_label.config(bg=original_bg, fg=original_fg)
+                        self.after(180, lambda: flash_sequence(step + 1))
+                    elif (hasattr(self, 'pot_label') and self.pot_label and 
+                          hasattr(self.pot_label, 'config')):
                         self.pot_label.config(bg=original_bg, fg=original_fg)
-                    self.after(150, lambda: flash_sequence(step + 1))  # 150ms per flash
-                else:
-                    self.pot_label.config(bg=original_bg, fg=original_fg)
-            
-            flash_sequence()
+                
+                flash_sequence()
+            except Exception as e:
+                print(f"Warning: Could not flash pot label: {e}")
     
     def animate_pot_to_winner(self, winner_info, pot_amount):
         """Animate pot money moving to the winner's stack."""
+        debug_log(f"animate_pot_to_winner called with winner_info={winner_info}, pot_amount={pot_amount}", "POT_ANIMATION")
+        
         if not winner_info or pot_amount <= 0:
+            debug_log(f"Animation skipped - winner_info={bool(winner_info)}, pot_amount={pot_amount}", "POT_ANIMATION")
             return
         
-        debug_log(f"🏆 Animating ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}", "POT_ANIMATION")
+        debug_log(f"Animating ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}", "POT_ANIMATION")
+        debug_log(f"Starting animation for ${pot_amount:.2f} to {winner_info.get('name', 'Unknown')}", "POT_ANIMATION")
         
         # Find winner's seat
         winner_name = winner_info.get('name', '')
@@ -1734,8 +1834,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     break
         
         if winner_seat_index == -1:
-            debug_log(f"⚠️ Could not find winner seat for {winner_name}", "POT_ANIMATION")
+            debug_log(f"Could not find winner seat for {winner_name}", "POT_ANIMATION")
+            debug_log(f"Could not find winner seat for '{winner_name}'", "POT_ANIMATION")
+            debug_log(f"Available players: {[seat['name_label'].cget('text') if seat and seat.get('name_label') else 'None' for seat in self.player_seats]}", "POT_ANIMATION")
             return
+        
+        debug_log(f"Found winner at seat index {winner_seat_index}", "POT_ANIMATION")
         
         # Get positions
         pot_x = self.canvas.winfo_width() // 2
@@ -1746,6 +1850,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Create multiple chips for large pots
         num_chips = min(max(1, int(pot_amount / 50)), 6)  # 1-6 chips
+        
+        debug_log(f"Creating {num_chips} chips animation from ({pot_x}, {pot_y}) to ({winner_x}, {winner_y})", "POT_ANIMATION")
         
         for i in range(num_chips):
             self._animate_single_chip_to_winner(
@@ -2125,10 +2231,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         pot_amount = game_info.get("pot", 0.0)
         self.update_pot_amount(pot_amount)
         
-        # Update current action player
+        # Update current action player (but not during hand completion)
         action_player_index = game_info.get("action_player", -1)
-        if action_player_index >= 0 and action_player_index < len(self.player_seats):
+        current_state = game_info.get("current_state", "")
+        
+        # Don't highlight during hand completion or showdown
+        if (action_player_index >= 0 and 
+            action_player_index < len(self.player_seats) and
+            "END_HAND" not in str(current_state) and
+            "SHOWDOWN" not in str(current_state)):
             self._highlight_current_player(action_player_index)
+        elif "END_HAND" in str(current_state) or "SHOWDOWN" in str(current_state):
+            # Clear highlights if we're in end states
+            self._reset_all_highlights()
     
     def _setup_ui(self):
         """Set up the UI layout."""
@@ -2159,6 +2274,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _force_initial_draw(self):
         """Force the initial draw of the table."""
+        # Ensure pot display starts from 0 on each new hand visually
+        try:
+            self.last_pot_amount = 0.0
+        except Exception:
+            pass
         self.after(100, self._draw_table)
     
     def _draw_table(self):
@@ -2183,15 +2303,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Clear canvas
         self.canvas.delete("all")
         
-        # Draw table felt - more compact oval for better space utilization
-        self.canvas.create_oval(
-            width*0.1, height*0.15, width*0.9, height*0.85, 
-            fill=THEME["table_felt"], outline=THEME["border"], width=8
+        # Get current scheme colors
+        from core.table_felt_styles import get_scheme_manager
+        scheme_manager = get_scheme_manager()
+        current_scheme = scheme_manager.get_current_scheme()
+        
+        # Draw background first (full canvas)
+        self.canvas.create_rectangle(
+            0, 0, width, height,
+            fill=current_scheme.background_color, outline="",
+            tags="table_background"
         )
+        
+        # Draw table rail (outer ring)
         self.canvas.create_oval(
-            width*0.11, height*0.16, width*0.89, height*0.84, 
-            fill="#228B22", outline="#222222", width=2
+            width*0.08, height*0.12, width*0.92, height*0.88, 
+            fill=current_scheme.rail_color, outline=current_scheme.border_color, width=6,
+            tags="table_rail"
         )
+        
+        # Draw table felt with texture and lighting effects
+        self._draw_textured_felt(current_scheme, width, height)
+        
+        # Add gold inlay if specified
+        if current_scheme.has_gold_inlay:
+            self._draw_gold_inlay(width, height)
+        
+        # Apply lighting effects
+        self._apply_lighting_effects(current_scheme, width, height)
         
         # Draw player seats
         self._draw_player_seats()
@@ -2205,6 +2344,767 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Mark table as drawn and store canvas size
         self.table_drawn = True
         self.last_canvas_size = current_size
+    
+    def _draw_textured_felt(self, scheme, width, height):
+        """Draw felt surface with texture based on scheme type."""
+        felt_x1, felt_y1 = width*0.12, height*0.18
+        felt_x2, felt_y2 = width*0.88, height*0.82
+        
+        if scheme.texture_type == "gradient":
+            # Create gradient effect
+            self._draw_gradient_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "suede":
+            # Suede texture with subtle noise
+            self._draw_suede_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "diamond":
+            # Diamond emboss pattern
+            self._draw_diamond_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "microfiber":
+            # Smooth microfiber finish
+            self._draw_microfiber_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "velvet":
+            # Rich velvet texture
+            self._draw_velvet_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "satin":
+            # Satin finish with subtle sheen
+            self._draw_satin_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "ripple":
+            # Ripple emboss pattern
+            self._draw_ripple_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "diamond_weave_pro":
+            # Professional diamond weave with suit watermarks
+            self._draw_diamond_weave_pro(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "championship_luxury":
+            # WSOP championship luxury texture
+            self._draw_championship_luxury(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "carbon_fiber_tech":
+            # High-tech carbon fiber weave
+            self._draw_carbon_fiber_tech(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "luxury_crosshatch":
+            # Luxury crosshatch pattern
+            self._draw_luxury_crosshatch(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        elif scheme.texture_type == "speed_cloth_pro":
+            # Professional speed cloth with suit emboss
+            self._draw_speed_cloth_pro(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+        else:
+            # Default solid felt
+            self._draw_solid_felt(scheme, felt_x1, felt_y1, felt_x2, felt_y2)
+    
+    def _draw_solid_felt(self, scheme, x1, y1, x2, y2):
+        """Draw basic solid felt surface."""
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        # Inner border for definition
+        self.canvas.create_oval(
+            x1+10, y1+10, x2-10, y2-10,
+            fill=scheme.felt_color, outline=scheme.rail_color, width=1,
+            tags="table_felt_inner"
+        )
+    
+    def _draw_gradient_felt(self, scheme, x1, y1, x2, y2):
+        """Draw gradient felt from edge to center."""
+        # Create multiple rings for gradient effect
+        colors = scheme.gradient_colors
+        if len(colors) < 2:
+            colors = [scheme.felt_color, self._lighten_color(scheme.felt_color, 0.1)]
+        
+        # Outer ring (darker)
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=colors[0], outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        # Inner ring (lighter)
+        ring_width = min((x2-x1), (y2-y1)) * 0.15
+        self.canvas.create_oval(
+            x1+ring_width, y1+ring_width, x2-ring_width, y2-ring_width,
+            fill=colors[1], outline="", width=0,
+            tags="table_felt_gradient"
+        )
+    
+    def _draw_suede_felt(self, scheme, x1, y1, x2, y2):
+        """Draw suede texture with subtle variations."""
+        # Base felt
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Add subtle texture variations
+        import random
+        random.seed(42)  # Consistent pattern
+        
+        # Create small oval variations for suede texture
+        center_x, center_y = (x1+x2)/2, (y1+y2)/2
+        radius_x, radius_y = (x2-x1)/3, (y2-y1)/3
+        
+        for i in range(20):  # Subtle texture spots
+            angle = i * 18  # Degrees
+            import math
+            spot_x = center_x + radius_x * 0.6 * math.cos(math.radians(angle))
+            spot_y = center_y + radius_y * 0.6 * math.sin(math.radians(angle))
+            
+            # Very subtle color variation
+            texture_color = self._darken_color(scheme.felt_color, 0.02)
+            self.canvas.create_oval(
+                spot_x-3, spot_y-2, spot_x+3, spot_y+2,
+                fill=texture_color, outline="",
+                tags="table_felt_texture"
+            )
+    
+    def _draw_diamond_felt(self, scheme, x1, y1, x2, y2):
+        """Draw diamond emboss pattern."""
+        # Base felt
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Diamond pattern overlay
+        center_x, center_y = (x1+x2)/2, (y1+y2)/2
+        diamond_size = 15
+        
+        # Create diamond grid
+        for row in range(-3, 4):
+            for col in range(-5, 6):
+                diamond_x = center_x + col * diamond_size * 1.5
+                diamond_y = center_y + row * diamond_size * 1.5
+                
+                # Only draw diamonds within the oval
+                if self._point_in_oval(diamond_x, diamond_y, x1, y1, x2, y2):
+                    # Subtle diamond emboss
+                    diamond_color = self._lighten_color(scheme.felt_color, 0.03)
+                    self.canvas.create_polygon(
+                        diamond_x, diamond_y-diamond_size/3,
+                        diamond_x+diamond_size/3, diamond_y,
+                        diamond_x, diamond_y+diamond_size/3,
+                        diamond_x-diamond_size/3, diamond_y,
+                        fill=diamond_color, outline="",
+                        tags="table_felt_diamond"
+                    )
+    
+    def _draw_microfiber_felt(self, scheme, x1, y1, x2, y2):
+        """Draw smooth microfiber texture."""
+        # Base felt with smooth finish
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Subtle inner highlight for microfiber sheen
+        highlight_color = self._lighten_color(scheme.felt_color, 0.05)
+        self.canvas.create_oval(
+            x1+20, y1+15, x2-20, y2-25,
+            fill="", outline=highlight_color, width=1,
+            tags="table_felt_microfiber"
+        )
+    
+    def _draw_velvet_felt(self, scheme, x1, y1, x2, y2):
+        """Draw rich velvet texture."""
+        # Base felt
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Velvet has rich, deep appearance with subtle directional texture
+        center_x, center_y = (x1+x2)/2, (y1+y2)/2
+        
+        # Create subtle radial lines for velvet pile direction
+        for angle in range(0, 360, 30):
+            import math
+            start_radius = min((x2-x1), (y2-y1)) * 0.2
+            end_radius = min((x2-x1), (y2-y1)) * 0.35
+            
+            start_x = center_x + start_radius * math.cos(math.radians(angle))
+            start_y = center_y + start_radius * math.sin(math.radians(angle))
+            end_x = center_x + end_radius * math.cos(math.radians(angle))
+            end_y = center_y + end_radius * math.sin(math.radians(angle))
+            
+            velvet_color = self._darken_color(scheme.felt_color, 0.02)
+            self.canvas.create_line(
+                start_x, start_y, end_x, end_y,
+                fill=velvet_color, width=1,
+                tags="table_felt_velvet"
+            )
+    
+    def _draw_satin_felt(self, scheme, x1, y1, x2, y2):
+        """Draw satin finish with subtle sheen."""
+        # Base felt
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Satin diagonal sheen effect
+        center_x, center_y = (x1+x2)/2, (y1+y2)/2
+        sheen_color = self._lighten_color(scheme.felt_color, 0.08)
+        
+        # Diagonal stripe pattern for satin effect
+        for i in range(-10, 11, 3):
+            stripe_x1 = center_x + i * 20
+            stripe_y1 = y1
+            stripe_x2 = center_x + i * 20 + 50
+            stripe_y2 = y2
+            
+            self.canvas.create_line(
+                stripe_x1, stripe_y1, stripe_x2, stripe_y2,
+                fill=sheen_color, width=1,
+                tags="table_felt_satin"
+            )
+    
+    def _draw_ripple_felt(self, scheme, x1, y1, x2, y2):
+        """Draw ripple emboss pattern."""
+        # Base felt
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Concentric ripple rings
+        center_x, center_y = (x1+x2)/2, (y1+y2)/2
+        max_radius = min((x2-x1), (y2-y1)) * 0.4
+        
+        ripple_color = self._lighten_color(scheme.felt_color, 0.04)
+        
+        for radius in range(20, int(max_radius), 25):
+            self.canvas.create_oval(
+                center_x-radius, center_y-radius,
+                center_x+radius, center_y+radius,
+                fill="", outline=ripple_color, width=1,
+                tags="table_felt_ripple"
+            )
+    
+    def _draw_gold_inlay(self, width, height):
+        """Draw gold thread inlay around table perimeter."""
+        # Gold thread color
+        gold_color = "#FFD700"
+        
+        # Outer gold ring
+        self.canvas.create_oval(
+            width*0.115, height*0.175, width*0.885, height*0.825,
+            fill="", outline=gold_color, width=2,
+            tags="table_gold_inlay"
+        )
+        
+        # Inner gold accent
+        self.canvas.create_oval(
+            width*0.135, height*0.195, width*0.865, height*0.805,
+            fill="", outline=gold_color, width=1,
+            tags="table_gold_inner"
+        )
+    
+    def _draw_diamond_weave_pro(self, scheme, x1, y1, x2, y2):
+        """Draw professional diamond weave texture with suit watermarks (PokerStars style)."""
+        # Base felt surface
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Diamond weave pattern
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        weave_color = self._lighten_color(scheme.felt_color, 0.03)
+        
+        # Create diamond grid pattern
+        diamond_size = 30
+        for i in range(-8, 9, 2):
+            for j in range(-6, 7, 2):
+                dx = center_x + i * diamond_size
+                dy = center_y + j * diamond_size
+        if self._point_in_oval(dx, dy, x1, y1, x2, y2):
+                    # Draw diamond shape
+                    self.canvas.create_polygon(
+                        dx, dy - diamond_size//3,
+                        dx + diamond_size//3, dy,
+                        dx, dy + diamond_size//3,
+                        dx - diamond_size//3, dy,
+                        fill=weave_color, outline="", width=1,
+                        tags="table_pattern"
+                    )
+        
+        # Subtle suit watermarks
+        watermark_color = self._lighten_color(scheme.felt_color, 0.02)
+        suit_positions = [
+            (center_x - 80, center_y - 40, "♠"),
+            (center_x + 80, center_y - 40, "♣"),
+            (center_x - 80, center_y + 40, "♦"),
+            (center_x + 80, center_y + 40, "♥")
+        ]
+        
+        for sx, sy, suit in suit_positions:
+            if self._point_in_oval(sx, sy, x1, y1, x2, y2):
+                self.canvas.create_text(
+                    sx, sy, text=suit, font=("Arial", 24, "bold"),
+                    fill=watermark_color, tags="table_watermark"
+                )
+    
+    def _draw_championship_luxury(self, scheme, x1, y1, x2, y2):
+        """Draw WSOP championship luxury texture with gold accents."""
+        # Create radial gradient effect with multiple layers
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        radius = min((x2 - x1) / 2, (y2 - y1) / 2)
+        
+        # Multiple gradient rings for luxury effect
+        colors = scheme.gradient_colors
+        num_rings = 12
+        for i in range(num_rings):
+            factor = (num_rings - i) / num_rings
+            ring_radius = radius * factor * 0.9
+            color_index = int(i / num_rings * (len(colors) - 1))
+            ring_color = colors[min(color_index, len(colors) - 1)]
+            
+            self.canvas.create_oval(
+                center_x - ring_radius, center_y - ring_radius,
+                center_x + ring_radius, center_y + ring_radius,
+                fill=ring_color, outline="",
+                tags="table_felt_gradient"
+            )
+        
+        # Luxury crosshatch overlay
+        crosshatch_color = self._darken_color(scheme.felt_color, 0.05)
+        for i in range(-15, 16, 8):
+            for j in range(-12, 13, 8):
+                x, y = center_x + i * 20, center_y + j * 20
+                if self._point_in_oval(x, y, x1, y1, x2, y2):
+                    # Diagonal lines for crosshatch
+                    self.canvas.create_line(
+                        x - 15, y - 15, x + 15, y + 15,
+                        fill=crosshatch_color, width=1, tags="table_pattern"
+                    )
+                    self.canvas.create_line(
+                        x - 15, y + 15, x + 15, y - 15,
+                        fill=crosshatch_color, width=1, tags="table_pattern"
+                    )
+    
+    def _draw_carbon_fiber_tech(self, scheme, x1, y1, x2, y2):
+        """Draw high-tech carbon fiber weave pattern."""
+        # Base surface
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Carbon fiber weave pattern
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        fiber_light = self._lighten_color(scheme.felt_color, 0.08)
+        fiber_dark = self._darken_color(scheme.felt_color, 0.05)
+        
+        # Horizontal fibers
+        for i in range(-20, 21, 4):
+            y = center_y + i * 8
+            for j in range(-25, 26, 8):
+                x = center_x + j * 8
+                if self._point_in_oval(x, y, x1, y1, x2, y2):
+                    self.canvas.create_rectangle(
+                        x - 3, y - 1, x + 3, y + 1,
+                        fill=fiber_light, outline="",
+                        tags="table_pattern"
+                    )
+        
+        # Vertical fibers (weaving effect)
+        for i in range(-25, 26, 8):
+            x = center_x + i * 8
+            for j in range(-20, 21, 8):
+                y = center_y + j * 8 + 4  # Offset for weave
+                if self._point_in_oval(x, y, x1, y1, x2, y2):
+                    self.canvas.create_rectangle(
+                        x - 1, y - 3, x + 1, y + 3,
+                        fill=fiber_dark, outline="",
+                        tags="table_pattern"
+                    )
+        
+        # Geometric accent lines
+        tech_accent = self._lighten_color(scheme.felt_color, 0.15)
+        for angle in [0, 45, 90, 135]:
+            for radius_factor in [0.3, 0.5, 0.7]:
+                self._draw_tech_accent_line(center_x, center_y, angle, radius_factor, x1, y1, x2, y2, tech_accent)
+    
+    def _draw_luxury_crosshatch(self, scheme, x1, y1, x2, y2):
+        """Draw luxury crosshatch pattern for VIP tables."""
+        # Base surface with gradient
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        
+        # Create gradient base
+        colors = scheme.gradient_colors
+        for i, color in enumerate(colors):
+            factor = 0.9 - (i * 0.1)
+            radius = min((x2 - x1) / 2, (y2 - y1) / 2) * factor
+            self.canvas.create_oval(
+                center_x - radius, center_y - radius,
+                center_x + radius, center_y + radius,
+                fill=color, outline="",
+                tags="table_felt_gradient"
+            )
+        
+        # Fine crosshatch pattern
+        hatch_light = self._lighten_color(scheme.felt_color, 0.06)
+        hatch_dark = self._darken_color(scheme.felt_color, 0.04)
+        
+        # Diagonal crosshatch grid
+        spacing = 12
+        for i in range(-30, 31, spacing):
+            for j in range(-25, 26, spacing):
+                x, y = center_x + i * 6, center_y + j * 6
+                if self._point_in_table(x, y, x1, y1, x2, y2):
+                    # Create small crosshatch square
+                    self.canvas.create_line(
+                        x - 4, y - 4, x + 4, y + 4,
+                        fill=hatch_light, width=1, tags="table_pattern"
+                    )
+                    self.canvas.create_line(
+                        x - 4, y + 4, x + 4, y - 4,
+                        fill=hatch_dark, width=1, tags="table_pattern"
+                    )
+    
+    def _draw_speed_cloth_pro(self, scheme, x1, y1, x2, y2):
+        """Draw professional speed cloth with suit symbol embossing."""
+        # Ultra-smooth base surface
+        self.canvas.create_oval(
+            x1, y1, x2, y2,
+            fill=scheme.felt_color, outline=scheme.border_color, width=3,
+            tags="table_felt"
+        )
+        
+        # Speed cloth texture (very subtle directional grain)
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        grain_color = self._lighten_color(scheme.felt_color, 0.02)
+        
+        # Horizontal speed lines for smooth card glide
+        for i in range(-15, 16, 3):
+            y = center_y + i * 10
+            if y > y1 + 20 and y < y2 - 20:  # Stay within table bounds
+                self.canvas.create_line(
+                    x1 + 40, y, x2 - 40, y,
+                    fill=grain_color, width=1, tags="table_pattern"
+                )
+        
+        # Embossed suit symbols around perimeter
+        emboss_color = self._darken_color(scheme.felt_color, 0.03)
+        suit_symbols = ["♠", "♥", "♦", "♣"]
+        
+        # Place suits around the table edge
+        radius = min((x2 - x1) / 2, (y2 - y1) / 2) * 0.85
+        for i, suit in enumerate(suit_symbols * 3):  # Repeat suits
+            angle = (2 * 3.14159 / 12) * i
+            sx = center_x + radius * 0.7 * math.cos(angle)
+            sy = center_y + radius * 0.7 * math.sin(angle)
+            
+            if self._point_in_oval(sx, sy, x1, y1, x2, y2):
+                self.canvas.create_text(
+                    sx, sy, text=suit, font=("Arial", 16, "bold"),
+                    fill=emboss_color, tags="table_emboss"
+                )
+    
+    def _draw_tech_accent_line(self, center_x, center_y, angle, radius_factor, x1, y1, x2, y2, color):
+        """Draw geometric accent line for tech patterns."""
+        import math
+        radius = min((x2 - x1) / 2, (y2 - y1) / 2) * radius_factor
+        
+        # Calculate line endpoints
+        rad = math.radians(angle)
+        start_x = center_x + radius * 0.3 * math.cos(rad)
+        start_y = center_y + radius * 0.3 * math.sin(rad)
+        end_x = center_x + radius * math.cos(rad)
+        end_y = center_y + radius * math.sin(rad)
+        
+        # Draw line if both points are within table
+        if (self._point_in_oval(start_x, start_y, x1, y1, x2, y2) and
+            self._point_in_oval(end_x, end_y, x1, y1, x2, y2)):
+            self.canvas.create_line(
+                start_x, start_y, end_x, end_y,
+                fill=color, width=2, tags="table_tech_accent"
+            )
+
+    def _apply_lighting_effects(self, scheme, width, height):
+        """Apply lighting effects based on scheme."""
+        if scheme.lighting_effect == "vignette":
+            self._apply_vignette_effect(width, height)
+        elif scheme.lighting_effect == "center_glow":
+            self._apply_center_glow_effect(width, height, scheme.felt_color)
+        elif scheme.lighting_effect == "tournament_spotlight":
+            self._apply_tournament_spotlight(width, height, scheme.felt_color)
+        elif scheme.lighting_effect == "tech_glow":
+            self._apply_tech_glow_effect(width, height)
+        elif scheme.lighting_effect == "vip_ambience":
+            self._apply_vip_ambience_effect(width, height, scheme.felt_color)
+        elif scheme.lighting_effect == "classic_vignette":
+            self._apply_classic_vignette_effect(width, height)
+        elif scheme.lighting_effect == "frosted_edge":
+            self._apply_frosted_edge_effect(width, height)
+        elif scheme.lighting_effect == "reflective_highlights":
+            self._apply_reflective_highlights(width, height)
+    
+    def _apply_vignette_effect(self, width, height):
+        """Apply subtle darkening around edges."""
+        # Dark vignette overlay
+        vignette_color = "#000000"
+        
+        # Create multiple rings for smooth vignette
+        for i in range(3):
+            alpha_effect = 0.02 + i * 0.01  # Very subtle
+            ring_offset = 5 + i * 8
+            
+            # This would need alpha blending in a real implementation
+            # For now, we'll use slightly darker colors
+            self.canvas.create_oval(
+                width*0.12-ring_offset, height*0.18-ring_offset,
+                width*0.88+ring_offset, height*0.82+ring_offset,
+                fill="", outline=self._darken_color("#000000", 0.8), width=1,
+                tags="table_vignette"
+            )
+    
+    def _apply_center_glow_effect(self, width, height, base_color):
+        """Apply center glow effect."""
+        center_x, center_y = width*0.5, height*0.5
+        glow_color = self._lighten_color(base_color, 0.15)
+        
+        # Center glow rings
+        for radius in range(30, 80, 15):
+            self.canvas.create_oval(
+                center_x-radius, center_y-radius,
+                center_x+radius, center_y+radius,
+                fill="", outline=glow_color, width=1,
+                tags="table_center_glow"
+            )
+    
+    def _apply_tournament_spotlight(self, width, height, felt_color):
+        """Apply WSOP tournament spotlight effect."""
+        center_x, center_y = width * 0.5, height * 0.5
+        
+        # Create bright center spotlight
+        spotlight_color = self._lighten_color(felt_color, 0.2)
+        spotlight_radius = min(width, height) * 0.15
+        
+        # Multiple spotlight rings for smooth gradient
+        for i in range(8):
+            factor = (8 - i) / 8
+            radius = spotlight_radius * factor
+            alpha = int(30 * factor)  # Fade out towards edges
+            
+            # Create semi-transparent spotlight effect
+            self.canvas.create_oval(
+                center_x - radius, center_y - radius,
+                center_x + radius, center_y + radius,
+                fill=spotlight_color, outline="",
+                tags="table_spotlight"
+            )
+    
+    def _apply_tech_glow_effect(self, width, height):
+        """Apply modern tech glow effect."""
+        # Create subtle blue-white glow around table edge
+        glow_color = "#4A9EFF"
+        
+        # Outer glow ring
+        self.canvas.create_oval(
+            width*0.10, height*0.16, width*0.90, height*0.84,
+            fill="", outline=glow_color, width=2,
+            tags="table_tech_glow"
+        )
+        
+        # Inner accent glow
+        inner_glow = self._lighten_color(glow_color, 0.3)
+        self.canvas.create_oval(
+            width*0.13, height*0.19, width*0.87, height*0.81,
+            fill="", outline=inner_glow, width=1,
+            tags="table_tech_inner_glow"
+        )
+    
+    def _apply_vip_ambience_effect(self, width, height, felt_color):
+        """Apply VIP table ambience lighting."""
+        center_x, center_y = width * 0.5, height * 0.5
+        
+        # Warm golden ambience around the table
+        ambience_color = "#FFD700"  # Gold
+        
+        # Create soft ambient glow
+        for i in range(5):
+            factor = (5 - i) / 5
+            radius = min(width, height) * 0.4 * factor
+            alpha = int(40 * factor)
+            
+            # Soft golden rim lighting
+            rim_color = self._lighten_color(ambience_color, 0.1 * i)
+            self.canvas.create_oval(
+                center_x - radius, center_y - radius * 0.8,
+                center_x + radius, center_y + radius * 0.8,
+                fill="", outline=rim_color, width=1,
+                tags="table_vip_ambience"
+            )
+    
+    def _apply_classic_vignette_effect(self, width, height):
+        """Apply classic casino vignette effect."""
+        # Darker edges fading to center
+        vignette_color = "#000000"
+        
+        # Create multiple vignette rings
+        for i in range(6):
+            factor = 1.0 - (i * 0.08)  # Start from outside edge
+            alpha = int(25 - i * 3)  # Fade intensity
+            
+            # Calculate oval dimensions for vignette ring
+            x1 = width * (0.5 - 0.4 * factor)
+            y1 = height * (0.5 - 0.3 * factor)
+            x2 = width * (0.5 + 0.4 * factor)
+            y2 = height * (0.5 + 0.3 * factor)
+            
+            # Only draw outer rings for vignette effect
+            if i < 3:  # Only outermost rings
+                self.canvas.create_oval(
+                    x1, y1, x2, y2,
+                    fill="", outline=vignette_color, width=1,
+                    tags="table_vignette"
+                )
+
+    def _apply_frosted_edge_effect(self, width, height):
+        """Apply frosted edge effect."""
+        frost_color = "#FFFFFF"
+        
+        # Subtle white edge highlight
+        self.canvas.create_oval(
+            width*0.12+2, height*0.18+2, width*0.88-2, height*0.82-2,
+            fill="", outline=frost_color, width=1,
+            tags="table_frost"
+        )
+    
+    def _apply_reflective_highlights(self, width, height):
+        """Apply reflective highlight streaks."""
+        highlight_color = "#666666"
+        center_x, center_y = width*0.5, height*0.5
+        
+        # Diagonal highlight streaks
+        import math
+        for angle in [45, 135, 225, 315]:  # Diagonal angles
+            length = min(width, height) * 0.15
+            
+            start_x = center_x - length/2 * math.cos(math.radians(angle))
+            start_y = center_y - length/2 * math.sin(math.radians(angle))
+            end_x = center_x + length/2 * math.cos(math.radians(angle))
+            end_y = center_y + length/2 * math.sin(math.radians(angle))
+            
+            self.canvas.create_line(
+                start_x, start_y, end_x, end_y,
+                fill=highlight_color, width=2,
+                tags="table_highlights"
+            )
+    
+    # Utility methods for color manipulation
+    def _lighten_color(self, hex_color, factor):
+        """Lighten a hex color by a factor (0.0 to 1.0)."""
+        # Remove # if present
+        hex_color = hex_color.lstrip('#')
+        
+        # Convert to RGB
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        
+        # Lighten
+        r = min(255, int(r + (255 - r) * factor))
+        g = min(255, int(g + (255 - g) * factor))
+        b = min(255, int(b + (255 - b) * factor))
+        
+        return f"#{r:02x}{g:02x}{b:02x}"
+    
+    def _darken_color(self, hex_color, factor):
+        """Darken a hex color by a factor (0.0 to 1.0)."""
+        # Remove # if present
+        hex_color = hex_color.lstrip('#')
+        
+        # Convert to RGB
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        
+        # Darken
+        r = max(0, int(r * (1 - factor)))
+        g = max(0, int(g * (1 - factor)))
+        b = max(0, int(b * (1 - factor)))
+        
+        return f"#{r:02x}{g:02x}{b:02x}"
+    
+    def _point_in_oval(self, px, py, x1, y1, x2, y2):
+        """Check if a point is inside an oval."""
+        center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+        radius_x, radius_y = (x2 - x1) / 2, (y2 - y1) / 2
+        
+        # Normalize point to unit circle
+        normalized_x = (px - center_x) / radius_x
+        normalized_y = (py - center_y) / radius_y
+        
+        # Check if point is inside unit circle
+        return (normalized_x ** 2 + normalized_y ** 2) <= 0.8  # Slightly inside edge
+    
+    def change_table_felt(self, felt_color: str, scheme=None):
+        """Change the table color scheme dynamically."""
+        if scheme is not None:
+            # Complete scheme provided (new system)
+            felt_color = scheme.felt_color
+            rail_color = scheme.rail_color
+            border_color = scheme.border_color
+            # background_color = scheme.background_color  # May be used for outer areas
+        elif felt_color.startswith('#'):
+            # Direct hex color (legacy system)
+            rail_color = THEME["table_rail"]  # Use theme default for rail
+            border_color = THEME["primary_bg"]  # Use theme default for border
+        else:
+            # Legacy color names (for backward compatibility)
+            table_felt_colors = {
+                "classic_green": "#015939",
+                "royal_blue": "#2d5aa0", 
+                "burgundy_red": "#8b2d2d",
+                "deep_purple": "#5a2d8b",
+                "golden_brown": "#8b6b2d",
+                "ocean_blue": "#2d8b8b",
+                "forest_green": "#2d8b2d",
+                "midnight_black": "#2d2d2d"
+            }
+            felt_color = table_felt_colors.get(felt_color, THEME["table_felt"])
+            rail_color = THEME["table_rail"]
+            border_color = THEME["primary_bg"]
+        
+        # Update THEME with new colors
+        THEME["table_felt"] = felt_color
+        THEME["table_rail"] = rail_color
+        
+        # Update existing table elements
+        try:
+            # Update background elements
+            if scheme:
+                for item in self.canvas.find_withtag("table_background"):
+                    self.canvas.itemconfig(item, fill=scheme.background_color)
+                
+                # Update table rail elements
+                for item in self.canvas.find_withtag("table_rail"):
+                    self.canvas.itemconfig(item, fill=scheme.rail_color)
+                
+                # Update table felt elements
+                for item in self.canvas.find_withtag("table_felt"):
+                    self.canvas.itemconfig(item, fill=scheme.felt_color)
+                for item in self.canvas.find_withtag("table_felt_inner"):
+                    self.canvas.itemconfig(item, fill=scheme.felt_color)
+            else:
+                # Legacy single color update
+                for item in self.canvas.find_withtag("table_felt"):
+                    self.canvas.itemconfig(item, fill=felt_color)
+                for item in self.canvas.find_withtag("table_felt_inner"):
+                    self.canvas.itemconfig(item, fill=felt_color)
+            
+            # Force a complete redraw to ensure all elements use new colors
+            self._draw_table()
+        except Exception as e:
+            debug_log(f"Error changing table scheme: {e}", "TABLE_APPEARANCE")
     
     def _draw_player_seats(self):
         """Draw player seats around the table (LAZY REDRAW OPTIMIZATION)."""
@@ -2431,9 +3331,14 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             return positions
         
         def calculate_community_card_position(self, width, height):
-            """Calculate community card position - more compact layout."""
-            return width / 2, height / 2 - 35  # Moved closer to center
+            """Calculate community card position with safe spacing from pot."""
+            # Ensure a minimum vertical gap from pot area
+            center_x, center_y = width / 2, height / 2
+            community_y = center_y - max(40, height * 0.06)
+            return center_x, community_y
         
         def calculate_pot_position(self, width, height):
-            """Calculate pot position - more compact layout."""
-            return width / 2, height / 2 + 35  # Moved closer to center
+            """Calculate pot position with safe spacing from community cards."""
+            center_x, center_y = width / 2, height / 2
+            pot_y = center_y + max(48, height * 0.07)
+            return center_x, pot_y

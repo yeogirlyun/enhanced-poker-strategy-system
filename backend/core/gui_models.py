@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 # --- Professional Poker App Theme (User's Final Design) ---
 THEME = {
     # Base Colors - User's final professional color scheme
-    "table_felt": "#35654D",      # Emerald Green (traditional poker feel)
+    "table_felt": "#1B4D3A",      # Default: PokerStars Classic Pro (professional diamond weave)
     "table_rail": "#2E4F76",      # Dark Steel Blue (table border)
     "primary_bg": "#191C22",      # Dark Charcoal (main app background)
     "secondary_bg": "#2E3C54",    # Deep Navy Slate (menu bar background)
