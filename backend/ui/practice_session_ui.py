@@ -8,7 +8,7 @@ and PracticeSessionPokerStateMachine, following clean inheritance patterns.
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import Optional, Dict, Any
+
 from datetime import datetime
 
 # Import core components
@@ -114,6 +114,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionUI initialization completed successfully", {})
         print("🎓 Practice Session UI ready")
+        
+        # Initialize table felt style after UI setup
+        self._initialize_table_felt()
     
     def on_event(self, event: GameEvent):
         """Handle events from the specialized state machine."""
@@ -207,86 +210,165 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         self._setup_bottom_control_strip()
     
     def _setup_bottom_control_strip(self):
-        """Setup the bottom control strip with session controls, action message area, action buttons, and quick bet buttons."""
-        # Create bottom control strip frame
-        bottom_frame = ttk.Frame(self, style='Dark.TFrame')
-        bottom_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=(0, 5))
+        """Setup the professional bottom control panel."""
+        # Professional bottom panel with theme colors
+        bottom_frame = tk.Frame(
+            self,
+            bg="#1E232A",  # Dark Slate background
+            relief='flat',
+            bd=0
+        )
+        bottom_frame.grid(row=1, column=0, sticky="ew", padx=0, pady=0)
         
-        # Configure four columns in bottom strip
-        bottom_frame.grid_columnconfigure(0, weight=1)  # Left: Session controls
-        bottom_frame.grid_columnconfigure(1, weight=2)  # Center-Left: Action message area (wider)
-        bottom_frame.grid_columnconfigure(2, weight=2)  # Center-Right: Action buttons (wider)
-        bottom_frame.grid_columnconfigure(3, weight=1)  # Right: Quick Bet Buttons
+        # Add top border for separation
+        separator = tk.Frame(
+            bottom_frame,
+            bg="#2E4F76",  # Dark Steel Blue border
+            height=2
+        )
+        separator.pack(fill="x", side="top")
+        
+        # Main panel content with proper padding
+        content_frame = tk.Frame(
+            bottom_frame,
+            bg="#1E232A",  # Match panel background
+            relief='flat',
+            bd=0
+        )
+        content_frame.pack(fill="both", expand=True, padx=16, pady=8)
+        
+        # Configure four columns in content frame with professional spacing
+        content_frame.grid_columnconfigure(0, weight=0, minsize=140)  # Left: Session controls (fixed)
+        content_frame.grid_columnconfigure(1, weight=1, minsize=280)  # Center: Message area (expandable)
+        content_frame.grid_columnconfigure(2, weight=0, minsize=220)  # Center-Right: Action buttons (fixed)
+        content_frame.grid_columnconfigure(3, weight=0, minsize=160)  # Right: Bet buttons (fixed)
+        content_frame.grid_rowconfigure(0, weight=1, minsize=80)  # Ensure consistent height
         
         # === LEFT: Session Controls ===
-        session_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
-        session_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        session_frame = tk.Frame(
+            content_frame,
+            bg="#1E232A"  # Match panel background
+        )
+        session_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=0)
         self._setup_session_controls_bottom(session_frame)
         
-        # === CENTER-LEFT: Action Message Area ===
-        message_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
-        message_frame.grid(row=0, column=1, sticky="nsew", padx=5)
+        # === CENTER: Game Message Area ===
+        message_frame = tk.Frame(
+            content_frame,
+            bg="#1E232A"  # Match panel background
+        )
+        message_frame.grid(row=0, column=1, sticky="nsew", padx=12, pady=0)
         self._setup_action_message_area(message_frame)
         
         # === CENTER-RIGHT: Action Buttons ===
-        action_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
-        action_frame.grid(row=0, column=2, sticky="nsew", padx=5)
+        action_frame = tk.Frame(
+            content_frame,
+            bg="#1E232A"  # Match panel background
+        )
+        action_frame.grid(row=0, column=2, sticky="nsew", padx=12, pady=0)
         self._setup_action_buttons(action_frame)
         
         # === RIGHT: Quick Bet Buttons ===
-        bet_buttons_frame = ttk.Frame(bottom_frame, style='Dark.TFrame')
-        bet_buttons_frame.grid(row=0, column=3, sticky="nsew", padx=(5, 0))
+        bet_buttons_frame = tk.Frame(
+            content_frame,
+            bg="#1E232A"  # Match panel background
+        )
+        bet_buttons_frame.grid(row=0, column=3, sticky="nsew", padx=(12, 0), pady=0)
         self._setup_quick_bet_buttons(bet_buttons_frame)
     
     def _setup_session_controls_bottom(self, parent):
-        """Setup session controls for bottom strip layout."""
-        # Start New Hand button using exact same style and sizing as action buttons
-        start_frame = tk.Frame(
+        """Setup session controls with professional styling."""
+        # Professional START NEW HAND button
+        start_button = tk.Button(
             parent,
-            bg=THEME['chip_green'],  # Green background like CHECK button style
-            relief='raised',
-            bd=3,
-            cursor='hand2'
+            text="START NEW HAND",
+            bg='#4CAF50',  # Medium Green (professional)
+            fg='#FFFFFF',  # White text
+            font=('Segoe UI', 12, 'bold'),
+            relief='flat',
+            bd=0,
+            cursor='hand2',
+            padx=20,
+            pady=12,
+            command=self._start_new_hand
         )
-        # Use same positioning style as action buttons with exact padding
-        start_frame.pack(side=tk.LEFT, padx=(5, 10), pady=10, ipadx=10, ipady=8)
+        start_button.pack(expand=True, fill='both', padx=4, pady=6)
         
-        start_label = tk.Label(
-            start_frame,
-            text="🎯 START NEW HAND",
-            bg=THEME['chip_green'],  # Green background
-            fg='#2B2F39',  # Dark desaturated blue-gray text (RGB: 43, 47, 57)
-            font=('Arial', 14, 'bold'),  # Same font as action buttons
-            cursor='hand2'
-        )
-        start_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)  # Exact same as action buttons
+        # Add hover effects
+        def on_enter(e):
+            start_button.config(bg='#5CCF63')  # Lighter green on hover
         
-        # Bind click events to both frame and label
-        start_frame.bind("<Button-1>", lambda e: self._start_new_hand())
-        start_label.bind("<Button-1>", lambda e: self._start_new_hand())
+        def on_leave(e):
+            start_button.config(bg='#4CAF50')  # Back to normal
         
-        # Store references for state management
-        self.start_btn = start_frame
-        self.start_label = start_label
+        def on_click(e):
+            start_button.config(relief='sunken')
+            parent.after(100, lambda: start_button.config(relief='flat'))
+        
+        start_button.bind('<Enter>', on_enter)
+        start_button.bind('<Leave>', on_leave)
+        start_button.bind('<Button-1>', on_click)
+        
+        # Store reference for state management
+        self.start_btn = start_button
+    
+    def _initialize_table_felt(self):
+        """Initialize the table felt to the default casino-grade style."""
+        try:
+            from core.table_felt_styles import get_scheme_manager
+            scheme_manager = get_scheme_manager()
+            
+            # Set the default table felt when poker widget is created
+            if hasattr(self, 'poker_widget') and self.poker_widget:
+                if hasattr(self.poker_widget, 'change_table_scheme'):
+                    default_scheme = scheme_manager.get_current_scheme()
+                    self.poker_widget.change_table_scheme(scheme=default_scheme)
+                    print(f"🎨 Table felt initialized to {default_scheme.name}")
+        except Exception as e:
+            print(f"Warning: Could not initialize table felt: {e}")
+        
+
     
     def _setup_action_message_area(self, parent):
-        """Setup action message area for game notifications."""
-        # Message text widget with dark teal blue background
-        self.action_message_text = tk.Text(
+        """Setup professional game message area."""
+        # Create container with rounded appearance
+        message_container = tk.Frame(
             parent,
-            height=2,  # Reduced height to match button height
-            bg="#2E4F76",  # Dark teal blue background
-            fg="white",    # White text for contrast
-            font=FONTS["main"],  # Match app font size
+            bg="#2B3845",  # Muted Navy Gray background
+            relief='flat',
+            bd=1,
+            highlightbackground="#3A4B5C",  # Subtle border
+            highlightthickness=1
+        )
+        message_container.pack(fill='both', expand=True, padx=6, pady=6)
+        
+        # Message text widget with professional styling
+        self.action_message_text = tk.Text(
+            message_container,
+            height=2,
+            bg="#2B3845",  # Muted Navy Gray
+            fg="#EAECEE",  # Off-white text
+            font=('Segoe UI', 11, 'normal'),  # Medium weight
             wrap=tk.WORD,
             state='disabled',
             relief='flat',
-            borderwidth=0
+            borderwidth=0,
+            insertbackground="#EAECEE",  # Cursor color
+            selectbackground="#3980A6",  # Selection color (teal)
+            padx=10,
+            pady=6
         )
-        self.action_message_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Match button padding
+        self.action_message_text.pack(fill='both', expand=True)
+        
+        # Configure text alignment and spacing
+        self.action_message_text.tag_configure("center", justify='center')
+        self.action_message_text.tag_configure("vpad", spacing1=4, spacing3=4)
         
         # Initialize with welcome message
         self._add_action_message("Welcome! Start a new hand to begin playing.")
+        
+        # Store container reference for animations
+        self.message_container = message_container
     
     def _add_action_message(self, message: str):
         """Add a message to the action message area (exactly 2 lines, well-centered)."""
@@ -309,29 +391,49 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             
             # Clear and set new content
             self.action_message_text.delete("1.0", tk.END)
-            self.action_message_text.insert("1.0", '\n'.join(lines))
+            content = '\n'.join(lines)
+            self.action_message_text.insert("1.0", content)
+            # Apply centering and vertical padding
+            self.action_message_text.tag_add("center", "1.0", tk.END)
+            self.action_message_text.tag_add("vpad", "1.0", tk.END)
             
             self.action_message_text.config(state='disabled')
 
     def _handle_action_message(self, event):
         """Convert action_executed events to user-friendly messages."""
+        # Handle both data dict format and direct attribute format
         if hasattr(event, 'data') and event.data:
             player_name = event.data.get('player_name', 'Unknown')
             action = event.data.get('action', 'unknown')
             amount = event.data.get('amount', 0)
+        else:
+            # Direct attribute format (FPSM style)
+            player_name = getattr(event, 'player_name', 'Unknown')
+            action = getattr(event, 'action', 'unknown')
+            amount = getattr(event, 'amount', 0)
             
+            # Convert ActionType enum to string if needed
+            if hasattr(action, 'value'):
+                action = action.value
+            
+            # Enhanced action messages with emojis and amounts
             if action == 'fold':
-                self._add_action_message(f"{player_name} folds")
+                self._add_action_message(f"💤 {player_name} folds")
             elif action == 'check':
-                self._add_action_message(f"{player_name} checks")
+                self._add_action_message(f"✋ {player_name} checks")
             elif action == 'call':
-                self._add_action_message(f"{player_name} calls ${amount:.2f}")
+                if amount > 0:
+                    self._add_action_message(f"📞 {player_name} calls ${amount:.0f}")
+                else:
+                    self._add_action_message(f"📞 {player_name} calls")
             elif action == 'bet':
-                self._add_action_message(f"{player_name} bets ${amount:.2f}")
+                self._add_action_message(f"💰 {player_name} bets ${amount:.0f}")
             elif action == 'raise':
-                self._add_action_message(f"{player_name} raises to ${amount:.2f}")
+                self._add_action_message(f"🚀 {player_name} raises to ${amount:.0f}")
+            elif action == 'all_in':
+                self._add_action_message(f"🔥 {player_name} goes ALL IN (${amount:.0f})")
             else:
-                self._add_action_message(f"{player_name} {action}")
+                self._add_action_message(f"🎯 {player_name} {action}")
 
     def _handle_street_change_message(self, event):
         """Convert state_change events to street transition messages."""
@@ -358,96 +460,145 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                         self._add_action_message(f"🃏 River: {river}")
 
     def _handle_hand_complete_message(self, event):
-        """Convert hand_complete events to showdown result messages."""
+        """Convert hand_complete events to showdown result messages with best 5 cards."""
         if hasattr(event, 'data') and event.data:
-            winner = event.data.get('winner', 'Unknown')
+            winner_info = event.data.get('winner_info', {})
+            winner = winner_info.get('name') or event.data.get('winner', 'Unknown')
             pot_amount = event.data.get('pot_amount', 0)
-            winning_hand = event.data.get('winning_hand', '')
-            self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {winning_hand}")
+            hand_desc = winner_info.get('hand_description') or event.data.get('winning_hand', '')
+            best_five = winner_info.get('best_five', [])
+            if best_five:
+                best_five_str = ' '.join(best_five)
+                self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc} ({best_five_str})")
+            else:
+                self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc}")
     
     def _setup_quick_bet_buttons(self, parent):
         """Setup quick bet buttons for faster gameplay."""
+        # Add padding frame for consistent spacing
+        padding_frame = tk.Frame(parent, bg=THEME["secondary_bg"])
+        padding_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        
         # Quick bet buttons panel
-        bet_panel = tk.Frame(parent, bg=THEME["primary_bg"])
+        bet_panel = tk.Frame(padding_frame, bg=THEME["secondary_bg"])
         bet_panel.pack(fill=tk.BOTH, expand=True)
         
-        # Configure grid for quick bet buttons (2x3 layout - 6 buttons total)
-        bet_panel.grid_columnconfigure(0, weight=1)
-        bet_panel.grid_columnconfigure(1, weight=1)
-        bet_panel.grid_columnconfigure(2, weight=1)
-        bet_panel.grid_rowconfigure(0, weight=1)
-        bet_panel.grid_rowconfigure(1, weight=1)
+        # Configure grid for quick bet buttons (2x4 layout - 8 buttons total)
+        for c in range(4):
+            bet_panel.grid_columnconfigure(c, weight=1)
+        for r in range(2):
+            bet_panel.grid_rowconfigure(r, weight=1)
         
         # Quick bet buttons using Frame+Label pattern
         bet_buttons_data = [
-            ("1/3 POT", "one_third", 0, 0),
-            ("1/2 POT", "half", 0, 1),
-            ("2/3 POT", "two_thirds", 0, 2),
-            ("POT", "pot", 1, 0),
-            ("2x POT", "two_x_pot", 1, 1),
-            ("ALL IN", "all_in", 1, 2)
+            ("1/4 POT", "quarter", 0, 0),
+            ("1/3 POT", "one_third", 0, 1),
+            ("1/2 POT", "half", 0, 2),
+            ("3/4 POT", "three_quarters", 0, 3),
+            ("2/3 POT", "two_thirds", 1, 0),
+            ("POT", "pot", 1, 1),
+            ("2x POT", "two_x_pot", 1, 2),
+            ("ALL IN", "all_in", 1, 3)
         ]
         
         self.quick_bet_buttons = {}
         
         for text, key, row, col in bet_buttons_data:
-            # Use dark deep orange color for all bet buttons
-            button_color = "#B8460E"  # Dark deep orange for all bet buttons
+            # Warm orange-brown for bet chips by spec
+            base_color = "#BF682D"
             
             # Create frame
             bet_frame = tk.Frame(
                 bet_panel,
-                bg=button_color,
-                relief='raised',
-                bd=2,
+                bg=base_color,
+                relief='flat',
+                bd=0,
                 cursor='hand2'
             )
-            bet_frame.grid(row=row, column=col, padx=2, pady=2, sticky="nsew", ipadx=5, ipady=5)
+            bet_frame.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
             
             # Create label
             bet_label = tk.Label(
                 bet_frame,
                 text=text,
-                bg=button_color,
+                bg=base_color,
                 fg='white',
-                font=('Arial', 10, 'bold'),
+                font=('Segoe UI', 11, 'bold'),
                 cursor='hand2'
             )
-            bet_label.pack(fill=tk.BOTH, expand=True)
+            bet_label.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+            # Hover and selection effects
+            hover_color = "#D97B3A"  # lighten on hover
+            selected_outline = "#FFD700"
+
+            def make_hover_handlers(frame=bet_frame, label=bet_label, normal=base_color, hover=hover_color):
+                def on_enter(_):
+                    frame.config(bg=hover)
+                    label.config(bg=hover)
+                def on_leave(_):
+                    # restore unless selected
+                    if getattr(frame, 'is_selected', False):
+                        return
+                    frame.config(bg=normal)
+                    label.config(bg=normal)
+                return on_enter, on_leave
+
+            on_enter, on_leave = make_hover_handlers()
+            bet_frame.bind('<Enter>', on_enter)
+            bet_frame.bind('<Leave>', on_leave)
+            bet_label.bind('<Enter>', on_enter)
+            bet_label.bind('<Leave>', on_leave)
             
             # Bind click events
-            bet_frame.bind("<Button-1>", lambda e, bet_type=key: self._handle_quick_bet(bet_type))
-            bet_label.bind("<Button-1>", lambda e, bet_type=key: self._handle_quick_bet(bet_type))
+            def on_click_factory(bet_type, frame=bet_frame):
+                def _on_click(_):
+                    # clear selection visuals
+                    for k, f in getattr(self, 'quick_bet_buttons', {}).items():
+                        f.is_selected = False
+                        f.config(highlightthickness=0)
+                    # select this
+                    frame.is_selected = True
+                    frame.config(highlightthickness=2, highlightbackground=selected_outline)
+                    self._handle_quick_bet(bet_type)
+                return _on_click
+
+            bet_frame.bind("<Button-1>", on_click_factory(key))
+            bet_label.bind("<Button-1>", on_click_factory(key))
             
             # Store reference
             self.quick_bet_buttons[key] = bet_frame
     
     def _setup_action_buttons(self, parent):
-        """Setup modern action buttons in the bottom center area."""
+        """Setup professional action buttons."""
+        # Professional button container
+        button_container = tk.Frame(parent, bg="#1E232A")
+        button_container.pack(fill='both', expand=True, padx=6, pady=6)
+        
         # Action buttons panel
-        action_panel = tk.Frame(parent, bg=THEME["primary_bg"])
+        action_panel = tk.Frame(button_container, bg="#1E232A")
         action_panel.pack(fill=tk.BOTH, expand=True)
         
         # Configure grid for equal button distribution
         for i in range(3):  # 3 action buttons only (CHECK, FOLD, BET/RAISE)
             action_panel.grid_columnconfigure(i, weight=1)
         
-        # CHECK/CALL button using Frame+Label for proper macOS colors
+        # CHECK/CALL button with professional styling
         check_frame = tk.Frame(
             action_panel,
-            bg=THEME['button_check'],
-            relief='raised',
-            bd=3,
+            bg='#3980A6',  # Teal Blue
+            relief='flat',
+            bd=0,
             cursor='hand2'
         )
-        check_frame.grid(row=0, column=0, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        check_frame.grid(row=0, column=0, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
         
         check_label = tk.Label(
             check_frame,
             text="CHECK",
-            bg=THEME['button_check'],
-            fg='white',
-            font=('Arial', 14, 'bold'),
+            bg='#3980A6',  # Teal Blue
+            fg='#FFFFFF',  # White text
+            font=('Segoe UI', 11, 'bold'),
             cursor='hand2'
         )
         check_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
@@ -464,22 +615,22 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         
         check_button = check_frame  # Reference for enable/disable
         
-        # FOLD button using Frame+Label for proper macOS colors
+        # FOLD button with professional styling
         fold_frame = tk.Frame(
             action_panel,
-            bg=THEME['button_fold'],
-            relief='raised',
-            bd=3,
+            bg='#757575',  # Gray
+            relief='flat',
+            bd=0,
             cursor='hand2'
         )
-        fold_frame.grid(row=0, column=1, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        fold_frame.grid(row=0, column=1, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
         
         fold_label = tk.Label(
             fold_frame,
             text="FOLD",
-            bg=THEME['button_fold'],
-            fg='white',
-            font=('Arial', 14, 'bold'),
+            bg='#757575',  # Gray
+            fg='#FFFFFF',  # White text
+            font=('Segoe UI', 11, 'bold'),
             cursor='hand2'
         )
         fold_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
@@ -496,22 +647,22 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         
         fold_button = fold_frame  # Reference for enable/disable
         
-        # BET/RAISE button using Frame+Label for proper macOS colors
+        # BET/RAISE button with professional styling
         bet_frame = tk.Frame(
             action_panel,
-            bg=THEME['button_raise'],
-            relief='raised',
-            bd=3,
+            bg='#E53935',  # Bright Red
+            relief='flat',
+            bd=0,
             cursor='hand2'
         )
-        bet_frame.grid(row=0, column=2, padx=5, pady=10, sticky="ew", ipadx=10, ipady=8)
+        bet_frame.grid(row=0, column=2, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
         
         bet_label = tk.Label(
             bet_frame,
             text="RAISE",
-            bg=THEME['button_raise'],
-            fg='white',
-            font=('Arial', 14, 'bold'),
+            bg='#E53935',  # Bright Red
+            fg='#FFFFFF',  # White text
+            font=('Segoe UI', 11, 'bold'),
             cursor='hand2'
         )
         bet_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
@@ -1143,26 +1294,24 @@ Total Winnings: ${stats['total_winnings']:.2f}
             self.poker_widget.change_table_felt(felt_color)
     
     def _disable_start_button(self):
-        """Disable the start button (custom Frame+Label implementation)."""
-        if hasattr(self, 'start_label'):
-            self.start_label.config(
-                bg=THEME.get('button_disabled', '#666666'),
+        """Disable the start button (professional Button implementation)."""
+        if hasattr(self, 'start_btn'):
+            self.start_btn.config(
+                bg='#388E3C',  # Darker green disabled state
+                fg='#CCCCCC',  # Light gray dimmed text
+                state='disabled',
                 cursor=''
             )
-            # Unbind click events
-            self.start_btn.unbind("<Button-1>")
-            self.start_label.unbind("<Button-1>")
     
     def _enable_start_button(self):
-        """Enable the start button (custom Frame+Label implementation)."""
-        if hasattr(self, 'start_label'):
-            self.start_label.config(
-                bg=THEME['chip_green'],
+        """Enable the start button (professional Button implementation)."""
+        if hasattr(self, 'start_btn'):
+            self.start_btn.config(
+                bg='#4CAF50',  # Medium Green
+                fg='#FFFFFF',  # White text
+                state='normal',
                 cursor='hand2'
             )
-            # Rebind click events
-            self.start_btn.bind("<Button-1>", lambda e: self._start_new_hand())
-            self.start_label.bind("<Button-1>", lambda e: self._start_new_hand())
 
     def _update_action_buttons_for_game_state(self):
         """Update action button text and appearance based on current game state."""

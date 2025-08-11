@@ -120,12 +120,16 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
             human_stack = human_player.stack if human_player else 1000.0
             
             # Calculate bet amount based on type
-            if bet_type == "one_third":
+            if bet_type == "quarter":
+                return max(2.0, current_pot * 0.25)
+            elif bet_type == "one_third":
                 return max(2.0, current_pot * 0.33)
             elif bet_type == "half":
                 return max(2.0, current_pot * 0.5)
             elif bet_type == "two_thirds":
                 return max(2.0, current_pot * 0.67)
+            elif bet_type == "three_quarters":
+                return max(2.0, current_pot * 0.75)
             elif bet_type == "pot":
                 return max(2.0, current_pot)
             elif bet_type == "two_x_pot":
