@@ -2,27 +2,29 @@
   "poker_actions": {
     "check": "player_check.wav",
     "call": "player_call.wav",
-    "bet": "chip_bet_single.wav",
-    "raise": "chip_bet_multiple.wav",
-    "fold": "card_fold.wav",
-    "all_in": "all_in_push.wav"
+    "bet": "player_bet.wav",
+    "raise": "player_raise.wav",
+    "fold": "player_fold.wav",
+    "all_in": "player_all_in.wav"
   },
   "card_actions": {
-    "deal_single": "card_deal_single.wav",
-    "deal_flop": "card_deal_flop.wav",
-    "shuffle": "card_shuffle.wav",
-    "flip": "card_flip.wav"
+    "deal": "card_deal.wav",
+    "dealing": "card_deal.wav",
+    "shuffle": "shuffle-cards-46455.mp3",
+    "flip": "card_deal.wav"
   },
   "chip_actions": {
-    "bet": "chip_bet_single.wav",
-    "stack": "chip_stack.wav",
-    "collect": "chip_collect.wav",
-    "shuffle": "chip_shuffle.wav"
+    "bet": "chip_bet.wav",
+    "multiple": "chip_bet_multiple.wav",
+    "single": "chip_bet_single.wav",
+    "collect": "pot_split.wav",
+    "stack": "chip_bet.wav"
   },
   "ui_actions": {
-    "click": "ui_click.wav",
-    "error": "ui_error.wav",
-    "success": "ui_success.wav",
-    "notification": "turn_chime.wav"
+    "click": "button_move.wav",
+    "error": "turn_notify.wav",
+    "success": "winner_announce.wav",
+    "notification": "turn_notify.wav",
+    "winner": "winner_announce.wav"
   }
 }

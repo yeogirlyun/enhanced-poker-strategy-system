@@ -30,6 +30,7 @@ from datetime import datetime
 import cProfile
 
 from core.gui_models import StrategyData, THEME, FONTS, GridSettings
+from core.table_felt_styles import get_scheme_manager
 from ui.components.hand_grid import HandGridWidget
 from ui.components.tier_panel import TierPanel
 from ui.components.decision_table_panel import DecisionTablePanel
@@ -232,7 +233,7 @@ class EnhancedMainGUI:
         # Settings menu
         settings_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Settings", menu=settings_menu)
-        settings_menu.add_command(label="🎵 Sound Settings", command=self._show_sound_settings)
+        settings_menu.add_command(label="🎵🎨 Sound & Appearance", command=self._show_sound_settings)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -250,17 +251,20 @@ class EnhancedMainGUI:
         except:
             pass
         
-        # Table Felt menu
+        # Table Felt menu - Casino-grade styles
         felt_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Table Felt", menu=felt_menu)
-        felt_menu.add_command(label="Classic Green", command=lambda: self._change_table_felt("classic_green"))
-        felt_menu.add_command(label="Royal Blue", command=lambda: self._change_table_felt("royal_blue"))
-        felt_menu.add_command(label="Burgundy Red", command=lambda: self._change_table_felt("burgundy_red"))
-        felt_menu.add_command(label="Deep Purple", command=lambda: self._change_table_felt("deep_purple"))
-        felt_menu.add_command(label="Golden Brown", command=lambda: self._change_table_felt("golden_brown"))
-        felt_menu.add_command(label="Ocean Blue", command=lambda: self._change_table_felt("ocean_blue"))
-        felt_menu.add_command(label="Forest Green", command=lambda: self._change_table_felt("forest_green"))
-        felt_menu.add_command(label="Midnight Black", command=lambda: self._change_table_felt("midnight_black"))
+        menubar.add_cascade(label="🃏 Table Felt", menu=felt_menu)
+        
+        # Get scheme manager and add all table schemes
+        scheme_manager = get_scheme_manager()
+        for scheme_id, scheme in scheme_manager.get_all_schemes().items():
+            # Add checkmark for current scheme
+            is_current = (scheme_id == scheme_manager.current_scheme_id)
+            label = f"{'✓ ' if is_current else '  '}{scheme.name}"
+            felt_menu.add_command(
+                label=label, 
+                command=lambda sid=scheme_id: self._change_table_scheme(sid)
+            )
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -1272,11 +1276,41 @@ Ready to track performance...
             self.set_status("🔍 Table size decreased")
         else:
             print(f"❌ practice_ui does not exist")
-    def _change_table_felt(self, felt_color):
-        """Change the table felt color."""
-        if hasattr(self, 'practice_ui'):
-            self.practice_ui.change_table_felt(felt_color)
-            self.set_status(f"🎨 Table felt changed to {felt_color.replace('_', ' ').title()}")
+    
+    def _change_table_scheme(self, scheme_id: int):
+        """Change the table to a complete color scheme."""
+        scheme_manager = get_scheme_manager()
+        
+        if scheme_manager.set_scheme(scheme_id):
+            scheme = scheme_manager.get_current_scheme()
+            
+            # Update the poker table if practice UI exists
+            if hasattr(self, 'practice_ui') and hasattr(self.practice_ui, 'poker_widget'):
+                if hasattr(self.practice_ui.poker_widget, 'change_table_felt'):
+                    # Pass the complete scheme to the table renderer
+                    self.practice_ui.poker_widget.change_table_felt(scheme.felt_color, scheme)
+            
+            # Update menu checkmarks
+            self._update_felt_menu_checkmarks()
+            
+            # Show status message
+            self.set_status(f"🎨 Table scheme changed to {scheme.name}")
+        else:
+            self.set_status("⚠️ Failed to change table scheme")
+    
+    # Legacy compatibility method
+    def _change_table_felt_style(self, style_id: int):
+        """Legacy compatibility method."""
+        self._change_table_scheme(style_id)
+    
+    def _update_felt_menu_checkmarks(self):
+        """Update the checkmarks in the felt menu to reflect current selection."""
+        # Recreate the menu to update checkmarks
+        try:
+            self._create_menu()
+        except Exception as e:
+            print(f"Warning: Could not update felt menu: {e}")
+    
     def _show_game_settings(self):
         """Show advanced game settings dialog."""
         settings_text = """Advanced Game Settings
@@ -1304,10 +1338,292 @@ These settings can be configured in the main strategy panels."""
         messagebox.showinfo("Game Settings", settings_text)
         self.set_status("Game settings dialog displayed")
     
+    def _create_sound_settings_dialog(self):
+        """Create and show the sound settings dialog."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("🎵🎨 Sound & Appearance Settings")
+        dialog.geometry("400x500")
+        dialog.configure(bg=THEME["primary_bg"])
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        # Main frame
+        main_frame = ttk.Frame(dialog)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Title
+        title_label = ttk.Label(
+            main_frame, 
+            text="🎵🎨 Sound & Appearance Settings", 
+            font=(FONTS["main"][0], 16, "bold")
+        )
+        title_label.pack(pady=(0, 20))
+        
+        # Voice Type Section
+        voice_frame = ttk.LabelFrame(main_frame, text="Voice Announcer")
+        voice_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        ttk.Label(
+            voice_frame, 
+            text="Select voice type for action announcements:"
+        ).pack(anchor=tk.W, padx=10, pady=(10, 5))
+        
+        self.voice_var = tk.StringVar(value="announcer_female")
+        voice_options = [
+            ("Female Announcer", "announcer_female"),
+            ("Male Announcer", "announcer_male"),
+            ("Female Dealer", "dealer_female"),
+            ("Male Dealer", "dealer_male"),
+            ("Female Hostess", "hostess_female"),
+            ("Tournament Female", "tournament_female")
+        ]
+        
+        for text, value in voice_options:
+            ttk.Radiobutton(
+                voice_frame,
+                text=text,
+                variable=self.voice_var,
+                value=value,
+                command=lambda: self._test_voice_selection()
+            ).pack(anchor=tk.W, padx=20, pady=2)
+        
+        # Volume Section
+        volume_frame = ttk.LabelFrame(main_frame, text="Volume Settings")
+        volume_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        # Voice Volume
+        ttk.Label(volume_frame, text="Voice Volume:").pack(anchor=tk.W, padx=10, pady=(10, 5))
+        self.voice_volume_var = tk.DoubleVar(value=0.8)
+        voice_volume_scale = ttk.Scale(
+            volume_frame,
+            from_=0.0,
+            to=1.0,
+            orient=tk.HORIZONTAL,
+            variable=self.voice_volume_var,
+            command=self._update_voice_volume
+        )
+        voice_volume_scale.pack(fill=tk.X, padx=20, pady=(0, 10))
+        
+        # Sound Effects Volume
+        ttk.Label(volume_frame, text="Sound Effects Volume:").pack(anchor=tk.W, padx=10, pady=(5, 5))
+        self.sfx_volume_var = tk.DoubleVar(value=0.7)
+        sfx_volume_scale = ttk.Scale(
+            volume_frame,
+            from_=0.0,
+            to=1.0,
+            orient=tk.HORIZONTAL,
+            variable=self.sfx_volume_var,
+            command=self._update_sfx_volume
+        )
+        sfx_volume_scale.pack(fill=tk.X, padx=20, pady=(0, 10))
+        
+        # Table Felt Color Section
+        felt_frame = ttk.LabelFrame(main_frame, text="Table Appearance")
+        felt_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        ttk.Label(
+            felt_frame, 
+            text="Select table felt color:"
+        ).pack(anchor=tk.W, padx=10, pady=(10, 5))
+        
+        self.felt_var = tk.StringVar(value="classic_green")
+        felt_options = [
+            ("Classic Green", "classic_green"),
+            ("Royal Blue", "royal_blue"), 
+            ("Burgundy Red", "burgundy_red"),
+            ("Deep Purple", "deep_purple"),
+            ("Golden Brown", "golden_brown"),
+            ("Ocean Blue", "ocean_blue"),
+            ("Forest Green", "forest_green"),
+            ("Midnight Black", "midnight_black")
+        ]
+        
+        # Create a frame for radio buttons in 2 columns
+        felt_radio_frame = ttk.Frame(felt_frame)
+        felt_radio_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+        
+        for i, (text, value) in enumerate(felt_options):
+            ttk.Radiobutton(
+                felt_radio_frame,
+                text=text,
+                variable=self.felt_var,
+                value=value,
+                command=lambda: self._preview_felt_color()
+            ).grid(row=i//2, column=i%2, sticky=tk.W, padx=(0, 20), pady=2)
+        
+        # Test Buttons
+        test_frame = ttk.Frame(main_frame)
+        test_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        ttk.Button(
+            test_frame,
+            text="🎤 Test Voice",
+            command=self._test_voice
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        
+        ttk.Button(
+            test_frame,
+            text="🔊 Test Chip Sound",
+            command=self._test_chip_sound
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        
+        ttk.Button(
+            test_frame,
+            text="🎨 Preview Felt",
+            command=self._preview_felt_color
+        ).pack(side=tk.LEFT)
+        
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X)
+        
+        ttk.Button(
+            button_frame,
+            text="✅ Apply",
+            command=lambda: self._apply_sound_settings(dialog)
+        ).pack(side=tk.RIGHT, padx=(10, 0))
+        
+        ttk.Button(
+            button_frame,
+            text="❌ Cancel",
+            command=dialog.destroy
+        ).pack(side=tk.RIGHT)
+        
+        self.set_status("Sound settings dialog opened")
+    
+    def _test_voice_selection(self):
+        """Test the selected voice immediately when changed."""
+        self._test_voice()
+    
+    def _test_voice(self):
+        """Test the currently selected voice."""
+        try:
+            # Get the practice session UI's sound manager
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sound_manager = game_widget.sound_manager
+                    if sound_manager and hasattr(sound_manager, 'voice_manager'):
+                        # Set the voice type
+                        sound_manager.voice_manager.set_voice_type(self.voice_var.get())
+                        # Test with a sample action
+                        sound_manager.voice_manager.play_voice("bet")
+                        self.set_status(f"Testing voice: {self.voice_var.get()}")
+                        return
+            
+            # Fallback message if no sound manager available
+            self.set_status("Voice test - no sound manager available")
+        except Exception as e:
+            self.set_status(f"Voice test failed: {e}")
+    
+    def _test_chip_sound(self):
+        """Test chip sound effect."""
+        try:
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sound_manager = game_widget.sound_manager
+                    sound_manager.play_chip_sound("bet")
+                    self.set_status("Testing chip sound")
+                    return
+            
+            self.set_status("Chip test - no sound manager available")
+        except Exception as e:
+            self.set_status(f"Chip test failed: {e}")
+    
+    def _update_voice_volume(self, value):
+        """Update voice volume in real time."""
+        try:
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sound_manager = game_widget.sound_manager
+                    if sound_manager and hasattr(sound_manager, 'voice_manager'):
+                        sound_manager.voice_manager.volume = float(value)
+        except Exception:
+            pass
+    
+    def _update_sfx_volume(self, value):
+        """Update sound effects volume in real time."""
+        try:
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sound_manager = game_widget.sound_manager
+                    sound_manager.set_volume(float(value))
+        except Exception:
+            pass
+    
+    def _preview_felt_color(self):
+        """Preview the selected felt color immediately."""
+        try:
+            felt_color = self.felt_var.get()
+            self._apply_felt_color(felt_color)
+            self.set_status(f"Previewing table felt: {felt_color.replace('_', ' ').title()}")
+        except Exception as e:
+            self.set_status(f"Felt preview failed: {e}")
+    
+    def _apply_felt_color(self, felt_color):
+        """Apply the selected felt color to the table."""
+        # Define the table felt colors
+        table_felt_colors = {
+            "classic_green": "#015939",
+            "royal_blue": "#2d5aa0", 
+            "burgundy_red": "#8b2d2d",
+            "deep_purple": "#5a2d8b",
+            "golden_brown": "#8b6b2d",
+            "ocean_blue": "#2d8b8b",
+            "forest_green": "#2d8b2d",
+            "midnight_black": "#2d2d2d"
+        }
+        
+        new_color = table_felt_colors.get(felt_color, "#35654D")
+        
+        # Update the THEME
+        from core.gui_models import THEME
+        THEME["table_felt"] = new_color
+        
+        # Apply to practice session if available
+        if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+            # Update the table felt in the poker widget
+            if hasattr(self.practice_session_ui, 'poker_widget'):
+                self.practice_session_ui.poker_widget._draw_table()
+            
+            # Update START NEW HAND button color to match
+            if hasattr(self.practice_session_ui, 'start_label'):
+                self.practice_session_ui.start_label.config(bg=new_color)
+            if hasattr(self.practice_session_ui, 'start_btn'):
+                self.practice_session_ui.start_btn.config(bg=new_color)
+    
+    def _apply_sound_settings(self, dialog):
+        """Apply the sound settings and close the dialog."""
+        try:
+            # Apply voice type
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sound_manager = game_widget.sound_manager
+                    if sound_manager and hasattr(sound_manager, 'voice_manager'):
+                        sound_manager.voice_manager.set_voice_type(self.voice_var.get())
+                        sound_manager.voice_manager.volume = self.voice_volume_var.get()
+                    sound_manager.set_volume(self.sfx_volume_var.get())
+            
+            # Apply felt color
+            self._apply_felt_color(self.felt_var.get())
+            
+            self.set_status(f"Settings applied: {self.voice_var.get()}, {self.felt_var.get().replace('_', ' ').title()}")
+            dialog.destroy()
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not apply settings: {e}")
+            self.set_status(f"Settings error: {e}")
+    
     def _show_sound_settings(self):
         """Show sound settings window."""
         try:
-            messagebox.showinfo("Sound Settings", "Sound settings feature is currently being updated.")
+            self._create_sound_settings_dialog()
         except Exception as e:
             messagebox.showerror("Error", f"Could not open sound settings: {e}")
 

@@ -31,6 +31,8 @@ class GameConfig:
     big_blind: float = 2.0  # Changed from 1.0 to 2.0 (no floating point)
     small_blind: float = 1.0  # Changed from 0.5 to 1.0 (no floating point)
     starting_stack: float = 200.0  # Changed from 100.0 to 200.0
+    # Optional testing flag kept for backward compatibility with tester scripts
+    test_mode: bool = False
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -107,7 +109,8 @@ class FlexiblePokerStateMachine:
         
         # Utilities
         self.hand_evaluator = EnhancedHandEvaluator()
-        self.sound_manager = SoundManager()
+        # Pass through test_mode so testers can disable sound/voice
+        self.sound_manager = SoundManager(test_mode=self.config.test_mode)
         
         # Strategy integration (optional)
         self.strategy_integration = self._create_basic_strategy_integration()
@@ -470,7 +473,11 @@ class FlexiblePokerStateMachine:
                 "name": ", ".join([w.name for w in winners]) if winners else "Unknown",
                 "amount": self.game_state.pot,
                 "board": self.game_state.board.copy(),
-                "hand": "Unknown"  # Will be filled by hand evaluator if available
+                "hand": "Unknown",  # Backward compatible field
+                # New fields for richer showdown messaging
+                "hand_description": "Unknown",
+                "hand_rank": "",
+                "best_five": []
             }
             
             # Try to get hand description for the first winner
@@ -480,10 +487,19 @@ class FlexiblePokerStateMachine:
                     if first_winner.cards and len(first_winner.cards) == 2:
                         hand_eval = self.hand_evaluator.evaluate_hand(
                             first_winner.cards, self.game_state.board)
-                        if isinstance(hand_eval, dict) and 'hand_description' in hand_eval:
-                            winner_info["hand"] = hand_eval['hand_description']
-                        elif isinstance(hand_eval, dict) and 'hand_rank' in hand_eval:
-                            winner_info["hand"] = hand_eval['hand_rank'].name.replace('_', ' ').title()
+                        if isinstance(hand_eval, dict):
+                            # Prefer explicit description when available
+                            if 'hand_description' in hand_eval:
+                                winner_info["hand_description"] = hand_eval['hand_description']
+                                winner_info["hand"] = hand_eval['hand_description']  # legacy alias
+                            if 'hand_rank' in hand_eval:
+                                winner_info["hand_rank"] = getattr(hand_eval['hand_rank'], 'name', str(hand_eval['hand_rank'])).replace('_', ' ').title()
+                        # Compute and attach best five cards used to win
+                        try:
+                            best_five_cards = self.hand_evaluator.get_best_five_cards(first_winner.cards, self.game_state.board)
+                            winner_info["best_five"] = best_five_cards
+                        except Exception:
+                            pass
                 except Exception as e:
                     self._safe_print(f"Warning: Could not evaluate winning hand: {e}")
             
@@ -501,11 +517,10 @@ class FlexiblePokerStateMachine:
                 }
             ))
             
-            # Emit display state update with final pot before reset
+            # Emit display state update reflecting final showdown state and pot
+            # Do NOT reset pot here; keep it until the next hand starts so the
+            # UI can animate chips cleanly and still show the last pot amount.
             self._emit_display_state_event()
-            
-            # Reset pot after emitting events (for validation purposes)
-            self.game_state.pot = 0.0
         
         # For betting states, ensure actions_this_round is reset if not already
         betting_states = [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
@@ -542,8 +557,9 @@ class FlexiblePokerStateMachine:
     
     def _reset_bets_for_new_round(self):
         """Reset bets for a new betting round."""
+        # IMPORTANT: Pot is already incremented during actions and blind posting.
+        # Do NOT add player.current_bet again here or pot will double-count.
         for player in self.game_state.players:
-            self.game_state.pot += player.current_bet
             player.current_bet = 0.0
         self.game_state.current_bet = 0.0
     
@@ -736,34 +752,38 @@ class FlexiblePokerStateMachine:
         ))
     
     def _is_round_complete(self) -> bool:
-        """Check if the current betting round is complete."""
-        active_players = [p for p in self.game_state.players 
-                         if not p.has_folded and p.is_active]
-        
-        if len(active_players) <= 1:
+        """Check if the current betting round is complete.
+
+        Fix: Exclude non-actionable players (all-in or with zero stack) when
+        determining whether more actions are required. This prevents loops where
+        only one player can act but the round never completes.
+        """
+        players = self.game_state.players
+        # Players still in the hand
+        active_players = [p for p in players if not p.has_folded and p.is_active]
+        # Players who can actually take an action (not all-in and with chips)
+        actionable_players = [p for p in active_players if not p.is_all_in and p.stack > 0]
+
+        # If everyone but one is out (folded/all-in/zero stack), the round is done
+        if len(actionable_players) <= 1:
             return True
-        
-        # Check if bets are equalized first (this is the key poker rule)
-        max_bet = max(p.current_bet for p in active_players)
-        all_equal = all(p.current_bet == max_bet or p.is_all_in 
-                       for p in active_players)
-        
+
+        # Bets equalization across active players (include all-in for equality)
+        max_bet = max(p.current_bet for p in active_players) if active_players else 0.0
+        all_equal = all((p.current_bet == max_bet) or p.is_all_in for p in active_players)
+
         if not all_equal:
             return False
-        
-        # If bets are equalized, check if we've gone around the table
-        # This prevents infinite loops while ensuring proper round completion
-        if self.actions_this_round >= len(active_players):
-            return True
-        
-        # No bet in this round: require all active players to act at least once
-        # Previously this returned True after the first check, which incorrectly
-        # ended the street before other players acted. We now require a full
-        # pass of actions equal to the number of active players.
+
+        # When equalized, require a full pass of actions among players who can act
+        required_actions = max(1, len(actionable_players))
+
+        # If no bet (max_bet == 0), ensure every actionable player has acted once
         if max_bet == 0:
-            return self.actions_this_round >= len(active_players)
-        
-        return False
+            return self.actions_this_round >= required_actions
+
+        # If there was betting, still require a pass among actionable players
+        return self.actions_this_round >= required_actions
     
     def _handle_round_complete(self):
         """Handle completion of a betting round."""
@@ -776,6 +796,16 @@ class FlexiblePokerStateMachine:
                 "street": self.game_state.street
             })
         
+        # Capture snapshot of bets BEFORE clearing, so UI can animate bets → pot
+        player_bets_snapshot = [
+            {
+                "index": i,
+                "name": p.name,
+                "amount": getattr(p, "current_bet", 0.0)
+            }
+            for i, p in enumerate(self.game_state.players)
+        ]
+
         self._reset_bets_for_new_round()
         self.actions_this_round = 0
         self.players_acted_this_round.clear()
@@ -789,11 +819,15 @@ class FlexiblePokerStateMachine:
             self.transition_to(PokerState.END_HAND)
             return
         
-        # Emit round complete event
+        # Emit round complete event with snapshot of player bets and current pot
         self._emit_event(GameEvent(
             event_type="round_complete",
             timestamp=time.time(),
-            data={"street": self.game_state.street}
+            data={
+                "street": self.game_state.street,
+                "player_bets": player_bets_snapshot,
+                "pot": self.game_state.pot
+            }
         ))
         
         # Transition to next state based on current state

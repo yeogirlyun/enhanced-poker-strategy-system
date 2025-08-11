@@ -89,11 +89,16 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_action_player = -1
         self.table_drawn = False
         
+        # Hand-complete animation coordination
+        self._pot_animation_scheduled = False
+        self._bet_animation_total_delay_ms = 0
+        
         # Highlight timing control to make actions visually clearer
-        # Delay moving the highlight briefly after an action so the bet/call
-        # visual can land first
+        # Keep highlight on the acting player for 500ms after an action,
+        # then move to the next player. With bot delay set to 1.0s,
+        # this yields a 0.5s pre-action highlight and 0.5s post-action hold.
         import time
-        self._highlight_delay_ms = 100
+        self._highlight_delay_ms = 500
         self._suppress_highlight_until = 0.0  # epoch seconds
         self._pending_highlight_index = None
         self._highlight_timer_active = False
@@ -1347,6 +1352,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     animation_delay += 280
             # Add a small delay after animations complete so users can perceive completion
             total_delay = animation_delay + 800
+            # Remember total delay so hand-complete can start pot animation AFTER this
+            self._bet_animation_total_delay_ms = total_delay
             self.after(total_delay, lambda: self._finish_bet_animations())
             debug_log(f"Round complete bet-to-pot animation scheduled; total_delay={total_delay}ms", "BET_ANIMATION")
         
@@ -1401,13 +1408,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             
             # Update pot display to ensure it shows the correct amount before animation
             self.update_pot_amount(pot_amount)
-            # Check if bet animations are currently running
+            # Check if bet animations are currently running and schedule strictly after they finish
             is_animating_bets = getattr(self, 'animating_bets_to_pot', False)
-            delay_for_pot_animation = 1200 if is_animating_bets else 300
-            debug_log(f"is_animating_bets={is_animating_bets}, delay={delay_for_pot_animation}ms", "POT_ANIMATION")
+            if is_animating_bets:
+                delay_for_pot_animation = max(300, getattr(self, '_bet_animation_total_delay_ms', 1200) + 200)
+            else:
+                delay_for_pot_animation = 300
+            debug_log(f"is_animating_bets={is_animating_bets}, scheduled_after={delay_for_pot_animation}ms", "POT_ANIMATION")
+            # Mark that a pot animation is about to run so we can defer heavy redraws
+            self._pot_animation_scheduled = True
             
             # Schedule pot-to-winner animation after bet animations complete
-            self.after(delay_for_pot_animation, lambda: self._start_pot_to_winner_animation(winner_info, pot_amount))
+            winners_list = event.data.get("winners", []) if hasattr(event, 'data') else []
+            self.after(delay_for_pot_animation, lambda: self._start_pot_to_winner_animation_multi(winner_info, winners_list, pot_amount))
         else:
             debug_log(f"No pot animation - winner_info valid: {bool(winner_info)}, pot_amount: {pot_amount}", "POT_ANIMATION")
             debug_log(f"Current display pot: ${self.last_pot_amount:.2f}, Event pot: ${pot_amount:.2f}", "POT_ANIMATION")
@@ -1424,22 +1437,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     }
                 )
 
-    def _start_pot_to_winner_animation(self, winner_info, pot_amount):
-        """Start pot-to-winner animation after bet animations are done."""
-        debug_log(f"_start_pot_to_winner_animation called with {winner_info.get('name', 'Unknown')}, ${pot_amount}", "POT_ANIMATION")
-        
-        # Ensure pot display is on top during pot-to-winner animation
+    def _start_pot_to_winner_animation_multi(self, winner_info, winners_list, pot_amount):
+        """Support split pots: animate chips to multiple winners if needed."""
         try:
-            if hasattr(self, 'pot_display') and self.pot_display:
-                self.canvas.tag_raise(self.pot_display)
-                debug_log("Pot display raised to front", "POT_ANIMATION")
+            names = []
+            # Prefer explicit winners list from event
+            if isinstance(winners_list, list) and winners_list:
+                names = winners_list
+            else:
+                # Fallback: parse comma-separated string in winner_info['name']
+                raw = winner_info.get('name', '') if isinstance(winner_info, dict) else ''
+                if raw:
+                    names = [n.strip() for n in raw.split(',') if n.strip()]
+            
+            if not names or len(names) == 1:
+                self._start_pot_to_winner_animation(winner_info, pot_amount)
+                return
+            
+            # Compute per-winner shares
+            share = pot_amount / max(1, len(names))
+            self.animate_pot_to_multiple_winners(names, share, pot_amount)
         except Exception as e:
-            debug_log(f"Error raising pot display: {e}", "POT_ANIMATION")
-        
-        # Start the pot-to-winner animation
-        debug_log("Calling animate_pot_to_winner...", "POT_ANIMATION")
-        self.animate_pot_to_winner(winner_info, pot_amount)
-    
+            debug_log(f"Error in split-pot start: {e}", "POT_ANIMATION")
+            # Fallback to single-winner animation
+            self._start_pot_to_winner_animation(winner_info, pot_amount)
+
     def _reset_all_highlights(self):
         """Clear any active highlights and reset internal state."""
         debug_log("_reset_all_highlights called", "HIGHLIGHT")
@@ -1619,9 +1641,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self._clear_all_bet_displays()
         self._clear_all_bet_displays_permanent()
         
-        # Force a display update after animation completes
-        debug_log("Forcing display update after bet animation completion", "DISPLAY_UPDATE")
-        self.after_idle(self._force_display_refresh)
+        # If a pot animation is queued, do not force a redraw now (it would clear chips)
+        if not getattr(self, '_pot_animation_scheduled', False):
+            debug_log("Forcing display update after bet animation completion", "DISPLAY_UPDATE")
+            self.after_idle(self._force_display_refresh)
     
     def _force_display_refresh(self):
         """Force a complete display refresh after animations."""
@@ -1666,23 +1689,23 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self.canvas.update()
     
     def update_pot_amount(self, amount):
-        """Update the pot amount display (FLICKER-FREE VERSION)."""
-        # Only update if pot amount actually changed
-        if self.last_pot_amount != amount:
+        """Update the pot amount display (FLICKER-FREE VERSION). Always apply update.
+        Note: self.last_pot_amount may be updated by logging earlier; do not gate on it.
+        """
+        if hasattr(self, 'pot_display') and self.pot_display:
+            self.pot_display.set_amount(amount)
+            debug_log(f"Pot display set to ${amount:,.2f}", "POT_DISPLAY")
+        elif hasattr(self, 'pot_label') and self.pot_label:
+            # Fallback for legacy pot label
+            self.pot_label.config(text=f"${amount:,.2f}")
+            debug_log(f"Pot legacy label set to ${amount:,.2f}", "POT_DISPLAY")
+        else:
+            # Pot display doesn't exist yet - create it then set
+            debug_log(f"Creating pot display for amount: ${amount:,.2f}", "POT_DISPLAY")
+            self._draw_pot_display()
             if hasattr(self, 'pot_display') and self.pot_display:
                 self.pot_display.set_amount(amount)
-                debug_log(f"Updated pot: ${self.last_pot_amount:,.2f} → ${amount:,.2f}", "POT_DISPLAY")
-            elif hasattr(self, 'pot_label') and self.pot_label:
-                # Fallback for legacy pot label
-                self.pot_label.config(text=f"${amount:,.2f}")
-                debug_log(f"Updated pot (legacy): ${self.last_pot_amount:,.2f} → ${amount:,.2f}", "POT_DISPLAY")
-            else:
-                # Pot display doesn't exist yet - ensure it's created
-                debug_log(f"Creating pot display for amount: ${amount:,.2f}", "POT_DISPLAY")
-                self._draw_pot_display()
-                if hasattr(self, 'pot_display') and self.pot_display:
-                    self.pot_display.set_amount(amount)
-            self.last_pot_amount = amount
+        self.last_pot_amount = amount
     
     def play_sound(self, sound_type: str, **kwargs):
         """Play a sound effect."""
@@ -1909,8 +1932,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             
             move_to_winner()
         
-        # Start with delay for staggered effect
-        self.after(delay, start_animation)
+    def _on_pot_animation_complete(self):
+        """Cleanup after pot-to-winner animation: hide pot and bet graphics."""
+        try:
+            # Refresh player stacks and clear any seat bet labels from FPSM state
+            if hasattr(self, 'state_machine') and self.state_machine:
+                self._update_from_fpsm_state()
+            # Clear pot display to 0 so no money remains shown at center
+            self.update_pot_amount(0.0)
+            # Clear any remaining bet displays (both modern and legacy)
+            self._clear_all_bet_displays()
+            self._clear_all_bet_displays_permanent()
+            debug_log("Pot animation complete - pot set to $0 and bet displays cleared", "POT_ANIMATION")
+        except Exception as e:
+            debug_log(f"Error during pot animation cleanup: {e}", "POT_ANIMATION")
+
     
     def _flash_winner_stack(self, winner_seat_index):
         """Flash the winner's stack to celebrate."""
@@ -2225,7 +2261,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Update community cards
         board_cards = game_info.get("board", [])
-        self._update_community_cards_from_display_state(board_cards)
+        # Ensure we only pass actual card codes, not placeholders
+        filtered = [c for c in board_cards if isinstance(c, str) and len(c) in (2,3) and c != "**"]
+        self._update_community_cards_from_display_state(filtered)
         
         # Update pot
         pot_amount = game_info.get("pot", 0.0)
@@ -3342,3 +3380,39 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             center_x, center_y = width / 2, height / 2
             pot_y = center_y + max(48, height * 0.07)
             return center_x, pot_y
+
+    def animate_pot_to_multiple_winners(self, winner_names, share_amount, total_pot):
+        """Animate split pot to multiple winners equally."""
+        try:
+            pot_x = self.canvas.winfo_width() // 2
+            pot_y = self.canvas.winfo_height() // 2 + 50
+            # Map names to seat positions
+            seat_targets = []
+            for name in winner_names:
+                idx = -1
+                for i, seat in enumerate(self.player_seats):
+                    if seat and seat.get("name_label"):
+                        player_name = seat["name_label"].cget("text")
+                        clean_name = player_name.split(' (')[0]
+                        if clean_name == name:
+                            idx = i
+                            break
+                if idx >= 0:
+                    seat_targets.append((idx, self.player_seats[idx]["position"]))
+            if not seat_targets:
+                debug_log("Split pot: no targets found; skipping", "POT_ANIMATION")
+                return
+            # Launch chips to each winner
+            max_delay = 0
+            for n, (idx, (wx, wy)) in enumerate(seat_targets):
+                num_chips = min(max(1, int(share_amount / 50)), 4)
+                for i in range(num_chips):
+                    delay = (i * 100) + (n * 120)  # stagger by winner too
+                    max_delay = max(max_delay, delay)
+                    self._animate_single_chip_to_winner(pot_x, pot_y, wx, wy, share_amount / num_chips, delay)
+                # Flash each winner a bit later
+                self.after(max_delay + 400, lambda seat_index=idx: self._flash_winner_stack(seat_index))
+            # Sound once
+            self.play_sound("winner")
+        except Exception as e:
+            debug_log(f"Error animating split pot: {e}", "POT_ANIMATION")

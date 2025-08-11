@@ -16,7 +16,7 @@ from typing import Dict, List, Any, Optional
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath('.')))
 
-from core.flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig
+from core.testable_poker_state_machine import TestablePokerStateMachine, TestableGameConfig
 from core.types import Player, ActionType, PokerState
 from core.position_mapping import UniversalPosition
 
@@ -103,17 +103,14 @@ class HistoricalOrderTester:
         hand_id = hand_data['id']
         hand_name = hand_data['name']
         
-        # Create FPSM configuration
-        config = GameConfig(
+        # Create testable FPSM configuration and instance
+        config = TestableGameConfig(
             num_players=hand_data['game_config']['num_players'],
             big_blind=hand_data['game_config']['big_blind'],
             small_blind=hand_data['game_config']['small_blind'],
-            starting_stack=1000000.0,
-            test_mode=True
+            starting_stack=1000000.0
         )
-        
-        # Create FPSM instance with modified behavior
-        fpsm = FlexiblePokerStateMachine(config)
+        fpsm = TestablePokerStateMachine(config)
         
         # Temporarily disable turn order validation
         original_get_action_player = fpsm.get_action_player

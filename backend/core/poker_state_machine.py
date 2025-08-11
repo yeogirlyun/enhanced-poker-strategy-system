@@ -2900,6 +2900,8 @@ class ImprovedPokerStateMachine:
         side_pots = self.create_side_pots()
         total_pot_awarded = 0
         all_winners = set()
+        main_pot_winners: list = []
+        main_pot_amount: float = 0.0
 
         for i, pot in enumerate(side_pots):
             pot_amount = pot['amount']
@@ -2922,20 +2924,26 @@ class ImprovedPokerStateMachine:
                     all_winners.add(winner.name)
                 
                 total_pot_awarded += pot_amount
+                # Track main pot winners (last in list)
+                if i == len(side_pots) - 1:
+                    main_pot_winners = winners
+                    main_pot_amount = pot_amount
 
         # Final check to ensure all money is awarded
         if abs(total_pot_awarded - self.game_state.pot) > 0.01:
              self._log_message(f"⚠️ Pot distribution discrepancy: {self.game_state.pot} vs {total_pot_awarded} awarded")
 
         if all_winners:
-            winner_names = ", ".join(sorted(all_winners))
-            pot_amount = self.game_state.pot  # Use original pot amount
+            # Prefer main pot winners for the primary announcement
+            chosen_winners = main_pot_winners if main_pot_winners else list(sorted(all_winners))
+            winner_names = ", ".join([w.name if hasattr(w, 'name') else str(w) for w in chosen_winners])
+            pot_amount = main_pot_amount if main_pot_amount > 0 else self.game_state.pot
             
             # ENHANCED: Include hand and board information for better UI display
             # Get the winning hand rank for the first winner
             winning_hand_rank = "Unknown"
             if all_winners:
-                first_winner_name = list(all_winners)[0]
+                first_winner_name = chosen_winners[0].name if hasattr(chosen_winners[0], 'name') else str(chosen_winners[0])
                 for player in self.game_state.players:
                     if player.name == first_winner_name and player.is_active:
                         winning_hand_rank = self.classify_hand(player.cards, self.game_state.board)

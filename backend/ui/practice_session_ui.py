@@ -211,6 +211,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     
     def _setup_bottom_control_strip(self):
         """Setup the professional bottom control panel."""
+        import os
         # Professional bottom panel with theme colors
         bottom_frame = tk.Frame(
             self,
@@ -227,90 +228,170 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             height=2
         )
         separator.pack(fill="x", side="top")
-        
-        # Main panel content with proper padding
-        content_frame = tk.Frame(
+
+        # LV-style gold hairline (subtle)
+        gold_hairline = tk.Frame(
             bottom_frame,
-            bg="#1E232A",  # Match panel background
-            relief='flat',
-            bd=0
+            bg="#FFD700",
+            height=1
         )
+        gold_hairline.pack(fill="x", side="top")
+        
+        # Main panel content with optional LV background image
+        content_frame = tk.Frame(bottom_frame, relief='flat', bd=0)
         content_frame.pack(fill="both", expand=True, padx=16, pady=8)
+        content_frame.configure(bg="#1E232A")
+
+        # Try to apply LV-style background image if available (PIL → fallback PhotoImage)
+        # Prefer bottom_panel_background.png if present
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+        preferred = os.path.join(data_dir, 'bottom_panel_background.png')
+        fallback = os.path.join(data_dir, 'LV style.png')
+        lv_path = preferred if os.path.exists(preferred) else fallback
+        if os.path.exists(lv_path):
+            bg_canvas = tk.Canvas(content_frame, highlightthickness=0, bd=0)
+            bg_canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+            self._lv_bg_image = None
+            try:
+                from PIL import Image, ImageTk  # Optional
+                img = Image.open(lv_path).convert('RGB')
+                overlay = Image.new('RGB', img.size, (30, 35, 42))
+                dark = Image.blend(img, overlay, alpha=0.30)
+                self._lv_bg_image = ImageTk.PhotoImage(dark)
+            except Exception:
+                try:
+                    self._lv_bg_image = tk.PhotoImage(file=lv_path)
+                except Exception:
+                    self._lv_bg_image = None
+
+            if self._lv_bg_image is not None:
+                def _tile_bg(event=None):
+                    bg_canvas.delete('bg')
+                    w, h = bg_canvas.winfo_width(), bg_canvas.winfo_height()
+                    iw, ih = self._lv_bg_image.width(), self._lv_bg_image.height()
+                    for y in range(0, h, ih):
+                        for x in range(0, w, iw):
+                            bg_canvas.create_image(x, y, image=self._lv_bg_image, anchor='nw', tags='bg')
+                bg_canvas.bind('<Configure>', _tile_bg)
         
-        # Configure four columns in content frame with professional spacing
-        content_frame.grid_columnconfigure(0, weight=0, minsize=140)  # Left: Session controls (fixed)
-        content_frame.grid_columnconfigure(1, weight=1, minsize=280)  # Center: Message area (expandable)
-        content_frame.grid_columnconfigure(2, weight=0, minsize=220)  # Center-Right: Action buttons (fixed)
-        content_frame.grid_columnconfigure(3, weight=0, minsize=160)  # Right: Bet buttons (fixed)
-        content_frame.grid_rowconfigure(0, weight=1, minsize=80)  # Ensure consistent height
+        # Configure three columns: message | action cluster | bet presets
+        content_frame.grid_columnconfigure(0, weight=1, minsize=320)   # Message area (expandable)
+        content_frame.grid_columnconfigure(1, weight=0, minsize=360)   # Action buttons cluster
+        content_frame.grid_columnconfigure(2, weight=0, minsize=320)   # Bet buttons cluster
+        content_frame.grid_rowconfigure(0, weight=1, minsize=80)  # Consistent panel height
         
-        # === LEFT: Session Controls ===
-        session_frame = tk.Frame(
-            content_frame,
-            bg="#1E232A"  # Match panel background
-        )
-        session_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=0)
-        self._setup_session_controls_bottom(session_frame)
-        
-        # === CENTER: Game Message Area ===
+        # === LEFT: Game Message Area (now column 0) ===
         message_frame = tk.Frame(
             content_frame,
             bg="#1E232A"  # Match panel background
         )
-        message_frame.grid(row=0, column=1, sticky="nsew", padx=12, pady=0)
+        message_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=8)
         self._setup_action_message_area(message_frame)
         
-        # === CENTER-RIGHT: Action Buttons ===
+        # === CENTER: Action Cluster (Check/Call + Fold on top, Start below) ===
         action_frame = tk.Frame(
             content_frame,
             bg="#1E232A"  # Match panel background
         )
-        action_frame.grid(row=0, column=2, sticky="nsew", padx=12, pady=0)
-        self._setup_action_buttons(action_frame)
+        action_frame.grid(row=0, column=1, sticky="nsew", padx=8, pady=8)
+        # Create combined cluster here (replaces separate action button layout)
+        self._setup_session_controls_bottom(action_frame)
         
         # === RIGHT: Quick Bet Buttons ===
         bet_buttons_frame = tk.Frame(
             content_frame,
             bg="#1E232A"  # Match panel background
         )
-        bet_buttons_frame.grid(row=0, column=3, sticky="nsew", padx=(12, 0), pady=0)
+        bet_buttons_frame.grid(row=0, column=2, sticky="nsew", padx=(8, 0), pady=8)
         self._setup_quick_bet_buttons(bet_buttons_frame)
     
     def _setup_session_controls_bottom(self, parent):
-        """Setup session controls with professional styling."""
-        # Professional START NEW HAND button
-        start_button = tk.Button(
-            parent,
-            text="START NEW HAND",
-            bg='#4CAF50',  # Medium Green (professional)
-            fg='#FFFFFF',  # White text
-            font=('Segoe UI', 12, 'bold'),
-            relief='flat',
-            bd=0,
-            cursor='hand2',
-            padx=20,
-            pady=12,
-            command=self._start_new_hand
+        """Create a vertical action cluster: CHECK/CALL + FOLD + START NEW HAND below."""
+        # STACK: two primary actions on top (row 0), start button below (row 1)
+        cluster = tk.Frame(parent, bg="#1E232A")
+        cluster.pack(fill='both', expand=True)
+        cluster.grid_columnconfigure(0, weight=1)
+        cluster.grid_columnconfigure(1, weight=1)
+
+        # Large CHECK/CALL and FOLD buttons side by side
+        def create_button(frame, text, bg_color, command):
+            container = tk.Frame(frame, bg=bg_color)
+            container.grid_propagate(False)
+            label = tk.Label(container, text=text, bg=bg_color, fg='#FFFFFF',
+                             font=('Segoe UI', 13, 'bold'), cursor='hand2')
+            label.pack(fill='both', expand=True, padx=16, pady=14)
+            container.bind('<Button-1>', lambda e: command())
+            label.bind('<Button-1>', lambda e: command())
+            return container, label
+
+        top_row = tk.Frame(cluster, bg="#1E232A")
+        top_row.grid(row=0, column=0, columnspan=2, sticky='nsew', pady=(0, 8))
+        top_row.grid_columnconfigure(0, weight=1)
+        top_row.grid_columnconfigure(1, weight=1)
+
+        # CHECK/CALL (left)
+        self._cluster_check_frame, self._cluster_check_label = create_button(
+            top_row, "CHECK", '#3980A6', lambda: self._handle_action_click('check_call')
         )
-        start_button.pack(expand=True, fill='both', padx=4, pady=6)
-        
-        # Add hover effects
-        def on_enter(e):
-            start_button.config(bg='#5CCF63')  # Lighter green on hover
-        
-        def on_leave(e):
-            start_button.config(bg='#4CAF50')  # Back to normal
-        
+        self._cluster_check_frame.grid(row=0, column=0, sticky='nsew', padx=(0, 8))
+
+        # FOLD (right)
+        self._cluster_fold_frame, self._cluster_fold_label = create_button(
+            top_row, "FOLD", '#757575', lambda: self._handle_action_click('fold')
+        )
+        self._cluster_fold_frame.grid(row=0, column=1, sticky='nsew', padx=(8, 0))
+
+        # START NEW HAND below (full width)
+        # Styled container to ensure visibility even when disabled
+        start_container = tk.Frame(
+            cluster, bg="#1E232A", highlightthickness=1,
+            highlightbackground="#2E4F76", highlightcolor="#2E4F76"
+        )
+        start_container.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        start_button = tk.Button(
+            start_container,
+            text="START NEW HAND",
+            bg='#4CAF50', fg='#FFFFFF',
+            font=('Segoe UI', 14, 'bold'), relief='flat', bd=0, cursor='hand2',
+            padx=24, pady=12, command=self._start_new_hand
+        )
+        start_button.pack(fill='x')
+
+        def on_enter(e): start_button.config(bg='#5CCF63')
+        def on_leave(e): start_button.config(bg='#4CAF50')
         def on_click(e):
             start_button.config(relief='sunken')
-            parent.after(100, lambda: start_button.config(relief='flat'))
-        
+            cluster.after(100, lambda: start_button.config(relief='flat'))
         start_button.bind('<Enter>', on_enter)
         start_button.bind('<Leave>', on_leave)
         start_button.bind('<Button-1>', on_click)
-        
-        # Store reference for state management
+
         self.start_btn = start_button
+        self.start_container = start_container
+
+        # Provide mappings used by enable/disable/update routines
+        self.action_buttons = {
+            'check_call': self._cluster_check_frame,
+            'fold': self._cluster_fold_frame
+        }
+        self.action_button_labels = {
+            'check_call': self._cluster_check_label,
+            'fold': self._cluster_fold_label
+        }
+        # Backward-compatible alias used by other helpers
+        self.action_labels = self.action_button_labels
+        # Original colors so _enable/_disable can restore
+        from core.gui_models import THEME
+        self.original_button_colors = {
+            'check_call': THEME.get('button_check', '#3980A6'),
+            'fold': THEME.get('button_fold', '#757575')
+        }
+        self.button_colors = self.original_button_colors.copy()
+        # Button config for dynamic CHECK/CALL text
+        self.button_configs = {
+            'check': {'text': 'CHECK', 'color': self.original_button_colors['check_call']},
+            'call': {'text': 'CALL', 'color': self.original_button_colors['check_call']}
+        }
     
     def _initialize_table_felt(self):
         """Initialize the table felt to the default casino-grade style."""
@@ -485,7 +566,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         
         # Configure grid for quick bet buttons (2x4 layout - 8 buttons total)
         for c in range(4):
-            bet_panel.grid_columnconfigure(c, weight=1)
+            bet_panel.grid_columnconfigure(c, weight=1, minsize=100)
         for r in range(2):
             bet_panel.grid_rowconfigure(r, weight=1)
         
@@ -494,9 +575,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             ("1/4 POT", "quarter", 0, 0),
             ("1/3 POT", "one_third", 0, 1),
             ("1/2 POT", "half", 0, 2),
-            ("3/4 POT", "three_quarters", 0, 3),
-            ("2/3 POT", "two_thirds", 1, 0),
-            ("POT", "pot", 1, 1),
+            ("2/3 POT", "two_thirds", 0, 3),
+            ("3/4 POT", "three_quarters", 1, 0),
+            ("1x POT", "pot", 1, 1),
             ("2x POT", "two_x_pot", 1, 2),
             ("ALL IN", "all_in", 1, 3)
         ]
@@ -526,7 +607,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 font=('Segoe UI', 11, 'bold'),
                 cursor='hand2'
             )
-            bet_label.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+            bet_label.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
             # Hover and selection effects
             hover_color = "#D97B3A"  # lighten on hover
@@ -571,16 +652,16 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     
     def _setup_action_buttons(self, parent):
         """Setup professional action buttons."""
-        # Professional button container
+        # Professional button container with subtle LV background pattern (2% opacity simulated)
         button_container = tk.Frame(parent, bg="#1E232A")
-        button_container.pack(fill='both', expand=True, padx=6, pady=6)
+        button_container.pack(fill='both', expand=True, padx=8, pady=8)
         
         # Action buttons panel
         action_panel = tk.Frame(button_container, bg="#1E232A")
         action_panel.pack(fill=tk.BOTH, expand=True)
         
-        # Configure grid for equal button distribution
-        for i in range(3):  # 3 action buttons only (CHECK, FOLD, BET/RAISE)
+        # Configure grid for equal button distribution (2 primary actions)
+        for i in range(2):  # CHECK/CALL and FOLD only
             action_panel.grid_columnconfigure(i, weight=1)
         
         # CHECK/CALL button with professional styling
@@ -591,7 +672,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             bd=0,
             cursor='hand2'
         )
-        check_frame.grid(row=0, column=0, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
+        check_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         
         check_label = tk.Label(
             check_frame,
@@ -601,7 +682,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             font=('Segoe UI', 11, 'bold'),
             cursor='hand2'
         )
-        check_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
+        check_label.pack(fill=tk.BOTH, expand=True, padx=16, pady=14)
         
         # Bind click events to both frame and label with focus protection
         check_frame.bind("<Button-1>", lambda e: self._handle_action_click('check_call'))
@@ -623,7 +704,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             bd=0,
             cursor='hand2'
         )
-        fold_frame.grid(row=0, column=1, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
+        fold_frame.grid(row=0, column=1, padx=8, pady=0, sticky="nsew")
         
         fold_label = tk.Label(
             fold_frame,
@@ -633,7 +714,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             font=('Segoe UI', 11, 'bold'),
             cursor='hand2'
         )
-        fold_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
+        fold_label.pack(fill=tk.BOTH, expand=True, padx=16, pady=14)
         
         # Bind click events to both frame and label with focus protection
         fold_frame.bind("<Button-1>", lambda e: self._handle_action_click('fold'))
@@ -647,78 +728,39 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         
         fold_button = fold_frame  # Reference for enable/disable
         
-        # BET/RAISE button with professional styling
-        bet_frame = tk.Frame(
-            action_panel,
-            bg='#E53935',  # Bright Red
-            relief='flat',
-            bd=0,
-            cursor='hand2'
-        )
-        bet_frame.grid(row=0, column=2, padx=3, pady=3, sticky="ew", ipadx=10, ipady=8)
-        
-        bet_label = tk.Label(
-            bet_frame,
-            text="RAISE",
-            bg='#E53935',  # Bright Red
-            fg='#FFFFFF',  # White text
-            font=('Segoe UI', 11, 'bold'),
-            cursor='hand2'
-        )
-        bet_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=8)
-        
-        # Bind click events to both frame and label with focus protection
-        bet_frame.bind("<Button-1>", lambda e: self._handle_action_click('bet_raise'))
-        bet_label.bind("<Button-1>", lambda e: self._handle_action_click('bet_raise'))
-        
-        # DISABLE KEYBOARD TRIGGERS to prevent accidental activation
-        bet_frame.bind("<Key>", lambda e: "break")  # Block all keyboard events
-        bet_label.bind("<Key>", lambda e: "break")  # Block all keyboard events
-        bet_frame.focus_set = lambda: None  # Disable focus
-        bet_label.focus_set = lambda: None  # Disable focus
-        
-        bet_button = bet_frame  # Reference for enable/disable
-        
         # Store button references and original colors for enabling/disabling
         self.action_buttons = {
             'check_call': check_button,
-            'fold': fold_button,
-            'bet_raise': bet_button
+            'fold': fold_button
         }
         
         # Store original colors for restoring when enabling
         self.original_button_colors = {
             'check_call': THEME['button_check'],
-            'fold': THEME['button_fold'], 
-            'bet_raise': THEME['button_raise']
+            'fold': THEME['button_fold']
         }
         
         # Store labels for color updates
         self.action_button_labels = {
             'check_call': check_label,
-            'fold': fold_label,
-            'bet_raise': bet_label
+            'fold': fold_label
         }
         
         # Store label references and original colors for restoration
         self.action_labels = {
             'check_call': check_label,
-            'fold': fold_label,
-            'bet_raise': bet_label
+            'fold': fold_label
         }
         
         self.button_colors = {
             'check_call': THEME['button_check'],
-            'fold': THEME['button_fold'],
-            'bet_raise': THEME['button_raise']
+            'fold': THEME['button_fold']
         }
         
         # Store original button configurations for dynamic updates
         self.button_configs = {
             'check': {'text': 'CHECK', 'color': THEME['button_check']},
-            'call': {'text': 'CALL', 'color': THEME.get('button_call', THEME['button_check'])},
-            'bet': {'text': 'BET', 'color': THEME['button_raise']},
-            'raise': {'text': 'RAISE', 'color': THEME['button_raise']}
+            'call': {'text': 'CALL', 'color': THEME.get('button_call', THEME['button_check'])}
         }
         
         # Start with buttons disabled until it's human's turn
@@ -892,13 +934,10 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             action = 'fold'
             amount = 0
         elif action_key == 'bet_raise':
-            # Use the current bet amount set by bet size controls
-            amount = getattr(self, 'current_bet_amount', self.state_machine.config.big_blind * 2)
+            # Executed by quick-bet presets; no dedicated primary button
             current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
-            if current_bet > 0:
-                action = 'raise'
-            else:
-                action = 'bet'
+            amount = getattr(self, 'current_bet_amount', self.state_machine.config.big_blind * 2)
+            action = 'raise' if current_bet > 0 else 'bet'
         else:
             if self.logger:
                 self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Unknown action: {action_key}", {})
@@ -1297,8 +1336,11 @@ Total Winnings: ${stats['total_winnings']:.2f}
         """Disable the start button (professional Button implementation)."""
         if hasattr(self, 'start_btn'):
             self.start_btn.config(
-                bg='#388E3C',  # Darker green disabled state
-                fg='#CCCCCC',  # Light gray dimmed text
+                bg='#27313C',  # LV muted deep slate when disabled
+                fg='#6E7A8B',  # Muted slate text
+                disabledforeground='#6E7A8B',
+                activebackground='#27313C',
+                activeforeground='#6E7A8B',
                 state='disabled',
                 cursor=''
             )
@@ -1324,21 +1366,19 @@ Total Winnings: ${stats['total_winnings']:.2f}
             if not human_player:
                 return
                 
-            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
-            player_bet = getattr(human_player, 'current_bet', 0)
-            call_amount = current_bet - player_bet
+            current_bet = float(getattr(self.state_machine.game_state, 'current_bet', 0) or 0)
+            player_bet = float(getattr(human_player, 'current_bet', 0) or 0)
+            call_amount = max(0.0, current_bet - player_bet)
             
             # Determine what the first button should be: CHECK or CALL
             if call_amount > 0:
                 # There's a bet to call - show CALL button
                 self._update_check_call_button('call', call_amount)
-                # Third button should be RAISE (since there's a bet to raise)
-                self._update_bet_raise_button('raise')
+                # Bet/Raise handled via preset grid; no primary action button needed
             else:
                 # No bet to call - show CHECK button  
                 self._update_check_call_button('check')
-                # Third button should be BET (since there's no current bet)
-                self._update_bet_raise_button('bet')
+                # Bet handled via preset grid; no primary action button needed
                 
         except Exception as e:
             print(f"⚠️ Error updating action buttons: {e}")
@@ -1349,11 +1389,13 @@ Total Winnings: ${stats['total_winnings']:.2f}
             return
             
         config = self.button_configs[action_type]
-        label = self.action_labels['check_call']
+        # Prefer the newer mapping; fallback to legacy if present
+        label = self.action_button_labels.get('check_call') or self.action_labels.get('check_call')
         frame = self.action_buttons['check_call']
         
         # Update button text
         if action_type == 'call' and amount > 0:
+            # Display as whole dollars for clarity
             button_text = f"CALL ${amount:.0f}"
         else:
             button_text = config['text']
@@ -1362,18 +1404,7 @@ Total Winnings: ${stats['total_winnings']:.2f}
         label.config(text=button_text, bg=config['color'])
         frame.config(bg=config['color'])
         
-    def _update_bet_raise_button(self, action_type: str):
-        """Update the bet/raise button dynamically."""
-        if action_type not in ['bet', 'raise']:
-            return
-            
-        config = self.button_configs[action_type]
-        label = self.action_labels['bet_raise']
-        frame = self.action_buttons['bet_raise']
-        
-        # Update label and frame appearance
-        label.config(text=config['text'], bg=config['color'])
-        frame.config(bg=config['color'])
+    # Bet/Raise primary button removed intentionally for practice session.
 
 
 # Clean architecture practice session UI is now the main implementation

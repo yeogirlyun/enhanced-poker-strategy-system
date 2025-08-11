@@ -59,6 +59,22 @@ class VoiceManager:
         if voice_type in self.voice_types:
             self.current_voice_type = voice_type
     
+    def get_available_voice_types(self):
+        """Get list of available voice types.
+        
+        Returns:
+            List of available voice type names
+        """
+        return self.voice_types.copy()
+    
+    def get_current_voice_type(self):
+        """Get the currently selected voice type.
+        
+        Returns:
+            Current voice type name
+        """
+        return self.current_voice_type
+    
     def _get_voice_path(self, action: str) -> Optional[str]:
         """Get the full path to a voice file.
         
@@ -98,7 +114,7 @@ class VoiceManager:
         
         voice_path = self._get_voice_path(action)
         if not voice_path:
-            print(f"Warning: Voice file not found for action: {action}")
+            # Voice file not found - using silent fallback
             return None
         
         try:
@@ -107,7 +123,7 @@ class VoiceManager:
             self.voice_cache[cache_key] = voice
             return voice
         except Exception as e:
-            print(f"Warning: Could not load voice for {action}: {e}")
+            # Could not load voice - using silent fallback
             return None
     
     def play_voice(self, action: str):

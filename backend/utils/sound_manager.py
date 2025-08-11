@@ -30,6 +30,7 @@ class SoundManager:
         self.enabled = True
         self.volume = 0.7
         self.test_mode = test_mode
+        self.animation_mode = False  # Track if we're in animation mode
         
         # Initialize voice manager
         self.voice_manager = VoiceManager()
@@ -42,7 +43,7 @@ class SoundManager:
             # Sound system initialized successfully
             self._load_sound_mapping()
         except (pygame.error, OSError) as e:
-            print(f"Warning: Could not initialize sound system: {e}")
+            # Could not initialize sound system - using fallback mode
             self.enabled = False
     
     def _load_sound_mapping(self):
@@ -68,7 +69,9 @@ class SoundManager:
                 },
                 "chip_actions": {
                     "bet": "chip_bet.wav",
-                    "collect": "pot_split.wav"
+                    "collect": "pot_split.wav",
+                    "multiple": "chip_bet_multiple.wav",
+                    "single": "chip_bet_single.wav"
                 },
                 "ui_actions": {
                     "notification": "turn_notify.wav",
@@ -120,7 +123,7 @@ class SoundManager:
         
         sound_path = self._get_sound_path(sound_name)
         if not sound_path:
-            print(f"Warning: Sound file not found: {sound_name}")
+            # Sound file not found - using silent fallback
             return None
         
         try:
@@ -129,7 +132,7 @@ class SoundManager:
             self.sound_cache[sound_name] = sound
             return sound
         except Exception as e:
-            print(f"Warning: Could not load sound {sound_name}: {e}")
+            # Could not load sound - using silent fallback
             return None
     
     def play(self, sound_name: str):
@@ -146,7 +149,8 @@ class SoundManager:
             try:
                 sound.play()
             except Exception as e:
-                print(f"Warning: Could not play sound {sound_name}: {e}")
+                # Could not play sound - continuing silently
+                pass
     
     def play_action_sound(self, action: str, amount: float = 0):
         """Play a sound for a poker action.
@@ -158,13 +162,14 @@ class SoundManager:
         if not self.enabled:
             return
         
-        # Skip voice activation in test mode to speed up testing
-        if not self.test_mode and hasattr(self, 'voice_manager'):
+        # Skip voice activation in test mode or animation mode to speed up testing
+        if not self.test_mode and not self.animation_mode and hasattr(self, 'voice_manager'):
             # Try to play voice announcement first
             try:
                 self.voice_manager.play_action_voice(action, amount)
             except Exception as e:
-                print(f"Warning: Could not play voice for {action}: {e}")
+                # Could not play voice - continuing with sound effects only
+                pass
         
         # Also play sound effects
         action_sounds = self.sound_mapping.get("poker_actions", {})
@@ -184,6 +189,13 @@ class SoundManager:
                 self.play("player_check.wav")
             elif action == "all_in":
                 self.play("player_all_in.wav")
+        
+        # For money actions (bet, call, raise, all_in), also play chip sound
+        if action in ["bet", "call", "raise", "all_in"] and amount > 0:
+            # Play chip sound immediately after voice (no delay needed)
+            self.play_chip_sound("bet")
+            # Debug log for chip sound
+            # Chip sound played for action with amount
     
     def play_card_sound(self, card_action: str):
         """Play a sound for card-related actions.
@@ -273,6 +285,14 @@ class SoundManager:
             test_mode: If True, voice activation will be skipped
         """
         self.test_mode = test_mode
+    
+    def set_animation_mode(self, animation_mode: bool):
+        """Set animation mode to disable voice during animations.
+        
+        Args:
+            animation_mode: If True, voice activation will be skipped during animations
+        """
+        self.animation_mode = animation_mode
     
     def cleanup(self):
         """Clean up resources."""

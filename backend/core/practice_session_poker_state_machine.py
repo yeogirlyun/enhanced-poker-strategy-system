@@ -112,32 +112,62 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
     def calculate_quick_bet_amount(self, bet_type: str) -> float:
         """Calculate quick bet amount based on pot and player stack (encapsulates bet logic)."""
         try:
-            # Get current pot size from game state
-            current_pot = self.game_state.pot if self.game_state.pot > 0 else 20.0
+            # Get current pot size from a fresh snapshot to avoid any staleness
+            try:
+                snapshot = self.get_game_info() if hasattr(self, 'get_game_info') else None
+                snapshot_pot = float(snapshot.get('pot', 0.0)) if snapshot else 0.0
+            except Exception:
+                snapshot_pot = 0.0
+            # Fallback to direct game_state if snapshot unavailable
+            gs_pot = float(getattr(self.game_state, 'pot', 0.0))
+            current_pot = max(0.0, snapshot_pot if snapshot_pot > 0 else gs_pot)
             
             # Get human player's stack for all-in calculations
             human_player = self.get_human_player()
             human_stack = human_player.stack if human_player else 1000.0
+            current_bet = getattr(self.game_state, 'current_bet', 0.0)
+            player_bet = getattr(human_player, 'current_bet', 0.0) if human_player else 0.0
+            call_amount = max(0.0, current_bet - player_bet)
+            min_raise = getattr(self.game_state, 'min_raise', self.config.big_blind)
+            min_raise_total = current_bet + min_raise
+
+            import math
+
+            def _round_up(amount: float) -> float:
+                # Round up to nearest $1 for clarity in UI
+                return float(math.ceil(amount))
+
+            def _target_amount_from_fraction(frac: float) -> float:
+                # If no bet to call → place a bet of ceil(pot * frac)
+                # If facing a bet → raise-to current_bet + call + ceil(pot * frac)
+                if call_amount <= 0.0:
+                    return _round_up(current_pot * frac)
+                # Raise-to target
+                raise_to = current_bet + call_amount + _round_up(current_pot * frac)
+                # Enforce minimum raise rule
+                return max(raise_to, min_raise_total)
             
             # Calculate bet amount based on type
             if bet_type == "quarter":
-                return max(2.0, current_pot * 0.25)
+                return _target_amount_from_fraction(0.25)
             elif bet_type == "one_third":
-                return max(2.0, current_pot * 0.33)
+                return _target_amount_from_fraction(1/3)
             elif bet_type == "half":
-                return max(2.0, current_pot * 0.5)
+                return _target_amount_from_fraction(0.5)
             elif bet_type == "two_thirds":
-                return max(2.0, current_pot * 0.67)
+                return _target_amount_from_fraction(2/3)
             elif bet_type == "three_quarters":
-                return max(2.0, current_pot * 0.75)
+                return _target_amount_from_fraction(0.75)
             elif bet_type == "pot":
-                return max(2.0, current_pot)
+                return _target_amount_from_fraction(1.0)
             elif bet_type == "two_x_pot":
-                return max(2.0, current_pot * 2)
+                return _target_amount_from_fraction(2.0)
             elif bet_type == "all_in":
                 return human_stack
             else:
                 return 10.0  # Default bet
+            
+            
                 
         except Exception as e:
             print(f"⚠️ Error calculating quick bet amount: {e}")
@@ -595,7 +625,7 @@ Pot: ${self.game_state.pot:.2f}"""
         
         # Use threading timer for delayed execution with better error handling
         import threading
-        bot_delay = 1.5  # Reduced from 3.0 to 1.5 seconds for better pacing
+        bot_delay = 1.0  # Target 1.0s total cadence with 0.5s post-action highlight + 0.5s pre-action focus
         timer = threading.Timer(bot_delay, execute_bot_action)  # Moderate delay for human players to see and react
         timer.daemon = True  # Make it a daemon thread
         timer.start()

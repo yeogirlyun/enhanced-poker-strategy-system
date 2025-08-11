@@ -362,7 +362,7 @@ class ChipStackDisplay(tk.Frame):
         # Amount label
         self.amount_label = tk.Label(
             self,
-            text=f"${self.amount:.0f}",
+            text=f"${self.amount:,.0f}",
             font=FONTS["bet_amount"],
             fg=THEME["text_gold"],
             bg=THEME["table_felt"]
@@ -442,7 +442,7 @@ class ChipStackDisplay(tk.Frame):
     def _update_display(self):
         """Update the visual display."""
         self._draw_chip_stack()
-        self.amount_label.config(text=f"${self.amount:.0f}")
+        self.amount_label.config(text=f"${self.amount:,.0f}")
 
 
 class PlayerSeatWidget(tk.Frame):
