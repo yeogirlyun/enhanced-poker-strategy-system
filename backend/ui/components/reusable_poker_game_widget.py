@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import ttk
 import math
 from typing import Dict, Any, List
-import time
+import time as _time
 
 # Import shared components
 from .card_widget import CardWidget
@@ -18,6 +18,9 @@ from .card_widget import CardWidget
 # Import theme and modern widgets
 from core.gui_models import THEME
 from .modern_poker_widgets import ChipStackDisplay, PlayerSeatWidget
+
+# Import types
+from core.types import ActionType
 
 def debug_log(message: str, category: str = "UI_DEBUG"):
     """Log debug messages to file instead of console."""
@@ -97,7 +100,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Keep highlight on the acting player for 500ms after an action,
         # then move to the next player. With bot delay set to 1.0s,
         # this yields a 0.5s pre-action highlight and 0.5s post-action hold.
-        import time
+        import time as _time
         self._highlight_delay_ms = 500
         self._suppress_highlight_until = 0.0  # epoch seconds
         self._pending_highlight_index = None
@@ -405,7 +408,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         amount = event_data.get('amount', getattr(event, 'amount', 0))
         
         event_key = f"{event.event_type}_{player_name}_{action}_{amount}"
-        current_time = time.time()
+        current_time = _time.time()
         
         # Track rapid-fire events and block excessive duplicates
         if event_key in self.last_processed_events:
@@ -422,7 +425,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     # Event filtering debug removed
                     return
                 else:
-                    print(f"⚠️  Skipping duplicate event: {event.event_type} (within {time_diff*1000:.1f}ms)")
+                    debug_log(f"Skipping duplicate event: {event.event_type} (within {time_diff*1000:.1f}ms)", "UI_EVENT_FILTER")
                     return
         else:
             # Reset rapid event count for new events
@@ -476,15 +479,25 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     player_index = i
                     break
         
+        # TIMING FIX: Keep highlight on acting player during sound + delay
+        if player_index >= 0 and player_index < len(self.player_seats):
+            if isinstance(action_type, str):
+                # Convert string to ActionType enum
+                try:
+                    action_enum = ActionType[action_type.upper()]
+                except:
+                    action_enum = ActionType.CHECK  # fallback
+            else:
+                action_enum = action_type or ActionType.CHECK
+            
+            self._maintain_highlight_during_action(player_index, action_enum, amount)
+        
         # Action execution logging handled by session logger, no console output needed
         
         # Show bet amount for betting actions
         if action_type in ["bet", "raise", "call"] and amount > 0 and player_index >= 0:
             # Bet display debug removed
             self.show_bet_display(player_index, action_type, amount)
-            # Hold highlight shift briefly so the bet visual can appear first
-            import time as _time
-            self._suppress_highlight_until = _time.time() + (self._highlight_delay_ms / 1000.0)
         
         # Clear any existing action indicator for this player
         if player_index >= 0:
@@ -513,6 +526,78 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._highlight_current_player(self._pending_highlight_index)
             self._pending_highlight_index = None
     
+    def _maintain_highlight_during_action(self, acting_player_index: int, action_type: ActionType, amount: float):
+        """Keep highlight on acting player during action sound + delay before moving to next player."""
+        # Calculate sound duration and delay
+        sound_duration_ms = self._estimate_action_sound_duration(action_type, amount)
+        additional_delay_ms = 500  # Additional 0.5s for user to process who acted
+        total_delay_ms = sound_duration_ms + additional_delay_ms
+        
+        # Log the timing for debugging
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "TIMING_COORDINATION", "Maintaining highlight during action", {
+                "acting_player": acting_player_index + 1,
+                "action": action_type.value,
+                "sound_duration_ms": sound_duration_ms,
+                "additional_delay_ms": additional_delay_ms,
+                "total_delay_ms": total_delay_ms,
+                "component": "ReusablePokerGameWidget"
+            })
+        
+        # Ensure this player stays highlighted
+        self._highlight_current_player(acting_player_index)
+        
+        # Store the current acting player to suppress immediate highlight changes
+        self._action_in_progress = {
+            "player_index": acting_player_index,
+            "end_time": _time.time() + (total_delay_ms / 1000.0)
+        }
+        
+        # Schedule highlight transition after sound + delay
+        self.after(total_delay_ms, self._complete_action_timing)
+    
+    def _estimate_action_sound_duration(self, action_type: ActionType, amount: float) -> int:
+        """Estimate the duration of action sound in milliseconds."""
+        # Voice sound durations (estimated based on typical speech)
+        voice_durations = {
+            ActionType.CHECK: 800,   # "Check" - short
+            ActionType.CALL: 800,    # "Call" - short  
+            ActionType.FOLD: 800,    # "Fold" - short
+            ActionType.BET: 800,     # "Bet" - short
+            ActionType.RAISE: 1000,  # "Raise" - slightly longer
+            ActionType.ALL_IN: 1200, # "All in" - longer
+        }
+        
+        base_duration = voice_durations.get(action_type, 800)
+        
+        # Add small buffer for sound effect that might play after voice
+        sound_effect_buffer = 200
+        
+        return base_duration + sound_effect_buffer
+    
+    def _complete_action_timing(self):
+        """Complete the action timing sequence and allow highlight to move."""
+        # Clear the action in progress
+        if hasattr(self, '_action_in_progress'):
+            delattr(self, '_action_in_progress')
+        
+        # Force a display state update to move highlight to next player
+        if hasattr(self, 'state_machine') and self.state_machine:
+            try:
+                game_info = self.state_machine.get_display_state()
+                if game_info:
+                    self._update_from_game_info(game_info)
+                    # Log the highlight transition
+                    if self.session_logger:
+                        self.session_logger.log_system("DEBUG", "TIMING_COORDINATION", "Action timing completed - allowing highlight transition", {
+                            "component": "ReusablePokerGameWidget"
+                        })
+            except Exception as e:
+                if self.session_logger:
+                    self.session_logger.log_system("ERROR", "TIMING_COORDINATION", f"Error completing action timing: {e}", {
+                        "component": "ReusablePokerGameWidget"
+                    })
+    
     def _log_event(self, event: GameEvent):
         """Log all events for debugging and analysis."""
         if not self.session_logger:
@@ -521,7 +606,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Extract event data for logging
         event_data = {
             "event_type": event.event_type,
-            "timestamp": time.time(),
+            "timestamp": _time.time(),
             "player_name": getattr(event, 'player_name', None),
             "action": getattr(event, 'action', None),
             "amount": getattr(event, 'amount', 0.0),
@@ -787,10 +872,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # LAZY redraw community cards (only when changed)
         board_cards = display_state.get("board", [])
-        print(f"🃏 TEMP: Raw board_cards from display_state: {board_cards}")
+        # Log to structured logger instead of console
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "CARD_DISPLAY", "Board cards update", {
+                "raw_board_cards": board_cards,
+                "component": "ReusablePokerGameWidget"
+            })
         # Filter out placeholder cards ("**") and ensure we have valid cards
         filtered_board_cards = [card for card in board_cards if card and card != "**" and len(card) >= 2]
-        print(f"🃏 TEMP: After filtering: {filtered_board_cards}")
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "CARD_DISPLAY", "Board cards filtered", {
+                "filtered_board_cards": filtered_board_cards,
+                "filter_removed": len(board_cards) - len(filtered_board_cards)
+            })
         
         # Only update if cards actually changed
         if not hasattr(self, '_last_board_cards') or self._last_board_cards != filtered_board_cards:
@@ -803,7 +897,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # LAZY redraw pot (only when changed)
         pot_amount = display_state.get("pot", 0.0)
-        print(f"💰 TEMP: Pot amount from display_state: {pot_amount}")
+        # Log to structured logger instead of console
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "POT_DISPLAY", "Pot amount update", {
+                "pot_amount": pot_amount,
+                "component": "ReusablePokerGameWidget"
+            })
         if not hasattr(self, '_last_pot_amount') or self._last_pot_amount != pot_amount:
             # Pot display update debug removed
             if not hasattr(self, '_pot_area_drawn') or not self._pot_area_drawn:
@@ -856,9 +955,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if last_state.get("stack", 0.0) != stack_amount:
             player_seat["stack_label"].config(text=f"${int(stack_amount)}")
             debug_log(f"Updated player {player_index+1} stack: ${int(stack_amount)}", "STACK_DISPLAY")
-            print(f"🔄 STACK UPDATE: Player {player_index+1} stack updated to ${int(stack_amount)}")
+            # Log to structured logger instead of console
+            if self.session_logger:
+                self.session_logger.log_system("DEBUG", "STACK_DISPLAY", "Player stack updated", {
+                    "player_index": player_index + 1,
+                    "new_stack": int(stack_amount),
+                    "component": "ReusablePokerGameWidget"
+                })
         else:
-            print(f"⚪ STACK SKIP: Player {player_index+1} stack unchanged (last: {last_state.get('stack', 0.0)}, new: {stack_amount})")
+            # Log to structured logger instead of console
+            if self.session_logger:
+                self.session_logger.log_system("DEBUG", "STACK_DISPLAY", "Player stack unchanged", {
+                    "player_index": player_index + 1,
+                    "stack_amount": stack_amount,
+                    "last_amount": last_state.get('stack', 0.0)
+                })
         
         # Only update bet if it changed (but preserve bet displays during animations)
         bet_text = f"Bet: ${int(bet_amount)}" if bet_amount > 0 else ""
@@ -870,15 +981,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             # Only clear bet text if we're not animating (preserve SB/BB during animations)
             if bet_amount > 0 or not is_animating_bets:
                 player_seat["bet_label"].config(text=bet_text)
-                print(f"💰 BET UPDATE: Player {player_index+1} bet text updated to '{bet_text}' (animating: {is_animating_bets})")
+                # Log to structured logger instead of console
+                if self.session_logger:
+                    self.session_logger.log_system("DEBUG", "BET_DISPLAY", "Player bet text updated", {
+                        "player_index": player_index + 1,
+                        "bet_text": bet_text,
+                        "is_animating": is_animating_bets,
+                        "component": "ReusablePokerGameWidget"
+                    })
             else:
-                print(f"🛡️ BET PROTECTED: Player {player_index+1} bet protected during animation (amount: ${bet_amount})")
+                # Log to structured logger instead of console
+                if self.session_logger:
+                    self.session_logger.log_system("DEBUG", "BET_DISPLAY", "Bet protected during animation", {
+                        "player_index": player_index + 1,
+                        "bet_amount": bet_amount,
+                        "component": "ReusablePokerGameWidget"
+                    })
                 
             if bet_amount > 0:
                 debug_log(f"Updated player {player_index} bet: ${bet_amount:,.2f}", "BET_DISPLAY")
                 # Also show graphical money display for existing bets (like blinds)
                 self._show_bet_display_for_player(player_index, "bet", bet_amount)
-                print(f"🎯 BET DISPLAY: Showing bet display for Player {player_index+1}: ${bet_amount}")
+                # Log to structured logger instead of console
+                if self.session_logger:
+                    self.session_logger.log_system("DEBUG", "BET_DISPLAY", "Bet display shown", {
+                        "player_index": player_index + 1,
+                        "bet_amount": bet_amount,
+                        "component": "ReusablePokerGameWidget"
+                    })
         
         # Always call card update method - let specialized widgets decide how to handle **
         last_cards = last_state.get("cards", [])
@@ -984,7 +1114,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
     
     def _update_community_cards_from_display_state(self, board_cards: List[str]):
         """Update community cards based on display state (FLICKER-FREE VERSION)."""
-        print(f"🃏 TEMP: _update_community_cards_from_display_state called with: {board_cards}")
+        # Log to structured logger instead of console
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "CARD_DISPLAY", "Community cards update called", {
+                "board_cards": board_cards,
+                "component": "ReusablePokerGameWidget"
+            })
         debug_log(f"COMMUNITY CARD UPDATE: Input cards: {board_cards}", "CARD_DISPLAY")
         # Board cards debug routed to logger via debug_log above
         
@@ -994,7 +1129,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             self._draw_community_card_area()
         
         if not self.community_card_widgets:
-            print(f"❌ COMMUNITY CARD WIDGETS STILL NOT CREATED!")
+            debug_log("COMMUNITY CARD WIDGETS STILL NOT CREATED!", "CARD_DISPLAY")
             return
         
         debug_log(f"Community card widgets exist: {len(self.community_card_widgets)} widgets", "CARD_DISPLAY")
@@ -1036,8 +1171,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # BRUTE FORCE FIX: If we have board cards, always show them (overrides state-based logic)
         if board_cards and len(board_cards) > 0:
             cards_to_show = max(cards_to_show, len(board_cards))
-            print(f"🔧 TEMP: FORCE OVERRIDE: Board has {len(board_cards)} cards, showing {cards_to_show}")
-            debug_log(f"🔧 FORCE OVERRIDE: Board has {len(board_cards)} cards, showing {cards_to_show}", "CARD_DISPLAY")
+            debug_log(f"FORCE OVERRIDE: Board has {len(board_cards)} cards, showing {cards_to_show}", "CARD_DISPLAY")
         
         # Limit board cards to only the first N cards that should be visible
         visible_board_cards = board_cards[:cards_to_show] if board_cards else []
@@ -1309,7 +1443,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         street = event.data.get("street", "")
         
         # Loop detection: prevent rapid-fire round_complete events
-        current_time = time.time()
+        current_time = _time.time()
         if current_time - self.last_round_complete_time < self.min_round_complete_interval:
             print(f"⚠️  Ignoring rapid round_complete event (street={street}) - too soon after last one")
             return
@@ -1494,8 +1628,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Wrapper to begin single-winner pot animation and schedule cleanup."""
         try:
             # Ensure pot display is on top during pot-to-winner animation
-            if hasattr(self, 'pot_display') and self.pot_display:
-                self.canvas.tag_raise(self.pot_display)
+            if hasattr(self, 'pot_display_canvas_id') and self.pot_display_canvas_id:
+                self.canvas.tag_raise(self.pot_display_canvas_id)
             # Determine approximate animation duration for cleanup scheduling
             num_chips = min(max(1, int(pot_amount / 50)), 6)
             total_duration_ms = (num_chips - 1) * 100 + 30 * 20 + 300
@@ -2307,7 +2441,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Store the pot frame for compatibility
         self.pot_frame = self.pot_display
-        self.canvas.create_window(pot_x, pot_y, window=self.pot_display, anchor="center")
+        self.pot_display_canvas_id = self.canvas.create_window(pot_x, pot_y, window=self.pot_display, anchor="center")
         
         # Store canvas size for next comparison
         self.last_pot_canvas_size = current_size
@@ -2378,6 +2512,22 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Update current action player (but not during hand completion)
         action_player_index = game_info.get("action_player", -1)
         current_state = game_info.get("current_state", "")
+        
+        # TIMING FIX: Don't change highlight if action is in progress
+        if hasattr(self, '_action_in_progress') and self._action_in_progress:
+            current_time = _time.time()
+            if current_time < self._action_in_progress["end_time"]:
+                # Action timing still in progress, keep current highlight
+                if self.session_logger:
+                    self.session_logger.log_system("DEBUG", "TIMING_COORDINATION", "Suppressing highlight change - action in progress", {
+                        "acting_player": self._action_in_progress["player_index"] + 1,
+                        "time_remaining": self._action_in_progress["end_time"] - current_time,
+                        "component": "ReusablePokerGameWidget"
+                    })
+                return
+            else:
+                # Action timing completed, clear the flag
+                delattr(self, '_action_in_progress')
         
         # Don't highlight during hand completion or showdown
         if (action_player_index >= 0 and 

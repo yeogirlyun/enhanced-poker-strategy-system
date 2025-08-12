@@ -525,40 +525,20 @@ class SessionLogger:
         debug_print(f"✅ DEBUG: Session terminated successfully")
     
     def log_system(self, level: str, category: str, message: str, data: Optional[Dict] = None):
-        """Log system-level messages with smart console/file routing."""
+        """Log system-level messages with strict console policy and full file logging.
+
+        Policy:
+        - Always write all levels/categories to the file for full traceability
+        - Console is reserved for critical/alert messages only (ERROR, CRITICAL)
+        """
         timestamp_str = datetime.now().isoformat()
-        
-        # FILTER: Only log essential game flow categories to reduce spam
-        essential_categories = {
-            "STARTUP", "SHUTDOWN", "ERROR", "WARNING", "CRITICAL",
-            "HAND_START", "HAND_END", "STATE_TRANSITION", 
-            "BOT_ACTION", "POKER_ACTION", "GAME_ACTION",
-            "BETTING_ROUND", "SHOWDOWN", "HAND_RESULT"
-        }
-        
-        # Skip non-essential categories entirely to reduce log file size
-        if category not in essential_categories and level not in ["ERROR", "WARNING", "CRITICAL"]:
-            return
-        
-        # Only show poker game flow in console
-        console_categories = {
-            "STATE_TRANSITION", "BOT_ACTION", "POKER_ACTION", 
-            "HAND_START", "HAND_END", "BETTING_ROUND", "SHOWDOWN",
-            "ERROR", "WARNING", "CRITICAL"
-        }
-        essential_levels = ["ERROR", "WARNING", "CRITICAL"]
-        
-        show_in_console = (
-            level in essential_levels or 
-            category in console_categories or
-            "error" in message.lower() or
-            "warning" in message.lower() or
-            "failed" in message.lower()
-        )
-        
+
+        # Console visibility per user policy: CRITICAL/ALERT only
+        show_in_console = level in ["ERROR", "CRITICAL"]
+
         if show_in_console:
             console_msg = f"[{timestamp_str}] {level} | {category} | {message}"
-            if data and level in ["ERROR", "WARNING"]:
+            if data:
                 console_msg += f" | {json.dumps(data, default=str)}"
             debug_print(console_msg)
         
@@ -610,16 +590,20 @@ class SessionLogger:
             print(f"Error saving session: {e}")
     
     def _save_system_logs(self):
-        """Save system logs to separate JSON file."""
+        """Persist a JSON snapshot of system logs without overwriting the stream log file.
+
+        Writes to a sibling JSON file, preserving the line-oriented .log file intact.
+        """
         if not self.session or not self.system_log_file:
             return
-            
+
         try:
             system_data = {
                 "session_id": self.session.session_id,
                 "logs": [asdict(log) for log in self.session.system_logs]
             }
-            with open(self.system_log_file, 'w') as f:
+            snapshot_path = self.system_log_file.with_suffix('.json')
+            with open(snapshot_path, 'w') as f:
                 json.dump(system_data, f, indent=2, default=str)
         except Exception as e:
             print(f"Error saving system logs: {e}")

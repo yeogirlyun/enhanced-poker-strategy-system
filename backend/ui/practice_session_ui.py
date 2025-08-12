@@ -41,7 +41,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 "strategy_data": bool(strategy_data)
             })
         except Exception as e:
-            print(f"⚠️ Could not get logger in PracticeSessionUI init: {e}")
+            # Minimal fallback; logger unavailable
             self.logger = None
         
         self.strategy_data = strategy_data
@@ -113,7 +113,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionUI initialization completed successfully", {})
-        print("🎓 Practice Session UI ready")
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Practice Session UI ready", {})
         
         # Initialize table felt style after UI setup
         self._initialize_table_felt()
@@ -180,7 +180,14 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                     self.poker_widget.on_event(event)
                 
         except Exception as e:
-            print(f"⚠️ Error handling event {event.event_type}: {e}")
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.log_system("ERROR", "UI_EVENT", f"Error handling event {event.event_type}: {e}", {
+                    "error_type": type(e).__name__,
+                    "component": "PracticeSessionUI"
+                })
+            else:
+                # Fallback minimal console log only if logger unavailable
+                print(f"⚠️ Error handling event {event.event_type}: {e}")
     
     def _setup_ui(self):
         """Setup the full-width layout with bottom control strip."""
@@ -404,9 +411,11 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 if hasattr(self.poker_widget, 'change_table_scheme'):
                     default_scheme = scheme_manager.get_current_scheme()
                     self.poker_widget.change_table_scheme(scheme=default_scheme)
-                    print(f"🎨 Table felt initialized to {default_scheme.name}")
+                    if self.logger:
+                        self.logger.log_system("DEBUG", "PRACTICE_UI_TABLE", f"Table felt initialized to {default_scheme.name}", {})
         except Exception as e:
-            print(f"Warning: Could not initialize table felt: {e}")
+            if self.logger:
+                self.logger.log_system("WARNING", "PRACTICE_UI_TABLE", f"Could not initialize table felt: {e}", {})
         
 
     
@@ -788,7 +797,11 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         disabled_color = '#2A2A2A'  # Dark gray for disabled state
         disabled_text_color = '#666666'  # Gray text for disabled state
         
-        print("🔒 DISABLING all action buttons")
+        # Log to structured logger instead of console
+        if self.logger:
+            self.logger.log_system("DEBUG", "UI_STATE", "Disabling all action buttons", {
+                "component": "PracticeSessionUI"
+            })
         
         for button_key, button_frame in self.action_buttons.items():
             if hasattr(button_frame, 'config'):
@@ -807,7 +820,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     
     def _enable_action_buttons(self):
         """Enable action buttons for human player's turn."""
-        print("🔓 ENABLING action buttons for human turn")
+        if self.logger:
+            self.logger.log_system("DEBUG", "UI_STATE", "Enabling action buttons for human turn", {})
         
         for button_key, button_frame in self.action_buttons.items():
             # Restore original colors
@@ -842,20 +856,36 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
                 state_name = str(self.state_machine.current_state).split('.')[-1]
                 if state_name in invalid_states:
-                    print(f"🔒 Keeping buttons disabled - game in {state_name} state")
+                    # Log to structured logger instead of console
+                    if self.logger:
+                        self.logger.log_system("DEBUG", "UI_STATE", "Keeping buttons disabled - invalid game state", {
+                            "game_state": state_name,
+                            "component": "PracticeSessionUI"
+                        })
                     return
             
             # Check if current player is human
             current_player = self.state_machine.get_action_player()
             if current_player and hasattr(current_player, 'is_human') and current_player.is_human:
-                print(f"🔓 Human turn detected - enabling buttons for {current_player.name}")
+                # Log to structured logger instead of console  
+                if self.logger:
+                    self.logger.log_system("DEBUG", "UI_STATE", "Human turn detected - enabling buttons", {
+                        "player_name": current_player.name,
+                        "component": "PracticeSessionUI"
+                    })
                 self._enable_action_buttons()
             else:
                 player_name = getattr(current_player, 'name', 'Unknown') if current_player else 'None'
-                print(f"🔒 Not human turn - keeping buttons disabled (current: {player_name})")
+                # Log to structured logger instead of console
+                if self.logger:
+                    self.logger.log_system("DEBUG", "UI_STATE", "Not human turn - keeping buttons disabled", {
+                        "current_player": player_name,
+                        "component": "PracticeSessionUI"
+                    })
                 
         except Exception as e:
-            print(f"⚠️ Error checking human turn: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "UI_STATE", f"Error checking human turn: {e}", {})
 
     def _handle_action_click(self, action_key: str):
         """Handle action button clicks directly with anti-auto-click protection."""
@@ -886,12 +916,19 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if self.logger:
             self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Action button clicked: {action_key}", {"timestamp": current_time})
         
-        print(f"🎯 HUMAN ACTION: {action_key} button clicked at {current_time}")
+        # Log to structured logger instead of console
+        if self.logger:
+            self.logger.log_system("INFO", "USER_ACTION", f"Human action: {action_key}", {
+                "action_key": action_key,
+                "timestamp": current_time,
+                "component": "PracticeSessionUI"
+            })
         
         # ADDITIONAL DEBUGGING: Log call stack to see what triggered this
         import traceback
         stack_trace = ''.join(traceback.format_stack()[-3:-1])  # Get last 2 stack frames
-        print(f"📋 ACTION TRIGGERED BY:\\n{stack_trace}")
+        if self.logger:
+            self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", "Action triggered", {"stack": stack_trace})
         
         if not hasattr(self, 'state_machine') or not self.state_machine:
             if self.logger:
@@ -902,7 +939,6 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if hasattr(self.state_machine, 'current_state'):
             invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
             if str(self.state_machine.current_state).split('.')[-1] in invalid_states:
-                print(f"🚫 ACTION BLOCKED: Game in {self.state_machine.current_state} state")
                 if self.logger:
                     self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - invalid state: {self.state_machine.current_state}", {"action": action_key})
                 
@@ -930,7 +966,6 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             return
             
         if not current_player.is_human:
-            print(f"🚫 ACTION BLOCKED: Not human's turn (current: {getattr(current_player, 'name', 'Unknown')})")
             if self.logger:
                 self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - not human's turn: {getattr(current_player, 'name', 'Unknown')}", {"action": action_key})
             return
@@ -992,9 +1027,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 return
             
             # CRITICAL DEBUGGING: Log the actual action execution
-            print(f"🚨 EXECUTING ACTION: {current_player.name} ({action_type.value}) ${amount}")
-            print(f"   Player is human: {current_player.is_human}")
-            print(f"   Action player index: {self.state_machine.action_player_index}")
+            if self.logger:
+                self.logger.log_system("INFO", "USER_ACTION", f"Executing action: {current_player.name} {action_type.value} ${amount}", {"is_human": current_player.is_human, "action_player_index": self.state_machine.action_player_index})
             
             # Log user decision for strategy analysis
             if self.logger and current_player.is_human:
@@ -1027,10 +1061,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             
             self.state_machine.execute_action(current_player, action_type, amount)
             
-            print(f"✅ ACTION COMPLETED: {action_type.value} executed successfully")
+            if self.logger:
+                self.logger.log_system("INFO", "USER_ACTION", f"Action completed: {action_type.value}", {})
             
             # Immediately disable buttons after human action
-            print("🔒 Disabling buttons after human action")
+            # Log to structured logger instead of console
+            if self.logger:
+                self.logger.log_system("DEBUG", "UI_STATE", "Disabling buttons after human action", {
+                    "component": "PracticeSessionUI"
+                })
             self._disable_action_buttons()
         except Exception as e:
             if self.logger:
@@ -1050,13 +1089,24 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 else:
                     self._handle_action_click('bet_raise')
                     
-                print(f"🎯 Quick bet executed: {bet_type} = ${bet_amount}")
+                # Log to structured logger instead of console
+                if self.logger:
+                    self.logger.log_system("INFO", "USER_ACTION", "Quick bet executed", {
+                        "bet_type": bet_type,
+                        "bet_amount": bet_amount,
+                        "component": "PracticeSessionUI"
+                    })
             else:
-                print("⚠️ No state machine available for bet calculation")
+                # Log to structured logger instead of console - this is a warning level issue
+                if self.logger:
+                    self.logger.log_system("WARNING", "STATE_MACHINE", "No state machine available for bet calculation", {
+                        "component": "PracticeSessionUI"
+                    })
                 self.current_bet_amount = 10  # Safe fallback
             
         except Exception as e:
-            print(f"⚠️ Error handling quick bet: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Error handling quick bet: {e}", {})
             # Set a default bet amount if calculation fails
             self.current_bet_amount = 10
     
@@ -1148,7 +1198,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     def _start_new_hand(self):
         """Start a new practice hand using the specialized state machine."""
         try:
-            print("🎓 Starting new practice hand...")
+            if self.logger:
+                self.logger.log_system("INFO", "PRACTICE_HAND", "Starting new practice hand", {})
             self.state_machine.start_hand()
             
             # Update UI state
@@ -1156,7 +1207,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             self._add_educational_message("🎯 New hand started! Observe the cards and consider your position.")
             
         except Exception as e:
-            print(f"❌ Error starting new hand: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_HAND", f"Error starting new hand: {e}", {})
             messagebox.showerror("Error", f"Failed to start new hand: {e}")
     
     def _reset_session(self):
@@ -1175,10 +1227,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 self._clear_educational_content()
                 self._update_session_stats()
                 
-                print("🔄 Practice session reset")
+                # Log to structured logger instead of console
+                if self.logger:
+                    self.logger.log_system("INFO", "SESSION", "Practice session reset", {
+                        "component": "PracticeSessionUI"
+                    })
                 
             except Exception as e:
-                print(f"❌ Error resetting session: {e}")
+                if self.logger:
+                    self.logger.log_system("ERROR", "SESSION", f"Error resetting session: {e}", {})
                 messagebox.showerror("Error", f"Failed to reset session: {e}")
     
     def _toggle_coaching_mode(self):
@@ -1207,7 +1264,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 self._add_educational_message("💡 Start a hand first to get strategy hints.")
                 
         except Exception as e:
-            print(f"⚠️ Error getting strategy hint: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_EDU", f"Error getting strategy hint: {e}", {})
     
     def _analyze_current_hand(self):
         """Analyze the current hand situation."""
@@ -1217,7 +1275,8 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             self._add_educational_message(analysis)
                 
         except Exception as e:
-            print(f"⚠️ Error analyzing current hand: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_EDU", f"Error analyzing current hand: {e}", {})
     
     def _handle_hand_started(self, event: GameEvent):
         """Handle practice hand started event."""
@@ -1291,7 +1350,8 @@ Total Winnings: ${stats['total_winnings']:.2f}
             self.stats_text.config(state=tk.DISABLED)
             
         except Exception as e:
-            print(f"⚠️ Error updating session stats: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "SESSION", f"Error updating session stats: {e}", {})
     
     def update_poker_config(self, new_config):
         """Update the poker configuration for the practice session."""
@@ -1322,7 +1382,6 @@ Total Winnings: ${stats['total_winnings']:.2f}
         except Exception as e:
             if self.logger:
                 self.logger.log_system("ERROR", "PRACTICE_UI_CONFIG", f"Error updating poker configuration: {e}", {})
-            print(f"⚠️ Error updating poker configuration: {e}")
 
     def update_font_size(self, font_size: int):
         """Update font sizes for all text widgets in the practice session UI."""
@@ -1345,7 +1404,8 @@ Total Winnings: ${stats['total_winnings']:.2f}
             if hasattr(self, 'poker_widget') and hasattr(self.poker_widget, 'update_font_size'):
                 self.poker_widget.update_font_size(font_size)
         except Exception as e:
-            print(f"⚠️ Error updating font size: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI", f"Error updating font size: {e}", {})
     
     def _analyze_deviation_type(self, user_action: str, gto_action: str) -> str:
         """Analyze the type of deviation from GTO recommendation."""
@@ -1451,7 +1511,8 @@ Total Winnings: ${stats['total_winnings']:.2f}
                 # Bet handled via preset grid; no primary action button needed
                 
         except Exception as e:
-            print(f"⚠️ Error updating action buttons: {e}")
+            if self.logger:
+                self.logger.log_system("ERROR", "PRACTICE_UI", f"Error updating action buttons: {e}", {})
     
     def _update_check_call_button(self, action_type: str, amount: float = 0):
         """Update the check/call button dynamically."""
