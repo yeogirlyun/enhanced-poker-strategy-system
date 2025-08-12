@@ -18,7 +18,8 @@ from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 
 from .types import ActionType, Player, GameState, PokerState
-from .hand_evaluation import EnhancedHandEvaluator
+from .hand_evaluation import HandRank
+from .deuces_hand_evaluator import DeucesHandEvaluator
 from .position_mapping import HandHistoryManager
 from utils.sound_manager import SoundManager
 from .session_logger import get_session_logger
@@ -107,8 +108,8 @@ class FlexiblePokerStateMachine:
         self.hand_number = 0
         self.hand_history: List[Dict[str, Any]] = []
         
-        # Utilities
-        self.hand_evaluator = EnhancedHandEvaluator()
+        # Utilities - Use proven deuces library for hand evaluation
+        self.hand_evaluator = DeucesHandEvaluator()
         # Pass through test_mode so testers can disable sound/voice
         self.sound_manager = SoundManager(test_mode=self.config.test_mode)
         
@@ -191,25 +192,25 @@ class FlexiblePokerStateMachine:
             # Heads-up: [SB/BTN, BB]
             return ["SB/BTN", "BB"]
         elif num_players == 3:
-            # 3-handed: [BTN, SB, BB]
+            # 3-handed: [BTN, SB, BB] (starting from dealer position)
             return ["BTN", "SB", "BB"]
         elif num_players == 4:
-            # 4-handed: [UTG, BTN, SB, BB]
-            return ["UTG", "BTN", "SB", "BB"]
+            # 4-handed: [BTN, SB, BB, UTG] (starting from dealer position)
+            return ["BTN", "SB", "BB", "UTG"]
         elif num_players == 5:
-            # 5-handed: [UTG, CO, BTN, SB, BB]
-            return ["UTG", "CO", "BTN", "SB", "BB"]
+            # 5-handed: [BTN, SB, BB, UTG, CO] (starting from dealer position)
+            return ["BTN", "SB", "BB", "UTG", "CO"]
         elif num_players == 6:
-            # 6-handed: [UTG, MP, CO, BTN, SB, BB]
-            return ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+            # 6-handed: [BTN, SB, BB, UTG, MP, CO] (starting from dealer position)
+            return ["BTN", "SB", "BB", "UTG", "MP", "CO"]
         else:
-            # 7+ players: [UTG, MP1, MP2, ..., CO, BTN, SB, BB]
-            positions = ["UTG"]
+            # 7+ players: [BTN, SB, BB, UTG, MP1, MP2, ..., CO] (starting from dealer position)
+            positions = ["BTN", "SB", "BB", "UTG"]
             # Add middle positions
-            mp_count = num_players - 5  # Total - (UTG + CO + BTN + SB + BB)
+            mp_count = num_players - 5  # Total - (BTN + SB + BB + UTG + CO)
             for i in range(1, mp_count + 1):
                 positions.append(f"MP{i}")
-            positions.extend(["CO", "BTN", "SB", "BB"])
+            positions.append("CO")
             return positions
     
     def add_event_listener(self, listener: EventListener):
@@ -469,8 +470,10 @@ class FlexiblePokerStateMachine:
                 player.current_bet = 0.0
 
             # Create winner_info structure that matches what the UI expects
+            # FIXED: Use primary winner name instead of comma-separated list
+            primary_winner_name = winners[0].name if winners else "Unknown"
             winner_info = {
-                "name": ", ".join([w.name for w in winners]) if winners else "Unknown",
+                "name": primary_winner_name,  # Single winner name for backward compatibility
                 "amount": self.game_state.pot,
                 "board": self.game_state.board.copy(),
                 "hand": "Unknown",  # Backward compatible field
@@ -860,38 +863,42 @@ class FlexiblePokerStateMachine:
         # Note: Display state event will be emitted by transition_to method
     
     def determine_winners(self, players: List[Player]) -> List[Player]:
-        """Determine the winners among the given players."""
+        """Determine the winners among the given players using deuces library."""
         if not players:
             return []
         
         if len(players) == 1:
             return players
         
-        # Evaluate hands
-        player_hands = []
+        # Evaluate hands using deuces
+        player_evaluations = []
         for player in players:
             if len(player.cards) == 2:
                 hand_eval = self.hand_evaluator.evaluate_hand(
                     player.cards, self.game_state.board)
-                # Extract the hand rank value from the evaluation result
-                if isinstance(hand_eval, dict) and 'hand_rank' in hand_eval:
-                    hand_rank = hand_eval['hand_rank']
-                    # Convert HandRank enum to integer value for comparison
-                    rank_value = hand_rank.value if hasattr(hand_rank, 'value') else hand_rank
-                else:
-                    rank_value = hand_eval if isinstance(hand_eval, (int, float)) else 0
-                player_hands.append((player, rank_value))
+                player_evaluations.append((player, hand_eval))
+                
+                # Debug logging for hand evaluation
+                score = hand_eval.get('hand_score', 9999)
+                desc = hand_eval.get('hand_description', 'Unknown')
+                self._safe_print(f"🃏 {player.name}: {player.cards} + {self.game_state.board} = {desc} (score={score})")
         
         # Handle case where no valid hands are evaluated
-        if not player_hands:
-            return players  # Return all players if no hands can be evaluated
+        if not player_evaluations:
+            return players
         
-        # Sort by hand rank (best first)
-        player_hands.sort(key=lambda x: x[1], reverse=True)
+        # Use deuces evaluator to determine winners
+        winners_with_evals = self.hand_evaluator.determine_winners(player_evaluations)
+        winners = [player for player, eval_data in winners_with_evals]
         
-        # Find winners (players with the same best hand rank)
-        best_rank = player_hands[0][1]
-        winners = [player for player, rank in player_hands if rank == best_rank]
+        # Debug logging for final winner determination
+        if len(winners) == 1:
+            winner_eval = winners_with_evals[0][1]
+            self._safe_print(f"🏆 Single winner: {winners[0].name} with {winner_eval.get('hand_description', 'Unknown')}")
+        else:
+            winner_names = [w.name for w in winners]
+            winner_eval = winners_with_evals[0][1] 
+            self._safe_print(f"🤝 Split pot: {', '.join(winner_names)} tie with {winner_eval.get('hand_description', 'Unknown')}")
         
         return winners
     
@@ -1012,26 +1019,7 @@ class FlexiblePokerStateMachine:
                 "big_blind": self.big_blind_position
             })
 
-    def _get_position_names(self):
-        """Get position names based on number of players."""
-        num_players = len(self.game_state.players)
-        
-        if num_players == 2:
-            return ["BTN/SB", "BB"]
-        elif num_players == 3:
-            return ["BTN", "SB", "BB"]
-        elif num_players == 4:
-            return ["BTN", "SB", "BB", "UTG"]
-        elif num_players == 5:
-            return ["BTN", "SB", "BB", "UTG", "CO"]
-        elif num_players == 6:
-            return ["BTN", "SB", "BB", "UTG", "MP", "CO"]
-        elif num_players == 7:
-            return ["BTN", "SB", "BB", "UTG", "UTG+1", "MP", "CO"]
-        elif num_players == 8:
-            return ["BTN", "SB", "BB", "UTG", "UTG+1", "UTG+2", "MP", "CO"]
-        else:  # 9+ players
-            return ["BTN", "SB", "BB", "UTG", "UTG+1", "UTG+2", "MP", "MP+1", "CO"]
+
 
     def _create_basic_strategy_integration(self):
         """Create a basic strategy integration for testing."""

@@ -25,8 +25,9 @@ import uuid
 from datetime import datetime
 import math
 
-# Import the enhanced hand evaluator for accurate winner determination
-from .hand_evaluation import EnhancedHandEvaluator, HandRank
+# Import the deuces-based hand evaluator for accurate winner determination
+from .deuces_hand_evaluator import DeucesHandEvaluator
+from .hand_evaluation import HandRank
 
 # Import the position mapping system for strategy integration
 from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
@@ -214,8 +215,8 @@ class ImprovedPokerStateMachine:
             self.strategy_integration = None
         self.hand_history_manager = HandHistoryManager()
         
-        # Hand evaluator
-        self.hand_evaluator = EnhancedHandEvaluator()
+        # Hand evaluator - Use proven deuces library
+        self.hand_evaluator = DeucesHandEvaluator()
         
         # Initialize hand evaluation cache
         self._hand_eval_cache = {}
@@ -2704,7 +2705,7 @@ class ImprovedPokerStateMachine:
             self.transition_to(PokerState.SHOWDOWN)
 
     def determine_winner(self, players_to_evaluate: List[Player] = None) -> List[Player]:
-        """Determine winners with proper tie handling using the enhanced evaluator."""
+        """Determine winners with proper tie handling using the deuces evaluator."""
         # If a specific list of players is provided, use it. Otherwise, use all active players.
         active_players = players_to_evaluate if players_to_evaluate is not None else [p for p in self.game_state.players if p.is_active]
         
@@ -2714,67 +2715,36 @@ class ImprovedPokerStateMachine:
         self._log_message(f"🔍 SHOWDOWN: Evaluating {len(active_players)} active players")
         self._log_message(f"🎴 Board: {' '.join(self.game_state.board)}")
         
-        # Collect all hand evaluations for detailed comparison
-        player_hands = []
-        best_hand_info = None
-        winners = []
-        
-        # First pass: evaluate all hands
+        # Evaluate hands using deuces
+        player_evaluations = []
         for player in active_players:
-            hand_info = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
-            player_hands.append({
-                'player': player,
-                'hand_info': hand_info
-            })
+            hand_eval = self.hand_evaluator.evaluate_hand(player.cards, self.game_state.board)
+            player_evaluations.append((player, hand_eval))
             
             # Log each player's hand details
-            hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
-            self._log_message(f"📊 {player.name} ({' '.join(player.cards)}): {hand_rank} - {hand_info['hand_description']}")
+            desc = hand_eval.get('hand_description', 'Unknown')
+            score = hand_eval.get('hand_score', 9999)
+            self._log_message(f"📊 {player.name} ({' '.join(player.cards)}): {desc} (score={score})")
         
-        # Second pass: determine winner(s)
-        for player_hand in player_hands:
-            player = player_hand['player']
-            hand_info = player_hand['hand_info']
-            
-            if not winners:  # First player to be evaluated
-                best_hand_info = hand_info
-                winners = [player]
-                hand_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
-                self._log_message(f"🏆 {player.name} leads with {hand_rank}")
-            else:
-                # Compare current player's hand with the best so far
-                comparison = self.hand_evaluator._compare_hands(
-                    (hand_info['hand_rank'], hand_info['rank_values']),
-                    (best_hand_info['hand_rank'], best_hand_info['rank_values'])
-                )
-                
-                current_rank = hand_info['hand_rank'].name.replace('_', ' ').title()
-                best_rank = best_hand_info['hand_rank'].name.replace('_', ' ').title()
-                
-                if comparison > 0:  # Current player has a better hand
-                    best_hand_info = hand_info
-                    winners = [player]
-                    self._log_message(f"🏆 {player.name} wins with {current_rank} vs {best_rank}")
-                elif comparison == 0:  # It's a tie
-                    winners.append(player)
-                    self._log_message(f"🤝 {player.name} ties with {current_rank}")
-                else:
-                    self._log_message(f"❌ {player.name} loses with {current_rank} vs {best_rank}")
+        # Use deuces evaluator to determine winners
+        winners_with_evals = self.hand_evaluator.determine_winners(player_evaluations)
+        winners = [player for player, eval_data in winners_with_evals]
         
         # Final showdown summary
         if len(winners) == 1:
-            winner = winners[0]
-            winner_hand = next(ph for ph in player_hands if ph['player'] == winner)
-            hand_rank = winner_hand['hand_info']['hand_rank'].name.replace('_', ' ').title()
-            self._log_message(f"🎉 {winner.name} wins with {hand_rank}!")
+            winner_eval = winners_with_evals[0][1]
+            desc = winner_eval.get('hand_description', 'Unknown')
+            self._log_message(f"🎉 {winners[0].name} wins with {desc}!")
         else:
             winner_names = [w.name for w in winners]
-            self._log_message(f"🎉 Split pot between {', '.join(winner_names)}")
+            winner_eval = winners_with_evals[0][1]
+            desc = winner_eval.get('hand_description', 'Unknown')
+            self._log_message(f"🎉 Split pot between {', '.join(winner_names)} - all have {desc}")
         
         return winners
 
     def determine_winners_among(self, candidates: List[Player]) -> List[Player]:
-        """Determine winners among a specific set of candidates."""
+        """Determine winners among a specific set of candidates using deuces evaluator."""
         evaluations = []
         for player in candidates:
             if player.cards:  # Skip if no cards (folded)
@@ -2782,8 +2752,10 @@ class ImprovedPokerStateMachine:
                 evaluations.append((player, eval))
         if not evaluations:
             return []
-        best_eval = max(evaluations, key=lambda x: (x[1]['hand_rank'].value, x[1]['rank_values']))
-        winners = [p for p, e in evaluations if e == best_eval[1]]
+        
+        # Use deuces evaluator's determine_winners method for proper comparison
+        winners_with_evals = self.hand_evaluator.determine_winners(evaluations)
+        winners = [player for player, eval_data in winners_with_evals]
         return winners
 
     def handle_showdown(self):

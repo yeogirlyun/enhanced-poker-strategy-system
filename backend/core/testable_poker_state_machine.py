@@ -20,10 +20,16 @@ class TestableGameConfig(GameConfig):
     """
     
     def __init__(self, **kwargs):
-        # Preserve test_mode for testing compatibility
-        self.test_mode = kwargs.pop('test_mode', True)  # Default to True for testable config
-        self.show_all_cards = kwargs.pop('show_all_cards', True)
+        # Extract test-specific parameters before parent init
+        test_mode = kwargs.pop('test_mode', True)  # Default to True for testable config
+        show_all_cards = kwargs.pop('show_all_cards', True)
+        
+        # Initialize parent dataclass
         super().__init__(**kwargs)
+        
+        # Override with test-specific values after parent init
+        self.test_mode = test_mode
+        self.show_all_cards = show_all_cards
 
 
 class TestablePokerStateMachine(FlexiblePokerStateMachine):

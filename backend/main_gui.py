@@ -1342,7 +1342,7 @@ These settings can be configured in the main strategy panels."""
         """Create and show the sound settings dialog."""
         dialog = tk.Toplevel(self.root)
         dialog.title("🎵🎨 Sound & Appearance Settings")
-        dialog.geometry("400x500")
+        dialog.geometry("800x700")  # FIXED: Increased size to show Sound Effects Mapping
         dialog.configure(bg=THEME["primary_bg"])
         dialog.transient(self.root)
         dialog.grab_set()
@@ -1350,9 +1350,32 @@ These settings can be configured in the main strategy panels."""
         # Center the dialog
         dialog.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
         
-        # Main frame
-        main_frame = ttk.Frame(dialog)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Create scrollable main frame
+        canvas = tk.Canvas(dialog, bg=THEME["primary_bg"])
+        scrollbar = ttk.Scrollbar(dialog, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True, padx=20, pady=20)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Enable mouse wheel scrolling
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        dialog.bind_all("<MouseWheel>", _on_mousewheel)  # Windows
+        dialog.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))  # Linux
+        dialog.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))   # Linux
+        
+        # Use scrollable_frame as main_frame
+        main_frame = scrollable_frame
         
         # Title
         title_label = ttk.Label(
@@ -1419,6 +1442,62 @@ These settings can be configured in the main strategy panels."""
             command=self._update_sfx_volume
         )
         sfx_volume_scale.pack(fill=tk.X, padx=20, pady=(0, 10))
+
+        # Sound Effects Mapping (chip/beep and action sounds)
+        mapping_frame = ttk.LabelFrame(main_frame, text="Sound Effects Mapping")
+        mapping_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+
+        ttk.Label(mapping_frame, text="Configure sound files for each event. Click ▶ to preview, Change to choose a new file.").pack(anchor=tk.W, padx=10, pady=(8, 6))
+
+        # Table container
+        table = ttk.Frame(mapping_frame)
+        table.pack(fill=tk.BOTH, expand=True, padx=10)
+
+        # Prepare mapping rows from the current sound manager
+        self._effect_var_by_key = {}
+
+        def add_mapping_rows(category_label, category_key):
+            row_container = ttk.LabelFrame(table, text=category_label)
+            row_container.pack(fill=tk.X, pady=(8, 4))
+            # Header
+            header = ttk.Frame(row_container)
+            header.pack(fill=tk.X)
+            ttk.Label(header, text="Event", width=18).grid(row=0, column=0, sticky=tk.W, padx=(10, 6))
+            ttk.Label(header, text="File").grid(row=0, column=1, sticky=tk.W)
+
+            # Get mapping from sound manager
+            mapping = {}
+            try:
+                if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                    game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                    if game_widget and hasattr(game_widget, 'sound_manager'):
+                        sm = game_widget.sound_manager
+                        mapping = sm.sound_mapping.get(category_key, {}) if hasattr(sm, 'sound_mapping') else {}
+            except Exception:
+                mapping = {}
+
+            # Create rows
+            row_idx = 1
+            for event_key, filename in mapping.items():
+                row = ttk.Frame(row_container)
+                row.pack(fill=tk.X, pady=2)
+                ttk.Label(row, text=event_key, width=18).grid(row=0, column=0, sticky=tk.W, padx=(10, 6))
+                var = tk.StringVar(value=str(filename))
+                entry = ttk.Entry(row, textvariable=var, width=36)
+                entry.grid(row=0, column=1, sticky=tk.W)
+
+                # Preview button
+                ttk.Button(row, text="▶", width=3, command=lambda ek=event_key, ck=category_key: self._preview_effect_sound(ck, ek)).grid(row=0, column=2, padx=(6, 2))
+                # Change button
+                ttk.Button(row, text="Change…", command=lambda v=var: self._pick_sound_file(v)).grid(row=0, column=3, padx=(2, 6))
+
+                self._effect_var_by_key[(category_key, event_key)] = var
+                row_idx += 1
+
+        add_mapping_rows("Poker Actions (check/call/bet/raise/fold/all-in)", "poker_actions")
+        add_mapping_rows("Card Actions (deal/shuffle)", "card_actions")
+        add_mapping_rows("Chip Actions (bet/collect)", "chip_actions")
+        add_mapping_rows("UI Actions (notification/winner)", "ui_actions")
         
         # Table Felt Color Section
         felt_frame = ttk.LabelFrame(main_frame, text="Table Appearance")
@@ -1533,6 +1612,38 @@ These settings can be configured in the main strategy panels."""
             self.set_status("Chip test - no sound manager available")
         except Exception as e:
             self.set_status(f"Chip test failed: {e}")
+
+    def _preview_effect_sound(self, category_key: str, event_key: str):
+        """Play the currently selected effect sound for a given category/event."""
+        try:
+            if hasattr(self, 'practice_session_ui') and self.practice_session_ui:
+                game_widget = getattr(self.practice_session_ui, 'game_widget', None)
+                if game_widget and hasattr(game_widget, 'sound_manager'):
+                    sm = game_widget.sound_manager
+                    # Resolve filename from the edited field
+                    var = self._effect_var_by_key.get((category_key, event_key))
+                    if var is not None:
+                        filename = var.get()
+                        # Temporarily play by filename directly
+                        sm.play(filename)
+                        self.set_status(f"Preview: {event_key} → {filename}")
+                        return
+            self.set_status("Preview failed - no sound manager available")
+        except Exception as e:
+            self.set_status(f"Preview failed: {e}")
+
+    def _pick_sound_file(self, target_var: tk.StringVar):
+        """Open a file picker and set the chosen filename relative to sounds directory."""
+        try:
+            from tkinter import filedialog
+            initialdir = os.path.join(os.path.dirname(__file__), 'sounds')
+            filename = filedialog.askopenfilename(title="Choose Sound", initialdir=initialdir, filetypes=[("Audio", "*.wav *.mp3")])
+            if filename:
+                # Save base name only; SoundManager resolves relative to sounds dir
+                base = os.path.basename(filename)
+                target_var.set(base)
+        except Exception as e:
+            self.set_status(f"Pick sound failed: {e}")
     
     def _update_voice_volume(self, value):
         """Update voice volume in real time."""
@@ -1610,6 +1721,27 @@ These settings can be configured in the main strategy panels."""
                         sound_manager.voice_manager.set_voice_type(self.voice_var.get())
                         sound_manager.voice_manager.volume = self.voice_volume_var.get()
                     sound_manager.set_volume(self.sfx_volume_var.get())
+
+                    # Persist updated sound effects mapping
+                    try:
+                        mapping = getattr(sound_manager, 'sound_mapping', {})
+                        for (cat, event_key), var in self._effect_var_by_key.items():
+                            if cat not in mapping:
+                                mapping[cat] = {}
+                            mapping[cat][event_key] = var.get()
+                        # Write back to sounds/sound_mapping.json
+                        sounds_dir = getattr(sound_manager, 'sounds_dir', None)
+                        if sounds_dir:
+                            mapping_file = os.path.join(sounds_dir, 'sound_mapping.json')
+                            with open(mapping_file, 'w') as f:
+                                import json
+                                json.dump(mapping, f, indent=2)
+                            # Reload mapping and clear cache so changes take effect immediately
+                            sound_manager.sound_cache.clear()
+                            if hasattr(sound_manager, '_load_sound_mapping'):
+                                sound_manager._load_sound_mapping()
+                    except Exception as e:
+                        self.set_status(f"Could not save sound mapping: {e}")
             
             # Apply felt color
             self._apply_felt_color(self.felt_var.get())

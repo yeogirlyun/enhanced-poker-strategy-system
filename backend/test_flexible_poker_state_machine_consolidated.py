@@ -65,11 +65,12 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment."""
-        self.        config = TestableGameConfig(
+        self.config = TestableGameConfig(
             num_players=6,
             big_blind=2.0,
             small_blind=1.0,
-            starting_stack=200.0
+            starting_stack=200.0,
+            test_mode=True
         )
         self.state_machine = TestablePokerStateMachine(self.config)
         self.event_listener = TestEventListener()
@@ -135,7 +136,8 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
         self.assertIn("BB", positions)
         
         # Check position order for 6 players (correct poker positions relative to dealer)
-        expected_positions = ["BB", "UTG", "MP", "CO", "BTN", "SB"]
+        # With dealer_position = 0, positions should be: BTN, SB, BB, UTG, MP, CO
+        expected_positions = ["BTN", "SB", "BB", "UTG", "MP", "CO"]
         for i, player in enumerate(self.state_machine.game_state.players):
             self.assertEqual(player.position, expected_positions[i])
     

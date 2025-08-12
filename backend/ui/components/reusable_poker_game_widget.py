@@ -1437,26 +1437,64 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                     }
                 )
 
+    def _start_pot_to_winner_animation(self, winner_info, pot_amount):
+        """Wrapper to begin single-winner pot animation and schedule cleanup."""
+        try:
+            # Ensure pot display is on top during pot-to-winner animation
+            if hasattr(self, 'pot_display') and self.pot_display:
+                self.canvas.tag_raise(self.pot_display)
+            # Determine approximate animation duration for cleanup scheduling
+            num_chips = min(max(1, int(pot_amount / 50)), 6)
+            total_duration_ms = (num_chips - 1) * 100 + 30 * 20 + 300
+            # Start animation
+            self.animate_pot_to_winner(winner_info, pot_amount)
+            # Cleanup after animation completes
+            self.after(total_duration_ms, self._on_pot_animation_complete)
+        except Exception as e:
+            debug_log(f"Error in _start_pot_to_winner_animation: {e}", "POT_ANIMATION")
+            # Fallback cleanup to avoid stuck UI
+            self.after(800, self._on_pot_animation_complete)
+
     def _start_pot_to_winner_animation_multi(self, winner_info, winners_list, pot_amount):
         """Support split pots: animate chips to multiple winners if needed."""
         try:
+            # FIXED: Use winners_list from event data as the authoritative source
+            # This is passed from the state machine's hand_complete event: "winners": [w.name for w in winners]
             names = []
-            # Prefer explicit winners list from event
             if isinstance(winners_list, list) and winners_list:
-                names = winners_list
+                names = [str(name).strip() for name in winners_list if name]  # Convert to strings and clean
+                debug_log(f"Using event winners list: {names}", "POT_ANIMATION")
             else:
-                # Fallback: parse comma-separated string in winner_info['name']
+                # Only fallback to winner_info if winners_list is unavailable (shouldn't happen)
                 raw = winner_info.get('name', '') if isinstance(winner_info, dict) else ''
                 if raw:
-                    names = [n.strip() for n in raw.split(',') if n.strip()]
+                    names = [raw.strip()]
+                debug_log(f"Fallback to winner_info name: {names}", "POT_ANIMATION")
             
-            if not names or len(names) == 1:
+            # Check if we truly have multiple winners
+            if not names:
+                debug_log("No winners found - skipping animation", "POT_ANIMATION")
+                return
+            elif len(names) == 1:
+                debug_log(f"Single winner: {names[0]}", "POT_ANIMATION")
                 self._start_pot_to_winner_animation(winner_info, pot_amount)
                 return
             
-            # Compute per-winner shares
+            # TRUE SPLIT POT: Multiple winners detected
+            debug_log(f"Split pot: {len(names)} winners sharing ${pot_amount:.2f}", "POT_ANIMATION")
             share = pot_amount / max(1, len(names))
+            debug_log(f"Each winner gets: ${share:.2f}", "POT_ANIMATION")
+            
+            # Determine final duration across all winners for cleanup scheduling
+            try:
+                # Conservative estimate: 4 chips per winner, staggered by 120ms per winner
+                chips_per = min(max(1, int(share / 50)), 4)
+                max_delay = (len(names) - 1) * 120 + (chips_per - 1) * 100
+                total_duration_ms = max_delay + 30 * 20 + 400
+            except Exception:
+                total_duration_ms = 1300
             self.animate_pot_to_multiple_winners(names, share, pot_amount)
+            self.after(total_duration_ms, self._on_pot_animation_complete)
         except Exception as e:
             debug_log(f"Error in split-pot start: {e}", "POT_ANIMATION")
             # Fallback to single-winner animation
@@ -1889,24 +1927,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.after(800, lambda: self._flash_winner_stack(winner_seat_index))
     
     def _animate_single_chip_to_winner(self, start_x, start_y, end_x, end_y, amount, delay):
-        """Animate a single chip from pot to winner."""
+        """Animate a single chip from pot to winner using canvas drawing."""
         
         def start_animation():
-            # Create winner chip
-            winner_chip = tk.Label(
-                self.canvas,
-                text="🏆",
-                bg="gold",
-                fg="red",
-                font=("Arial", 30, "bold"),
-                bd=3,
-                relief="raised",
-                padx=6,
-                pady=4
+            # Create chip as canvas oval (not a widget)
+            chip_size = 40
+            chip_id = self.canvas.create_oval(
+                start_x - chip_size//2, start_y - chip_size//2,
+                start_x + chip_size//2, start_y + chip_size//2,
+                fill="gold", 
+                outline="darkgoldenrod",
+                width=3,
+                tags="pot_animation_chip"
             )
             
-            chip_window = self.canvas.create_window(start_x, start_y, window=winner_chip)
-            self.canvas.tag_raise(chip_window)
+            # Add text on top of chip
+            text_id = self.canvas.create_text(
+                start_x, start_y,
+                text="$",
+                fill="red",
+                font=("Arial", 20, "bold"),
+                tags="pot_animation_chip"
+            )
+            
+            # Ensure chips are on top
+            self.canvas.tag_raise("pot_animation_chip")
             
             # Animate to winner
             def move_to_winner(step=0):
@@ -1924,13 +1969,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         bounce = math.sin((progress - 0.7) * 15) * 5
                         y += bounce
                     
-                    self.canvas.coords(chip_window, x, y)
+                    # Move both chip and text
+                    self.canvas.coords(chip_id, 
+                        x - chip_size//2, y - chip_size//2,
+                        x + chip_size//2, y + chip_size//2)
+                    self.canvas.coords(text_id, x, y)
+                    
                     self.after(20, lambda: move_to_winner(step + 1))
                 else:
-                    # Animation complete
-                    self.canvas.delete(chip_window)
+                    # Animation complete - delete the chip
+                    self.canvas.delete(chip_id)
+                    self.canvas.delete(text_id)
             
             move_to_winner()
+        
+        self.after(delay, start_animation)
         
     def _on_pot_animation_complete(self):
         """Cleanup after pot-to-winner animation: hide pot and bet graphics."""

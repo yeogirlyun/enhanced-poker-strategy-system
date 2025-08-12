@@ -543,16 +543,31 @@ class PracticeSessionUI(ttk.Frame, EventListener):
     def _handle_hand_complete_message(self, event):
         """Convert hand_complete events to showdown result messages with best 5 cards."""
         if hasattr(event, 'data') and event.data:
+            # FIXED: Use the winners list from event data instead of parsing winner_info['name']
+            winners_list = event.data.get('winners', [])
             winner_info = event.data.get('winner_info', {})
-            winner = winner_info.get('name') or event.data.get('winner', 'Unknown')
             pot_amount = event.data.get('pot_amount', 0)
             hand_desc = winner_info.get('hand_description') or event.data.get('winning_hand', '')
             best_five = winner_info.get('best_five', [])
-            if best_five:
-                best_five_str = ' '.join(best_five)
-                self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc} ({best_five_str})")
+            
+            # Format message based on number of winners
+            if isinstance(winners_list, list) and len(winners_list) > 1:
+                # Split pot
+                winners_str = ", ".join(winners_list)
+                share = pot_amount / len(winners_list)
+                if best_five:
+                    best_five_str = ' '.join(best_five)
+                    self._add_action_message(f"🏆 Split pot: {winners_str} each win ${share:.2f} with {hand_desc} ({best_five_str})")
+                else:
+                    self._add_action_message(f"🏆 Split pot: {winners_str} each win ${share:.2f} with {hand_desc}")
             else:
-                self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc}")
+                # Single winner
+                winner = winners_list[0] if winners_list else (winner_info.get('name') or 'Unknown')
+                if best_five:
+                    best_five_str = ' '.join(best_five)
+                    self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc} ({best_five_str})")
+                else:
+                    self._add_action_message(f"🏆 {winner} wins ${pot_amount:.2f} with {hand_desc}")
     
     def _setup_quick_bet_buttons(self, parent):
         """Setup quick bet buttons for faster gameplay."""
