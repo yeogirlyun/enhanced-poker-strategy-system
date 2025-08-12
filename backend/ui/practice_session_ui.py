@@ -13,9 +13,9 @@ from datetime import datetime
 
 # Import core components
 from core.practice_session_poker_state_machine import PracticeSessionPokerStateMachine
+from core.practice_session_action_interface import PracticeSessionActionInterface
 from core.flexible_poker_state_machine import GameConfig, EventListener, GameEvent
 from core.gui_models import StrategyData, THEME, FONTS
-from core.types import Player, ActionType
 
 # Import specialized components
 from ui.components.practice_session_poker_widget import PracticeSessionPokerWidget
@@ -105,6 +105,9 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Adding UI as event listener", {})
         self.state_machine.add_event_listener(self)
+        
+        # Initialize clean action interface
+        self.action_interface = PracticeSessionActionInterface(self.state_machine)
         
         # Setup UI
         if self.logger:
@@ -847,39 +850,21 @@ class PracticeSessionUI(ttk.Frame, EventListener):
 
     def _check_and_enable_human_turn(self):
         """Check if it's human's turn and enable buttons accordingly."""
-        if not hasattr(self, 'state_machine') or not self.state_machine:
+        if not hasattr(self, 'action_interface') or not self.action_interface:
             return
             
         try:
-            # Check if game is in a valid state for human actions
-            if hasattr(self.state_machine, 'current_state'):
-                invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
-                state_name = str(self.state_machine.current_state).split('.')[-1]
-                if state_name in invalid_states:
-                    # Log to structured logger instead of console
-                    if self.logger:
-                        self.logger.log_system("DEBUG", "UI_STATE", "Keeping buttons disabled - invalid game state", {
-                            "game_state": state_name,
-                            "component": "PracticeSessionUI"
-                        })
-                    return
-            
-            # Check if current player is human
-            current_player = self.state_machine.get_action_player()
-            if current_player and hasattr(current_player, 'is_human') and current_player.is_human:
-                # Log to structured logger instead of console  
+            # Use clean action interface to check if human can act
+            if self.action_interface.can_human_act():
+                self._enable_action_buttons()
                 if self.logger:
-                    self.logger.log_system("DEBUG", "UI_STATE", "Human turn detected - enabling buttons", {
-                        "player_name": current_player.name,
+                    self.logger.log_system("DEBUG", "UI_STATE", "Human turn - enabling action buttons", {
                         "component": "PracticeSessionUI"
                     })
-                self._enable_action_buttons()
             else:
-                player_name = getattr(current_player, 'name', 'Unknown') if current_player else 'None'
-                # Log to structured logger instead of console
+                self._disable_action_buttons()
                 if self.logger:
-                    self.logger.log_system("DEBUG", "UI_STATE", "Not human turn - keeping buttons disabled", {
-                        "current_player": player_name,
+                    self.logger.log_system("DEBUG", "UI_STATE", "Not human turn - disabling action buttons", {
                         "component": "PracticeSessionUI"
                     })
                 
@@ -973,142 +958,63 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if self.logger:
             self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Human player's turn, executing action: {action_key}", {})
         
-        # Determine the action and amount based on the button clicked
+        # Execute action using clean interface (no game logic in UI)
+        success = False
+        
         if action_key == 'check_call':
-            # Check if we need to call or check
-            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
-            player_bet = getattr(current_player, 'current_bet', 0)
-            call_amount = current_bet - player_bet
-            if self.logger:
-                self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", f"Bet calculation: current_bet={current_bet}, player_bet={player_bet}, call_amount={call_amount}", {})
-            
-            if call_amount > 0:
-                action = 'call'
-                amount = call_amount
-            else:
-                action = 'check'
-                amount = 0
+            success = self.action_interface.execute_check_call()
         elif action_key == 'fold':
-            action = 'fold'
-            amount = 0
+            success = self.action_interface.execute_fold()
         elif action_key == 'bet_raise':
-            # Executed by quick-bet presets; no dedicated primary button
-            current_bet = getattr(self.state_machine.game_state, 'current_bet', 0)
-            amount = getattr(self, 'current_bet_amount', self.state_machine.config.big_blind * 2)
-            action = 'raise' if current_bet > 0 else 'bet'
+            # Use current bet amount if set by quick-bet, otherwise interface calculates default
+            amount = getattr(self, 'current_bet_amount', None)
+            success = self.action_interface.execute_bet_raise(amount)
         else:
             if self.logger:
                 self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Unknown action: {action_key}", {})
             return
         
-        # Execute the action through the state machine
-        try:
-            if self.logger:
-                self.logger.log_system("INFO", "PRACTICE_UI_ACTION", f"Executing {action} with amount {amount}", {})
-            
-            # Convert string action to ActionType enum
-            action_type_map = {
-                'fold': ActionType.FOLD,
-                'check': ActionType.CHECK, 
-                'call': ActionType.CALL,
-                'bet': ActionType.BET,
-                'raise': ActionType.RAISE
-            }
-            action_type = action_type_map.get(action)
-            if not action_type:
-                if self.logger:
-                    self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Unknown action type: {action}", {})
-                return
-                
-            # Final safety check before executing action
-            if not isinstance(current_player, Player):
-                if self.logger:
-                    self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Final check failed: current_player is {type(current_player)}, expected Player object", {})
-                return
-            
-            # CRITICAL DEBUGGING: Log the actual action execution
-            if self.logger:
-                self.logger.log_system("INFO", "USER_ACTION", f"Executing action: {current_player.name} {action_type.value} ${amount}", {"is_human": current_player.is_human, "action_player_index": self.state_machine.action_player_index})
-            
-            # Log user decision for strategy analysis
-            if self.logger and current_player.is_human:
-                # Get GTO recommendation if available
-                gto_recommendation = "UNKNOWN"
-                if hasattr(self.state_machine, 'strategy_engine'):
-                    try:
-                        gto_action, gto_amount = self.state_machine.strategy_engine.get_gto_bot_action(current_player, self.state_machine.game_state)
-                        gto_recommendation = gto_action.value
-                    except:
-                        pass
-                
-                # Log strategy performance comparison
-                self.logger.log_strategy_performance(
-                    hand_id=getattr(self.state_machine.current_hand, 'hand_id', 'unknown') if hasattr(self.state_machine, 'current_hand') else 'unknown',
-                    strategy_name=getattr(self.strategy_data, 'name', 'Default') if self.strategy_data else "GTO",
-                    gto_recommendation=gto_recommendation,
-                    user_action=action_type.value,
-                    situation_context={
-                        "street": self.state_machine.game_state.street,
-                        "position": current_player.position,
-                        "pot_size": self.state_machine.game_state.pot,
-                        "stack_size": current_player.stack,
-                        "current_bet": self.state_machine.game_state.current_bet,
-                        "action_amount": amount
-                    },
-                    deviation_type=self._analyze_deviation_type(action_type.value, gto_recommendation),
-                    outcome_quality=None  # Will be determined post-hand
-                )
-            
-            self.state_machine.execute_action(current_player, action_type, amount)
-            
-            if self.logger:
-                self.logger.log_system("INFO", "USER_ACTION", f"Action completed: {action_type.value}", {})
-            
-            # Immediately disable buttons after human action
-            # Log to structured logger instead of console
-            if self.logger:
-                self.logger.log_system("DEBUG", "UI_STATE", "Disabling buttons after human action", {
-                    "component": "PracticeSessionUI"
-                })
-            self._disable_action_buttons()
-        except Exception as e:
-            if self.logger:
-                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Error executing action: {e}", {})
+        # Log action result
+        if self.logger:
+            action_name = action_key.replace('_', '/').title()
+            status = "completed" if success else "failed"
+            self.logger.log_system("INFO", "USER_ACTION", f"Action {status}: {action_name}", {
+                "action_key": action_key,
+                "success": success,
+                "component": "PracticeSessionUI"
+            })
+        
+        # Reset bet amount after use
+        if hasattr(self, 'current_bet_amount'):
+            delattr(self, 'current_bet_amount')
+        
+        # Disable buttons after action (they'll be re-enabled when it's human's turn again)
+        self._disable_action_buttons()
+        
+
     
     def _handle_quick_bet(self, bet_type: str):
-        """Handle quick bet button clicks and delegate calculation to state machine."""
+        """Handle quick bet button clicks using clean action interface."""
         try:
-            # Delegate bet calculation to the state machine (proper architecture)
-            if hasattr(self, 'state_machine') and self.state_machine:
-                bet_amount = self.state_machine.calculate_quick_bet_amount(bet_type)
-                self.current_bet_amount = bet_amount
-                
-                # Execute the appropriate action based on bet type
-                if bet_type == "all_in":
-                    self._handle_action_click('all_in')
-                else:
-                    self._handle_action_click('bet_raise')
-                    
-                # Log to structured logger instead of console
-                if self.logger:
-                    self.logger.log_system("INFO", "USER_ACTION", "Quick bet executed", {
-                        "bet_type": bet_type,
-                        "bet_amount": bet_amount,
-                        "component": "PracticeSessionUI"
-                    })
-            else:
-                # Log to structured logger instead of console - this is a warning level issue
-                if self.logger:
-                    self.logger.log_system("WARNING", "STATE_MACHINE", "No state machine available for bet calculation", {
-                        "component": "PracticeSessionUI"
-                    })
-                self.current_bet_amount = 10  # Safe fallback
+            # Use action interface for clean execution (no game logic in UI)
+            success = self.action_interface.execute_quick_bet(bet_type)
+            
+            # Log result
+            if self.logger:
+                status = "completed" if success else "failed"
+                self.logger.log_system("INFO", "USER_ACTION", f"Quick bet {status}: {bet_type}", {
+                    "bet_type": bet_type,
+                    "success": success,
+                    "component": "PracticeSessionUI"
+                })
+            
+            # Disable buttons after action
+            if success:
+                self._disable_action_buttons()
             
         except Exception as e:
             if self.logger:
                 self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Error handling quick bet: {e}", {})
-            # Set a default bet amount if calculation fails
-            self.current_bet_amount = 10
     
     def _enable_action_buttons(self):
         """Enable action buttons for human player interaction."""
