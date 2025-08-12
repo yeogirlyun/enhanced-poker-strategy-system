@@ -18,7 +18,7 @@ from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 
 from .types import ActionType, Player, GameState, PokerState
-from .hand_evaluation import HandRank
+
 from .deuces_hand_evaluator import DeucesHandEvaluator
 from .position_mapping import HandHistoryManager
 from utils.sound_manager import SoundManager

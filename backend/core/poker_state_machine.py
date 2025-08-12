@@ -27,7 +27,7 @@ import math
 
 # Import the deuces-based hand evaluator for accurate winner determination
 from .deuces_hand_evaluator import DeucesHandEvaluator
-from .hand_evaluation import HandRank
+
 
 # Import the position mapping system for strategy integration
 from .position_mapping import EnhancedStrategyIntegration, HandHistoryManager
