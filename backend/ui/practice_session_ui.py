@@ -905,6 +905,14 @@ class PracticeSessionUI(ttk.Frame, EventListener):
                 print(f"🚫 ACTION BLOCKED: Game in {self.state_machine.current_state} state")
                 if self.logger:
                     self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - invalid state: {self.state_machine.current_state}", {"action": action_key})
+                
+                # Log user interaction attempt for UX analytics
+                self.logger.log_user_activity("UI_INTERACTION_BLOCKED", {
+                    "attempted_action": action_key,
+                    "game_state": str(self.state_machine.current_state),
+                    "block_reason": "invalid_game_state",
+                    "ui_element": "action_button"
+                })
                 return
         
         # Check if it's the human player's turn
@@ -987,6 +995,35 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             print(f"🚨 EXECUTING ACTION: {current_player.name} ({action_type.value}) ${amount}")
             print(f"   Player is human: {current_player.is_human}")
             print(f"   Action player index: {self.state_machine.action_player_index}")
+            
+            # Log user decision for strategy analysis
+            if self.logger and current_player.is_human:
+                # Get GTO recommendation if available
+                gto_recommendation = "UNKNOWN"
+                if hasattr(self.state_machine, 'strategy_engine'):
+                    try:
+                        gto_action, gto_amount = self.state_machine.strategy_engine.get_gto_bot_action(current_player, self.state_machine.game_state)
+                        gto_recommendation = gto_action.value
+                    except:
+                        pass
+                
+                # Log strategy performance comparison
+                self.logger.log_strategy_performance(
+                    hand_id=getattr(self.state_machine.current_hand, 'hand_id', 'unknown') if hasattr(self.state_machine, 'current_hand') else 'unknown',
+                    strategy_name=getattr(self.strategy_data, 'name', 'Default') if self.strategy_data else "GTO",
+                    gto_recommendation=gto_recommendation,
+                    user_action=action_type.value,
+                    situation_context={
+                        "street": self.state_machine.game_state.street,
+                        "position": current_player.position,
+                        "pot_size": self.state_machine.game_state.pot,
+                        "stack_size": current_player.stack,
+                        "current_bet": self.state_machine.game_state.current_bet,
+                        "action_amount": amount
+                    },
+                    deviation_type=self._analyze_deviation_type(action_type.value, gto_recommendation),
+                    outcome_quality=None  # Will be determined post-hand
+                )
             
             self.state_machine.execute_action(current_player, action_type, amount)
             
@@ -1309,6 +1346,24 @@ Total Winnings: ${stats['total_winnings']:.2f}
                 self.poker_widget.update_font_size(font_size)
         except Exception as e:
             print(f"⚠️ Error updating font size: {e}")
+    
+    def _analyze_deviation_type(self, user_action: str, gto_action: str) -> str:
+        """Analyze the type of deviation from GTO recommendation."""
+        if user_action == gto_action:
+            return None  # No deviation
+        
+        # Simple deviation classification
+        aggressive_actions = ["BET", "RAISE", "ALL_IN"]
+        passive_actions = ["CHECK", "CALL"]
+        
+        if user_action in aggressive_actions and gto_action in passive_actions:
+            return "AGGRESSIVE"
+        elif user_action in passive_actions and gto_action in aggressive_actions:
+            return "PASSIVE"
+        elif user_action == "FOLD":
+            return "FOLD_HEAVY"
+        else:
+            return "SIZING_DEVIATION"
     
     def increase_table_size(self):
         """Increase the poker table size."""

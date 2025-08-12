@@ -554,6 +554,17 @@ class FPSMHandsReviewPanel(ttk.Frame, EventListener):
             self.add_log_entry("INFO", "SIMULATION", 
                              f"Starting simulation for: {self.current_hand.metadata.name}")
             
+            # Log hands review activity for learning analytics
+            from core.session_logger import get_session_logger
+            logger = get_session_logger()
+            logger.log_user_activity("HANDS_REVIEW_SIMULATION_START", {
+                "hand_id": getattr(self.current_hand.metadata, 'hand_id', 'unknown'),
+                "hand_category": getattr(self.current_hand.metadata, 'category', 'unknown'),
+                "legendary_hand_name": self.current_hand.metadata.name,
+                "hand_type": getattr(self.current_hand, 'type', 'legendary'),
+                "simulation_mode": "step_by_step"
+            })
+            
             # Setup the hand for simulation
             self.setup_hand_for_simulation()
             

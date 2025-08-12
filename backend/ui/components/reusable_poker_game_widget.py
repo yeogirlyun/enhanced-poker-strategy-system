@@ -452,6 +452,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         elif event.event_type == "hand_complete":
             # Handle hand completion - pot to winner animation
+            if self.session_logger:
+                self.session_logger.log_system("INFO", "POT_ANIMATION_DEBUG", "hand_complete event received in ReusablePokerGameWidget!", {
+                    "event_source": "FPSM",
+                    "widget_class": "ReusablePokerGameWidget"
+                })
             self._handle_hand_complete(event)
     
     def _handle_action_executed(self, event: GameEvent):
@@ -1370,6 +1375,16 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         winner_info = event.data.get("winner_info", {})
         pot_amount = event.data.get("pot_amount", 0.0)
         
+        # STRUCTURED DEBUG: Log pot animation debugging with full context
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "POT_ANIMATION_DEBUG", "_handle_hand_complete called", {
+                "winner_info": winner_info,
+                "pot_amount": pot_amount,
+                "event_data": event.data,
+                "last_pot_amount": self.last_pot_amount,
+                "animation_context": "hand_completion_pot_transfer"
+            })
+        
         debug_log(f"Hand complete: {winner_info.get('name', 'Unknown')} wins ${pot_amount:.2f}", "HAND_COMPLETE")
         debug_log(f"winner_info={winner_info}, pot_amount={pot_amount}", "HAND_COMPLETE")
         debug_log(f"event.data keys: {list(event.data.keys()) if hasattr(event, 'data') and event.data else 'No data'}", "HAND_COMPLETE")
@@ -1385,6 +1400,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 if fallback_pot > 0:
                     pot_amount = fallback_pot
                     debug_log(f"Using fallback pot amount: ${pot_amount:.2f}", "HAND_COMPLETE")
+                    
+        # Additional fallback: use last displayed pot amount if available
+        if pot_amount == 0.0 and hasattr(self, 'last_pot_amount') and self.last_pot_amount > 0:
+            pot_amount = self.last_pot_amount
+            debug_log(f"Using last displayed pot amount as final fallback: ${pot_amount:.2f}", "HAND_COMPLETE")
         
         # IMMEDIATELY clear all highlights when hand completes - no more action needed
         self._reset_all_highlights()
@@ -1401,9 +1421,35 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 showdown=True
             )
         
+        # Ensure we have valid winner info for animation
+        if not winner_info or not winner_info.get('name'):
+            # Try to get winner from winners list as fallback
+            winners_list = event.data.get("winners", []) if hasattr(event, 'data') else []
+            if winners_list and len(winners_list) > 0:
+                winner_info = {"name": winners_list[0], "amount": pot_amount}
+                debug_log(f"Using winners list fallback for animation: {winner_info}", "HAND_COMPLETE")
+        
         # Wait for any ongoing bet-to-pot animations to finish before starting pot-to-winner
         # This prevents visual confusion of money moving in multiple directions
+        # STRUCTURED DEBUG: Animation condition analysis
+        animation_conditions = {
+            "winner_info_valid": bool(winner_info),
+            "pot_amount_positive": pot_amount > 0,
+            "combined_condition": bool(winner_info and pot_amount > 0),
+            "pot_amount": pot_amount,
+            "winner_name": winner_info.get('name', 'Unknown') if winner_info else None
+        }
+        
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "POT_ANIMATION_DEBUG", "Animation condition check", animation_conditions)
+        
         if winner_info and pot_amount > 0:
+            if self.session_logger:
+                self.session_logger.log_system("INFO", "POT_ANIMATION_DEBUG", "✅ STARTING POT ANIMATION!", {
+                    "winner": winner_info.get('name', 'Unknown'),
+                    "pot_amount": pot_amount,
+                    "animation_type": "pot_to_winner"
+                })
             debug_log(f"Starting pot animation sequence for {winner_info.get('name', 'Unknown')} with ${pot_amount}", "POT_ANIMATION")
             
             # Update pot display to ensure it shows the correct amount before animation
@@ -1422,6 +1468,13 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             winners_list = event.data.get("winners", []) if hasattr(event, 'data') else []
             self.after(delay_for_pot_animation, lambda: self._start_pot_to_winner_animation_multi(winner_info, winners_list, pot_amount))
         else:
+            if self.session_logger:
+                self.session_logger.log_system("WARNING", "POT_ANIMATION_DEBUG", "❌ NO POT ANIMATION - Condition failed", {
+                    "failure_reason": "pot_animation_condition_not_met",
+                    "winner_info": winner_info,
+                    "pot_amount": pot_amount,
+                    "conditions": animation_conditions
+                })
             debug_log(f"No pot animation - winner_info valid: {bool(winner_info)}, pot_amount: {pot_amount}", "POT_ANIMATION")
             debug_log(f"Current display pot: ${self.last_pot_amount:.2f}, Event pot: ${pot_amount:.2f}", "POT_ANIMATION")
             # Log to session logger instead of console

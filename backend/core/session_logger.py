@@ -103,6 +103,39 @@ class SystemLog:
 
 
 @dataclass
+class UserActivityLog:
+    """Log user activities for analytics and features."""
+    timestamp: float
+    session_id: str
+    activity_type: str  # PRACTICE_DECISION, HANDS_REVIEW, STRATEGY_USAGE, UI_INTERACTION
+    activity_data: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class StrategyPerformanceLog:
+    """Track strategy usage and performance."""
+    timestamp: float
+    session_id: str
+    hand_id: str
+    strategy_name: str
+    gto_recommendation: str
+    user_action: str
+    deviation_type: Optional[str] = None  # AGGRESSIVE, PASSIVE, BLUFF, FOLD_EQUITY
+    situation_context: Dict[str, Any] = field(default_factory=dict)
+    outcome_quality: Optional[str] = None  # EXCELLENT, GOOD, QUESTIONABLE, POOR
+
+@dataclass
+class LearningProgressLog:
+    """Track user learning and improvement over time."""
+    timestamp: float
+    session_id: str
+    skill_area: str  # PREFLOP, POSTFLOP, BLUFFING, VALUE_BETTING, etc.
+    performance_metric: str
+    current_value: float
+    previous_value: Optional[float] = None
+    improvement_trend: Optional[str] = None  # IMPROVING, STABLE, DECLINING
+    confidence_level: Optional[float] = None
+
+@dataclass
 class SessionLog:
     """Complete session data."""
     session_id: str
@@ -125,6 +158,11 @@ class SessionLog:
     # Data collections
     hands: List[HandLog] = field(default_factory=list)
     system_logs: List[SystemLog] = field(default_factory=list)
+    
+    # Enhanced user analytics
+    user_activities: List[UserActivityLog] = field(default_factory=list)
+    strategy_performance: List[StrategyPerformanceLog] = field(default_factory=list)
+    learning_progress: List[LearningProgressLog] = field(default_factory=list)
     
     # Statistics
     human_stats: Dict[str, Any] = field(default_factory=dict)
@@ -332,6 +370,14 @@ class SessionLogger:
     def start_player_action(self, player_name: str):
         """Mark the start of a player's decision time."""
         self.action_start_times[player_name] = time.time()
+        
+        # Log thinking time start for human players
+        if self.session and player_name == self.session.human_player:
+            self.log_user_activity("DECISION_THINKING_START", {
+                "player_name": player_name,
+                "hand_id": self.current_hand.hand_id if self.current_hand else None,
+                "street": getattr(self.current_hand, 'street', 'unknown') if self.current_hand else 'unknown'
+            })
     
     def log_action(self, player_name: str, player_index: int, action: str, amount: float,
                    stack_before: float, stack_after: float, pot_before: float, pot_after: float,
@@ -718,6 +764,84 @@ class SessionLogger:
                     self._force_flush_all()
             except:
                 print("Failed to save session data")
+    
+    # Enhanced User Activity Logging Methods
+    def log_user_activity(self, activity_type: str, activity_data: Dict[str, Any] = None):
+        """Log user activities for analytics and feature development."""
+        if activity_data is None:
+            activity_data = {}
+            
+        activity_log = UserActivityLog(
+            timestamp=time.time(),
+            session_id=self.session_id,
+            activity_type=activity_type,
+            activity_data=activity_data
+        )
+        
+        if self.session:
+            self.session.user_activities.append(activity_log)
+        
+        # Also log to system for immediate access
+        self.log_system("INFO", "USER_ACTIVITY", f"User activity: {activity_type}", {
+            "activity_type": activity_type,
+            "activity_data": activity_data
+        })
+    
+    def log_strategy_performance(self, hand_id: str, strategy_name: str, 
+                                gto_recommendation: str, user_action: str,
+                                situation_context: Dict[str, Any] = None,
+                                deviation_type: str = None, outcome_quality: str = None):
+        """Log strategy usage and performance for learning analytics."""
+        if situation_context is None:
+            situation_context = {}
+            
+        strategy_log = StrategyPerformanceLog(
+            timestamp=time.time(),
+            session_id=self.session_id,
+            hand_id=hand_id,
+            strategy_name=strategy_name,
+            gto_recommendation=gto_recommendation,
+            user_action=user_action,
+            deviation_type=deviation_type,
+            situation_context=situation_context,
+            outcome_quality=outcome_quality
+        )
+        
+        if self.session:
+            self.session.strategy_performance.append(strategy_log)
+        
+        self.log_system("INFO", "STRATEGY_PERFORMANCE", f"Strategy analysis: {strategy_name}", {
+            "strategy_name": strategy_name,
+            "gto_vs_user": f"{gto_recommendation} vs {user_action}",
+            "deviation_type": deviation_type,
+            "outcome_quality": outcome_quality
+        })
+    
+    def log_learning_progress(self, skill_area: str, performance_metric: str, 
+                             current_value: float, previous_value: float = None,
+                             improvement_trend: str = None, confidence_level: float = None):
+        """Log learning progress and skill development over time."""
+        progress_log = LearningProgressLog(
+            timestamp=time.time(),
+            session_id=self.session_id,
+            skill_area=skill_area,
+            performance_metric=performance_metric,
+            current_value=current_value,
+            previous_value=previous_value,
+            improvement_trend=improvement_trend,
+            confidence_level=confidence_level
+        )
+        
+        if self.session:
+            self.session.learning_progress.append(progress_log)
+        
+        self.log_system("INFO", "LEARNING_PROGRESS", f"Progress in {skill_area}: {performance_metric}", {
+            "skill_area": skill_area,
+            "metric": performance_metric,
+            "current_value": current_value,
+            "previous_value": previous_value,
+            "trend": improvement_trend
+        })
 
 
 # Global logger instance
