@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 # Add backend directory to path
 sys.path.append('.')
 
-from core.poker_state_machine import ActionType
+from core.flexible_poker_state_machine import ActionType
 
 def generate_bad_beats() -> List[Dict[str, Any]]:
     """Generate 10 bad beat hands."""

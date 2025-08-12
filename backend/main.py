@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 
-from shared.poker_state_machine_enhanced import ImprovedPokerStateMachine, ActionType
+from core.flexible_poker_state_machine import ActionType
 from gui_models import StrategyData
 
 app = FastAPI()

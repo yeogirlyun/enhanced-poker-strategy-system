@@ -16,9 +16,7 @@ from pathlib import Path
 # Add backend directory to path
 sys.path.append('.')
 
-from core.poker_state_machine import (
-    ImprovedPokerStateMachine, ActionType, PokerState
-)
+from core.flexible_poker_state_machine import ActionType, PokerState
 
 @dataclass
 class HandSummary:

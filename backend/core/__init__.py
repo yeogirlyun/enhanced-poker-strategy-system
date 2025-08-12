@@ -5,7 +5,7 @@ This module contains the fundamental game logic, state management,
 and core functionality for the poker strategy practice application.
 """
 
-from .poker_state_machine import ImprovedPokerStateMachine
+
 from .deuces_hand_evaluator import DeucesHandEvaluator
 from .position_mapping import PositionMapper, EnhancedStrategyIntegration
 from .gui_models import StrategyData
