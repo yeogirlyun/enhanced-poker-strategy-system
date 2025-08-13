@@ -305,18 +305,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
             print("🔥 CONSOLE: Received UI cleanup event - clearing all hand state")
             self._clear_all_hand_state()
     
-    def on_event(self, event: GameEvent):
-        """
-        Override: Handle events from the state machine.
-        
-        This ensures we can intercept and handle UI cleanup events.
-        """
-        # Handle UI cleanup events specifically
-        if event.event_type == "ui_cleanup":
-            self._handle_ui_cleanup_event(event.data)
-        
-        # Call parent class event handling for all other events
-        super().on_event(event)
+
     
     def _customize_player_styling(self, player_index: int, player_info: dict) -> dict:
         """
@@ -479,12 +468,21 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
     # ==============================
     
     def on_event(self, event: GameEvent):
-        """Handle hands review specific events."""
-        # Call parent event handler first
-        super().on_event(event)
+        """
+        Override: Handle events from the state machine.
         
-        # Handle hands review specific events
-        if event.event_type == "step_forward":
+        This ensures we can intercept and handle UI cleanup events AND round_complete events.
+        """
+        # Handle UI cleanup events specifically
+        if event.event_type == "ui_cleanup":
+            self._handle_ui_cleanup_event(event.data)
+        
+        # Handle round_complete events for bet-to-pot animations
+        elif event.event_type == "round_complete":
+            self._handle_round_complete(event)
+        
+        # Handle other hands review specific events
+        elif event.event_type == "step_forward":
             self._handle_step_forward_event(event)
         elif event.event_type == "step_backward":
             self._handle_step_backward_event(event)
@@ -492,6 +490,9 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
             self._handle_hand_loaded_event(event)
         elif event.event_type == "annotation_added":
             self._handle_annotation_added_event(event)
+        
+        # Call parent class event handling for all other events
+        super().on_event(event)
     
     def _handle_step_forward_event(self, event: GameEvent):
         """Handle step forward event."""
@@ -599,6 +600,7 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         The state machine doesn't play card dealing sounds in hands review mode,
         so the UI widget must play them to maintain the poker experience.
         """
+        print(f"🔥 CONSOLE: _handle_round_complete called for street: {event.data.get('street', 'unknown')}")
         street = event.data.get("street", "") if hasattr(event, 'data') else ""
         
         # Play card dealing sound ONCE - state machine doesn't play it in hands review
