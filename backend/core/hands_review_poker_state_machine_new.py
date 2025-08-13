@@ -586,11 +586,8 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             if success:
                 self.action_index += 1
                 
-                # CRITICAL: Check and force street transitions for animations
-                self._check_and_force_street_transitions()
-                
-                # DON'T automatically detect street boundaries - let historical data control progression
-                # The system should stay in each betting state until historical actions indicate otherwise
+                # Let the GameDirector handle all timing and transitions naturally
+                # The state machine just emits events - no manual timing control
                 
                 # Emit step forward event
                 self._emit_event(GameEvent(
@@ -605,7 +602,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 ))
             
             return success
-            
+        
         except Exception as e:
             if self.session_logger:
                 self.session_logger.log_system("ERROR", "HANDS_REVIEW_STEP", f"Error stepping forward: {e}", {
@@ -613,6 +610,47 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                     "action_data": self.historical_actions[self.action_index] if self.action_index < len(self.historical_actions) else None
                 })
             return False
+    
+    def execute_action(self, player: Player, action: ActionType, amount: float = 0.0):
+        """
+        Override: Execute action with proper historical bet handling for hands review.
+        
+        This ensures that historical bet amounts are properly applied and
+        the betting context is maintained for animations.
+        """
+        print(f"🔥 CONSOLE: 🎯 Hands Review execute_action - {player.name} {action.value} ${amount:.2f}")
+        
+        if not player.is_active or player.has_folded:
+            return False
+        
+        # CRITICAL: For historical hands, we need to ensure proper betting context
+        if action == ActionType.CALL and amount > 0:
+            # Historical call with specific amount - set current_bet if needed
+            if self.game_state.current_bet == 0.0:
+                print(f"🔥 CONSOLE: 🎯 Setting current_bet to ${amount:.2f} for historical call")
+                self.game_state.current_bet = amount
+        
+        elif action == ActionType.BET and amount > 0:
+            # Historical bet - ensure current_bet is set
+            if self.game_state.current_bet < amount:
+                print(f"🔥 CONSOLE: 🎯 Updating current_bet to ${amount:.2f} for historical bet")
+                self.game_state.current_bet = amount
+        
+        elif action == ActionType.RAISE and amount > 0:
+            # Historical raise - ensure current_bet is set
+            if self.game_state.current_bet < amount:
+                print(f"🔥 CONSOLE: 🎯 Updating current_bet to ${amount:.2f} for historical raise")
+                self.game_state.current_bet = amount
+        
+        # Now call the parent class method with proper context
+        result = super().execute_action(player, action, amount)
+        
+        if result:
+            print(f"🔥 CONSOLE: 🎯 Action executed successfully - current_bet: ${self.game_state.current_bet:.2f}, player_bet: ${player.current_bet:.2f}")
+        
+        return result
+    
+
     
     def _ensure_proper_betting_state(self):
         """Ensure we're in the correct betting state for action execution."""
@@ -665,63 +703,11 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             current_street = street_names.get(new_state, "unknown")
             self._emit_round_complete_event_for_transition(current_street)
     
-    def _check_and_force_street_transitions(self):
-        """
-        CRITICAL: Force street transitions based on board size in hands review mode.
-        
-        Historical hands don't have transition markers, so we need to detect
-        when board cards change and force the transitions for proper animations.
-        """
-        current_board_size = len(self.game_state.board)
-        print(f"🔥 CONSOLE: _check_and_force_street_transitions - board size: {current_board_size}")
-        
-        # Force flop transition if we have 3+ cards but are still in preflop
-        if current_board_size >= 3 and self.current_state == PokerState.PREFLOP_BETTING:
-            print(f"🔥 CONSOLE: 🎬 FORCING FLOP TRANSITION - board has {current_board_size} cards")
-            self._emit_game_message("🎴 Flop dealt", "info")
-            self._force_street_transition("flop")
-            
-        # Force turn transition if we have 4+ cards but are still in flop
-        elif current_board_size >= 4 and self.current_state == PokerState.FLOP_BETTING:
-            print(f"🔥 CONSOLE: 🎬 FORCING TURN TRANSITION - board has {current_board_size} cards")
-            self._emit_game_message("🎴 Turn card dealt", "info")
-            self._force_street_transition("turn")
-            
-        # Force river transition if we have 5+ cards but are still in turn
-        elif current_board_size >= 5 and self.current_state == PokerState.TURN_BETTING:
-            print(f"🔥 CONSOLE: 🎬 FORCING RIVER TRANSITION - board has {current_board_size} cards")
-            self._emit_game_message("🎴 River card dealt", "info")
-            self._force_street_transition("river")
+
     
-    def _force_street_transition(self, street_name: str):
-        """
-        Force a street transition and emit round_complete event for animations.
-        
-        This ensures bet-to-pot animations work in hands review mode.
-        """
-        print(f"🔥 CONSOLE: 🎬 FORCING street transition to: {street_name}")
-        
-        # Update state based on street
-        if street_name == "flop":
-            self.current_state = PokerState.FLOP_BETTING
-            self.game_state.street = "flop"
-        elif street_name == "turn":
-            self.current_state = PokerState.TURN_BETTING
-            self.game_state.street = "turn"
-        elif street_name == "river":
-            self.current_state = PokerState.RIVER_BETTING
-            self.game_state.street = "river"
-        
-        # CRITICAL: Emit round_complete event BEFORE resetting bets
-        self._emit_round_complete_event_for_transition(street_name)
-        
-        # Reset betting for new round
-        self._reset_bets_for_new_round()
-        self.actions_this_round = 0
-        self.players_acted_this_round.clear()
-        self.action_player_index = self._find_first_active_after_dealer()
-        
-        print(f"🔥 CONSOLE: ✅ Street transition to {street_name} completed")
+
+    
+
     
     def _emit_game_message(self, message: str, message_type: str = "info"):
         """
@@ -741,30 +727,39 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             }
         ))
     
-    def _emit_round_complete_event_for_transition(self, street_name: str):
+    def _emit_round_complete_event_for_transition(self, street_name: str, pre_captured_bets: List[Dict[str, Any]] = None):
         """
-        Emit a round_complete event with player bet data BEFORE resetting bets.
+        Emit a round_complete event with player bet data.
         
         This method is called during street transitions to ensure bet-to-pot
         animations work in hands review mode.
+        
+        Args:
+            street_name: Name of the street being transitioned to
+            pre_captured_bets: Optional pre-captured bet data (use if bets already reset)
         """
         print(f"🔥 CONSOLE: 🎬 Emitting round_complete event for transition to: {street_name}")
         
-        # CRITICAL: Collect bet data BEFORE calling _reset_bets_for_new_round()
-        player_bets = []
-        for i, player in enumerate(self.game_state.players):
-            if player.current_bet > 0:
-                player_bets.append({
-                    "index": i,
-                    "amount": player.current_bet,
-                    "player_name": player.name
-                })
+        # Use pre-captured bet data if provided, otherwise collect current bets
+        if pre_captured_bets is not None:
+            player_bets = pre_captured_bets
+            print(f"🔥 CONSOLE:   - Using pre-captured bet data: {len(player_bets)} players")
+        else:
+            # Fallback: collect bet data from current state
+            player_bets = []
+            for i, player in enumerate(self.game_state.players):
+                if player.current_bet > 0:
+                    player_bets.append({
+                        "index": i,
+                        "amount": player.current_bet,
+                        "player_name": player.name
+                    })
+            print(f"🔥 CONSOLE:   - Collected bet data from current state: {len(player_bets)} players")
         
-        print(f"🔥 CONSOLE:   - Player bets collected BEFORE reset: {len(player_bets)}")
         for bet in player_bets:
             print(f"🔥 CONSOLE:     Player {bet['index']}: ${bet['amount']:.2f}")
         
-        # Emit the round_complete event with the captured bet data
+        # Emit the round_complete event with the bet data
         import time
         self._emit_event(GameEvent(
             event_type="round_complete",
@@ -777,7 +772,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             }
         ))
         
-        print(f"🔥 CONSOLE:   ✅ round_complete event emitted with bet data for transition")
+        print(f"🔥 CONSOLE:   ✅ round_complete event emitted with {len(player_bets)} player bets")
     
     def _deal_historical_flop(self):
         """Deal flop cards from historical data."""
@@ -934,78 +929,7 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
         }
         return street_sequence.get(current_street, "unknown")
     
-    def _emit_round_complete_event_for_transition(self, street_name: str):
-        """
-        Emit a round_complete event with player bet data BEFORE resetting bets.
-        
-        This method is called during street transitions to ensure bet-to-pot
-        animations work in hands review mode.
-        """
-        print(f"🔥 CONSOLE: 🎬 Emitting round_complete event for transition to: {street_name}")
-        
-        # CRITICAL: Collect bet data BEFORE calling _reset_bets_for_new_round()
-        player_bets = []
-        for i, player in enumerate(self.game_state.players):
-            if player.current_bet > 0:
-                player_bets.append({
-                    "index": i,
-                    "amount": player.current_bet,
-                    "player_name": player.name
-                })
-        
-        print(f"🔥 CONSOLE:   - Player bets collected BEFORE reset: {len(player_bets)}")
-        for bet in player_bets:
-            print(f"🔥 CONSOLE:     Player {bet['index']}: ${bet['amount']:.2f}")
-        
-        # Emit the round_complete event with the captured bet data
-        import time
-        self._emit_event(GameEvent(
-            event_type="round_complete",
-            timestamp=time.time(),
-            data={
-                "street": street_name,
-                "player_bets": player_bets,
-                "next_street": self._get_next_street_name(street_name),
-                "transition_type": "street_transition"
-            }
-        ))
-        
-        print(f"🔥 CONSOLE:   ✅ round_complete event emitted with bet data for transition")
-        self.players_acted_this_round.clear()
-        self.action_player_index = self._find_first_active_after_dealer()
-        
-        print(f"🔥 CONSOLE: Advanced to {self.current_state}, board size: {len(self.game_state.board)}")
-        
-        # Emit round_complete event for UI animations
-        street_names = {
-            PokerState.PREFLOP_BETTING: "preflop",
-            PokerState.FLOP_BETTING: "flop", 
-            PokerState.TURN_BETTING: "turn",
-            PokerState.RIVER_BETTING: "river"
-        }
-        previous_street = street_names.get(self.current_state, "unknown")
-        
-        # Collect current bet amounts for animation
-        player_bets = []
-        for i, player in enumerate(self.game_state.players):
-            if player.current_bet > 0:
-                player_bets.append({
-                    "index": i,
-                    "amount": player.current_bet,
-                    "player_name": player.name
-                })
-        
-        print(f"🔥 CONSOLE: Emitting round_complete event - street: {previous_street}, player_bets: {len(player_bets)}")
-        import time
-        self._emit_event(GameEvent(
-            event_type="round_complete",
-            data={
-                'street': previous_street,
-                'player_bets': player_bets,
-                'pot': self.game_state.pot
-            },
-            timestamp=time.time()
-        ))
+
     
     def _check_for_street_boundary(self, action_data: Dict[str, Any]):
         """Check if this action indicates a new street should begin based on historical patterns."""
@@ -1138,9 +1062,17 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
         # Check if all active players have matched the current bet
         all_matched = True
         for player in active_players:
-            if player.current_bet != self.game_state.current_bet:
+            # CRITICAL: Only check players who haven't folded
+            if not player.has_folded and player.current_bet != self.game_state.current_bet:
                 all_matched = False
+                print(f"🔥 CONSOLE: Player {player.name} hasn't matched: current_bet=${player.current_bet:.2f}, required=${self.game_state.current_bet:.2f}")
                 break
+        
+        if all_matched:
+            print(f"🔥 CONSOLE: All active players have matched the current bet - round is complete")
+        else:
+            print(f"🔥 CONSOLE: Not all players have matched current bet - round continues")
+            return
         
         if not all_matched:
             print(f"🔥 CONSOLE: Not all players have matched current bet - round continues")
@@ -1312,6 +1244,20 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 street = action_data.get('street', '')
                 print(f"🔥 CONSOLE: Processing street transition to: {street}")
                 
+                # CRITICAL: Capture bet data BEFORE resetting bets
+                player_bets = []
+                for i, player in enumerate(self.game_state.players):
+                    if player.current_bet > 0:
+                        player_bets.append({
+                            "index": i,
+                            "amount": player.current_bet,
+                            "player_name": player.name
+                        })
+                
+                print(f"🔥 CONSOLE: 🎯 Captured bet data BEFORE reset: {len(player_bets)} players with bets")
+                for bet in player_bets:
+                    print(f"🔥 CONSOLE:   - Player {bet['index']}: ${bet['amount']:.2f}")
+                
                 if street == 'flop':
                     print(f"🔥 CONSOLE: Transitioning to FLOP - dealing flop cards")
                     self._deal_historical_flop()
@@ -1338,9 +1284,9 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 self.players_acted_this_round.clear()
                 self.action_player_index = self._find_first_active_after_dealer()
                 
-                # CRITICAL: Emit round_complete event BEFORE resetting bets
+                # CRITICAL: Emit round_complete event with captured bet data
                 # This ensures bet-to-pot animations work in hands review mode
-                self._emit_round_complete_event_for_transition(street)
+                self._emit_round_complete_event_for_transition(street, player_bets)
                 
                 print(f"🔥 CONSOLE: Street transition complete - round_complete event emitted with bet data")
                 
