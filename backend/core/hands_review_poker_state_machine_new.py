@@ -729,12 +729,18 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             self.current_state = PokerState.FLOP_BETTING
             self._reset_bets_for_new_round()
             
+            # CRITICAL: Emit round_complete event for bet-to-pot animations
+            self._emit_round_complete_event("preflop")
+            
         elif self.current_state == PokerState.FLOP_BETTING:
             print(f"🔥 CONSOLE: Flop complete - dealing turn")
             self.current_state = PokerState.DEAL_TURN
             self._deal_historical_turn()
             self.current_state = PokerState.TURN_BETTING
             self._reset_bets_for_new_round()
+            
+            # CRITICAL: Emit round_complete event for bet-to-pot animations
+            self._emit_round_complete_event("flop")
             
         elif self.current_state == PokerState.TURN_BETTING:
             print(f"🔥 CONSOLE: Turn complete - dealing river")
@@ -743,10 +749,59 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             self.current_state = PokerState.RIVER_BETTING
             self._reset_bets_for_new_round()
             
+            # CRITICAL: Emit round_complete event for bet-to-pot animations
+            self._emit_round_complete_event("turn")
+            
         elif self.current_state == PokerState.RIVER_BETTING:
             print(f"🔥 CONSOLE: River complete - transitioning to showdown")
             self.transition_to(PokerState.SHOWDOWN)
             return
+    
+    def _emit_round_complete_event(self, street_name: str):
+        """
+        Emit a round_complete event with player bet data for UI animations.
+        
+        This ensures bet-to-pot animations work in hands review mode.
+        """
+        print(f"🔥 CONSOLE: 🎬 Emitting round_complete event for street: {street_name}")
+        
+        # Collect current bet amounts for animation
+        player_bets = []
+        for i, player in enumerate(self.game_state.players):
+            if player.current_bet > 0:
+                player_bets.append({
+                    "index": i,
+                    "amount": player.current_bet,
+                    "player_name": player.name
+                })
+        
+        print(f"🔥 CONSOLE:   - Player bets collected: {len(player_bets)}")
+        for bet in player_bets:
+            print(f"🔥 CONSOLE:     Player {bet['index']}: ${bet['amount']:.2f}")
+        
+        # Emit the round_complete event
+        import time
+        self._emit_event(GameEvent(
+            event_type="round_complete",
+            timestamp=time.time(),
+            data={
+                "street": street_name,
+                "player_bets": player_bets,
+                "next_street": self._get_next_street_name(street_name)
+            }
+        ))
+        
+        print(f"🔥 CONSOLE:   ✅ round_complete event emitted successfully")
+    
+    def _get_next_street_name(self, current_street: str) -> str:
+        """Get the name of the next street for the round_complete event."""
+        street_sequence = {
+            "preflop": "flop",
+            "flop": "turn", 
+            "turn": "river",
+            "river": "showdown"
+        }
+        return street_sequence.get(current_street, "unknown")
         
         # Reset round tracking
         self.actions_this_round = 0
@@ -1117,25 +1172,10 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 self.players_acted_this_round.clear()
                 self.action_player_index = self._find_first_active_after_dealer()
                 
-                # Emit round_complete event for UI animations
-                street_names = {
-                    PokerState.FLOP_BETTING: "flop",
-                    PokerState.TURN_BETTING: "turn", 
-                    PokerState.RIVER_BETTING: "river"
-                }
-                current_street = street_names.get(self.current_state, "unknown")
-                
-                print(f"🔥 CONSOLE: Emitting round_complete event - street: {current_street}")
-                import time
-                self._emit_event(GameEvent(
-                    event_type="round_complete",
-                    data={
-                        'street': current_street,
-                        'player_bets': [],
-                        'pot': self.game_state.pot
-                    },
-                    timestamp=time.time()
-                ))
+                # REMOVED: Duplicate round_complete event emission
+                # The _check_and_advance_street_if_complete method will handle this properly
+                # to avoid duplicate events and duplicate dealing sounds
+                print(f"🔥 CONSOLE: Street transition complete - round_complete event will be emitted by _check_and_advance_street_if_complete")
                 
                 return True  # Street transition successful
             
