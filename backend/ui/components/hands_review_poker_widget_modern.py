@@ -570,25 +570,27 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
     
     def show_bet_display(self, player_index, action, amount):
         """
-        Override: Use practice session bet graphics for hands review.
+        Override: Disable text bet labels, preserve chip graphics.
         
-        In hands review, we want the SAME chip graphics as practice session:
-        - 💰 chip icons with action text
-        - 🔴 chip stack visualizations
-        - Proper positioning and styling
+        In hands review, we want ONLY chip graphics (no text labels):
+        - Chip animations and movements
+        - Bet-to-pot animations
+        - NO text overlays like "💰 CALL $2"
         """
-        # Call parent method to get the exact same bet graphics as practice session
-        super().show_bet_display(player_index, action, amount)
+        # Do nothing - no text bet labels in hands review mode
+        # Chip graphics, animations, and bet-to-pot movements are handled elsewhere
+        pass
     
     def _show_bet_display_for_player(self, player_index: int, action: str, amount: float):
         """
-        Override: Use practice session bet display for hands review.
+        Override: Disable text bet displays, preserve chip graphics.
         
         This method is called from other places in the parent class.
-        We want the SAME bet display behavior as practice session.
+        We want ONLY chip graphics, not text labels.
         """
-        # Call parent method to get the exact same bet display as practice session
-        super()._show_bet_display_for_player(player_index, action, amount)
+        # Do nothing - no text bet displays in hands review mode
+        # Actual chip graphics and animations are preserved
+        pass
     
     def _handle_round_complete(self, event: GameEvent):
         """

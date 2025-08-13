@@ -651,6 +651,8 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
     def _deal_historical_flop(self):
         """Deal flop cards from historical data."""
         if hasattr(self, '_full_board') and len(self._full_board) >= 3:
+            # CRITICAL: Clear board first to prevent duplicates from previous hands
+            self.game_state.board = []
             self.game_state.board.extend(self._full_board[:3])
             self.game_state.street = "flop"
             print(f"🔥 CONSOLE: Dealt historical flop: {self._full_board[:3]}")
@@ -662,6 +664,10 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
     def _deal_historical_turn(self):
         """Deal turn card from historical data."""
         if hasattr(self, '_full_board') and len(self._full_board) >= 4 and len(self.game_state.board) == 3:
+            # CRITICAL: Ensure board has exactly 3 cards before adding turn
+            if len(self.game_state.board) != 3:
+                print(f"🔥 CONSOLE: WARNING - Board has {len(self.game_state.board)} cards, expected 3 for turn")
+                self.game_state.board = self._full_board[:3]  # Reset to flop
             self.game_state.board.append(self._full_board[3])
             self.game_state.street = "turn"
             print(f"🔥 CONSOLE: Dealt historical turn: {self._full_board[3]}")
@@ -673,6 +679,10 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
     def _deal_historical_river(self):
         """Deal river card from historical data."""
         if hasattr(self, '_full_board') and len(self._full_board) >= 5 and len(self.game_state.board) == 4:
+            # CRITICAL: Ensure board has exactly 4 cards before adding river
+            if len(self.game_state.board) != 4:
+                print(f"🔥 CONSOLE: WARNING - Board has {len(self.game_state.board)} cards, expected 4 for river")
+                self.game_state.board = self._full_board[:4]  # Reset to turn
             self.game_state.board.append(self._full_board[4])
             self.game_state.street = "river"
             print(f"🔥 CONSOLE: Dealt historical river: {self._full_board[4]}")
