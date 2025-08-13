@@ -589,3 +589,42 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         # Do nothing - no text bet displays in hands review mode
         # Actual chip graphics and animations are preserved
         pass
+    
+    def _handle_round_complete(self, event: GameEvent):
+        """
+        Override: Prevent duplicate card dealing sounds in hands review.
+        
+        The state machine already plays card dealing sounds when transitioning
+        to DEAL_FLOP, DEAL_TURN, DEAL_RIVER. The UI widget shouldn't play
+        them again to avoid duplicate sounds.
+        """
+        street = event.data.get("street", "") if hasattr(event, 'data') else ""
+        
+        # Skip the duplicate card dealing sound - state machine handles it
+        # self.play_sound("dealing")  # REMOVED - prevents duplicate sounds
+        
+        # Animate all player bets to pot during street transition using snapshot from event
+        snapshot = event.data.get("player_bets", []) if hasattr(event, 'data') else []
+        if snapshot:
+            self.animating_bets_to_pot = True
+            animation_delay = 0
+            for item in snapshot:
+                idx = item.get("index", -1)
+                amt = item.get("amount", 0.0)
+                if idx >= 0 and amt > 0:
+                    self.after(animation_delay, lambda pidx=idx, pam=amt: self._animate_bet_to_pot(pidx, pam))
+                    animation_delay += 280
+            # Add a small delay after animations complete so users can perceive completion
+            total_delay = animation_delay + 800
+            # Remember total delay so hand-complete can start pot animation AFTER this
+            self._bet_animation_total_delay_ms = total_delay
+            self.after(total_delay, lambda: self._finish_bet_animations())
+            print(f"🔥 CONSOLE: Round complete bet-to-pot animation scheduled; total_delay={total_delay}ms")
+        
+        # Animate street progression (but without duplicate sound)
+        if street in ["flop", "turn", "river"]:
+            # Get current board cards from display state
+            if hasattr(self, 'state_machine') and self.state_machine:
+                display_state = self.state_machine.get_game_info()
+                board_cards = display_state.get("board", [])
+                self.play_animation("street_progression", street_name=street, board_cards=board_cards)

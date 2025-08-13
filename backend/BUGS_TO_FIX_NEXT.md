@@ -8,7 +8,13 @@
 - **Impact**: Player fold status not properly managed
 - **Fix**: Add missing method or inherit from parent class
 
-### **2. Session Saving Pickle Errors**
+### **2. Duplicate Card Dealing Sounds** ✅ **FIXED**
+- **Issue**: Two card dealing sounds played for turn/river cards
+- **Root Cause**: Both state machine and UI widget playing same sound
+- **Fix Applied**: Override `_handle_round_complete` to skip duplicate sound
+- **Status**: Resolved - only state machine plays card dealing sounds now
+
+### **3. Session Saving Pickle Errors**
 - **Error**: `cannot pickle '_tkinter.Tcl_Obj' object`
 - **Location**: Multiple occurrences in session logging
 - **Impact**: Session data not properly saved
@@ -16,7 +22,7 @@
 
 ## **Priority 2 - Code Quality Issues**
 
-### **3. Linter Errors in Widget File**
+### **4. Linter Errors in Widget File**
 - **File**: `hands_review_poker_widget_modern.py`
 - **Issues**:
   - Line 15: 'typing.Dict' imported but unused
@@ -31,13 +37,13 @@
 
 ## **Priority 3 - Verification & Testing**
 
-### **4. Chip Graphics Verification**
+### **5. Chip Graphics Verification**
 - **Issue**: Need to verify actual chip animations work in GUI
 - **Current Status**: Text labels removed, chip methods preserved
 - **Test Required**: Run actual GUI and verify chip movements
 - **Risk**: Chip graphics might not work despite method preservation
 
-### **5. UI Cleanup Verification**
+### **6. UI Cleanup Verification**
 - **Issue**: Need to verify complete cleanup between hands
 - **Current Status**: Methods implemented, needs GUI testing
 - **Test Required**: Load multiple hands in sequence
@@ -45,13 +51,13 @@
 
 ## **Priority 4 - Performance & Optimization**
 
-### **6. Memory Leaks from UI Cleanup**
+### **7. Memory Leaks from UI Cleanup**
 - **Issue**: Aggressive widget destruction might cause memory issues
 - **Current Status**: Using `destroy()` on widgets
 - **Risk**: Potential memory fragmentation over time
 - **Fix**: Implement proper widget lifecycle management
 
-### **7. Sound System Conflicts**
+### **8. Sound System Conflicts**
 - **Issue**: Multiple sound managers (local vs GameDirector)
 - **Current Status**: Both systems active
 - **Risk**: Sound conflicts or duplicate playback
@@ -66,6 +72,7 @@
 ✅ "YOUR TURN" label removal  
 ✅ Selective method overrides  
 ✅ Preserved chip graphics methods  
+✅ **Duplicate card dealing sounds eliminated**  
 
 ### **Architecture Improvements Made:**
 - Clean separation between text labels and chip graphics
@@ -89,6 +96,13 @@
 5. **Test UI cleanup in GUI** - Verify complete reset between hands
 6. **Optimize memory management** - Long-term stability
 7. **Unify sound systems** - Clean up architecture
+
+## **🎯 Recently Fixed Issues**
+
+✅ **Duplicate Card Dealing Sounds** - Eliminated by overriding `_handle_round_complete` method
+- **Root Cause**: Both state machine and UI widget playing same sound
+- **Solution**: UI widget now skips card dealing sound, only state machine plays it
+- **Result**: Single, clean card dealing sound for each street transition
 
 ## **🎯 Success Criteria for Next Phase**
 
