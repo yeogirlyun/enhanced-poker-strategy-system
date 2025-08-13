@@ -802,9 +802,44 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
             "river": "showdown"
         }
         return street_sequence.get(current_street, "unknown")
+    
+    def _emit_round_complete_event_for_transition(self, street_name: str):
+        """
+        Emit a round_complete event with player bet data BEFORE resetting bets.
         
-        # Reset round tracking
-        self.actions_this_round = 0
+        This method is called during street transitions to ensure bet-to-pot
+        animations work in hands review mode.
+        """
+        print(f"🔥 CONSOLE: 🎬 Emitting round_complete event for transition to: {street_name}")
+        
+        # CRITICAL: Collect bet data BEFORE calling _reset_bets_for_new_round()
+        player_bets = []
+        for i, player in enumerate(self.game_state.players):
+            if player.current_bet > 0:
+                player_bets.append({
+                    "index": i,
+                    "amount": player.current_bet,
+                    "player_name": player.name
+                })
+        
+        print(f"🔥 CONSOLE:   - Player bets collected BEFORE reset: {len(player_bets)}")
+        for bet in player_bets:
+            print(f"🔥 CONSOLE:     Player {bet['index']}: ${bet['amount']:.2f}")
+        
+        # Emit the round_complete event with the captured bet data
+        import time
+        self._emit_event(GameEvent(
+            event_type="round_complete",
+            timestamp=time.time(),
+            data={
+                "street": street_name,
+                "player_bets": player_bets,
+                "next_street": self._get_next_street_name(street_name),
+                "transition_type": "street_transition"
+            }
+        ))
+        
+        print(f"🔥 CONSOLE:   ✅ round_complete event emitted with bet data for transition")
         self.players_acted_this_round.clear()
         self.action_player_index = self._find_first_active_after_dealer()
         
@@ -1172,10 +1207,11 @@ class HandsReviewPokerStateMachine(FlexiblePokerStateMachine):
                 self.players_acted_this_round.clear()
                 self.action_player_index = self._find_first_active_after_dealer()
                 
-                # REMOVED: Duplicate round_complete event emission
-                # The _check_and_advance_street_if_complete method will handle this properly
-                # to avoid duplicate events and duplicate dealing sounds
-                print(f"🔥 CONSOLE: Street transition complete - round_complete event will be emitted by _check_and_advance_street_if_complete")
+                # CRITICAL: Emit round_complete event BEFORE resetting bets
+                # This ensures bet-to-pot animations work in hands review mode
+                self._emit_round_complete_event_for_transition(street)
+                
+                print(f"🔥 CONSOLE: Street transition complete - round_complete event emitted with bet data")
                 
                 return True  # Street transition successful
             
