@@ -603,31 +603,212 @@ class HandsReviewPokerWidget(ReusablePokerGameWidget):
         print(f"🔥 CONSOLE: _handle_round_complete called for street: {event.data.get('street', 'unknown')}")
         street = event.data.get("street", "") if hasattr(event, 'data') else ""
         
+        # EXTENSIVE LOGGING: Log all event data for debugging
+        print(f"🔥 CONSOLE: EVENT DATA DUMP:")
+        print(f"🔥 CONSOLE:   - Event type: {event.event_type}")
+        print(f"🔥 CONSOLE:   - Event data keys: {list(event.data.keys()) if hasattr(event, 'data') else 'NO_DATA'}")
+        print(f"🔥 CONSOLE:   - Street: {street}")
+        
+        # Check for player_bets data
+        player_bets = event.data.get("player_bets", []) if hasattr(event, 'data') else []
+        print(f"🔥 CONSOLE:   - Player bets data: {player_bets}")
+        print(f"🔥 CONSOLE:   - Player bets type: {type(player_bets)}")
+        print(f"🔥 CONSOLE:   - Player bets length: {len(player_bets) if player_bets else 0}")
+        
+        # Check if we have bet amounts to animate
+        total_bet_amount = 0
+        if player_bets:
+            for i, bet_data in enumerate(player_bets):
+                print(f"🔥 CONSOLE:     Bet {i}: {bet_data}")
+                if isinstance(bet_data, dict):
+                    idx = bet_data.get("index", -1)
+                    amt = bet_data.get("amount", 0.0)
+                    total_bet_amount += amt
+                    print(f"🔥 CONSOLE:       - Player index: {idx}, Amount: ${amt:.2f}")
+                else:
+                    print(f"🔥 CONSOLE:       - Invalid bet data format: {bet_data}")
+        
+        print(f"🔥 CONSOLE:   - Total bet amount to animate: ${total_bet_amount:.2f}")
+        
         # Play card dealing sound ONCE - state machine doesn't play it in hands review
+        print(f"🔥 CONSOLE: Playing card dealing sound for street: {street}")
         self.play_sound("dealing")  # RESTORED - provides single card dealing sound
         
         # Animate all player bets to pot during street transition using snapshot from event
-        snapshot = event.data.get("player_bets", []) if hasattr(event, 'data') else []
-        if snapshot:
+        if player_bets and total_bet_amount > 0:
+            print(f"🔥 CONSOLE: 🎬 STARTING BET-TO-POT ANIMATIONS!")
+            print(f"🔥 CONSOLE:   - Setting animating_bets_to_pot = True")
             self.animating_bets_to_pot = True
+            
             animation_delay = 0
-            for item in snapshot:
-                idx = item.get("index", -1)
-                amt = item.get("amount", 0.0)
-                if idx >= 0 and amt > 0:
-                    self.after(animation_delay, lambda pidx=idx, pam=amt: self._animate_bet_to_pot(pidx, pam))
-                    animation_delay += 280
+            for item in player_bets:
+                if isinstance(item, dict):
+                    idx = item.get("index", -1)
+                    amt = item.get("amount", 0.0)
+                    if idx >= 0 and amt > 0:
+                        print(f"🔥 CONSOLE:   - Scheduling _animate_bet_to_pot({idx}, ${amt:.2f}) at delay {animation_delay}ms")
+                        self.after(animation_delay, lambda pidx=idx, pam=amt: self._animate_bet_to_pot(pidx, pam))
+                        animation_delay += 280
+                    else:
+                        print(f"🔥 CONSOLE:   - Skipping invalid bet: idx={idx}, amt=${amt:.2f}")
+                else:
+                    print(f"🔥 CONSOLE:   - Skipping non-dict bet data: {item}")
+            
             # Add a small delay after animations complete so users can perceive completion
             total_delay = animation_delay + 800
+            print(f"🔥 CONSOLE:   - Total animation delay: {total_delay}ms")
+            print(f"🔥 CONSOLE:   - Scheduling _finish_bet_animations() at {total_delay}ms")
+            
             # Remember total delay so hand-complete can start pot animation AFTER this
             self._bet_animation_total_delay_ms = total_delay
             self.after(total_delay, lambda: self._finish_bet_animations())
-            print(f"🔥 CONSOLE: Round complete bet-to-pot animation scheduled; total_delay={total_delay}ms")
+            print(f"🔥 CONSOLE: ✅ Bet-to-pot animations scheduled successfully!")
+        else:
+            print(f"🔥 CONSOLE: ⚠️  NO BET-TO-POT ANIMATIONS - No valid bet data")
+            print(f"🔥 CONSOLE:   - player_bets: {player_bets}")
+            print(f"🔥 CONSOLE:   - total_bet_amount: ${total_bet_amount:.2f}")
         
         # Animate street progression (but without duplicate sound)
         if street in ["flop", "turn", "river"]:
+            print(f"🔥 CONSOLE: 🎬 Playing street progression animation for: {street}")
             # Get current board cards from display state
             if hasattr(self, 'state_machine') and self.state_machine:
                 display_state = self.state_machine.get_game_info()
                 board_cards = display_state.get("board", [])
+                print(f"🔥 CONSOLE:   - Board cards for animation: {board_cards}")
                 self.play_animation("street_progression", street_name=street, board_cards=board_cards)
+            else:
+                print(f"🔥 CONSOLE:   - No state machine available for street progression")
+        else:
+            print(f"🔥 CONSOLE:   - No street progression animation for street: {street}")
+        
+        print(f"🔥 CONSOLE: _handle_round_complete COMPLETED for street: {street}")
+    
+    def _animate_bet_to_pot(self, player_index, amount):
+        """
+        Override: Add extensive logging to bet-to-pot animation.
+        
+        This method is inherited from the parent class, but we override it
+        to add detailed logging for debugging the animation pipeline.
+        """
+        print(f"🔥 CONSOLE: 🎬 _animate_bet_to_pot CALLED - Player {player_index}, Amount: ${amount:.2f}")
+        
+        # Check if we have required components
+        if not hasattr(self, 'pot_frame'):
+            print(f"🔥 CONSOLE:   ❌ Missing pot_frame - animation cancelled")
+            return
+        
+        if player_index >= len(self.player_seats):
+            print(f"🔥 CONSOLE:   ❌ Invalid player_index {player_index} >= {len(self.player_seats)} - animation cancelled")
+            return
+        
+        player_seat = self.player_seats[player_index]
+        if not player_seat:
+            print(f"🔥 CONSOLE:   ❌ No player seat for index {player_index} - animation cancelled")
+            return
+        
+        print(f"🔥 CONSOLE:   ✅ Player seat found: {player_seat}")
+        
+        # Get player and pot positions using stored positions
+        if "position" not in player_seat:
+            print(f"🔥 CONSOLE:   ❌ No position data in player seat - animation cancelled")
+            return
+        
+        player_x, player_y = player_seat["position"]
+        print(f"🔥 CONSOLE:   - Player position: ({player_x}, {player_y})")
+        
+        # Get pot position
+        if not hasattr(self, 'canvas'):
+            print(f"🔥 CONSOLE:   ❌ No canvas available - animation cancelled")
+            return
+        
+        pot_x = self.canvas.winfo_width() // 2
+        pot_y = self.canvas.winfo_height() // 2 + 50  # Pot position
+        print(f"🔥 CONSOLE:   - Pot position: ({pot_x}, {pot_y})")
+        
+        # Create animated chip for the movement (larger and more visible)
+        print(f"🔥 CONSOLE:   - Creating animated chip label...")
+        try:
+            chip_label = tk.Label(
+                self.canvas,
+                text="💰",
+                bg="gold",
+                fg="black",
+                font=("Arial", 28, "bold"),  # Larger font
+                bd=3,
+                relief="raised",
+                padx=6,
+                pady=4
+            )
+            print(f"🔥 CONSOLE:   ✅ Chip label created successfully")
+        except Exception as e:
+            print(f"🔥 CONSOLE:   ❌ Failed to create chip label: {e}")
+            return
+        
+        try:
+            chip_window = self.canvas.create_window(player_x, player_y, window=chip_label)
+            self.canvas.tag_raise(chip_window)  # Bring to front
+            print(f"🔥 CONSOLE:   ✅ Chip window created at ({player_x}, {player_y})")
+        except Exception as e:
+            print(f"🔥 CONSOLE:   ❌ Failed to create chip window: {e}")
+            return
+        
+        # Play chip movement sound (but not voice during animations)
+        if hasattr(self, 'sound_manager') and self.sound_manager:
+            print(f"🔥 CONSOLE:   🔊 Playing chip movement sound")
+            self.sound_manager.play_poker_event_sound("chip_bet")  # Only chip sound, no voice
+        else:
+            print(f"🔥 CONSOLE:   ⚠️  No sound manager available for chip sound")
+        
+        # Animate the chip to the pot with smooth movement
+        print(f"🔥 CONSOLE:   🎬 Starting chip movement animation...")
+        def move_chip_step(step=0):
+            # Faster animation (about ~2x faster than previous)
+            total_steps = 30
+            if step <= total_steps:
+                progress = step / total_steps
+                # Smooth easing function
+                ease_progress = progress * progress * (3.0 - 2.0 * progress)
+                
+                x = player_x + (pot_x - player_x) * ease_progress
+                y = player_y + (pot_y - player_y) * ease_progress
+                
+                # Add slight bounce effect
+                if progress > 0.8:
+                    bounce = math.sin((progress - 0.8) * 10) * 3
+                    y += bounce
+                
+                try:
+                    self.canvas.coords(chip_window, x, y)
+                    # Faster frame rate
+                    self.after(30, lambda: move_chip_step(step + 1))
+                except Exception as e:
+                    print(f"🔥 CONSOLE:   ❌ Animation step {step} failed: {e}")
+            else:
+                # Animation complete - remove chip and update pot
+                print(f"🔥 CONSOLE:   ✅ Animation complete - removing chip and flashing pot")
+                try:
+                    self.canvas.delete(chip_window)
+                    self._flash_pot_update(amount)
+                except Exception as e:
+                    print(f"🔥 CONSOLE:   ❌ Failed to complete animation: {e}")
+        
+        move_chip_step()
+        print(f"🔥 CONSOLE:   🎬 Chip animation started for player {player_index}")
+    
+    def _finish_bet_animations(self):
+        """
+        Override: Add logging to bet animation completion.
+        
+        This method is called after all bet-to-pot animations complete.
+        """
+        print(f"🔥 CONSOLE: 🎬 _finish_bet_animations CALLED")
+        print(f"🔥 CONSOLE:   - Setting animating_bets_to_pot = False")
+        
+        if hasattr(self, 'animating_bets_to_pot'):
+            self.animating_bets_to_pot = False
+            print(f"🔥 CONSOLE:   ✅ animating_bets_to_pot set to False")
+        else:
+            print(f"🔥 CONSOLE:   ⚠️  animating_bets_to_pot attribute not found")
+        
+        print(f"🔥 CONSOLE:   ✅ Bet animations finished")
