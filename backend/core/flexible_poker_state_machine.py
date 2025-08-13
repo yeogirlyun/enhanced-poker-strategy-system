@@ -46,7 +46,9 @@ class GameConfig:
         if self.small_blind >= self.big_blind:
             raise ValueError(f"small_blind ({self.small_blind}) must be less than big_blind ({self.big_blind})")
     
-    auto_advance: bool = False  # For simulation mode
+    # Re-add auto_advance for dealing states - was needed for practice session bug fix
+    auto_advance: bool = False
+
 
 
 @dataclass
@@ -174,10 +176,9 @@ class FlexiblePokerStateMachine:
                 else:
                     self.game_state.players[i].position = "BB"
             else:
-                # Multi-way: assign positions in order starting from UTG
-                # UTG is first after BB, so we calculate from that
-                utg_position = (self.big_blind_position + 1) % num_players
-                position_offset = (i - utg_position) % num_players
+                # Multi-way: assign positions starting from dealer (BTN)
+                # Position names are in order: [BTN, SB, BB, UTG, MP, CO]
+                position_offset = (i - self.dealer_position) % num_players
                 
                 if position_offset < len(position_names):
                     self.game_state.players[i].position = position_names[position_offset]
@@ -401,6 +402,9 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "Flop dealt", {"board": self.game_state.board})
+            # Play card dealing sound for flop
+            if self.sound_manager:
+                self.sound_manager.play_poker_event_sound("card_dealing")
             # Auto-advance to FLOP_BETTING if auto_advance is enabled
             if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.FLOP_BETTING)
@@ -414,6 +418,9 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "Turn dealt", {"board": self.game_state.board})
+            # Play card dealing sound for turn
+            if self.sound_manager:
+                self.sound_manager.play_poker_event_sound("card_dealing")
             # Auto-advance to TURN_BETTING if auto_advance is enabled
             if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.TURN_BETTING)
@@ -427,6 +434,9 @@ class FlexiblePokerStateMachine:
             self.action_player_index = self._find_first_active_after_dealer()
             self.session_logger.log_system("INFO", "STATE_MACHINE", 
                                          "River dealt", {"board": self.game_state.board})
+            # Play card dealing sound for river
+            if self.sound_manager:
+                self.sound_manager.play_poker_event_sound("card_dealing")
             # Auto-advance to RIVER_BETTING if auto_advance is enabled  
             if hasattr(self.config, 'auto_advance') and self.config.auto_advance:
                 self.transition_to(PokerState.RIVER_BETTING)
@@ -499,8 +509,10 @@ class FlexiblePokerStateMachine:
                                 winner_info["hand_rank"] = getattr(hand_eval['hand_rank'], 'name', str(hand_eval['hand_rank'])).replace('_', ' ').title()
                         # Compute and attach best five cards used to win
                         try:
-                            best_five_cards = self.hand_evaluator.get_best_five_cards(first_winner.cards, self.game_state.board)
-                            winner_info["best_five"] = best_five_cards
+                            winner_eval = self.hand_evaluator.evaluate_hand(first_winner.cards, self.game_state.board)
+                            best_five_cards = winner_eval.get('best_five_cards', [])
+                            if best_five_cards:
+                                winner_info["best_five"] = best_five_cards
                         except Exception:
                             pass
                 except Exception as e:
@@ -525,10 +537,11 @@ class FlexiblePokerStateMachine:
             # UI can animate chips cleanly and still show the last pot amount.
             self._emit_display_state_event()
         
-        # For betting states, ensure actions_this_round is reset if not already
+        # For betting states, reset actions_this_round only when transitioning TO a new betting round
         betting_states = [PokerState.PREFLOP_BETTING, PokerState.FLOP_BETTING, 
                          PokerState.TURN_BETTING, PokerState.RIVER_BETTING]
-        if new_state in betting_states:
+        if new_state in betting_states and old_state != new_state:
+            # Only reset if we're entering a NEW betting state, not re-entering the same one
             self.actions_this_round = 0
             self.players_acted_this_round.clear()
             if new_state != PokerState.PREFLOP_BETTING:
@@ -894,11 +907,17 @@ class FlexiblePokerStateMachine:
         # Debug logging for final winner determination
         if len(winners) == 1:
             winner_eval = winners_with_evals[0][1]
-            self._safe_print(f"🏆 Single winner: {winners[0].name} with {winner_eval.get('hand_description', 'Unknown')}")
+            hand_desc = winner_eval.get('hand_description', 'Unknown')
+            best_five = winner_eval.get('best_five_cards', [])
+            five_cards_str = f" [{', '.join(best_five)}]" if best_five else ""
+            self._safe_print(f"🏆 Single winner: {winners[0].name} with {hand_desc}{five_cards_str}")
         else:
             winner_names = [w.name for w in winners]
             winner_eval = winners_with_evals[0][1] 
-            self._safe_print(f"🤝 Split pot: {', '.join(winner_names)} tie with {winner_eval.get('hand_description', 'Unknown')}")
+            hand_desc = winner_eval.get('hand_description', 'Unknown')
+            best_five = winner_eval.get('best_five_cards', [])
+            five_cards_str = f" [{', '.join(best_five)}]" if best_five else ""
+            self._safe_print(f"🤝 Split pot: {', '.join(winner_names)} tie with {hand_desc}{five_cards_str}")
         
         return winners
     
@@ -959,7 +978,8 @@ class FlexiblePokerStateMachine:
             ],
             "action_player": self.action_player_index,
             "street": self.game_state.street,
-            "hand_number": self.hand_number
+            "hand_number": self.hand_number,
+            "dealer_position": self.dealer_position
         }
     
     def get_valid_actions_for_player(self, player: Player) -> Dict[str, Any]:
@@ -1000,24 +1020,7 @@ class FlexiblePokerStateMachine:
             self.game_state.players[player_index].has_folded = folded
             self.game_state.players[player_index].is_active = not folded
 
-    def _assign_positions(self):
-        """Assign position names to players based on dealer position."""
-        position_names = self._get_position_names()
-        num_players = len(self.game_state.players)
-        
-        for i, player in enumerate(self.game_state.players):
-            # Calculate position relative to dealer
-            position_index = (i - self.dealer_position) % num_players
-            player.position = position_names[position_index]
-            
-        # Log position assignments
-        if hasattr(self, 'session_logger') and self.session_logger:
-            positions_str = ", ".join([f"{p.name}:{p.position}" for p in self.game_state.players])
-            self.session_logger.log_system("INFO", "POSITION_ASSIGNMENT", f"Positions assigned: {positions_str}", {
-                "dealer": self.dealer_position,
-                "small_blind": self.small_blind_position,
-                "big_blind": self.big_blind_position
-            })
+
 
 
 

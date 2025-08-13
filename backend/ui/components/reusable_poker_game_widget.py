@@ -20,7 +20,7 @@ from core.gui_models import THEME
 from .modern_poker_widgets import ChipStackDisplay, PlayerSeatWidget
 
 # Import types
-from core.types import ActionType
+from core.types import ActionType, PokerState
 
 def debug_log(message: str, category: str = "UI_DEBUG"):
     """Log debug messages to file instead of console."""
@@ -60,6 +60,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Store the state machine
         self.state_machine = state_machine
         
+        # GameDirector integration
+        self.game_director = None
+        
         # Event loop detection to prevent infinite loops
         self.event_history = []
         self.max_event_history = 100
@@ -97,11 +100,11 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self._bet_animation_total_delay_ms = 0
         
         # Highlight timing control to make actions visually clearer
-        # Keep highlight on the acting player for 500ms after an action,
+        # Keep highlight on the acting player for 1000ms after an action,
         # then move to the next player. With bot delay set to 1.0s,
-        # this yields a 0.5s pre-action highlight and 0.5s post-action hold.
+        # this yields a 1.0s post-action hold for better user comprehension.
         import time as _time
-        self._highlight_delay_ms = 500
+        self._highlight_delay_ms = 1000
         self._suppress_highlight_until = 0.0  # epoch seconds
         self._pending_highlight_index = None
         self._highlight_timer_active = False
@@ -439,6 +442,19 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         if event.event_type == "display_state_update":
             display_state = event.data.get("display_state", {})
+            
+            # CRITICAL DEBUGGING: Log display state updates that might cause highlighting
+            if self.session_logger:
+                current_state = display_state.get("current_state", "UNKNOWN")
+                action_player_index = display_state.get("action_player_index", -1)
+                
+                self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"📺 display_state_update received", {
+                    "current_state": str(current_state),
+                    "action_player_index": action_player_index,
+                    "timestamp": _time.time(),
+                    "hand_complete": display_state.get("hand_complete", False)
+                })
+            
             self._render_from_display_state(display_state)
         
         elif event.event_type == "action_executed":
@@ -456,20 +472,31 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         elif event.event_type == "hand_complete":
             # Handle hand completion - pot to winner animation
             if self.session_logger:
-                self.session_logger.log_system("INFO", "POT_ANIMATION_DEBUG", "hand_complete event received in ReusablePokerGameWidget!", {
+                self.session_logger.log_system("INFO", "HIGHLIGHT_DEBUG", "🏁 hand_complete event received - HAND IS OVER!", {
                     "event_source": "FPSM",
-                    "widget_class": "ReusablePokerGameWidget"
+                    "widget_class": "ReusablePokerGameWidget",
+                    "timestamp": _time.time(),
+                    "winners": event.data.get("winners", []),
+                    "pot_amount": event.data.get("pot_amount", 0)
                 })
             self._handle_hand_complete(event)
     
     def _handle_action_executed(self, event: GameEvent):
         """Handle action execution events - show bet amounts and play sounds."""
-        if not hasattr(event, 'data') or not event.data:
-            return
+        # Handle both data dict format and direct attribute format
+        if hasattr(event, 'data') and event.data:
+            action_type = event.data.get("action_type")
+            amount = event.data.get("amount", 0.0)
+            player_name = event.data.get("player_name", "Unknown")
+        else:
+            # Direct attribute format (FPSM style)
+            action_type = getattr(event, 'action', None)
+            amount = getattr(event, 'amount', 0.0)
+            player_name = getattr(event, 'player_name', 'Unknown')
             
-        action_type = event.data.get("action_type")
-        amount = event.data.get("amount", 0.0)
-        player_name = event.data.get("player_name", "Unknown")
+            # Convert ActionType enum to string if needed
+            if hasattr(action_type, 'value'):
+                action_type = action_type.value.lower()
         
         # Find player index by name
         player_index = -1
@@ -530,7 +557,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         """Keep highlight on acting player during action sound + delay before moving to next player."""
         # Calculate sound duration and delay
         sound_duration_ms = self._estimate_action_sound_duration(action_type, amount)
-        additional_delay_ms = 500  # Additional 0.5s for user to process who acted
+        additional_delay_ms = 1000  # Additional 1.0s for user to process who acted
         total_delay_ms = sound_duration_ms + additional_delay_ms
         
         # Log the timing for debugging
@@ -564,8 +591,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             ActionType.CALL: 800,    # "Call" - short  
             ActionType.FOLD: 800,    # "Fold" - short
             ActionType.BET: 800,     # "Bet" - short
-            ActionType.RAISE: 1000,  # "Raise" - slightly longer
-            ActionType.ALL_IN: 1200, # "All in" - longer
+            ActionType.RAISE: 1000,  # "Raise" - slightly longer (includes all-in)
         }
         
         base_duration = voice_durations.get(action_type, 800)
@@ -915,6 +941,17 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         import time as _time
         action_player_index = display_state.get("action_player", -1)
         if action_player_index >= 0 and action_player_index < len(self.player_seats):
+            # CRITICAL: Don't call _highlight_current_player when hand is over to preserve winner highlighting
+            current_state = getattr(self.state_machine, 'current_state', None) if hasattr(self, 'state_machine') else None
+            if current_state and current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
+                if self.session_logger:
+                    self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"🚨 BLOCKING _highlight_current_player call - hand is over!", {
+                        "action_player_index": action_player_index,
+                        "current_state": str(current_state),
+                        "reason": "Preserving winner highlighting"
+                    })
+                return  # Skip player highlighting to preserve winner highlights
+            
             now = _time.time()
             if now < getattr(self, "_suppress_highlight_until", 0.0):
                 # Defer highlight until suppression expires
@@ -953,8 +990,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Only update stack if it changed
         if last_state.get("stack", 0.0) != stack_amount:
-            player_seat["stack_label"].config(text=f"${int(stack_amount)}")
-            debug_log(f"Updated player {player_index+1} stack: ${int(stack_amount)}", "STACK_DISPLAY")
+            player_seat["stack_label"].config(text=f"${int(stack_amount):,}")
+            debug_log(f"Updated player {player_index+1} stack: ${int(stack_amount):,}", "STACK_DISPLAY")
             # Log to structured logger instead of console
             if self.session_logger:
                 self.session_logger.log_system("DEBUG", "STACK_DISPLAY", "Player stack updated", {
@@ -972,7 +1009,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 })
         
         # Only update bet if it changed (but preserve bet displays during animations)
-        bet_text = f"Bet: ${int(bet_amount)}" if bet_amount > 0 else ""
+        bet_text = f"Bet: ${int(bet_amount):,}" if bet_amount > 0 else ""
         
         # Don't clear bet displays if we're in the middle of bet-to-pot animations
         is_animating_bets = getattr(self, 'animating_bets_to_pot', False)
@@ -1209,6 +1246,10 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         card_widget.set_card(new_card, is_folded=False)
                         card_widget._current_card = new_card
                         debug_log(f"✅ SET community card {i}: {current_card} → {new_card}", "CARD_DISPLAY")
+                        
+                        # Apply teal highlighting for newly dealt cards
+                        if current_card == "" or current_card == "**":  # This is a newly dealt card
+                            self._highlight_new_community_card(card_widget, i)
                     else:
                         # Show card back for hidden cards (instead of empty)
                         card_widget.set_card("**", is_folded=False)
@@ -1221,8 +1262,68 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Update the tracking
         self.last_board_cards = visible_board_cards.copy()
     
+    def _highlight_new_community_card(self, card_widget, card_index):
+        """Apply teal highlighting to a newly dealt community card."""
+        try:
+            # Apply teal border highlighting
+            original_bg = card_widget.cget("highlightbackground")
+            original_thickness = card_widget.cget("highlightthickness")
+            
+            # Set teal highlighting
+            teal_color = "#008B8B"  # Dark cyan/teal
+            card_widget.config(
+                highlightbackground=teal_color,
+                highlightthickness=4,
+                relief="solid"
+            )
+            
+            debug_log(f"Applied teal highlighting to community card {card_index}", "CARD_HIGHLIGHT")
+            
+            # Schedule removal of highlighting after 2 seconds
+            def remove_highlight():
+                try:
+                    card_widget.config(
+                        highlightbackground=original_bg,
+                        highlightthickness=original_thickness,
+                        relief="flat"
+                    )
+                    debug_log(f"Removed teal highlighting from community card {card_index}", "CARD_HIGHLIGHT")
+                except tk.TclError:
+                    pass  # Widget was destroyed
+            
+            # Use after() for delayed highlight removal
+            self.after(2000, remove_highlight)  # Remove after 2 seconds
+            
+        except tk.TclError:
+            pass  # Widget was destroyed
+    
     def _highlight_current_player(self, player_index):
         """Highlight the current action player with strong visual indication."""
+        
+        # CRITICAL DEBUGGING: Log all calls to this method
+        if self.session_logger:
+            # Get the current state machine state
+            current_state = getattr(self.state_machine, 'current_state', 'UNKNOWN') if hasattr(self, 'state_machine') else 'NO_SM'
+            
+            self.session_logger.log_system("WARNING", "HIGHLIGHT_DEBUG", f"⚠️ _highlight_current_player called", {
+                "player_index": player_index,
+                "current_state": str(current_state),
+                "timestamp": _time.time(),
+                "stack_trace": ''.join(__import__('traceback').format_stack()[-3:-1])  # Last 2 stack frames
+            })
+        
+        # CRITICAL: Block ALL highlighting when hand is over to preserve winner highlighting
+        current_state = getattr(self.state_machine, 'current_state', None) if hasattr(self, 'state_machine') else None
+        if current_state and hasattr(self, 'state_machine'):
+            if current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
+                if self.session_logger:
+                    self.session_logger.log_system("ERROR", "HIGHLIGHT_DEBUG", f"🚨 BLOCKING ALL player highlighting - hand is over!", {
+                        "player_index": player_index,
+                        "current_state": str(current_state),
+                        "action": "BLOCKED_ALL_HIGHLIGHTING"
+                    })
+                return  # Skip ALL highlighting when hand is over
+        
         for i, player_seat in enumerate(self.player_seats):
             if player_seat:
                 player_frame = player_seat["frame"]
@@ -1237,12 +1338,30 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         break
                 
                 if i == player_index and not has_folded_indicator:
+                    
                     # STRONG highlighting for active player (only if not folded)
+                    if self.session_logger:
+                        self.session_logger.log_system("WARNING", "HIGHLIGHT_DEBUG", f"🟡 Applying GOLD highlight to player {player_index}", {
+                            "highlightbackground": THEME["text_gold"],
+                            "highlightthickness": 6,
+                            "bg": THEME["primary_bg"]
+                        })
+                    
                     player_frame.config(
                         highlightbackground=THEME["text_gold"],  # Gold
                         highlightthickness=6,           # Much thicker border
                         bg=THEME["primary_bg"]          # Dark Charcoal background
                     )
+                    
+                    # 🔍 BORDER LOGGING: Track all player frame styling changes
+                    self.session_logger.log_system("DEBUG", "BORDER_TRACKING", f"🎯 GOLD highlighting applied to player {player_index}", {
+                        "player_index": player_index,
+                        "method": "_highlight_current_player",
+                        "border_color": THEME["text_gold"],
+                        "border_thickness": 6,
+                        "background": THEME["primary_bg"],
+                        "current_state": str(current_state) if current_state else "unknown"
+                    })
                     # Add blinking effect for extra visibility
                     self._add_action_indicator(player_frame)
                 elif not has_folded_indicator:
@@ -1252,7 +1371,21 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                         highlightthickness=2,
                         bg=THEME["secondary_bg"]        # Deep Navy Slate background
                     )
+                    
+                    # 🔍 BORDER LOGGING: Track all player frame styling changes
+                    self.session_logger.log_system("DEBUG", "BORDER_TRACKING", f"🔄 NORMAL styling applied to player {player_index}", {
+                        "player_index": player_index,
+                        "method": "_highlight_current_player",
+                        "border_color": THEME["table_felt"],
+                        "border_thickness": 2,
+                        "background": THEME["secondary_bg"],
+                        "current_state": str(current_state) if current_state else "unknown"
+                    })
                 # Note: Folded players keep their gray styling set by _mark_player_folded
+    
+
+    
+
     
     def _add_action_indicator(self, player_frame):
         """Add a visual action indicator to the player frame."""
@@ -1341,6 +1474,15 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             highlightthickness=2,
             bg="#404040"  # Dark gray background
         )
+        
+        # 🔍 BORDER LOGGING: Track all player frame styling changes
+        self.session_logger.log_system("DEBUG", "BORDER_TRACKING", f"💤 FOLDED styling applied to player {player_index}", {
+            "player_index": player_index,
+            "method": "_mark_player_folded",
+            "border_color": "#696969",
+            "border_thickness": 2,
+            "background": "#404040"
+        })
     
     def _restore_player_cards(self, player_index):
         """Restore player cards to normal display (unfold them)."""
@@ -1374,48 +1516,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         elif update_type == "player_action":
             self._handle_player_action(**kwargs)
     
-    def _handle_action_executed(self, event: GameEvent):
-        """Handle action execution events."""
-        # Action executed event handled
-        
-        action = event.action
-        amount = event.amount
-        player_name = event.player_name
-        
-        # Find player index by matching names more flexibly
-        player_index = -1
-        for i, player_seat in enumerate(self.player_seats):
-            if player_seat and player_seat.get("name_label"):
-                seat_text = player_seat["name_label"].cget("text")
-                # Extract just the player name part (before position)
-                seat_name = seat_text.split(' (')[0]
-                if player_name == seat_name or player_name in seat_text:
-                    player_index = i
-                    # Player found at specified index
-                    break
-        
-        if player_index >= 0:
-            # Clear "YOUR TURN" indicator for this player since they just acted
-            self._clear_action_indicators(player_index)
-            
-            # Play sound based on action
-            if action:
-                if action.value == "fold":
-                    self.play_sound("fold", amount=amount)
-                elif action.value == "call":
-                    self.play_sound("call", amount=amount)
-                elif action.value == "bet":
-                    self.play_sound("bet", amount=amount)
-                elif action.value == "raise":
-                    self.play_sound("raise", amount=amount)
-                elif action.value == "check":
-                    self.play_sound("check", amount=amount)
-            
-            # Show bet display in front of player (proper money graphics)
-            if amount > 0:
-                self._show_bet_display_for_player(player_index, action.value if action else "bet", amount)
-        else:
-            debug_log(f"Could not find player index for {player_name}", "ACTION_EXECUTION")
+
     
     def _handle_state_change(self, event: GameEvent):
         """Handle state change events."""
@@ -1509,6 +1610,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         winner_info = event.data.get("winner_info", {})
         pot_amount = event.data.get("pot_amount", 0.0)
         
+        # Extract winner indices for highlighting
+        winners_list = event.data.get("winners", []) if hasattr(event, 'data') else []
+        winner_indices = []
+        
+        # Convert winner names to indices
+        if winners_list and hasattr(self, 'player_seats'):
+            if self.session_logger:
+                self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"Converting winner names to indices", {
+                    "winners_list": winners_list,
+                    "num_seats": len(self.player_seats)
+                })
+            
+            for winner_name in winners_list:
+                for i, seat in enumerate(self.player_seats):
+                    if seat and hasattr(self, 'state_machine'):
+                        game_info = self.state_machine.get_game_info()
+                        players = game_info.get('players', [])
+                        if i < len(players) and players[i].get('name') == winner_name:
+                            winner_indices.append(i)
+                            if self.session_logger:
+                                self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"Found winner index: {winner_name} -> {i}", {})
+                            break
+        
+        # Highlight winners in burgundy color
+        if winner_indices:
+            self._highlight_winners(winner_indices)
+            debug_log(f"Highlighted winners: {winner_indices} in burgundy", "WINNER_HIGHLIGHT")
+        
         # STRUCTURED DEBUG: Log pot animation debugging with full context
         if self.session_logger:
             self.session_logger.log_system("DEBUG", "POT_ANIMATION_DEBUG", "_handle_hand_complete called", {
@@ -1516,7 +1645,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
                 "pot_amount": pot_amount,
                 "event_data": event.data,
                 "last_pot_amount": self.last_pot_amount,
-                "animation_context": "hand_completion_pot_transfer"
+                "animation_context": "hand_completion_pot_transfer",
+                "winner_indices": winner_indices
             })
         
         debug_log(f"Hand complete: {winner_info.get('name', 'Unknown')} wins ${pot_amount:.2f}", "HAND_COMPLETE")
@@ -1540,8 +1670,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             pot_amount = self.last_pot_amount
             debug_log(f"Using last displayed pot amount as final fallback: ${pot_amount:.2f}", "HAND_COMPLETE")
         
-        # IMMEDIATELY clear all highlights when hand completes - no more action needed
-        self._reset_all_highlights()
+        # Note: Don't clear highlights here - winner highlighting should persist
         
         # Log hand completion
         if self.session_logger:
@@ -1593,7 +1722,8 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             if is_animating_bets:
                 delay_for_pot_animation = max(300, getattr(self, '_bet_animation_total_delay_ms', 1200) + 200)
             else:
-                delay_for_pot_animation = 300
+                # Increase delay for fold wins to give users time to see winner highlighting
+                delay_for_pot_animation = 2000  # 2 seconds to see the burgundy border
             debug_log(f"is_animating_bets={is_animating_bets}, scheduled_after={delay_for_pot_animation}ms", "POT_ANIMATION")
             # Mark that a pot animation is about to run so we can defer heavy redraws
             self._pot_animation_scheduled = True
@@ -1728,6 +1858,102 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         except Exception as e:
             debug_log(f"ERROR in _reset_all_highlights: {e}", "HIGHLIGHT")
 
+    def _highlight_winners(self, winner_indices):
+        """Highlight winner(s) with sapphire color and winner indicator."""
+        if self.session_logger:
+            self.session_logger.log_system("INFO", "HIGHLIGHT_DEBUG", f"🏆 _highlight_winners called", {
+                "winner_indices": winner_indices,
+                "timestamp": _time.time()
+            })
+        
+        debug_log(f"_highlight_winners called for indices: {winner_indices} (burgundy style)", "WINNER_HIGHLIGHT")
+        
+        # First, clear all action highlights to remove yellow borders
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", "Clearing all highlights before winner highlighting", {})
+        self._reset_all_highlights()
+        
+        # Remove any existing action indicator widgets
+        removed_count = 0
+        for i, seat in enumerate(getattr(self, 'player_seats', [])):
+            if seat and seat.get("frame"):
+                for widget in seat["frame"].winfo_children():
+                    if hasattr(widget, '_action_indicator') or widget.winfo_class() == 'Label':
+                        # Check if it's an action indicator by text content
+                        try:
+                            if hasattr(widget, 'cget') and 'YOUR TURN' in widget.cget('text'):
+                                debug_log(f"Removing action indicator from seat {i}", "WINNER_HIGHLIGHT")
+                                if self.session_logger:
+                                    self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"Removing action indicator from seat {i}", {})
+                                widget.destroy()
+                                removed_count += 1
+                        except:
+                            pass
+        
+        if self.session_logger:
+            self.session_logger.log_system("DEBUG", "HIGHLIGHT_DEBUG", f"Removed {removed_count} action indicators", {})
+        
+        # Apply sapphire highlighting to winners
+        success_count = 0
+        for winner_index in winner_indices:
+            if winner_index < len(getattr(self, 'player_seats', [])):
+                seat = self.player_seats[winner_index]
+                if seat and seat.get("frame"):
+                    player_frame = seat["frame"]
+                    
+                    # Apply VIVID burgundy winner border - VERY BOLD AND NOTICEABLE
+                    player_frame.configure(
+                        highlightbackground="#8B0000",  # Dark red / burgundy border - VERY VISIBLE
+                        highlightthickness=8  # MUCH thicker border for winners
+                        # Note: Removed bg color to keep only border highlighting
+                    )
+                    
+                    # 🔍 BORDER LOGGING: Track all player frame styling changes
+                    self.session_logger.log_system("DEBUG", "BORDER_TRACKING", f"🏆 BURGUNDY WINNER styling applied to player {winner_index}", {
+                        "player_index": winner_index,
+                        "method": "_highlight_winners",
+                        "border_color": "#8B0000",
+                        "border_thickness": 8,
+                        "background": "unchanged"
+                    })
+                    
+                    # Add winner indicator
+                    self._add_winner_indicator(player_frame)
+                    success_count += 1
+                    
+                    debug_log(f"Applied burgundy highlighting to winner seat {winner_index}", "WINNER_HIGHLIGHT")
+                    if self.session_logger:
+                        self.session_logger.log_system("INFO", "HIGHLIGHT_DEBUG", f"✅ Applied burgundy highlighting to winner seat {winner_index}", {
+                            "player_frame_id": id(player_frame),
+                            "highlightbackground": "#8B0000",
+                            "highlightthickness": 8,
+                            "bg": "#A0002A"
+                        })
+        
+        if self.session_logger:
+            self.session_logger.log_system("INFO", "HIGHLIGHT_DEBUG", f"🏆 Winner highlighting completed", {
+                "requested_winners": len(winner_indices),
+                "successfully_highlighted": success_count
+            })
+
+    def _add_winner_indicator(self, player_frame):
+        """Add winner indicator label to player frame."""
+        try:
+            # Create winner indicator label
+            winner_label = tk.Label(
+                player_frame,
+                text="🏆 WINNER! 🏆",
+                font=("Arial", 12, "bold"),
+                fg="#8B0000",  # Burgundy text to match border
+                bg="white",    # White background for clean contrast
+                relief="raised",
+                bd=2
+            )
+            winner_label.pack(side="top", pady=2)
+            debug_log("Added winner indicator label", "WINNER_HIGHLIGHT")
+        except Exception as e:
+            debug_log(f"Error adding winner indicator: {e}", "WINNER_HIGHLIGHT")
+
     def _handle_player_action(self, **kwargs):
         """Handle player action updates from FPSM."""
         player_name = kwargs.get("player_name", "")
@@ -1762,9 +1988,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if player_index >= len(self.player_seats) or not self.player_seats[player_index]:
             return
         
-        # Play sound
+        # Play sound using the GUI's play_sound method (which uses configurable system)
         if self.sound_manager:
-            self.sound_manager.play_sound(action.lower())
+            self.play_sound(action.lower())
         
         # Show bet display
         if amount > 0:
@@ -1871,6 +2097,34 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             debug_log("Forcing display update after bet animation completion", "DISPLAY_UPDATE")
             self.after_idle(self._force_display_refresh)
     
+    def _remove_bet_display(self, player_index: int):
+        """Remove bet display for a specific player."""
+        if player_index in self.bet_labels:
+            try:
+                self.canvas.delete(self.bet_labels[player_index])
+                del self.bet_labels[player_index]
+            except Exception as e:
+                debug_log(f"Error removing bet display for player {player_index}: {e}", "BET_DISPLAY")
+    
+    def _update_from_game_info(self, game_info: dict):
+        """Update the widget display from game info."""
+        try:
+            # Update player information
+            if 'players' in game_info:
+                for i, player_info in enumerate(game_info['players']):
+                    if i < len(self.player_seats):
+                        self._update_player_display(i, player_info)
+            
+            # Update pot and board information
+            if 'pot' in game_info:
+                self._update_pot_display(game_info['pot'])
+            
+            if 'board' in game_info:
+                self._update_board_display(game_info['board'])
+                
+        except Exception as e:
+            debug_log(f"Error updating from game info: {e}", "DISPLAY_UPDATE")
+    
     def _force_display_refresh(self):
         """Force a complete display refresh after animations."""
         debug_log("Forcing complete display refresh", "DISPLAY_UPDATE")
@@ -1933,24 +2187,45 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         self.last_pot_amount = amount
     
     def play_sound(self, sound_type: str, **kwargs):
-        """Play a sound effect."""
+        """Play a sound effect using the configurable poker event system."""
         if not self.sound_manager:
             debug_log(f"No sound manager available for {sound_type}", "SOUND")
             return
         
         debug_log(f"Playing sound: {sound_type}", "SOUND")
         
-        # Map sound types to the appropriate SoundManager methods
+        # Map sound types to poker events using the new configurable system
         if sound_type in ["fold", "call", "bet", "raise", "check", "all_in"]:
+            # Player action sounds - use configurable poker events
+            poker_event = f"player_action_{sound_type}"
+            self.sound_manager.play_poker_event_sound(poker_event)
+            
+            # Also play chip sound for money actions
             amount = kwargs.get("amount", 0.0)
-            self.sound_manager.play_action_sound(sound_type, amount)
-        elif sound_type in ["dealing", "deal", "shuffle", "flip"]:
-            self.sound_manager.play_card_sound(sound_type)
-        elif sound_type in ["winner", "notification"]:
-            self.sound_manager.play_ui_sound(sound_type)
+            if sound_type in ["bet", "call", "raise", "all_in"] and amount > 0:
+                self.sound_manager.play_poker_event_sound("chip_bet")
+                
+        elif sound_type in ["dealing", "deal"]:
+            # Card dealing sounds
+            self.sound_manager.play_poker_event_sound("card_dealing")
+        elif sound_type in ["shuffle"]:
+            # Card shuffling sounds
+            self.sound_manager.play_poker_event_sound("card_shuffle")
+        elif sound_type in ["winner"]:
+            # Winner announcement sounds
+            self.sound_manager.play_poker_event_sound("winner_announce")
+        elif sound_type in ["notification", "turn_notify"]:
+            # Turn notification sounds
+            self.sound_manager.play_poker_event_sound("turn_notification")
+        elif sound_type in ["click", "ui_click"]:
+            # UI click sounds
+            self.sound_manager.play_poker_event_sound("ui_click")
         else:
-            # Try to play as a generic sound
-            self.sound_manager.play(sound_type)
+            # Fallback: try as poker event first, then legacy
+            self.sound_manager.play_poker_event_sound(sound_type)
+            # If that doesn't work, try the old method
+            if not hasattr(self.sound_manager, 'poker_sound_events') or sound_type not in self.sound_manager.poker_sound_events:
+                self.sound_manager.play(sound_type)
     
     def play_animation(self, animation_type: str, **kwargs):
         """Play an animation."""
@@ -2003,7 +2278,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         
         # Play chip movement sound (but not voice during animations)
         if self.sound_manager:
-            self.sound_manager.play_chip_sound("bet")  # Only chip sound, no voice
+            self.sound_manager.play_poker_event_sound("chip_bet")  # Only chip sound, no voice
         
         # Animate the chip to the pot with smooth movement
         def move_chip_step(step=0):
@@ -2478,6 +2753,72 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Immediately update display based on new state machine
         if self.state_machine:
             self._update_from_fpsm_state()
+            
+    def set_game_director(self, game_director):
+        """Set the game director for this widget."""
+        self.game_director = game_director
+        debug_log("GameDirector set for UI widget", "GAME_DIRECTOR")
+        
+    def render_current_state(self):
+        """Pure render function - updates UI from current game state."""
+        if not self.game_director:
+            # Fallback to old method if no GameDirector
+            self._update_from_fpsm_state()
+            return
+            
+        try:
+            # Get current state from GameDirector (single source of truth)
+            game_state = self.game_director.get_current_state()
+            
+            if game_state:
+                # Render immediately from current state
+                self._render_from_game_state(game_state)
+            else:
+                debug_log("No game state available for rendering", "GAME_DIRECTOR")
+                
+        except Exception as e:
+            debug_log(f"Error in render_current_state: {e}", "GAME_DIRECTOR")
+            # Fallback to old method
+            self._update_from_fpsm_state()
+            
+    def _render_from_game_state(self, game_state: dict):
+        """Render UI from game state dict (pure render function)."""
+        try:
+            # Update players
+            for i, player_info in enumerate(game_state.get("players", [])):
+                if i < len(self.player_seats) and self.player_seats[i]:
+                    self._update_player_from_display_state(i, player_info)
+            
+            # Update community cards
+            board_cards = game_state.get("board", [])
+            filtered = [c for c in board_cards if isinstance(c, str) and len(c) in (2,3) and c != "**"]
+            self._update_community_cards_from_display_state(filtered)
+            
+            # Update pot
+            pot_amount = game_state.get("pot", 0.0)
+            self.update_pot_amount(pot_amount)
+            
+            # Store display state for dealer button update
+            self.last_display_state = game_state
+            
+            # Update dealer button
+            self._update_dealer_button_display()
+            
+            # Update current action player highlight (only if hand is still active)
+            action_player_index = game_state.get("action_player", -1)
+            current_state = game_state.get("current_state")
+            
+            if (action_player_index >= 0 and 
+                action_player_index < len(self.player_seats) and
+                "END_HAND" not in str(current_state) and
+                "SHOWDOWN" not in str(current_state)):
+                self._highlight_current_player(action_player_index)
+            elif "SHOWDOWN" in str(current_state):
+                # Clear highlights only for SHOWDOWN, not END_HAND (preserve winner highlighting)
+                self._reset_all_highlights()
+                
+        except Exception as e:
+            debug_log(f"Error in _render_from_game_state: {e}", "GAME_DIRECTOR")
     
     def _update_from_fpsm_state(self):
         """Update the entire display based on FPSM's current state."""
@@ -2509,6 +2850,12 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         pot_amount = game_info.get("pot", 0.0)
         self.update_pot_amount(pot_amount)
         
+        # Store display state for dealer button update
+        self.last_display_state = game_info
+        
+        # Update dealer button
+        self._update_dealer_button_display()
+        
         # Update current action player (but not during hand completion)
         action_player_index = game_info.get("action_player", -1)
         current_state = game_info.get("current_state", "")
@@ -2535,9 +2882,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             "END_HAND" not in str(current_state) and
             "SHOWDOWN" not in str(current_state)):
             self._highlight_current_player(action_player_index)
-        elif "END_HAND" in str(current_state) or "SHOWDOWN" in str(current_state):
-            # Clear highlights if we're in end states
-            self._reset_all_highlights()
+        # Note: Removed _reset_all_highlights() for SHOWDOWN to preserve winner highlighting
     
     def _setup_ui(self):
         """Set up the UI layout."""
@@ -3584,11 +3929,98 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
             "card_widgets": [card1, card2],
             "stack_label": stack_label,
             "bet_label": bet_label,
-            "position": (x, y)
+            "position": (x, y),
+            "dealer_button": None  # Will store dealer button widget
         }
         
         # Position the player frame
         self.canvas.create_window(x, y, window=player_frame, anchor="center")
+    
+    def _create_dealer_button(self, player_index: int):
+        """Create a dealer button next to the specified player."""
+        if (player_index >= len(self.player_seats) or 
+            not self.player_seats[player_index] or 
+            not self.player_seats[player_index].get("position")):
+            return
+            
+        player_x, player_y = self.player_seats[player_index]["position"]
+        
+        # Position dealer button to the right of the player seat
+        button_x = player_x + 100  # 100 pixels to the right
+        button_y = player_y
+        
+        # Create a modern dealer button with professional styling
+        button_frame = tk.Frame(
+            self.canvas,
+            bg=THEME["accent"],  # Use accent color (gold/orange)
+            highlightbackground="#FFD700",  # Gold border
+            highlightthickness=2,
+            relief="raised",
+            bd=2,
+            width=35,
+            height=35
+        )
+        
+        # Create the "D" label for dealer
+        dealer_label = tk.Label(
+            button_frame,
+            text="D",
+            font=("Segoe UI", 14, "bold"),
+            bg=THEME["accent"],
+            fg="white",
+            width=2,
+            height=1
+        )
+        dealer_label.pack(expand=True)
+        
+        # Position on canvas
+        canvas_item = self.canvas.create_window(
+            button_x, button_y, 
+            window=button_frame, 
+            anchor="center",
+            tags="dealer_button"
+        )
+        
+        # Store reference
+        self.player_seats[player_index]["dealer_button"] = {
+            "frame": button_frame,
+            "label": dealer_label,
+            "canvas_item": canvas_item
+        }
+    
+    def _remove_dealer_button(self, player_index: int):
+        """Remove dealer button from the specified player."""
+        if (player_index >= len(self.player_seats) or 
+            not self.player_seats[player_index] or 
+            not self.player_seats[player_index].get("dealer_button")):
+            return
+            
+        dealer_button = self.player_seats[player_index]["dealer_button"]
+        if dealer_button:
+            # Remove from canvas
+            if dealer_button.get("canvas_item"):
+                self.canvas.delete(dealer_button["canvas_item"])
+            # Destroy the frame
+            if dealer_button.get("frame"):
+                dealer_button["frame"].destroy()
+            # Clear reference
+            self.player_seats[player_index]["dealer_button"] = None
+    
+    def _update_dealer_button_display(self):
+        """Update dealer button display based on current dealer position."""
+        if not hasattr(self, 'last_display_state') or not self.last_display_state:
+            return
+            
+        dealer_position = self.last_display_state.get('dealer_position', -1)
+        
+        # Remove all existing dealer buttons
+        for i in range(len(self.player_seats)):
+            if self.player_seats[i]:
+                self._remove_dealer_button(i)
+        
+        # Add dealer button to current dealer
+        if 0 <= dealer_position < len(self.player_seats):
+            self._create_dealer_button(dealer_position)
     
     class LayoutManager:
         """Manages dynamic positioning for the poker table."""

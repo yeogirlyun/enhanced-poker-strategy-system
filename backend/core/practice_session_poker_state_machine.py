@@ -58,6 +58,9 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         self.strategy_data = strategy_data
         self.practice_mode = True
         
+        # GameDirector integration for event-driven architecture
+        self.game_director = None  # Will be set when GameDirector is created
+        
         # Initialize improved GTO strategy engine for bot decision making
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_SM_INIT", "Creating ImprovedGTOStrategy", {})
@@ -259,7 +262,9 @@ Pot: ${self.game_state.pot:.2f}"""
             if self.current_state in betting_states:
                 if self.logger:
                     self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Scheduling bot actions after {player.name}'s {action_type.value} (state: {self.current_state})", {"player": player.name, "action": action_type.value, "state": self.current_state.name})
-                self._schedule_bot_actions()
+                # GameDirector now handles bot scheduling
+                if self.game_director:
+                    self.game_director.schedule_next_bot_action()
             else:
                 if self.logger:
                     self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Current state {self.current_state} not a betting state", {"state": self.current_state.name})
@@ -275,6 +280,8 @@ Pot: ${self.game_state.pot:.2f}"""
         if self.logger:
             self.logger.log_system("DEBUG", "ACTION_ADVANCE", f"Action player advanced: {old_action_player} → {new_action_player}", {"old": old_action_player, "new": new_action_player})
         
+        # GameDirector handles all timing - no need for manual timer management
+        
         # Schedule bot actions after action player advancement (betting streets only)
         betting_states = [
             PokerState.PREFLOP_BETTING,
@@ -289,11 +296,11 @@ Pot: ${self.game_state.pot:.2f}"""
                 self.logger.log_system("DEBUG", "PRACTICE_ACTION_ADVANCE", f"[PRACTICE_PSM] Next player: {next_player.name} (is_human={next_player.is_human})", {"player": next_player.name, "is_human": next_player.is_human})
             if not next_player.is_human:
                 if self.logger:
-                    self.logger.log_system("DEBUG", "PRACTICE_BOT_SCHEDULING", f"[PRACTICE_PSM] Scheduling bot action for {next_player.name}", {"player": next_player.name})
-                self._schedule_bot_actions()
+                    self.logger.log_system("DEBUG", "PRACTICE_BOT_SCHEDULING", f"[PRACTICE_PSM] Bot turn: {next_player.name} - GameDirector will handle timing", {"player": next_player.name})
+                # GameDirector handles bot action scheduling
             else:
                 if self.logger:
-                    self.logger.log_system("DEBUG", "PRACTICE_HUMAN_TURN", f"[PRACTICE_PSM] Human turn: {next_player.name} - not scheduling bot actions", {"player": next_player.name})
+                    self.logger.log_system("DEBUG", "PRACTICE_HUMAN_TURN", f"[PRACTICE_PSM] Human turn: {next_player.name} - waiting for user input", {"player": next_player.name})
     
     def transition_to(self, new_state: PokerState):
         """Override: Enhanced state transitions with educational insights."""
@@ -321,7 +328,9 @@ Pot: ${self.game_state.pot:.2f}"""
         if new_state in betting_states:
             if self.logger:
                 self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Transition scheduling: New state {new_state} is a betting state", {"new_state": new_state.name})
-            self._schedule_bot_actions()
+            # GameDirector now handles bot scheduling
+            if self.game_director:
+                self.game_director.schedule_next_bot_action()
         else:
             if self.logger:
                 self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Transition to {new_state} - not a betting state", {"new_state": new_state.name})
@@ -570,71 +579,18 @@ Pot: ${self.game_state.pot:.2f}"""
         
         return display_state
     
-    def _schedule_bot_actions(self):
-        """Schedule bot actions to auto-play non-human players."""
-        # Don't schedule bots in end game states
-        if self.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
-            if self.logger:
-                self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Hand is ending (state: {self.current_state})", {"state": self.current_state.name})
-            return
-        
-        # SAFETY: Only schedule during betting states
-        betting_states = [
-            PokerState.PREFLOP_BETTING, 
-            PokerState.FLOP_BETTING, 
-            PokerState.TURN_BETTING, 
-            PokerState.RIVER_BETTING
-        ]
-        if self.current_state not in betting_states:
-            if self.logger:
-                self.logger.log_system("DEBUG", "BOT_SCHEDULING", f"Not scheduling: Not a betting state (state: {self.current_state})", {
-                    "state": self.current_state.name,
-                    "action_player_index": self.action_player_index
-                })
-            return
-        
-        # Check if current player is actually a bot that needs to act
-        if (self.action_player_index >= 0 and 
-            self.action_player_index < len(self.game_state.players)):
-            current_player = self.game_state.players[self.action_player_index]
-            if current_player.is_human:
-                # Don't schedule bot actions when it's human's turn
-                if self.logger:
-                    self.logger.log_system("INFO", "PRACTICE_BOT_SCHEDULING", f"[PRACTICE_PSM] HUMAN TURN: Not scheduling bot - {current_player.name}'s turn", {"player": current_player.name, "action_index": self.action_player_index})
-                # Console print removed; logged above
-                return
-        
-        if getattr(self, '_scheduled_bot_action', False):
-            if self.logger:
-                self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Bot action already scheduled - skipping", {"current_player_index": self.action_player_index})
-            return  # Already scheduled
-        
-        self._scheduled_bot_action = True
-        
-        # Schedule bot action after a short delay for realism
-        def execute_bot_action():
-            try:
-                if self.logger:
-                    self.logger.log_system("DEBUG", "BOT_SCHEDULING", "Executing scheduled bot action", {"resetting_flag": True})
-                self._scheduled_bot_action = False
-                self._execute_bot_action_if_needed()
-            except Exception as e:
-                if self.logger:
-                    self.logger.log_system("ERROR", "BOT_SCHEDULING", f"Error in scheduled bot action: {e}", {"error": str(e)})
-                # Reset the flag so future scheduling can work
-                self._scheduled_bot_action = False
-        
-        # Use threading timer for delayed execution with better error handling
-        import threading
-        bot_delay = 1.0  # Target 1.0s total cadence with 0.5s post-action highlight + 0.5s pre-action focus
-        timer = threading.Timer(bot_delay, execute_bot_action)  # Moderate delay for human players to see and react
-        timer.daemon = True  # Make it a daemon thread
-        timer.start()
+    # Threading-based bot scheduling removed - GameDirector handles all timing
+    
+    def set_game_director(self, game_director):
+        """Set the GameDirector for this state machine."""
+        self.game_director = game_director
         if self.logger:
-            self.logger.log_system("DEBUG", "PRACTICE_BOT_SCHEDULING", "[PRACTICE_PSM] Started bot action timer", {"delay": bot_delay, "current_player_index": self.action_player_index, "scheduled_flag": self._scheduled_bot_action})
+            self.logger.log_system("INFO", "PRACTICE_SM_INIT", "GameDirector set for state machine", {})
     
     def _execute_bot_action_if_needed(self):
         """Execute bot action if current player is a bot."""
+        # GameDirector-driven execution - no timer validation needed
+        
         # Don't execute bot actions in end game states
         if self.current_state in [PokerState.END_HAND, PokerState.SHOWDOWN]:
             if self.logger:
@@ -680,7 +636,7 @@ Pot: ${self.game_state.pot:.2f}"""
                 if self.logger:
                     self.logger.log_system("INFO", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Bot {current_player.name} auto-playing: {action.value} ${amount:.2f}", {"player": current_player.name, "action": action.value, "amount": amount})
                 
-                # Execute the bot's decision
+                # Execute the bot's decision (GameDirector handles all timing)
                 success = self.execute_action(current_player, action, amount)
                 
                 if success:
@@ -698,6 +654,10 @@ Pot: ${self.game_state.pot:.2f}"""
         else:
             if self.logger:
                 self.logger.log_system("WARNING", "PRACTICE_BOT_ACTION", f"[PRACTICE_PSM] Invalid action_player_index: {self.action_player_index}", {"action_player_index": self.action_player_index, "total_players": len(self.game_state.players)})
+    
+
+    
+
     
     def _get_bot_strategy_decision(self, bot_player: Player) -> tuple[ActionType, float]:
         """Get bot's strategic decision using existing GTO strategy engine."""

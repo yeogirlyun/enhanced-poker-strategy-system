@@ -1,0 +1,34 @@
+{
+  "test_timestamp": "2025-08-13 09:54:54",
+  "summary": {
+    "total_hands": 2,
+    "successful": 2,
+    "stalled": 0,
+    "errors": 0,
+    "incomplete": 0
+  },
+  "detailed_results": [
+    {
+      "hand_id": "GEN-001",
+      "hand_name": "Hand GEN-001",
+      "result": "success",
+      "total_actions": 15,
+      "completed_actions": 15,
+      "final_state": "PokerState.PREFLOP_BETTING",
+      "error_message": null,
+      "execution_time": 0.1965029239654541,
+      "stalling_pattern": null
+    },
+    {
+      "hand_id": "GEN-002",
+      "hand_name": "Hand GEN-002",
+      "result": "success",
+      "total_actions": 13,
+      "completed_actions": 13,
+      "final_state": "PokerState.PREFLOP_BETTING",
+      "error_message": null,
+      "execution_time": 0.1694040298461914,
+      "stalling_pattern": null
+    }
+  ]
+}

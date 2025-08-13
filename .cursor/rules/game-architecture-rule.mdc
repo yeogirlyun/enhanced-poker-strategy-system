@@ -1,0 +1,55 @@
+---
+description: Poker Project Architecture Rules — enforce single-threaded, event-driven GameDirector architecture and reject non-compliant proposals.
+globs:
+  - "**/*.py"
+alwaysApply: true
+---
+
+## 🏗️ POKER PROJECT ARCHITECTURE RULES (Condensed)
+
+**CORE PRINCIPLE**  
+- **Single-threaded, event-driven GameDirector** = single source of truth.  
+- GameDirector controls all timing, schedules events, coordinates all components.  
+
+**LAYER RESPONSIBILITIES**  
+- **GameDirector**: Timing, event queue, component coordination. No game rules or UI rendering.  
+- **FPSM**: Pure game logic & state. No timing, UI, or audio.  
+- **UI Components**: Pure renderers, stateless, no logic/timing/state.  
+- **AudioManager**: Sound playback, non-blocking, timing via GameDirector only.  
+
+**FORBIDDEN**  
+- Threading/timers (`threading.Timer`, `sleep`) for game logic.  
+- Timing control inside UI or components.  
+- Duplicate/secondary state sources.  
+- Blocking audio/animations.  
+- Direct component-to-component calls for state or timing.  
+
+**REQUIRED PATTERNS**  
+- All comms/event flow via GameDirector.  
+- UI reads state from FPSM/GameDirector; renders immediately.  
+- Audio/animations use callbacks; follow-up via GameDirector scheduling.  
+- Bots = pure decision functions; actions scheduled via GameDirector.  
+
+**TESTING REQUIREMENTS**  
+- Deterministic, synchronous, event-driven logic.  
+- Single state source.  
+- Test via event injection, not threading/delays.  
+
+**CODE REVIEW CHECKLIST**  
+- [ ] No threading/timers for game logic.  
+- [ ] Single state source.  
+- [ ] Event-driven only.  
+- [ ] Pure UI rendering.  
+- [ ] All timing in GameDirector.  
+- [ ] No blocking ops.  
+- [ ] Deterministic & testable.  
+
+**ENFORCEMENT**  
+- If **I** or **the AI** propose anything violating these principles, **reject it** and suggest a compliant, better solution.  
+- All solution suggestions, including mine, must abide by this architecture.  
+
+**WHEN IN DOUBT**  
+- Timing → GameDirector  
+- State → FPSM  
+- Display → Pure render  
+- Unsure? Ask for guidance.

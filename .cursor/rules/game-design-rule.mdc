@@ -1,0 +1,22 @@
+---
+description: Poker UI Design System — enforce tokens & interaction rules without inlining the whole spec.
+globs:
+  - "ui/**"
+  - "frontend/**"
+  - "**/*.py"
+alwaysApply: true
+---
+
+## Poker UI Design — Enforcement (Condensed)
+
+• Use the **Design System v2** at `docs/Poker_Design_System_v2.md` as the single source of truth for colors, spacing, typography, motion, and components.  
+• **Do not inline** the full design spec in chat; **open/read that file** when specifics are required.  
+• Keep UI **dark theme tokens** and **bottom panel spec** as defined; no ad‑hoc colors/spacing.  
+• Buttons, message area, bet controls = follow sizes, states, shadows, focus rings exactly.  
+• Animations: 120–240ms UI; 300–500ms table events; non‑blocking; guide attention, never block input.  
+• Accessibility: meet contrast (4.5:1 body), 44×44 targets, keyboard roles/shortcuts, live region for messages.  
+• If a proposed change conflicts with the design system, **reject it** and suggest a compliant alternative.  
+• Prefer **tokenized CSS/vars**; avoid hard‑coded values in components.  
+• Keep copies DRY: reuse shared components; do not duplicate near-identical widgets.
+
+**When in doubt:** follow the spec file; ask for direction before deviating.

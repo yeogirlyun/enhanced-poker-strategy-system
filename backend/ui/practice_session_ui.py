@@ -114,12 +114,55 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Setting up UI components", {})
         self._setup_ui()
         
+        # Initialize GameDirector after UI is set up
+        self._initialize_game_director()
+        
         if self.logger:
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "PracticeSessionUI initialization completed successfully", {})
             self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Practice Session UI ready", {})
         
         # Initialize table felt style after UI setup
         self._initialize_table_felt()
+        
+    def _initialize_game_director(self):
+        """Initialize GameDirector for event-driven architecture."""
+        try:
+            if self.logger:
+                self.logger.log_system("INFO", "GAME_DIRECTOR_INIT", "Initializing GameDirector", {})
+                
+            # Import GameDirector
+            from core.game_director import GameDirector
+            from utils.sound_manager import SoundManager
+            
+            # Create sound manager
+            sound_manager = SoundManager(test_mode=False)
+            
+            # Create GameDirector with all required components
+            self.game_director = GameDirector(
+                state_machine=self.state_machine,
+                ui_renderer=self.poker_widget,
+                audio_manager=sound_manager,
+                session_logger=self.logger
+            )
+            
+            # Set GameDirector in UI widget, state machine, and action interface
+            self.poker_widget.set_game_director(self.game_director)
+            self.state_machine.set_game_director(self.game_director)
+            self.action_interface.game_director = self.game_director
+            
+            # Start GameDirector
+            self.game_director.start()
+            
+            if self.logger:
+                self.logger.log_system("INFO", "GAME_DIRECTOR_INIT", "GameDirector initialized and started successfully", {})
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "GAME_DIRECTOR_INIT", f"Failed to initialize GameDirector: {e}", {
+                    "error": str(e)
+                })
+            # Continue without GameDirector (fallback mode)
+            self.game_director = None
     
     def on_event(self, event: GameEvent):
         """Handle events from the specialized state machine."""
@@ -215,6 +258,15 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             start_new_hand=self._start_new_hand
         )
         self.poker_widget.pack(fill=tk.BOTH, expand=True)
+        
+        # CRITICAL: Register poker widget as event listener to receive hand_complete events
+        self.state_machine.add_event_listener(self.poker_widget)
+        if self.logger:
+            self.logger.log_system("INFO", "PRACTICE_UI_INIT", "Registered poker widget as event listener for hand_complete events", {
+                "widget_type": type(self.poker_widget).__name__,
+                "widget_has_on_event": hasattr(self.poker_widget, 'on_event'),
+                "total_listeners": len(getattr(self.state_machine, '_event_listeners', []))
+            })
         
         # === BOTTOM: Control Strip (Session | Action Buttons | Statistics) ===
         self._setup_bottom_control_strip()
@@ -533,23 +585,23 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if hasattr(event, 'data') and event.data:
             new_state = event.data.get('new_state', '')
             if 'DEAL_FLOP' in new_state:
-                # Get board cards from state machine
-                if hasattr(self, 'state_machine'):
-                    board = getattr(self.state_machine.game_state, 'board', [])
-                    if len(board) >= 3:
-                        flop = ' '.join(board[:3])
+                # Get board info using action interface (no direct state access)
+                if hasattr(self, 'action_interface'):
+                    board_info = self.action_interface.get_board_info()
+                    if board_info and len(board_info.get('cards', [])) >= 3:
+                        flop = ' '.join(board_info['cards'][:3])
                         self._add_action_message(f"🃏 Flop: {flop}")
             elif 'DEAL_TURN' in new_state:
-                if hasattr(self, 'state_machine'):
-                    board = getattr(self.state_machine.game_state, 'board', [])
-                    if len(board) >= 4:
-                        turn = board[3]
+                if hasattr(self, 'action_interface'):
+                    board_info = self.action_interface.get_board_info()
+                    if board_info and len(board_info.get('cards', [])) >= 4:
+                        turn = board_info['cards'][3]
                         self._add_action_message(f"🃏 Turn: {turn}")
             elif 'DEAL_RIVER' in new_state:
-                if hasattr(self, 'state_machine'):
-                    board = getattr(self.state_machine.game_state, 'board', [])
-                    if len(board) >= 5:
-                        river = board[4]
+                if hasattr(self, 'action_interface'):
+                    board_info = self.action_interface.get_board_info()
+                    if board_info and len(board_info.get('cards', [])) >= 5:
+                        river = board_info['cards'][4]
                         self._add_action_message(f"🃏 River: {river}")
 
     def _handle_hand_complete_message(self, event):
@@ -915,44 +967,16 @@ class PracticeSessionUI(ttk.Frame, EventListener):
         if self.logger:
             self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", "Action triggered", {"stack": stack_trace})
         
-        if not hasattr(self, 'state_machine') or not self.state_machine:
+        # Use action interface for all validation (no state checking in UI)
+        if not hasattr(self, 'action_interface') or not self.action_interface:
             if self.logger:
-                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", "No state machine available", {})
+                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", "No action interface available", {})
             return
         
-        # Check if game is in a valid state for human actions
-        if hasattr(self.state_machine, 'current_state'):
-            invalid_states = ['END_HAND', 'SHOWDOWN', 'START_HAND']
-            if str(self.state_machine.current_state).split('.')[-1] in invalid_states:
-                if self.logger:
-                    self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - invalid state: {self.state_machine.current_state}", {"action": action_key})
-                
-                # Log user interaction attempt for UX analytics
-                self.logger.log_user_activity("UI_INTERACTION_BLOCKED", {
-                    "attempted_action": action_key,
-                    "game_state": str(self.state_machine.current_state),
-                    "block_reason": "invalid_game_state",
-                    "ui_element": "action_button"
-                })
-                return
-        
-        # Check if it's the human player's turn
-        current_player = self.state_machine.get_action_player()
-        if not current_player:
+        # Check if action is currently allowed using clean interface
+        if not self.action_interface.can_execute_action(action_key):
             if self.logger:
-                self.logger.log_system("DEBUG", "PRACTICE_UI_ACTION", "No current player", {})
-            return
-        
-        # Robust type checking - ensure we have a Player object
-        if not hasattr(current_player, 'is_human') or isinstance(current_player, str):
-            if self.logger:
-                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"current_player is {type(current_player)}, not Player object: {current_player}", {})
-                self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Action player index: {getattr(self.state_machine, 'action_player_index', 'unknown')}, Players count: {len(getattr(self.state_machine.game_state, 'players', []))}", {})
-            return
-            
-        if not current_player.is_human:
-            if self.logger:
-                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked - not human's turn: {getattr(current_player, 'name', 'Unknown')}", {"action": action_key})
+                self.logger.log_system("WARNING", "PRACTICE_UI_ACTION", f"Action blocked by interface: {action_key}", {})
             return
             
         if self.logger:
@@ -1016,29 +1040,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             if self.logger:
                 self.logger.log_system("ERROR", "PRACTICE_UI_ACTION", f"Error handling quick bet: {e}", {})
     
-    def _enable_action_buttons(self):
-        """Enable action buttons for human player interaction."""
-        for key, button_frame in self.action_buttons.items():
-            # Restore original colors for frames
-            original_color = self.button_colors[key]
-            button_frame.config(relief='raised', bg=original_color)
-            
-            # Restore original colors for labels
-            if key in self.action_labels:
-                self.action_labels[key].config(bg=original_color, fg='white')
-    
-    def _disable_action_buttons(self):
-        """Disable action buttons (not human player's turn)."""
-        disabled_color = THEME['button_fold']  # Use theme gray
-        disabled_text = THEME['text_muted']    # Use theme muted text
-        
-        for key, button_frame in self.action_buttons.items():
-            # Set disabled appearance for frames
-            button_frame.config(relief='sunken', bg=disabled_color)
-            
-            # Set disabled appearance for labels
-            if key in self.action_labels:
-                self.action_labels[key].config(bg=disabled_color, fg=disabled_text)
+
 
     # Old session controls method removed - using bottom control strip instead
     
@@ -1319,7 +1321,7 @@ Total Winnings: ${stats['total_winnings']:.2f}
             return None  # No deviation
         
         # Simple deviation classification
-        aggressive_actions = ["BET", "RAISE", "ALL_IN"]
+        aggressive_actions = ["BET", "RAISE"]  # All-in is treated as RAISE
         passive_actions = ["CHECK", "CALL"]
         
         if user_action in aggressive_actions and gto_action in passive_actions:

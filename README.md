@@ -29,9 +29,21 @@ A comprehensive poker practice application that allows users to develop, test, a
    ```
 
 4. **Run the application**
+   
+   **Option A: Using the launcher (recommended)**
    ```bash
+   # From the project root directory (Poker/)
+   python3 run_poker.py
+   ```
+
+   **Option B: Direct execution**
+   ```bash
+   # Change to backend directory first
+   cd backend
    python3 main_gui.py
    ```
+
+   > **Note**: The `run_poker.py` launcher automatically handles the correct working directory and is the recommended way to start the application.
 
 ## 🎮 **Features**
 

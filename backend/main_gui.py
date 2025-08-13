@@ -573,17 +573,39 @@ class EnhancedMainGUI:
 
         self._create_enhanced_game_tab(enhanced_game_frame)
 
-        # Tab 8: Hands Review (NEW) - Using Latest 130-Hand JSON Database
+        # Tab 8: Hands Review (MODERN) - Using Latest Architecture
         hands_review_frame = ttk.Frame(self.notebook)
         self.notebook.add(hands_review_frame, text="🎯 Hands Review (130 Legendary)")
         
-        # Create original working FPSM hands review panel 
-        from ui.components.fpsm_hands_review_panel import FPSMHandsReviewPanel
-        self.hands_review_panel = FPSMHandsReviewPanel(hands_review_frame)
+        # Create modern hands review panel with clean architecture
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "Creating ModernHandsReviewPanel", {})
+        from ui.components.hands_review_panel_modern import ModernHandsReviewPanel
+        self.hands_review_panel = ModernHandsReviewPanel(hands_review_frame)
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
+        if self.logger:
+            self.logger.log_system("INFO", "GUI_INIT", "ModernHandsReviewPanel created and packed", {})
+        
+        # Add tab switch logging
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
         # Update strategy file display
         self._update_strategy_file_display()
+
+    def _on_tab_changed(self, event):
+        """Log when user switches tabs."""
+        try:
+            selected_tab = self.notebook.select()
+            tab_text = self.notebook.tab(selected_tab, "text")
+            if self.logger:
+                self.logger.log_system("INFO", "UI_INTERACTION", "Tab switched", {
+                    "tab_text": tab_text,
+                    "tab_index": self.notebook.index(selected_tab),
+                    "event_type": "tab_change"
+                })
+        except Exception as e:
+            if self.logger:
+                self.logger.log_system("ERROR", "UI_INTERACTION", f"Error logging tab change: {e}")
 
     def _create_practice_session_interface(self, parent_frame):
         """Create the integrated practice session interface."""

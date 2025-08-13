@@ -51,13 +51,18 @@ class DeucesHandEvaluator:
             strength_percentage = 1.0 - self.evaluator.get_five_card_rank_percentage(hand_score)
             strength_score = strength_percentage * 100
             
+            # Find the best 5-card combination
+            all_cards = deuces_hole + deuces_board
+            best_five_cards = self._find_best_five_cards(all_cards, hand_score)
+            
             return {
                 'hand_score': hand_score,          # Lower = better (for comparison)
                 'hand_rank': hand_rank,            # Rank class (1-8)
                 'hand_description': hand_description,
                 'strength_score': strength_score,   # 0-100 percentile
                 'hole_cards': list(hole_cards),
-                'board_cards': list(board_cards)
+                'board_cards': list(board_cards),
+                'best_five_cards': best_five_cards  # The actual 5 cards used
             }
             
         except Exception as e:
@@ -84,6 +89,22 @@ class DeucesHandEvaluator:
                 # Skip invalid cards
                 continue
         return deuces_cards
+    
+    def _find_best_five_cards(self, all_cards: List[int], target_score: int) -> List[str]:
+        """Find the best 5-card combination that matches the given score."""
+        from itertools import combinations
+        
+        # Generate all possible 5-card combinations
+        for combo in combinations(all_cards, 5):
+            combo_score = self.evaluator.evaluate([], list(combo))
+            if combo_score == target_score:
+                # Convert back to our string format
+                return [Card.int_to_str(card) for card in combo]
+        
+        # Fallback: return first 5 cards if no exact match found
+        if len(all_cards) >= 5:
+            return [Card.int_to_str(card) for card in all_cards[:5]]
+        return []
     
     def compare_hands(self, eval1: Dict[str, Any], eval2: Dict[str, Any]) -> int:
         """

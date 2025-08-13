@@ -67,14 +67,14 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                     self.widget = widget
                 
                 def play_sound(self, sound_name):
-                    """Play sound via widget's sound manager."""
-                    if hasattr(self.widget, 'sound_manager'):
-                        self.widget.sound_manager.play_sound(sound_name)
+                    """Play sound via widget's play_sound method (uses configurable system)."""
+                    if hasattr(self.widget, 'play_sound'):
+                        self.widget.play_sound(sound_name)
                 
                 def play_action_sound(self, action):
-                    """Play action-specific sound."""
-                    if hasattr(self.widget, 'sound_manager'):
-                        self.widget.sound_manager.play_action_sound(action)
+                    """Play action-specific sound via widget's play_sound method."""
+                    if hasattr(self.widget, 'play_sound'):
+                        self.widget.play_sound(action)
                 
                 def animate_chips(self, *args, **kwargs):
                     """Handle chip animations."""

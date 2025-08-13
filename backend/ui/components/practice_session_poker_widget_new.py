@@ -421,7 +421,7 @@ class PracticeSessionPokerWidget(ReusablePokerGameWidget):
                 stack = self.state_machine.game_state.players[0].stack
                 success = self.state_machine.execute_action(
                     self.state_machine.game_state.players[0],
-                    ActionType.ALL_IN,
+                    ActionType.RAISE,  # All-in is treated as a raise
                     stack
                 )
             

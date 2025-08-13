@@ -1,0 +1,22 @@
+{
+  "poker_sound_events": {
+    "card_shuffle": "shuffling-cards-01-86984.mp3",
+    "player_action_fold": "voice/announcer_female/fold.wav",
+    "player_action_call": "voice/announcer_female/call.wav",
+    "player_action_bet": "voice/announcer_female/bet.wav",
+    "player_action_check": "voice/announcer_female/check.wav",
+    "player_action_raise": "voice/announcer_female/raise.wav",
+    "player_action_all_in": "voice/announcer_female/all_in.wav",
+    "winner_announce": "cash-register-kaching-376867.mp3",
+    "turn_notification": "self-assured-notification.mp3",
+    "card_dealing": "card_deal_shuffle-cards-46455.mp3",
+    "chip_bet": "chip_bet_multiple.wav",
+    "chip_collect": "poker_chips1-87592.mp3",
+    "ui_click": "so-proud-notification.mp3"
+  },
+  "metadata": {
+    "created_by": "Poker Sound Tester",
+    "version": "1.0",
+    "description": "Sound configuration for poker events"
+  }
+}

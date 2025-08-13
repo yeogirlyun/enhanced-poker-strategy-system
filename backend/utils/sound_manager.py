@@ -48,6 +48,25 @@ class SoundManager:
     
     def _load_sound_mapping(self):
         """Load sound mapping configuration."""
+        # First try to load the new poker sound configuration
+        poker_config_file = os.path.join(self.sounds_dir, 'poker_sound_config.json')
+        print(f"🔥 SOUND_DEBUG: Looking for config at: {poker_config_file}")
+        print(f"🔥 SOUND_DEBUG: Config file exists: {os.path.exists(poker_config_file)}")
+        if os.path.exists(poker_config_file):
+            try:
+                with open(poker_config_file, 'r') as f:
+                    poker_config = json.load(f)
+                self.poker_sound_events = poker_config.get("poker_sound_events", {})
+                print(f"🔥 SOUND_DEBUG: Loaded {len(self.poker_sound_events)} poker sound events")
+                print(f"🔥 SOUND_DEBUG: Voice events: {[k for k in self.poker_sound_events.keys() if 'player_action' in k]}")
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                print(f"🔥 SOUND_DEBUG: Error loading config: {e}")
+                self.poker_sound_events = {}
+        else:
+            print(f"🔥 SOUND_DEBUG: Config file not found, using empty events")
+            self.poker_sound_events = {}
+        
+        # Load the legacy sound mapping for backward compatibility
         mapping_file = os.path.join(self.sounds_dir, 'sound_mapping.json')
         try:
             with open(mapping_file, 'r') as f:
@@ -141,16 +160,28 @@ class SoundManager:
         Args:
             sound_name: Name of the sound file to play
         """
+        print(f"🔥 SOUND_DEBUG: play() called with: {sound_name}")
+        print(f"🔥 SOUND_DEBUG: Sound system enabled: {self.enabled}")
+        
         if not self.enabled:
+            print(f"🔥 SOUND_DEBUG: Sound system disabled, returning from play()")
             return
         
+        print(f"🔥 SOUND_DEBUG: Loading sound: {sound_name}")
         sound = self._load_sound(sound_name)
+        print(f"🔥 SOUND_DEBUG: Sound loaded: {sound is not None}")
+        
         if sound:
             try:
+                print(f"🔥 SOUND_DEBUG: About to call sound.play()")
                 sound.play()
+                print(f"🔥 SOUND_DEBUG: sound.play() completed successfully")
             except Exception as e:
+                print(f"🔥 SOUND_DEBUG: ERROR in sound.play(): {e}")
                 # Could not play sound - continuing silently
                 pass
+        else:
+            print(f"🔥 SOUND_DEBUG: No sound object to play")
     
     def play_action_sound(self, action: str, amount: float = 0):
         """Play a sound for a poker action.
@@ -206,6 +237,20 @@ class SoundManager:
         if not self.enabled:
             return
         
+        # Use new configuration system if available
+        if hasattr(self, 'poker_sound_events') and self.poker_sound_events:
+            if card_action == "deal":
+                sound_file = self.poker_sound_events.get("card_dealing")
+                if sound_file:
+                    self.play(sound_file)
+                    return
+            elif card_action == "shuffle":
+                sound_file = self.poker_sound_events.get("card_shuffle")
+                if sound_file:
+                    self.play(sound_file)
+                    return
+        
+        # Fallback to legacy mapping
         card_sounds = self.sound_mapping.get("card_actions", {})
         sound_name = card_sounds.get(card_action)
         
@@ -217,6 +262,74 @@ class SoundManager:
                 self.play("card_deal.wav")
             elif card_action == "shuffle":
                 self.play("shuffle-cards-46455.mp3")
+    
+    def play_poker_event_sound(self, event_name: str):
+        """Play a sound for a poker event using the configuration system.
+        
+        Args:
+            event_name: The poker event name (e.g., 'card_dealing', 'winner_announce')
+        """
+        print(f"🔥 SOUND_DEBUG: play_poker_event_sound called with: {event_name}")
+        print(f"🔥 SOUND_DEBUG: Sound system enabled: {self.enabled}")
+        
+        if not self.enabled:
+            print(f"🔥 SOUND_DEBUG: Sound system disabled, returning")
+            return
+        
+        # Use new configuration system
+        if hasattr(self, 'poker_sound_events') and self.poker_sound_events:
+            sound_file = self.poker_sound_events.get(event_name)
+            print(f"🔥 SOUND_DEBUG: Found sound file for {event_name}: {sound_file}")
+            if sound_file:
+                print(f"🔥 SOUND_DEBUG: About to call self.play({sound_file})")
+                self.play(sound_file)
+                print(f"🔥 SOUND_DEBUG: self.play() call completed")
+                return
+        
+        # Fallback to legacy system for common events
+        fallback_mapping = {
+            "card_dealing": "card_deal.wav",
+            "card_shuffle": "shuffle-cards-46455.mp3",
+            "chip_bet": "chip_bet.wav",
+            "chip_collect": "pot_split.wav",
+            "winner_announce": "winner_announce.wav",
+            "turn_notification": "turn_notify.wav",
+            "ui_click": "button_move.wav"
+        }
+        
+        fallback_sound = fallback_mapping.get(event_name)
+        if fallback_sound:
+            print(f"🔥 SOUND_DEBUG: Using fallback sound: {fallback_sound}")
+            self.play(fallback_sound)
+        else:
+            print(f"🔥 SOUND_DEBUG: No sound found for event: {event_name}")
+    
+    def get_action_sound_duration(self, action: str) -> float:
+        """Get estimated duration of action sound in seconds.
+        
+        Args:
+            action: The poker action (fold, call, bet, raise, check)
+            
+        Returns:
+            float: Duration in seconds
+        """
+        # Voice duration estimates for GameDirector timing
+        voice_durations = {
+            "check": 0.8,   # "Check"
+            "call": 0.8,    # "Call"  
+            "bet": 0.9,     # "Bet"
+            "raise": 1.0,   # "Raise"
+            "fold": 0.8     # "Fold"
+        }
+        
+        base_duration = voice_durations.get(action.lower(), 0.8)
+        
+        # Add sound effect duration if not in test mode
+        if not self.test_mode and self.enabled:
+            return base_duration
+        else:
+            # Shorter duration for test mode
+            return 0.1
     
     def play_chip_sound(self, chip_action: str):
         """Play a sound for chip-related actions.

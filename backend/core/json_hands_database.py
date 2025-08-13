@@ -63,7 +63,7 @@ class JSONHandMetadata:
 class JSONHandsDatabase:
     """Database loader for our validated JSON hands database."""
     
-    def __init__(self, json_file_path: str = "data/legendary_hands_complete_130_fixed.json"):
+    def __init__(self, json_file_path: str = "data/clean_poker_hands_flat.json"):
         self.json_file_path = Path(json_file_path)
         self.hands: List[ParsedHand] = []
         self.raw_data: Dict[str, Any] = {}
@@ -164,9 +164,15 @@ class JSONHandsDatabase:
                 return hand.raw_data
         return None
     
-    def get_hands_by_category(self) -> Dict[HandCategory, List[ParsedHand]]:
-        """Get hands organized by category."""
-        return self.load_all_hands()
+    def get_hands_by_category(self, category: HandCategory = None) -> Dict[HandCategory, List[ParsedHand]]:
+        """Get hands organized by category. If category is specified, returns only that category."""
+        all_hands = self.load_all_hands()
+        
+        if category is None:
+            return all_hands
+        else:
+            # Return hands for the specific category
+            return all_hands.get(category, [])
     
     def get_database_info(self) -> Dict[str, Any]:
         """Get information about the database."""
