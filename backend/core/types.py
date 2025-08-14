@@ -7,11 +7,12 @@ to avoid circular imports between components.
 
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Optional, Set, Dict, Any
+from typing import List, Optional, Set
 
 
 class PokerState(Enum):
     """Poker game states following standard Texas Hold'em flow."""
+
     START_HAND = "start_hand"
     PREFLOP_BETTING = "preflop_betting"
     DEAL_FLOP = "deal_flop"
@@ -26,6 +27,7 @@ class PokerState(Enum):
 
 class ActionType(Enum):
     """Valid poker actions."""
+
     FOLD = "fold"
     CHECK = "check"
     CALL = "call"
@@ -36,6 +38,7 @@ class ActionType(Enum):
 @dataclass
 class Player:
     """Enhanced Player data structure with all-in tracking."""
+
     name: str
     stack: float
     position: str
@@ -55,6 +58,7 @@ class Player:
 @dataclass
 class GameState:
     """Enhanced game state with better tracking."""
+
     players: List[Player]
     board: List[str]
     pot: float
@@ -65,6 +69,8 @@ class GameState:
     deck: List[str] = field(default_factory=list)
     min_raise: float = 1.0  # NEW: Track minimum raise amount
     big_blind: float = 1.0
-    last_raise_amount: float = 0.0  # NEW: Track the size of the last raise for under-raise validation
-    last_full_raise_amount: float = 0.0  # NEW: Track the amount of the last valid, action-reopening raise
+    # NEW: Track the size of the last raise for under-raise validation
+    last_raise_amount: float = 0.0
+    # NEW: Track the amount of the last valid, action-reopening raise
+    last_full_raise_amount: float = 0.0
     last_action_details: str = ""  # NEW: Track the last action for UI feedback

@@ -14,7 +14,7 @@ from .dialogs import TierEditDialog, FileDialog, AboutDialog
 from .dynamic_position_manager import DynamicPositionManager
 from .card_widget import CardWidget
 from .reusable_poker_game_widget import ReusablePokerGameWidget
-from .hands_review_poker_widget_modern import HandsReviewPokerWidget
+# HandsReviewPokerWidget removed - replaced by unified bot session architecture
 from .practice_session_poker_widget import PracticeSessionPokerWidget
 
 __all__ = [
@@ -30,6 +30,6 @@ __all__ = [
     'DynamicPositionManager',
     'CardWidget',
     'ReusablePokerGameWidget',
-    'HandsReviewPokerWidget',
+    # 'HandsReviewPokerWidget', # removed - using unified bot session architecture
     'PracticeSessionPokerWidget'
 ] 
