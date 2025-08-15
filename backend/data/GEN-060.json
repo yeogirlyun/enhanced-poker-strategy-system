@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "table_id": "Legendary-Table-1",
+    "hand_id": "GEN-060",
+    "variant": "NLHE",
+    "max_players": 6,
+    "small_blind": 50000,
+    "big_blind": 100000,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "hole_cards": {
+      "Player1": [
+        "Xx",
+        "Xx"
+      ],
+      "Player2": [
+        "Xx",
+        "Xx"
+      ],
+      "Player3": [
+        "7d",
+        "7h"
+      ],
+      "Player4": [
+        "Js",
+        "Jd"
+      ],
+      "Player5": [
+        "Xx",
+        "Xx"
+      ],
+      "Player6": [
+        "Ad",
+        "10d"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_id": "Player1",
+      "display_name": "Player1",
+      "starting_stack": 2500000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_id": "Player2",
+      "display_name": "Player2",
+      "starting_stack": 2500000,
+      "is_button": false
+    },
+    {
+      "seat_no": 3,
+      "player_id": "Player3",
+      "display_name": "Chin Wei Lim",
+      "starting_stack": 2400000,
+      "is_button": false
+    },
+    {
+      "seat_no": 4,
+      "player_id": "Player4",
+      "display_name": "Nick Petrangelo",
+      "starting_stack": 2500000,
+      "is_button": false
+    },
+    {
+      "seat_no": 5,
+      "player_id": "Player5",
+      "display_name": "Player5",
+      "starting_stack": 2500000,
+      "is_button": false
+    },
+    {
+      "seat_no": 6,
+      "player_id": "Player6",
+      "display_name": "Vivek Rajkumar",
+      "starting_stack": 2500000,
+      "is_button": false
+    }
+  ],
+  "hero_player_id": "Player1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "actor_id": "Player4",
+          "action": "RAISE",
+          "amount": 200000,
+          "to_amount": 200000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 2,
+          "actor_id": "Player5",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 3,
+          "actor_id": "Player6",
+          "action": "CALL",
+          "amount": 200000,
+          "to_amount": 200000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "actor_id": "Player1",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 5,
+          "actor_id": "Player2",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 6,
+          "actor_id": "Player3",
+          "action": "CALL",
+          "amount": 100000,
+          "to_amount": 100000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "8d",
+        "2d",
+        "2s"
+      ],
+      "actions": [
+        {
+          "order": 7,
+          "actor_id": "Player3",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "actor_id": "Player4",
+          "action": "BET",
+          "amount": 250000,
+          "to_amount": 250000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 9,
+          "actor_id": "Player6",
+          "action": "RAISE",
+          "amount": 650000,
+          "to_amount": 650000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 10,
+          "actor_id": "Player3",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 11,
+          "actor_id": "Player4",
+          "action": "RAISE",
+          "amount": 2500000,
+          "to_amount": 2500000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 12,
+          "actor_id": "Player6",
+          "action": "CALL",
+          "amount": 1850000,
+          "to_amount": 1850000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "8d",
+        "2d",
+        "2s",
+        "K"
+      ],
+      "actions": []
+    },
+    "RIVER": {
+      "board": [
+        "8d",
+        "2d",
+        "2s",
+        "K",
+        "6"
+      ],
+      "actions": []
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

@@ -1,0 +1,106 @@
+{
+  "package_info": {
+    "name": "Hands Review Problem Analysis Package",
+    "created_at": "2025-08-15T03:32:56.835107",
+    "version": "1.0",
+    "description": "Complete analysis and code for fixing Hands Review panel issues"
+  },
+  "problem_summary": {
+    "status": "CRITICAL - Not Functional",
+    "main_issues": [
+      "Poker table not loading after hand selection",
+      "Next/Auto-Play buttons not working",
+      "Data conversion errors preventing hand loading",
+      "Session integration failures with ReusablePokerGameWidget"
+    ],
+    "error_messages": [
+      "ERROR: 'str' object has no attribute 'get'",
+      "ERROR: Hand.__init__() got unexpected keyword argument 'actions'",
+      "Import warning: No module named 'backend'. Using fallbacks."
+    ]
+  },
+  "architecture_analysis": {
+    "intended_pattern": "Bot Session Architecture (same as GTO simulation)",
+    "components": {
+      "UnifiedHandsReviewPanel": "Main UI panel for hand selection and controls",
+      "HandsReviewBotSession": "Session state machine for hand replay",
+      "HandModelDecisionEngine": "Preloaded action sequence engine",
+      "ReusablePokerGameWidget": "Poker table display widget"
+    },
+    "data_flow": [
+      "User selects hand from left panel",
+      "Panel converts JSON to Hand model",
+      "Creates HandsReviewBotSession with decision engine",
+      "Creates ReusablePokerGameWidget with session",
+      "Session starts and displays poker table",
+      "Next button executes actions via session"
+    ]
+  },
+  "working_reference": {
+    "gto_simulation": {
+      "status": "WORKING CORRECTLY",
+      "pattern": "GTOSimulationPanel \u2192 GTOBotSession \u2192 GTOSessionWidget \u2192 ReusablePokerGameWidget",
+      "key_methods": [
+        "GTOBotSession(config=game_config, logger=logger)",
+        "GTOSessionWidget(container, session)",
+        "session.start_session()",
+        "widget._update_display()"
+      ]
+    }
+  },
+  "critical_failures": {
+    "data_conversion": {
+      "issue": "GTOToHandConverter fails with 'str' has no 'get' attribute",
+      "root_cause": "JSON data format mismatch - expecting dict, receiving string",
+      "impact": "Cannot load any hands for review"
+    },
+    "session_integration": {
+      "issue": "HandsReviewBotSession created but doesn't integrate with widget",
+      "root_cause": "Session lifecycle and state machine transitions failing",
+      "impact": "Poker table doesn't display even when hand loads"
+    },
+    "action_execution": {
+      "issue": "Next button calls session.execute_next_bot_action() but nothing happens",
+      "root_cause": "Decision engine not properly connected to session",
+      "impact": "Cannot step through hand actions"
+    }
+  },
+  "fix_priorities": [
+    {
+      "priority": 1,
+      "task": "Fix data conversion pipeline",
+      "details": "Debug JSON parsing in _convert_with_cache(), ensure Hand model compatibility"
+    },
+    {
+      "priority": 2,
+      "task": "Fix session integration",
+      "details": "Verify HandsReviewBotSession constructor and state transitions"
+    },
+    {
+      "priority": 3,
+      "task": "Fix widget display",
+      "details": "Ensure ReusablePokerGameWidget displays poker table correctly"
+    },
+    {
+      "priority": 4,
+      "task": "Fix action execution",
+      "details": "Connect decision engine to session for Next button functionality"
+    }
+  ],
+  "success_criteria": [
+    "User can select and load any hand without errors",
+    "Poker table displays with cards, chips, and players",
+    "Next button advances through actions step-by-step",
+    "Visual updates show game state changes",
+    "Hand completes properly at the end",
+    "Reset and Auto-Play functionality works"
+  ],
+  "test_results": {
+    "panel_creation": "\u2705 PASS - 393 hands loaded",
+    "hand_selection": "\u2705 PASS - UI selection works",
+    "data_conversion": "\u274c FAIL - JSON conversion errors",
+    "session_creation": "\u274c FAIL - Integration issues",
+    "poker_table_display": "\u274c FAIL - No table appears",
+    "action_execution": "\u274c FAIL - Buttons non-functional"
+  }
+}

@@ -18,8 +18,9 @@ from typing import List, Dict, Any, Optional
 import time
 
 from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig, GameEvent
-from .types import Player, ActionType, PokerState
-from .decision_engine import DecisionEngine, GTODecisionEngine, PreloadedDecisionEngine
+from .poker_types import Player, ActionType, PokerState
+from .decision_engine_v2 import DecisionEngine, GTODecisionEngine, PreloadedDecisionEngine
+from .hand_model import Hand
 
 
 class BotSessionStateMachine(FlexiblePokerStateMachine):
@@ -130,11 +131,20 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
             return False
         
         # Get current action player
+        print(f"🔍 BOT_DEBUG: action_player_index={self.action_player_index}, num_players={len(self.game_state.players)}")
         if self.action_player_index < 0 or self.action_player_index >= len(self.game_state.players):
-            print(f"🔥 BOT_ACTION_DEBUG: Invalid action player index: {self.action_player_index}")
+            print(f"❌ BOT_ACTION_DEBUG: Invalid action player index: {self.action_player_index} (valid range: 0-{len(self.game_state.players)-1})")
+            self.stop_session()  # Stop session instead of continuing with invalid state
             return False
         
-        current_player = self.game_state.players[self.action_player_index]
+        try:
+            current_player = self.game_state.players[self.action_player_index]
+        except IndexError as e:
+            print(f"❌ BOT_ACTION_DEBUG: IndexError accessing player {self.action_player_index}: {e}")
+            print(f"🔍 BOT_DEBUG: Players list length: {len(self.game_state.players)}")
+            print(f"🔍 BOT_DEBUG: Players: {[p.name for p in self.game_state.players]}")
+            self.stop_session()
+            return False
         print(f"🔥 BOT_ACTION_DEBUG: Current player: {current_player.name} (index {self.action_player_index})")
         
         # Get decision from the engine
@@ -164,9 +174,7 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
             self.current_decision_explanation = explanation
             
             # Execute the action
-            print(f"🔥 BOT_ACTION_DEBUG: Executing action on state machine...")
             success = self.execute_action(current_player, action_type, amount)
-            print(f"🔥 BOT_ACTION_DEBUG: Action execution result: {success}")
             
             if success:
                 # Play sound for the action
@@ -184,10 +192,7 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
                         }
                     )
             
-            if success:
-                return ({'action': action_type.value, 'amount': amount}, explanation)
-            else:
-                return None
+            return success
             
         except Exception as e:
             if self.session_logger:
@@ -196,7 +201,7 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
                     f"Error executing bot action: {e}",
                     {"player_index": self.action_player_index}
                 )
-            return None
+            return False
     
     def _play_action_sound(self, action: ActionType):
         """Play sound for the given action."""
@@ -390,107 +395,155 @@ class HandsReviewBotSession(BotSessionStateMachine):
     def set_preloaded_hand_data(self, hand_data: Dict[str, Any]):
         """Set the preloaded hand data including initial player cards."""
         self.preloaded_hand_data = hand_data
-    
+
+    def _sync_next_action_player_with_engine(self):
+        """Align the next action player with the engine's next actor id."""
+        try:
+            eng = getattr(self, 'decision_engine', None)
+            if not eng:
+                return
+            idx = getattr(eng, 'current_action_index', 0)
+            actions = getattr(eng, 'actions_for_replay', [])
+            if idx >= len(actions):
+                return
+            next_actor_id = getattr(actions[idx], 'actor_id', None)
+            for i, p in enumerate(self.game_state.players):
+                if getattr(p, 'name', '') == next_actor_id:
+                    self.action_player_index = i
+                    break
+        except Exception:
+            pass
+
     def start_hand(self, existing_players: Optional[List[Player]] = None):
         """Override to load preloaded hand data instead of dealing new cards."""
-        if self.preloaded_hand_data and 'initial_state' in self.preloaded_hand_data:
-            # Load players from preloaded hand data
-            players_data = self.preloaded_hand_data['initial_state'].get('players', [])
-            
-            # Import Player class and PokerState
-            from .types import Player, PokerState
-            
-            # Create players with the exact cards from the hand data
-            loaded_players = []
-            for i, player_data in enumerate(players_data):
-                player = Player(
-                    name=player_data.get('name', f'Player {i+1}'),
-                    stack=player_data.get('stack', 1000.0),
-                    position=player_data.get('position', 'UTG'),
-                    is_human=player_data.get('is_human', False),
-                    is_active=player_data.get('is_active', True),
-                    cards=player_data.get('cards', []),  # These are the actual hole cards!
-                    current_bet=player_data.get('current_bet', 0.0)
-                )
-                loaded_players.append(player)
-            
-            print(f"🃏 HANDS_REVIEW: Loaded {len(loaded_players)} players with preloaded cards")
-            for i, player in enumerate(loaded_players):
-                print(f"🃏 HANDS_REVIEW: {player.name} -> {player.cards}")
-            
-            # CRITICAL: Set up the game state manually without calling parent's start_hand
-            # because parent's start_hand would deal new cards and overwrite our preloaded cards
-            self.hand_number += 1
-            self.current_state = PokerState.START_HAND
-            
-            # Set the preloaded players directly
-            self.game_state.players = loaded_players
-            
-            # Set additional game state from preloaded data
-            initial_state = self.preloaded_hand_data['initial_state']
-            self.game_state.pot = initial_state.get('pot', 0.0)
-            self.game_state.current_bet = initial_state.get('current_bet', 0.0)
-            self.game_state.street = initial_state.get('street', 'preflop')
-            self.game_state.board = initial_state.get('board', [])
-            if 'dealer_position' in initial_state:
-                self.dealer_position = initial_state['dealer_position']
-            
-            # Set action positions manually (no dealing/shuffling needed)
-            if self.config.num_players == 2:
-                self.small_blind_position = self.dealer_position
-                self.big_blind_position = (self.dealer_position + 1) % self.config.num_players
+        print(f"🃏 HANDS_REVIEW: HandsReviewBotSession.start_hand() called!")
+        print(f"🃏 HANDS_REVIEW: preloaded_hand_data exists: {self.preloaded_hand_data is not None}")
+        if self.preloaded_hand_data:
+            # Check if this is Hand Model format (new) or legacy format
+            if 'hand_model' in self.preloaded_hand_data:
+                print("🃏 HANDS_REVIEW: Using Hand Model format (robust)")
+                return self._start_hand_from_hand_model(self.preloaded_hand_data['hand_model'])
             else:
-                self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
-                self.big_blind_position = (self.dealer_position + 2) % self.config.num_players
+                print("🃏 HANDS_REVIEW: Using legacy format (fallback)")
+                # Legacy format handling
+                # Try to get players from different possible locations in the data
+                players_data = None
+                if 'initial_state' in self.preloaded_hand_data:
+                    players_data = self.preloaded_hand_data['initial_state'].get('players', [])
+                elif 'players' in self.preloaded_hand_data:
+                    players_data = self.preloaded_hand_data['players']
+                else:
+                    print("🃏 HANDS_REVIEW: No player data found")
+                    return
+        
+        # Import Player class and PokerState
+        from .poker_types import Player, PokerState
+        
+        # Create players with proper initial state reconstruction
+        loaded_players = []
+        for i, player_data in enumerate(players_data):
+            # CRITICAL: Reconstruct initial state from corrupted final state data
+            # The data contains final stacks, so we need to estimate initial stacks
             
-            # Set initial action player (after big blind)
-            self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
+            # Use either 'cards' or 'hole_cards' depending on data structure
+            player_cards = player_data.get('cards', player_data.get('hole_cards', []))
             
-            # Transition to preflop betting phase
-            self.current_state = PokerState.PREFLOP_BETTING
+            # For initial state, all players should be active and not folded
+            # Use a reasonable starting stack if the final stack looks corrupted
+            final_stack = player_data.get('stack', 1000.0)
+            initial_stack = max(1000.0, final_stack)  # Ensure minimum reasonable stack
             
-            # Emit initial display state
-            self._emit_display_state_event()
-            
-            print(f"🃏 HANDS_REVIEW: Hand initialized with preloaded data, street={self.game_state.street}")
+            player = Player(
+                name=player_data.get('name', f'Player {i+1}'),
+                stack=initial_stack,  # Use reconstructed initial stack
+                position=player_data.get('position', 'UTG'),
+                is_human=False,  # All GTO hands are bots
+                is_active=True,  # Start with all players active
+                cards=player_cards,  # Use the hole cards from data
+                current_bet=0.0,  # ALWAYS start with 0 bets for clean replay
+                has_folded=False,  # Start with no one folded
+                has_acted_this_round=False,  # Fresh round
+                is_all_in=False  # No one all-in initially
+            )
+            loaded_players.append(player)
+        
+        print(f"🃏 HANDS_REVIEW: Loaded {len(loaded_players)} players with preloaded cards")
+        for i, player in enumerate(loaded_players):
+            print(f"🃏 HANDS_REVIEW: {player.name} -> {player.cards}")
+        
+        # CRITICAL: Set up the game state manually without calling parent's start_hand
+        # because parent's start_hand would deal new cards and overwrite our preloaded cards
+        self.hand_number += 1
+        self.current_state = PokerState.START_HAND
+        
+        # Set the preloaded players directly
+        self.game_state.players = loaded_players
+        
+        # CRITICAL FIX: Start with completely clean game state
+        # The original data is corrupted (final state), so we reconstruct initial state
+        
+        # Start with pristine poker state
+        self.game_state.pot = 0.0  # Start with empty pot
+        self.game_state.current_bet = 0.0  # No bets yet (will be set by blinds)
+        self.game_state.street = 'preflop'  # Always start preflop
+        self.game_state.board = []  # Empty board
+        
+        # Set dealer position - use default since data might be corrupted
+        self.dealer_position = 0  # Start with first player as dealer
+        
+        # Set action positions manually (no dealing/shuffling needed)
+        if self.config.num_players == 2:
+            self.small_blind_position = self.dealer_position
+            self.big_blind_position = (self.dealer_position + 1) % self.config.num_players
         else:
-            # Fallback to normal hand start if no preloaded data
-            print("🃏 HANDS_REVIEW: No preloaded data, using normal hand start")
-            super().start_hand(existing_players)
-    
-    def get_game_info(self) -> Dict[str, Any]:
-        """Override to always reveal all cards for hands review educational purposes."""
-        game_info = super().get_game_info()
+            self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
+            self.big_blind_position = (self.dealer_position + 2) % self.config.num_players
         
-        # Reveal all players' hole cards for educational purposes (same as GTO session)
-        if "players" in game_info:
-            for i, player_info in enumerate(game_info["players"]):
-                player_info["cards_revealed"] = True
-                
-                # If cards are still placeholders, try to get actual cards from the player object
-                if player_info.get("cards") == ['**', '**']:
-                    # Try to get actual cards from the game state players
-                    try:
-                        actual_players = getattr(self.game_state, 'players', [])
-                        if i < len(actual_players) and hasattr(actual_players[i], 'cards'):
-                            actual_cards = actual_players[i].cards
-                            if actual_cards and actual_cards != ['**', '**']:
-                                player_info["cards"] = actual_cards
-                    except Exception as e:
-                        print(f"🃏 CARD_REVEAL: Error getting actual cards for player {i}: {e}")
+        # CRITICAL: Post the blinds to set up correct game state
+        # This ensures current_bet is correct for the first action
+        sb_amount = self.config.small_blind
+        bb_amount = self.config.big_blind
         
-        return game_info
-    
-    def get_display_state(self) -> Dict[str, Any]:
-        """Override to ensure all cards are visible for hands review education."""
-        display_state = super().get_display_state()
+        # Post small blind
+        sb_player = self.game_state.players[self.small_blind_position]
+        sb_player.current_bet = sb_amount
+        sb_player.stack -= sb_amount
+        self.game_state.pot += sb_amount
         
-        # Ensure all player cards are visible (same as GTO session)
-        num_players = len(self.game_state.players)
-        display_state["card_visibilities"] = [True] * num_players
+        # Post big blind
+        bb_player = self.game_state.players[self.big_blind_position]
+        bb_player.current_bet = bb_amount
+        bb_player.stack -= bb_amount
+        self.game_state.pot += bb_amount
         
-        # Ensure community cards are visible based on current street
-        if "board" in display_state:
-            display_state["community_cards_visible"] = True
+        # Set current bet to big blind amount
+        self.game_state.current_bet = bb_amount
         
-        return display_state
+        print(f"🃏 HANDS_REVIEW: Posted blinds - SB: ${sb_amount}, BB: ${bb_amount}")
+        print(f"🃏 HANDS_REVIEW: Current bet is now ${self.game_state.current_bet}")
+        print(f"🃏 HANDS_REVIEW: Pot is now ${self.game_state.pot}")
+        print(f"🃏 HANDS_REVIEW: Dealer: {self.dealer_position}, SB: {self.small_blind_position}, BB: {self.big_blind_position}")
+        for i, player in enumerate(self.game_state.players):
+            print(f"🃏 HANDS_REVIEW: Player {i}: {player.name}, current_bet=${player.current_bet}, stack=${player.stack}")
+        
+        # Set initial action player (after big blind)
+        self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
+        print(f"🃏 HANDS_REVIEW: First action player: {self.action_player_index} ({self.game_state.players[self.action_player_index].name})")
+        
+        # Transition to preflop betting phase
+        self.current_state = PokerState.PREFLOP_BETTING
+        
+        # Emit initial display state
+        self._emit_display_state_event()
+        
+        print(f"🃏 HANDS_REVIEW: Hand initialized with preloaded data, street={self.game_state.street}")
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

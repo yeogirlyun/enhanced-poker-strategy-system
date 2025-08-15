@@ -24,7 +24,7 @@ from core.gui_models import THEME
 from .modern_poker_widgets import ChipStackDisplay
 
 # Import types
-from core.types import ActionType, PokerState
+from core.poker_types import ActionType, PokerState
 
 
 def debug_log(message: str, category: str = "UI_DEBUG"):

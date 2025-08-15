@@ -1,0 +1,36 @@
+=== GTO BOT GAME ORIGINAL ===
+Dealer position: 0
+Setup: Player 1 (Position 0) starts with $1000.00, cards: ['Kh', 'Kd']
+Setup: Player 2 (Position 1) starts with $995.00, cards: ['As', 'Ac']
+Setup: Player 3 (Position 2) starts with $990.00, cards: ['Ah', 'Kh']
+Setup: Initial pot=$15.00, current_bet=$10.00
+
+GTO Action 1: Player 1 calls $10.00
+  Result: Pot=$25.00, Player 1 stack=$990.00
+GTO Action 2: Player 2 calls $5.00
+  Result: Pot=$30.00, Player 2 stack=$990.00
+GTO Action 3: Player 3 bets $21.00
+  Result: Pot=$51.00, Player 3 stack=$969.00
+GTO Action 4: Player 1 raises to $73.00 (putting in $0.00)
+  Result: Pot=$114.00, Player 1 stack=$927.00
+GTO Action 5: Player 2 calls $63.00
+  Result: Pot=$177.00, Player 2 stack=$927.00
+GTO Action 6: Player 3 raises to $157.00 (putting in $0.00)
+  Result: Pot=$303.00, Player 3 stack=$843.00
+GTO Action 7: Player 1 raises to $296.05 (putting in $-0.00)
+  Result: Pot=$526.05, Player 1 stack=$703.95
+GTO Action 8: Player 2 raises to $435.10 (putting in $0.00)
+  Result: Pot=$888.15, Player 2 stack=$564.90
+GTO Action 9: Player 3 folds
+  Result: Pot=$888.15, Player 3 stack=$843.00
+GTO Action 10: Player 1 raises to $540.69 (putting in $0.00)
+  Result: Pot=$1132.79, Player 1 stack=$459.31
+GTO Action 11: Player 2 folds
+  Result: Pot=$1132.79, Player 2 stack=$564.90
+
+🏁 GTO Hand completed after 11 actions
+Final pot: $1132.79
+Final board: []
+  Player 1: $1592.10
+  Player 2: $564.90 (FOLDED)
+  Player 3: $843.00 (FOLDED)

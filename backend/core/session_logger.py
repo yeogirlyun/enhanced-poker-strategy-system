@@ -4,7 +4,7 @@ Comprehensive Session Logger for Poker Training System
 
 This module provides detailed JSON logging for:
 - Complete session tracking
-- Hand-by-hand analysis  
+- Hand-by-hand analysis
 - Player action logging
 - System debugging
 - Performance analytics
@@ -24,6 +24,8 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict, field
 
 # Define debug_print locally to avoid circular import
+
+
 def debug_print(*args, **kwargs):
     """Debug print function that flushes immediately."""
     print(*args, **kwargs, flush=True)
@@ -32,6 +34,7 @@ def debug_print(*args, **kwargs):
 @dataclass
 class ActionLog:
     """Single player action within a hand."""
+
     timestamp: float
     hand_id: str
     player_name: str
@@ -54,38 +57,39 @@ class ActionLog:
 @dataclass
 class HandLog:
     """Complete data for a single hand."""
+
     hand_id: str
     session_id: str
     timestamp: float
     hand_number: int
-    
+
     # Pre-hand setup
     dealer_button: int
     small_blind: int
     big_blind: int
     sb_amount: float
     bb_amount: float
-    
+
     # Player data at hand start
     players: List[Dict[str, Any]]
-    
+
     # Cards
     hole_cards: Dict[str, List[str]]  # player_name -> [card1, card2]
     board_cards: List[str]
-    
+
     # Actions by street
     preflop_actions: List[ActionLog] = field(default_factory=list)
     flop_actions: List[ActionLog] = field(default_factory=list)
     turn_actions: List[ActionLog] = field(default_factory=list)
     river_actions: List[ActionLog] = field(default_factory=list)
-    
+
     # Hand results
     winner: Optional[str] = None
     winning_hand: Optional[str] = None
     pot_size: float = 0.0
     showdown: bool = False
     hand_complete: bool = False
-    
+
     # Timing
     hand_duration_ms: Optional[int] = None
     streets_reached: List[str] = field(default_factory=list)
@@ -94,6 +98,7 @@ class HandLog:
 @dataclass
 class SystemLog:
     """System-level debug and performance data."""
+
     timestamp: float
     session_id: str
     level: str  # DEBUG, INFO, WARNING, ERROR
@@ -105,27 +110,36 @@ class SystemLog:
 @dataclass
 class UserActivityLog:
     """Log user activities for analytics and features."""
+
     timestamp: float
     session_id: str
-    activity_type: str  # PRACTICE_DECISION, HANDS_REVIEW, STRATEGY_USAGE, UI_INTERACTION
+    activity_type: (
+        str  # PRACTICE_DECISION, HANDS_REVIEW, STRATEGY_USAGE, UI_INTERACTION
+    )
     activity_data: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class StrategyPerformanceLog:
     """Track strategy usage and performance."""
+
     timestamp: float
     session_id: str
     hand_id: str
     strategy_name: str
     gto_recommendation: str
     user_action: str
-    deviation_type: Optional[str] = None  # AGGRESSIVE, PASSIVE, BLUFF, FOLD_EQUITY
+    # AGGRESSIVE, PASSIVE, BLUFF, FOLD_EQUITY
+    deviation_type: Optional[str] = None
     situation_context: Dict[str, Any] = field(default_factory=dict)
-    outcome_quality: Optional[str] = None  # EXCELLENT, GOOD, QUESTIONABLE, POOR
+    # EXCELLENT, GOOD, QUESTIONABLE, POOR
+    outcome_quality: Optional[str] = None
+
 
 @dataclass
 class LearningProgressLog:
     """Track user learning and improvement over time."""
+
     timestamp: float
     session_id: str
     skill_area: str  # PREFLOP, POSTFLOP, BLUFFING, VALUE_BETTING, etc.
@@ -135,35 +149,41 @@ class LearningProgressLog:
     improvement_trend: Optional[str] = None  # IMPROVING, STABLE, DECLINING
     confidence_level: Optional[float] = None
 
+
 @dataclass
 class SessionLog:
     """Complete session data."""
+
     session_id: str
     start_time: float
     end_time: Optional[float] = None
-    
+
     # Session setup
     num_players: int = 6
     starting_stack: float = 100.0
-    blinds: Dict[str, float] = field(default_factory=lambda: {"small": 0.5, "big": 1.0})
-    
+    blinds: Dict[str, float] = field(
+        default_factory=lambda: {"small": 0.5, "big": 1.0}
+    )
+
     # Player information
     human_player: str = "Player 1"
     bot_players: List[str] = field(default_factory=list)
-    
+
     # Session results
     hands_played: int = 0
     session_duration_ms: Optional[int] = None
-    
+
     # Data collections
     hands: List[HandLog] = field(default_factory=list)
     system_logs: List[SystemLog] = field(default_factory=list)
-    
+
     # Enhanced user analytics
     user_activities: List[UserActivityLog] = field(default_factory=list)
-    strategy_performance: List[StrategyPerformanceLog] = field(default_factory=list)
+    strategy_performance: List[StrategyPerformanceLog] = field(
+        default_factory=list
+    )
     learning_progress: List[LearningProgressLog] = field(default_factory=list)
-    
+
     # Statistics
     human_stats: Dict[str, Any] = field(default_factory=dict)
     bot_stats: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
@@ -172,7 +192,7 @@ class SessionLog:
 class SessionLogger:
     """
     Comprehensive logging system for poker training sessions.
-    
+
     Features:
     - Real-time JSON logging
     - Structured data capture
@@ -180,124 +200,163 @@ class SessionLogger:
     - Debug message logging
     - Analysis-ready output
     """
-    
+
     def __init__(self, log_directory: str = "logs"):
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(exist_ok=True)
-        
+
         # Generate unique session ID and start session immediately
         self.session_id = str(uuid.uuid4())
         self.session_start_time = time.time()
-        
+
         # Initialize session data immediately
         self.session = SessionLog(
             session_id=self.session_id,
             start_time=self.session_start_time,
             num_players=6,  # Default, can be updated later
             starting_stack=100.0,  # Default, can be updated later
-            bot_players=[f"Player {i+2}" for i in range(5)]  # Default 6 players
+            # Default 6 players
+            bot_players=[f"Player {i + 2}" for i in range(5)],
         )
-        
+
         self.current_hand: Optional[HandLog] = None
         self.hand_start_time: Optional[float] = None
-        
+
         # Timing tracking
         self.action_start_times: Dict[str, float] = {}
-        
+
         # Initialize log files immediately
-        session_datetime = datetime.fromtimestamp(self.session_start_time).strftime("%Y%m%d_%H%M%S")
-        self.session_file = self.log_directory / f"session_{self.session_id}_{session_datetime}.json"
-        self.system_log_file = self.log_directory / f"system_{self.session_id}_{session_datetime}.log"
-        
+        session_datetime = datetime.fromtimestamp(
+            self.session_start_time
+        ).strftime("%Y%m%d_%H%M%S")
+        self.session_file = (
+            self.log_directory
+            / f"session_{self.session_id}_{session_datetime}.json"
+        )
+        self.system_log_file = (
+            self.log_directory
+            / f"system_{self.session_id}_{session_datetime}.log"
+        )
+
         # Initialize graceful shutdown BEFORE any logging
         self._shutdown_handlers_registered = False
         self._register_shutdown_handlers()
-        
+
         # Now safe to log - session is initialized
         self._write_session_header()
-    
+
     def _write_session_header(self):
         """Write session header to log files."""
         # Write minimal session header - detailed logs will be in system log
         try:
-            with open(self.session_file, 'w') as f:
+            with open(self.session_file, "w") as f:
                 header_data = {
                     "session_id": self.session_id,
-                    "start_time": datetime.fromtimestamp(self.session_start_time).isoformat(),
-                    "log_type": "session_header"
+                    "start_time": datetime.fromtimestamp(
+                        self.session_start_time
+                    ).isoformat(),
+                    "log_type": "session_header",
                 }
                 json.dump(header_data, f, indent=2)
                 f.write("\n")
         except Exception as e:
             print(f"Error writing session header: {e}")
-    
+
     # PHH export functionality removed - using JSON-based hands database
-    
-    def start_session(self, num_players: int = 6, starting_stack: float = 100.0) -> str:
+
+    def start_session(
+        self, num_players: int = 6, starting_stack: float = 100.0
+    ) -> str:
         """Start a new logging session."""
         session_id = str(uuid.uuid4())
         timestamp = time.time()
-        
+
         self.session = SessionLog(
             session_id=session_id,
             start_time=timestamp,
             num_players=num_players,
             starting_stack=starting_stack,
-            bot_players=[f"Player {i+2}" for i in range(num_players-1)]
+            bot_players=[f"Player {i + 2}" for i in range(num_players - 1)],
         )
-        
+
         # Create session files
-        session_datetime = datetime.fromtimestamp(timestamp).strftime("%Y%m%d_%H%M%S")
-        self.session_file = self.log_directory / f"session_{session_datetime}_{session_id[:8]}.json"
-        self.system_log_file = self.log_directory / f"system_{session_datetime}_{session_id[:8]}.json"
-        
-        self.log_system("INFO", "SESSION", f"Started new session {session_id}", {
-            "num_players": num_players,
-            "starting_stack": starting_stack
-        })
-        
+        session_datetime = datetime.fromtimestamp(timestamp).strftime(
+            "%Y%m%d_%H%M%S"
+        )
+        self.session_file = (
+            self.log_directory
+            / f"session_{session_datetime}_{session_id[:8]}.json"
+        )
+        self.system_log_file = (
+            self.log_directory
+            / f"system_{session_datetime}_{session_id[:8]}.json"
+        )
+
+        self.log_system(
+            "INFO",
+            "SESSION",
+            f"Started new session {session_id}",
+            {"num_players": num_players, "starting_stack": starting_stack},
+        )
+
         return session_id
-    
+
     def end_session(self):
         """End the current session and save final data."""
         if not self.session:
             return
-            
+
         self.session.end_time = time.time()
         if self.session.start_time:
-            self.session.session_duration_ms = int((self.session.end_time - self.session.start_time) * 1000)
-        
-        self.log_system("INFO", "SESSION", "Session ended", {
-            "hands_played": self.session.hands_played,
-            "duration_ms": self.session.session_duration_ms
-        })
-        
+            self.session.session_duration_ms = int(
+                (self.session.end_time - self.session.start_time) * 1000
+            )
+
+        self.log_system(
+            "INFO",
+            "SESSION",
+            "Session ended",
+            {
+                "hands_played": self.session.hands_played,
+                "duration_ms": self.session.session_duration_ms,
+            },
+        )
+
         # Session data ready for analysis
-        
+
         self._save_session()
-    
+
     # PHH export functionality removed - using JSON-based hands database
-    
-    def start_hand(self, hand_number: int, players: List[Dict], dealer_button: int, 
-                   small_blind: int, big_blind: int, sb_amount: float = 0.5, bb_amount: float = 1.0) -> str:
+
+    def start_hand(
+        self,
+        hand_number: int,
+        players: List[Dict],
+        dealer_button: int,
+        small_blind: int,
+        big_blind: int,
+        sb_amount: float = 0.5,
+        bb_amount: float = 1.0,
+    ) -> str:
         """Start logging a new hand."""
         import sys
+
         print(f"🐛 DEBUG: start_hand called for hand {hand_number}")
         sys.stdout.flush()
         print(f"🐛 DEBUG: session = {self.session}")
         sys.stdout.flush()
-        
+
         if not self.session:
             print("❌ DEBUG: No active session!")
             sys.stdout.flush()
             raise ValueError("No active session")
-            
+
         hand_id = f"{self.session.session_id}_{hand_number}"
         self.hand_start_time = time.time()
-        
+
         print(f"🐛 DEBUG: Creating new HandLog with hand_id = {hand_id}")
         sys.stdout.flush()
-        
+
         self.current_hand = HandLog(
             hand_id=hand_id,
             session_id=self.session.session_id,
@@ -310,95 +369,139 @@ class SessionLogger:
             bb_amount=bb_amount,
             players=[dict(p) for p in players],  # Deep copy
             hole_cards={},  # Initialize empty, will be populated by log_hole_cards
-            board_cards=[]  # Initialize empty, will be populated by log_board_cards
+            board_cards=[],  # Initialize empty, will be populated by log_board_cards
         )
-        
+
         print(f"✅ DEBUG: current_hand created: {self.current_hand}")
         sys.stdout.flush()
-        
-        self.log_system("INFO", "HAND", f"Started hand {hand_number}", {
-            "hand_id": hand_id,
-            "dealer_button": dealer_button,
-            "blinds": {"sb": sb_amount, "bb": bb_amount}
-        })
-        
+
+        self.log_system(
+            "INFO",
+            "HAND",
+            f"Started hand {hand_number}",
+            {
+                "hand_id": hand_id,
+                "dealer_button": dealer_button,
+                "blinds": {"sb": sb_amount, "bb": bb_amount},
+            },
+        )
+
         print(f"✅ DEBUG: Hand {hand_number} logging started successfully")
         sys.stdout.flush()
         return hand_id
-    
+
     def log_hole_cards(self, player_cards: Dict[str, List[str]]):
         """Log hole cards for all players."""
         import sys
-        print(f"🐛 DEBUG: log_hole_cards called with {len(player_cards)} players")
+
+        print(
+            f"🐛 DEBUG: log_hole_cards called with {
+                len(player_cards)} players"
+        )
         sys.stdout.flush()
         print(f"🐛 DEBUG: current_hand = {self.current_hand}")
         sys.stdout.flush()
         print(f"🐛 DEBUG: session = {self.session}")
         sys.stdout.flush()
-        
+
         if not self.current_hand:
             print("❌ DEBUG: No current_hand, cannot log hole cards!")
             sys.stdout.flush()
             return
-            
+
         self.current_hand.hole_cards = dict(player_cards)
-        print(f"✅ DEBUG: Hole cards stored in current_hand")
+        print("✅ DEBUG: Hole cards stored in current_hand")
         sys.stdout.flush()
-        
-        self.log_system("INFO", "CARDS", "Hole cards dealt", {
-            "hand_id": self.current_hand.hand_id,
-            "cards_dealt": len(player_cards)
-        })
-        print(f"✅ DEBUG: Hole cards system log completed")
+
+        self.log_system(
+            "INFO",
+            "CARDS",
+            "Hole cards dealt",
+            {
+                "hand_id": self.current_hand.hand_id,
+                "cards_dealt": len(player_cards),
+            },
+        )
+        print("✅ DEBUG: Hole cards system log completed")
         sys.stdout.flush()
-    
+
     def log_board_cards(self, board: List[str], street: str):
         """Log community cards for current street."""
         if not self.current_hand:
             return
-            
+
         self.current_hand.board_cards = list(board)
         if street not in self.current_hand.streets_reached:
             self.current_hand.streets_reached.append(street)
-        
-        self.log_system("INFO", "CARDS", f"Board cards - {street}", {
-            "hand_id": self.current_hand.hand_id,
-            "board": board,
-            "street": street
-        })
-    
+
+        self.log_system(
+            "INFO",
+            "CARDS",
+            f"Board cards - {street}",
+            {
+                "hand_id": self.current_hand.hand_id,
+                "board": board,
+                "street": street,
+            },
+        )
+
     def start_player_action(self, player_name: str):
         """Mark the start of a player's decision time."""
         self.action_start_times[player_name] = time.time()
-        
+
         # Log thinking time start for human players
         if self.session and player_name == self.session.human_player:
-            self.log_user_activity("DECISION_THINKING_START", {
-                "player_name": player_name,
-                "hand_id": self.current_hand.hand_id if self.current_hand else None,
-                "street": getattr(self.current_hand, 'street', 'unknown') if self.current_hand else 'unknown'
-            })
-    
-    def log_action(self, player_name: str, player_index: int, action: str, amount: float,
-                   stack_before: float, stack_after: float, pot_before: float, pot_after: float,
-                   current_bet: float, street: str, position: str, is_human: bool):
+            self.log_user_activity(
+                "DECISION_THINKING_START",
+                {
+                    "player_name": player_name,
+                    "hand_id": (
+                        self.current_hand.hand_id
+                        if self.current_hand
+                        else None
+                    ),
+                    "street": (
+                        getattr(self.current_hand, "street", "unknown")
+                        if self.current_hand
+                        else "unknown"
+                    ),
+                },
+            )
+
+    def log_action(
+        self,
+        player_name: str,
+        player_index: int,
+        action: str,
+        amount: float,
+        stack_before: float,
+        stack_after: float,
+        pot_before: float,
+        pot_after: float,
+        current_bet: float,
+        street: str,
+        position: str,
+        is_human: bool,
+    ):
         """Log a player action."""
         if not self.current_hand:
             return
-        
+
         # Calculate decision time
         decision_time_ms = None
         if player_name in self.action_start_times:
-            decision_time_ms = int((time.time() - self.action_start_times[player_name]) * 1000)
+            decision_time_ms = int(
+                (time.time() - self.action_start_times[player_name]) * 1000
+            )
             del self.action_start_times[player_name]
-        
+
         # Calculate pot odds and ratios
         pot_odds = None
         stack_pot_ratio = None
         if amount > 0 and pot_before > 0:
             pot_odds = amount / (pot_before + amount)
             stack_pot_ratio = stack_before / pot_before
-        
+
         action_log = ActionLog(
             timestamp=time.time(),
             hand_id=self.current_hand.hand_id,
@@ -416,9 +519,9 @@ class SessionLogger:
             is_human=is_human,
             decision_time_ms=decision_time_ms,
             pot_odds=pot_odds,
-            stack_pot_ratio=stack_pot_ratio
+            stack_pot_ratio=stack_pot_ratio,
         )
-        
+
         # Add to appropriate street
         if street == "preflop":
             self.current_hand.preflop_actions.append(action_log)
@@ -428,103 +531,159 @@ class SessionLogger:
             self.current_hand.turn_actions.append(action_log)
         elif street == "river":
             self.current_hand.river_actions.append(action_log)
-        
-        self.log_system("INFO", "ACTION", f"{player_name} {action}", {
-            "hand_id": self.current_hand.hand_id,
-            "action": action,
-            "amount": amount,
-            "street": street,
-            "decision_time_ms": decision_time_ms
-        })
-    
-    def end_hand(self, winner: str, winning_hand: str, pot_size: float, showdown: bool = False):
+
+        self.log_system(
+            "INFO",
+            "ACTION",
+            f"{player_name} {action}",
+            {
+                "hand_id": self.current_hand.hand_id,
+                "action": action,
+                "amount": amount,
+                "street": street,
+                "decision_time_ms": decision_time_ms,
+            },
+        )
+
+    def end_hand(
+        self,
+        winner: str,
+        winning_hand: str,
+        pot_size: float,
+        showdown: bool = False,
+    ):
         """Complete the current hand logging."""
         if not self.current_hand:
-            debug_print(f"❌ DEBUG: No current hand to end")
+            debug_print("❌ DEBUG: No current hand to end")
             return
-            
-        debug_print(f"🔄 DEBUG: Ending hand with winner={winner}, hand={winning_hand}, pot=${pot_size:.2f}")
-        
+
+        debug_print(
+            f"🔄 DEBUG: Ending hand with winner={winner}, hand={winning_hand}, pot=${
+                pot_size:.2f}"
+        )
+
         self.current_hand.winner = winner
         self.current_hand.winning_hand = winning_hand
         self.current_hand.pot_size = pot_size
         self.current_hand.showdown = showdown
         self.current_hand.hand_complete = True
-        
+
         if self.hand_start_time:
-            self.current_hand.hand_duration_ms = int((time.time() - self.hand_start_time) * 1000)
-        
+            self.current_hand.hand_duration_ms = int(
+                (time.time() - self.hand_start_time) * 1000
+            )
+
         # Add to session
         if self.session:
             self.session.hands.append(self.current_hand)
             self.session.hands_played += 1
-            debug_print(f"✅ DEBUG: Hand added to session, total hands = {self.session.hands_played}")
+            debug_print(
+                f"✅ DEBUG: Hand added to session, total hands = {
+                    self.session.hands_played}"
+            )
         else:
-            debug_print(f"❌ ERROR: No session available for hand completion")
-        
-        self.log_system("INFO", "HAND", f"Hand completed", {
-            "hand_id": self.current_hand.hand_id,
-            "winner": winner,
-            "pot_size": pot_size,
-            "showdown": showdown,
-            "duration_ms": self.current_hand.hand_duration_ms,
-            "hand_complete": True
-        })
-        
+            debug_print("❌ ERROR: No session available for hand completion")
+
+        self.log_system(
+            "INFO",
+            "HAND",
+            "Hand completed",
+            {
+                "hand_id": self.current_hand.hand_id,
+                "winner": winner,
+                "pot_size": pot_size,
+                "showdown": showdown,
+                "duration_ms": self.current_hand.hand_duration_ms,
+                "hand_complete": True,
+            },
+        )
+
         # Save session data incrementally
         self._save_session()
-        
+
         self.current_hand = None
         self.hand_start_time = None
-        debug_print(f"✅ DEBUG: Hand completion successful")
-    
-    def end_session_with_termination(self, termination_reason: str = "User quit"):
+        debug_print("✅ DEBUG: Hand completion successful")
+
+    def end_session_with_termination(
+        self, termination_reason: str = "User quit"
+    ):
         """End session with termination note for incomplete hands."""
-        debug_print(f"🔄 DEBUG: Ending session with termination: {termination_reason}")
-        
+        debug_print(
+            f"🔄 DEBUG: Ending session with termination: {termination_reason}"
+        )
+
         # Complete current hand if it exists
         if self.current_hand:
-            debug_print(f"🔄 DEBUG: Completing incomplete hand due to termination")
-            
+            debug_print(
+                "🔄 DEBUG: Completing incomplete hand due to termination"
+            )
+
             # Mark hand as incomplete
             self.current_hand.winner = "Session terminated"
-            self.current_hand.winning_hand = f"Session terminated - {termination_reason}"
+            self.current_hand.winning_hand = (
+                f"Session terminated - {termination_reason}"
+            )
             self.current_hand.hand_complete = False  # Mark as incomplete
             self.current_hand.showdown = False
-            
+
             if self.hand_start_time:
-                self.current_hand.hand_duration_ms = int((time.time() - self.hand_start_time) * 1000)
-            
+                self.current_hand.hand_duration_ms = int(
+                    (time.time() - self.hand_start_time) * 1000
+                )
+
             # Add to session
             if self.session:
                 self.session.hands.append(self.current_hand)
                 self.session.hands_played += 1
-                debug_print(f"✅ DEBUG: Incomplete hand added to session")
-            
+                debug_print("✅ DEBUG: Incomplete hand added to session")
+
             # Log the termination
-            self.log_system("WARNING", "SESSION", f"Session terminated: {termination_reason}", {
-                "hand_id": self.current_hand.hand_id,
-                "termination_reason": termination_reason,
-                "hand_complete": False,
-                "pot_size": self.current_hand.pot_size
-            })
-            
+            self.log_system(
+                "WARNING",
+                "SESSION",
+                f"Session terminated: {termination_reason}",
+                {
+                    "hand_id": self.current_hand.hand_id,
+                    "termination_reason": termination_reason,
+                    "hand_complete": False,
+                    "pot_size": self.current_hand.pot_size,
+                },
+            )
+
             self.current_hand = None
             self.hand_start_time = None
-        
+
         # End the session
         self.end_session()
-        
+
         # Add final termination note
-        self.log_system("INFO", "SESSION", f"Session ended by user: {termination_reason}", {
-            "hands_played": self.session.hands_played if self.session else 0,
-            "session_duration": time.time() - self.session.start_time if self.session else 0,
-            "termination_reason": termination_reason
-        })
-        
-        debug_print(f"✅ DEBUG: Session terminated successfully")
-    
-    def log_system(self, level: str, category: str, message: str, data: Optional[Dict] = None):
+        self.log_system(
+            "INFO",
+            "SESSION",
+            f"Session ended by user: {termination_reason}",
+            {
+                "hands_played": (
+                    self.session.hands_played if self.session else 0
+                ),
+                "session_duration": (
+                    time.time() - self.session.start_time
+                    if self.session
+                    else 0
+                ),
+                "termination_reason": termination_reason,
+            },
+        )
+
+        debug_print("✅ DEBUG: Session terminated successfully")
+
+    def log_system(
+        self,
+        level: str,
+        category: str,
+        message: str,
+        data: Optional[Dict] = None,
+    ):
         """Log system-level messages with strict console policy and full file logging.
 
         Policy:
@@ -541,54 +700,54 @@ class SessionLogger:
             if data:
                 console_msg += f" | {json.dumps(data, default=str)}"
             debug_print(console_msg)
-        
+
         if not self.session:
             if show_in_console:
-                debug_print(f"WARNING: No session available for logging")
+                debug_print("WARNING: No session available for logging")
             return
-            
+
         system_log = SystemLog(
             timestamp=time.time(),
             session_id=self.session.session_id,
             level=level,
             category=category,
             message=message,
-            data=data
+            data=data,
         )
-        
+
         self.session.system_logs.append(system_log)
-        
+
         # Write to system log file immediately (all messages go here)
         self._write_system_log_entry(system_log)
-        
+
         # Only flush frequently for errors/warnings
         if level in ["ERROR", "WARNING"]:
             self._force_flush_all()
-    
+
     def _write_system_log_entry(self, log_entry: SystemLog):
         """Write a single system log entry to file."""
         try:
             log_line = f"[{datetime.fromtimestamp(log_entry.timestamp).isoformat()}] {log_entry.level} | {log_entry.category} | {log_entry.message}"
             if log_entry.data:
                 log_line += f" | {json.dumps(log_entry.data, default=str)}"
-            
-            with open(self.system_log_file, 'a') as f:
+
+            with open(self.system_log_file, "a") as f:
                 f.write(log_line + "\n")
                 f.flush()
         except Exception as e:
             debug_print(f"Error writing system log: {e}")
-    
+
     def _save_session(self):
         """Save session data to JSON file."""
         if not self.session or not self.session_file:
             return
-            
+
         try:
-            with open(self.session_file, 'w') as f:
+            with open(self.session_file, "w") as f:
                 json.dump(asdict(self.session), f, indent=2, default=str)
         except Exception as e:
             print(f"Error saving session: {e}")
-    
+
     def _save_system_logs(self):
         """Persist a JSON snapshot of system logs without overwriting the stream log file.
 
@@ -600,110 +759,126 @@ class SessionLogger:
         try:
             system_data = {
                 "session_id": self.session.session_id,
-                "logs": [asdict(log) for log in self.session.system_logs]
+                "logs": [asdict(log) for log in self.session.system_logs],
             }
-            snapshot_path = self.system_log_file.with_suffix('.json')
-            with open(snapshot_path, 'w') as f:
+            snapshot_path = self.system_log_file.with_suffix(".json")
+            with open(snapshot_path, "w") as f:
                 json.dump(system_data, f, indent=2, default=str)
         except Exception as e:
             print(f"Error saving system logs: {e}")
-    
+
     def get_session_summary(self) -> Dict[str, Any]:
         """Get a summary of the current session."""
         if not self.session:
             return {}
-            
+
         return {
             "session_id": self.session.session_id,
             "hands_played": self.session.hands_played,
             "duration_ms": self.session.session_duration_ms,
             "players": self.session.num_players,
             "log_files": {
-                "session": str(self.session_file) if self.session_file else None,
-                "system": str(self.system_log_file) if self.system_log_file else None
-            }
+                "session": (
+                    str(self.session_file) if self.session_file else None
+                ),
+                "system": (
+                    str(self.system_log_file) if self.system_log_file else None
+                ),
+            },
         }
-    
+
     def _register_shutdown_handlers(self):
         """Register signal handlers for graceful shutdown."""
         if self._shutdown_handlers_registered:
             return
-            
+
         try:
             # Register signal handlers for Ctrl+C and other termination signals
             signal.signal(signal.SIGINT, self._signal_handler)  # Ctrl+C
             signal.signal(signal.SIGTERM, self._signal_handler)  # Termination
-            
+
             # Register atexit handler for normal program exit (including Cmd+Q)
             atexit.register(self._cleanup_on_exit)
-            
+
             self._shutdown_handlers_registered = True
             debug_print("✅ Shutdown handlers registered successfully")
-            
+
         except Exception as e:
-            debug_print(f"⚠️ Warning: Could not register shutdown handlers: {e}")
-    
+            debug_print(
+                f"⚠️ Warning: Could not register shutdown handlers: {e}"
+            )
+
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals (Ctrl+C, etc.)."""
         signal_names = {
             signal.SIGINT: "SIGINT (Ctrl+C)",
-            signal.SIGTERM: "SIGTERM"
+            signal.SIGTERM: "SIGTERM",
         }
         signal_name = signal_names.get(signum, f"Signal {signum}")
-        
+
         print(f"\n🔄 Received {signal_name} - Gracefully shutting down...")
         print("💾 Saving session data...")
-        
+
         # Save all pending data
         self._emergency_save()
-        
+
         print("✅ Session data saved successfully!")
         print("👋 Goodbye!")
-        
+
         # Exit cleanly
         exit(0)
-    
+
     def _cleanup_on_exit(self):
         """Cleanup function called on normal program exit (including Cmd+Q)."""
         try:
             if self.session:
-                debug_print("🔄 Normal exit detected - saving final session data...")
-                self.log_system("INFO", "SHUTDOWN", "Normal application exit - saving session data", {})
+                debug_print(
+                    "🔄 Normal exit detected - saving final session data..."
+                )
+                self.log_system(
+                    "INFO",
+                    "SHUTDOWN",
+                    "Normal application exit - saving session data",
+                    {},
+                )
                 self._save_final_session_data()
                 debug_print("✅ Final session data saved!")
         except Exception as e:
             debug_print(f"⚠️ Warning: Error during exit cleanup: {e}")
-    
+
     def _save_final_session_data(self):
         """Save all session data immediately."""
         if not self.session:
             return
-            
+
         # Update session end time
         self.session.end_time = time.time()
         if self.session.start_time:
-            self.session.session_duration_ms = int((self.session.end_time - self.session.start_time) * 1000)
-        
+            self.session.session_duration_ms = int(
+                (self.session.end_time - self.session.start_time) * 1000
+            )
+
         # Save all data
         self._save_session()
         self._save_system_logs()
         self._force_flush_all()
-    
+
     def _force_flush_all(self):
         """Force immediate flush of all log files."""
         try:
             import sys
+
             # Flush stdout/stderr for debug messages
             sys.stdout.flush()
             sys.stderr.flush()
-            
+
             # Force save session and system logs
             self._save_session()
             self._save_system_logs()
-            
+
         except Exception as e:
             print(f"Warning: Could not force flush: {e}")
-    
+
     def _emergency_save(self):
         """Emergency save of all session data."""
         try:
@@ -712,33 +887,46 @@ class SessionLogger:
                 self.current_hand.hand_complete = True
                 self.current_hand.winner = "Unknown (Emergency Exit)"
                 self.current_hand.winning_hand = "Session terminated"
-                
+
                 if self.hand_start_time:
-                    self.current_hand.hand_duration_ms = int((time.time() - self.hand_start_time) * 1000)
-                
+                    self.current_hand.hand_duration_ms = int(
+                        (time.time() - self.hand_start_time) * 1000
+                    )
+
                 # Add to session if not already added
-                if self.session and self.current_hand not in self.session.hands:
+                if (
+                    self.session
+                    and self.current_hand not in self.session.hands
+                ):
                     self.session.hands.append(self.current_hand)
                     self.session.hands_played += 1
-            
+
             # End session properly
             if self.session:
                 self.session.end_time = time.time()
                 if self.session.start_time:
-                    self.session.session_duration_ms = int((self.session.end_time - self.session.start_time) * 1000)
-                
+                    self.session.session_duration_ms = int(
+                        (self.session.end_time - self.session.start_time)
+                        * 1000
+                    )
+
                 # Log emergency shutdown
-                self.log_system("WARNING", "SESSION", "Emergency shutdown - session terminated by user", {
-                    "hands_completed": self.session.hands_played,
-                    "session_duration_ms": self.session.session_duration_ms,
-                    "shutdown_reason": "SIGINT/Ctrl+C"
-                })
-                
+                self.log_system(
+                    "WARNING",
+                    "SESSION",
+                    "Emergency shutdown - session terminated by user",
+                    {
+                        "hands_completed": self.session.hands_played,
+                        "session_duration_ms": self.session.session_duration_ms,
+                        "shutdown_reason": "SIGINT/Ctrl+C",
+                    },
+                )
+
                 # Force save
                 self._save_session()
                 self._save_system_logs()
                 self._force_flush_all()
-                
+
         except Exception as e:
             print(f"Error during emergency save: {e}")
             # Try to at least save what we can
@@ -746,39 +934,49 @@ class SessionLogger:
                 if self.session:
                     self._save_session()
                     self._force_flush_all()
-            except:
+            except BaseException:
                 print("Failed to save session data")
-    
+
     # Enhanced User Activity Logging Methods
-    def log_user_activity(self, activity_type: str, activity_data: Dict[str, Any] = None):
+    def log_user_activity(
+        self, activity_type: str, activity_data: Dict[str, Any] = None
+    ):
         """Log user activities for analytics and feature development."""
         if activity_data is None:
             activity_data = {}
-            
+
         activity_log = UserActivityLog(
             timestamp=time.time(),
             session_id=self.session_id,
             activity_type=activity_type,
-            activity_data=activity_data
+            activity_data=activity_data,
         )
-        
+
         if self.session:
             self.session.user_activities.append(activity_log)
-        
+
         # Also log to system for immediate access
-        self.log_system("INFO", "USER_ACTIVITY", f"User activity: {activity_type}", {
-            "activity_type": activity_type,
-            "activity_data": activity_data
-        })
-    
-    def log_strategy_performance(self, hand_id: str, strategy_name: str, 
-                                gto_recommendation: str, user_action: str,
-                                situation_context: Dict[str, Any] = None,
-                                deviation_type: str = None, outcome_quality: str = None):
+        self.log_system(
+            "INFO",
+            "USER_ACTIVITY",
+            f"User activity: {activity_type}",
+            {"activity_type": activity_type, "activity_data": activity_data},
+        )
+
+    def log_strategy_performance(
+        self,
+        hand_id: str,
+        strategy_name: str,
+        gto_recommendation: str,
+        user_action: str,
+        situation_context: Dict[str, Any] = None,
+        deviation_type: str = None,
+        outcome_quality: str = None,
+    ):
         """Log strategy usage and performance for learning analytics."""
         if situation_context is None:
             situation_context = {}
-            
+
         strategy_log = StrategyPerformanceLog(
             timestamp=time.time(),
             session_id=self.session_id,
@@ -788,22 +986,33 @@ class SessionLogger:
             user_action=user_action,
             deviation_type=deviation_type,
             situation_context=situation_context,
-            outcome_quality=outcome_quality
+            outcome_quality=outcome_quality,
         )
-        
+
         if self.session:
             self.session.strategy_performance.append(strategy_log)
-        
-        self.log_system("INFO", "STRATEGY_PERFORMANCE", f"Strategy analysis: {strategy_name}", {
-            "strategy_name": strategy_name,
-            "gto_vs_user": f"{gto_recommendation} vs {user_action}",
-            "deviation_type": deviation_type,
-            "outcome_quality": outcome_quality
-        })
-    
-    def log_learning_progress(self, skill_area: str, performance_metric: str, 
-                             current_value: float, previous_value: float = None,
-                             improvement_trend: str = None, confidence_level: float = None):
+
+        self.log_system(
+            "INFO",
+            "STRATEGY_PERFORMANCE",
+            f"Strategy analysis: {strategy_name}",
+            {
+                "strategy_name": strategy_name,
+                "gto_vs_user": f"{gto_recommendation} vs {user_action}",
+                "deviation_type": deviation_type,
+                "outcome_quality": outcome_quality,
+            },
+        )
+
+    def log_learning_progress(
+        self,
+        skill_area: str,
+        performance_metric: str,
+        current_value: float,
+        previous_value: float = None,
+        improvement_trend: str = None,
+        confidence_level: float = None,
+    ):
         """Log learning progress and skill development over time."""
         progress_log = LearningProgressLog(
             timestamp=time.time(),
@@ -813,19 +1022,24 @@ class SessionLogger:
             current_value=current_value,
             previous_value=previous_value,
             improvement_trend=improvement_trend,
-            confidence_level=confidence_level
+            confidence_level=confidence_level,
         )
-        
+
         if self.session:
             self.session.learning_progress.append(progress_log)
-        
-        self.log_system("INFO", "LEARNING_PROGRESS", f"Progress in {skill_area}: {performance_metric}", {
-            "skill_area": skill_area,
-            "metric": performance_metric,
-            "current_value": current_value,
-            "previous_value": previous_value,
-            "trend": improvement_trend
-        })
+
+        self.log_system(
+            "INFO",
+            "LEARNING_PROGRESS",
+            f"Progress in {skill_area}: {performance_metric}",
+            {
+                "skill_area": skill_area,
+                "metric": performance_metric,
+                "current_value": current_value,
+                "previous_value": previous_value,
+                "trend": improvement_trend,
+            },
+        )
 
 
 # Global logger instance

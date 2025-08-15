@@ -756,7 +756,11 @@ class EnhancedMainGUI:
             UnifiedHandsReviewPanel,
         )
 
-        self.hands_review_panel = UnifiedHandsReviewPanel(hands_review_frame)
+        self.hands_review_panel = UnifiedHandsReviewPanel(
+            hands_review_frame, 
+            session_logger=self.logger,
+            sound_manager=getattr(self, 'sound_manager', None)
+        )
         self.hands_review_panel.pack(fill=tk.BOTH, expand=True)
         if self.logger:
             self.logger.log_system(

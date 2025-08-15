@@ -10,7 +10,7 @@ import random
 from typing import Tuple, Dict, List
 from deuces import Card, Evaluator
 
-from .types import ActionType, Player, GameState
+from .poker_types import ActionType, Player, GameState
 
 
 class ImprovedGTOStrategy:
@@ -702,11 +702,14 @@ class ImprovedGTOStrategy:
             else:
                 return ActionType.CHECK, 0.0
         else:
-            # Facing a bet - call or raise based on hand strength
+            # Facing a bet - call or raise based on hand strength  
             if play_frequency >= 0.9:  # Premium hands - consider raising
                 if random.random() < 0.3:  # 30% raise frequency with premium
-                    raise_size = min(call_amount * 3, player.stack * 0.2)
-                    return ActionType.RAISE, raise_size
+                    # Calculate raise amount (additional on top of current bet to call)
+                    additional_raise_size = min(call_amount * 2, player.stack * 0.15)
+                    # Total bet amount = current bet of game + additional raise
+                    total_bet_amount = game_state.current_bet + additional_raise_size
+                    return ActionType.RAISE, total_bet_amount
 
             # Default to calling playable hands
             if call_amount <= player.stack * 0.15:  # Reasonable call
@@ -754,8 +757,11 @@ class ImprovedGTOStrategy:
 
                 if hand_strength >= 0.85:  # Very strong - consider raising
                     if random.random() < 0.5:
-                        raise_size = min(call_amount * 2.5, player.stack * 0.3)
-                        return ActionType.RAISE, raise_size
+                        # Calculate raise amount (additional on top of current bet to call)
+                        additional_raise_size = min(call_amount * 1.5, player.stack * 0.2)
+                        # Total bet amount = current bet of game + additional raise
+                        total_bet_amount = game_state.current_bet + additional_raise_size
+                        return ActionType.RAISE, total_bet_amount
                     else:
                         return ActionType.CALL, call_amount
                 elif hand_strength >= pot_odds + 0.1:  # Good odds

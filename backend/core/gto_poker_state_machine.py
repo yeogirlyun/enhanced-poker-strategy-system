@@ -8,7 +8,7 @@ pure bot vs bot gameplay with detailed GTO decision explanations.
 
 from typing import List, Dict, Any, Optional, Tuple
 from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig
-from .types import Player, ActionType
+from .poker_types import Player, ActionType
 from .improved_gto_strategy import ImprovedGTOStrategy
 
 

@@ -1,0 +1,295 @@
+{
+  "metadata": {
+    "table_id": "Table-12",
+    "hand_id": "H#0001",
+    "variant": "NLHE",
+    "max_players": 9,
+    "small_blind": 50,
+    "big_blind": 100,
+    "ante": 0,
+    "rake": 25,
+    "currency": "CHIPS",
+    "started_at_utc": "2025-01-15T15:00:00Z",
+    "ended_at_utc": "2025-01-15T15:03:12Z",
+    "run_count": 1,
+    "session_type": "gto",
+    "bot_strategy": "gto_v1",
+    "analysis_tags": [
+      "premium_cards",
+      "3bet_pot"
+    ]
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_id": "p1",
+      "display_name": "Alice",
+      "starting_stack": 10000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_id": "p2",
+      "display_name": "Bob",
+      "starting_stack": 12000,
+      "is_button": false
+    },
+    {
+      "seat_no": 3,
+      "player_id": "p3",
+      "display_name": "Cara",
+      "starting_stack": 8000,
+      "is_button": false
+    }
+  ],
+  "hero_player_id": "p1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "actor_id": "p2",
+          "action": "POST_BLIND",
+          "amount": 50,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "SB"
+          }
+        },
+        {
+          "order": 2,
+          "actor_id": "p3",
+          "action": "POST_BLIND",
+          "amount": 100,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "BB"
+          }
+        },
+        {
+          "order": 3,
+          "actor_id": null,
+          "action": "DEAL_HOLE",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": "Dealt hole cards",
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "actor_id": "p1",
+          "action": "RAISE",
+          "amount": 300,
+          "to_amount": 300,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 5,
+          "actor_id": "p2",
+          "action": "CALL",
+          "amount": 250,
+          "to_amount": 300,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 6,
+          "actor_id": "p3",
+          "action": "CALL",
+          "amount": 200,
+          "to_amount": 300,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "As",
+        "Kd",
+        "7c"
+      ],
+      "actions": [
+        {
+          "order": 7,
+          "actor_id": "p2",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "actor_id": "p3",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 9,
+          "actor_id": "p1",
+          "action": "BET",
+          "amount": 400,
+          "to_amount": 400,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 10,
+          "actor_id": "p2",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 11,
+          "actor_id": "p3",
+          "action": "CALL",
+          "amount": 400,
+          "to_amount": 400,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "As",
+        "Kd",
+        "7c",
+        "2h"
+      ],
+      "actions": [
+        {
+          "order": 12,
+          "actor_id": "p3",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        },
+        {
+          "order": 13,
+          "actor_id": "p1",
+          "action": "BET",
+          "amount": 1000,
+          "to_amount": 1000,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        },
+        {
+          "order": 14,
+          "actor_id": "p3",
+          "action": "CALL",
+          "amount": 1000,
+          "to_amount": 1000,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        }
+      ]
+    },
+    "RIVER": {
+      "board": [
+        "As",
+        "Kd",
+        "7c",
+        "2h",
+        "Jh"
+      ],
+      "actions": [
+        {
+          "order": 15,
+          "actor_id": "p3",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        },
+        {
+          "order": 16,
+          "actor_id": "p1",
+          "action": "BET",
+          "amount": 2500,
+          "to_amount": 2500,
+          "all_in": false,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        },
+        {
+          "order": 17,
+          "actor_id": "p3",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        }
+      ]
+    }
+  },
+  "pots": [
+    {
+      "amount": 5275,
+      "eligible_player_ids": [
+        "p1",
+        "p3"
+      ],
+      "shares": [
+        {
+          "player_id": "p1",
+          "amount": 5275
+        }
+      ]
+    }
+  ],
+  "showdown": [],
+  "final_stacks": {
+    "p1": 11075,
+    "p2": 11700,
+    "p3": 6300
+  }
+}

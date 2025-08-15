@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 
 from .reusable_poker_game_widget import ReusablePokerGameWidget
 from core.gto_poker_state_machine import GTOPokerStateMachine
-from core.types import GameState
+from core.poker_types import GameState
 from core.gui_models import THEME, FONTS
 
 

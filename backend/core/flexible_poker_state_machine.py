@@ -17,7 +17,7 @@ import time
 from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 
-from .types import ActionType, Player, GameState, PokerState
+from .poker_types import ActionType, Player, GameState, PokerState
 
 from .deuces_hand_evaluator import DeucesHandEvaluator
 from .position_mapping import HandHistoryManager
@@ -585,7 +585,12 @@ class FlexiblePokerStateMachine:
             self._reset_bets_for_new_round()
             self.actions_this_round = 0
             self.players_acted_this_round.clear()
-            self.action_player_index = self._find_first_active_after_dealer()
+            next_player = self._find_first_active_after_dealer()
+            if next_player == -1:
+                print(f"⚠️ STREET_TRANSITION: No active players for new street, ending hand")
+                self.transition_to(PokerState.END_HAND)
+                return
+            self.action_player_index = next_player
             self.session_logger.log_system(
                 "INFO",
                 "STATE_MACHINE",
@@ -608,7 +613,12 @@ class FlexiblePokerStateMachine:
             self._reset_bets_for_new_round()
             self.actions_this_round = 0
             self.players_acted_this_round.clear()
-            self.action_player_index = self._find_first_active_after_dealer()
+            next_player = self._find_first_active_after_dealer()
+            if next_player == -1:
+                print(f"⚠️ STREET_TRANSITION: No active players for new street, ending hand")
+                self.transition_to(PokerState.END_HAND)
+                return
+            self.action_player_index = next_player
             self.session_logger.log_system(
                 "INFO",
                 "STATE_MACHINE",
@@ -631,7 +641,12 @@ class FlexiblePokerStateMachine:
             self._reset_bets_for_new_round()
             self.actions_this_round = 0
             self.players_acted_this_round.clear()
-            self.action_player_index = self._find_first_active_after_dealer()
+            next_player = self._find_first_active_after_dealer()
+            if next_player == -1:
+                print(f"⚠️ STREET_TRANSITION: No active players for new street, ending hand")
+                self.transition_to(PokerState.END_HAND)
+                return
+            self.action_player_index = next_player
             self.session_logger.log_system(
                 "INFO",
                 "STATE_MACHINE",
@@ -849,9 +864,18 @@ class FlexiblePokerStateMachine:
     def _find_first_active_after_dealer(self) -> int:
         """Find the first active player after the dealer (for postflop)."""
         start = (self.dealer_position + 1) % len(self.game_state.players)
-        return self._find_next_active_player(
+        result = self._find_next_active_player(
             start - 1
         )  # Start from dealer to find next
+        
+        print(f"🔍 FIND_ACTIVE_DEBUG: dealer_position={self.dealer_position}, start={start}, result={result}")
+        if result == -1:
+            print(f"⚠️ FIND_ACTIVE_DEBUG: No active players found!")
+            active_players = [i for i, p in enumerate(self.game_state.players) if not p.has_folded and p.is_active and p.stack > 0]
+            print(f"🔍 FIND_ACTIVE_DEBUG: Active players: {active_players}")
+            print(f"🔍 FIND_ACTIVE_DEBUG: Player states: {[(i, p.name, p.has_folded, p.is_active, p.stack) for i, p in enumerate(self.game_state.players)]}")
+        
+        return result
 
     def _find_next_active_player(self, current_index: int) -> int:
         """Find the next active player after the given index."""
@@ -870,7 +894,9 @@ class FlexiblePokerStateMachine:
         valid_actions: Dict[str, Any],
     ) -> bool:
         """Check if an action is valid for the current game state."""
-        if not valid_actions.get(action.value, False):
+        # Check if action is allowed (handle case mismatch)
+        action_key = action.value.lower()
+        if not valid_actions.get(action_key, False):
             return False
 
         # Additional validation based on action type
@@ -917,13 +943,16 @@ class FlexiblePokerStateMachine:
         ]
         if self.current_state not in betting_states:
             self._safe_print(
-                f"❌ Action rejected: {action.value} not allowed during {self.current_state}"
+                f"❌ Action rejected: {action.value} not allowed during {self.current_state.value}"
             )
             return False
 
         # Validate action
         valid_actions = self.get_valid_actions_for_player(player)
         if not self._is_action_valid(action, amount, valid_actions):
+            self._safe_print(
+                f"❌ Invalid action: {player.name} cannot {action.value} ${amount:.2f}. Valid: {valid_actions}"
+            )
             return False
 
         # Log current state (reduced verbosity)

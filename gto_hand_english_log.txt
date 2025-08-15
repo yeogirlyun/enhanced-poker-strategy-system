@@ -1,0 +1,31 @@
+Setup: Player 1 (Position 0) starts with $990.00, cards: ['Kh', 'Kd']
+Setup: Player 2 (Position 1) starts with $1000.00, cards: ['As', 'Ac']
+Setup: Player 3 (Position 2) starts with $995.00, cards: ['Ah', 'Kh']
+Setup: Pot starts at $15.00, current bet: $10.00
+
+Action 1: Player 2 raises to $30.00 (putting in $30.00)
+  Result: Pot=$15.00→$45.00, Player 2 stack=$1000.00→$970.00
+Action 2: Player 3 calls $25.00
+  Result: Pot=$45.00→$70.00, Player 3 stack=$995.00→$970.00
+Action 3: Player 1 raises to $70.00 (putting in $60.00)
+  Result: Pot=$70.00→$130.00, Player 1 stack=$990.00→$930.00
+Action 4: Player 2 calls $40.00
+  Result: Pot=$130.00→$170.00, Player 2 stack=$970.00→$930.00
+Action 5: Player 3 raises to $150.00 (putting in $120.00)
+  Result: Pot=$170.00→$290.00, Player 3 stack=$970.00→$850.00
+Action 6: Player 1 raises to $289.50 (putting in $219.50)
+  Result: Pot=$290.00→$509.50, Player 1 stack=$930.00→$710.50
+Action 7: Player 2 raises to $429.00 (putting in $359.00)
+  Result: Pot=$509.50→$868.50, Player 2 stack=$930.00→$571.00
+Action 8: Player 3 folds
+  Result: Pot=$868.50→$868.50, Player 3 stack=$850.00→$850.00
+Action 9: Player 1 folds
+  Result: Pot=$868.50→$868.50, Player 1 stack=$710.50→$710.50
+Action 10: Player 1 - action failed or hand complete
+
+Final state:
+  Pot: $868.50
+  Board: []
+  Player 1: $710.50 (FOLDED)
+  Player 2: $1439.50
+  Player 3: $850.00 (FOLDED)

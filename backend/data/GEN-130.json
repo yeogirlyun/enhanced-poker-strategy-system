@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "table_id": "Legendary-Table-1",
+    "hand_id": "GEN-130",
+    "variant": "NLHE",
+    "max_players": 6,
+    "small_blind": 25000,
+    "big_blind": 50000,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "hole_cards": {
+      "Player1": [
+        "Ad",
+        "Ac"
+      ],
+      "Player2": [
+        "As",
+        "Ah"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_id": "Player1",
+      "display_name": "Connor Drinan",
+      "starting_stack": 1000000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_id": "Player2",
+      "display_name": "Cary Katz",
+      "starting_stack": 1000000,
+      "is_button": false
+    }
+  ],
+  "hero_player_id": "Player1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "actor_id": "Player2",
+          "action": "RAISE",
+          "amount": 10000,
+          "to_amount": 10000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 2,
+          "actor_id": "Player1",
+          "action": "RAISE",
+          "amount": 30000,
+          "to_amount": 30000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 3,
+          "actor_id": "Player2",
+          "action": "RAISE",
+          "amount": 90000,
+          "to_amount": 90000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "actor_id": "Player1",
+          "action": "RAISE",
+          "amount": 1000000,
+          "to_amount": 1000000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 5,
+          "actor_id": "Player2",
+          "action": "CALL",
+          "amount": 910000,
+          "to_amount": 910000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "2d",
+        "Kh",
+        "5h"
+      ],
+      "actions": []
+    },
+    "TURN": {
+      "board": [
+        "2d",
+        "Kh",
+        "5h",
+        "4"
+      ],
+      "actions": []
+    },
+    "RIVER": {
+      "board": [
+        "2d",
+        "Kh",
+        "5h",
+        "4",
+        "2"
+      ],
+      "actions": []
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

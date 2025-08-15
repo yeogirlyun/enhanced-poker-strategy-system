@@ -1,0 +1,268 @@
+{
+  "metadata": {
+    "table_id": "Table 1",
+    "hand_id": "GEN-004",
+    "variant": "NLHE",
+    "max_players": 3,
+    "small_blind": 400,
+    "big_blind": 800,
+    "ante": 200,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "hole_cards": {
+      "Player1": [
+        "As",
+        "Ad"
+      ],
+      "Player2": [
+        "4c",
+        "4d"
+      ],
+      "Player3": [
+        "2h",
+        "6h",
+        "7s"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_id": "Player1",
+      "display_name": "Barry Greenstein",
+      "starting_stack": 167000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_id": "Player2",
+      "display_name": "Peter Eastgate",
+      "starting_stack": 238000,
+      "is_button": false
+    },
+    {
+      "seat_no": 3,
+      "player_id": "Player3",
+      "display_name": "Tom Dwan",
+      "starting_stack": 328000,
+      "is_button": false
+    }
+  ],
+  "hero_player_id": "Player1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "actor_id": "Player2",
+          "action": "POST_BLIND",
+          "amount": 400,
+          "to_amount": 400,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "SB"
+          }
+        },
+        {
+          "order": 2,
+          "actor_id": "Player3",
+          "action": "POST_BLIND",
+          "amount": 800,
+          "to_amount": 800,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "BB"
+          }
+        },
+        {
+          "order": 3,
+          "actor_id": "Player1",
+          "action": "RAISE",
+          "amount": 0,
+          "to_amount": 0,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "actor_id": "Player2",
+          "action": "CALL",
+          "amount": 2500,
+          "to_amount": 2500,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 5,
+          "actor_id": "Player3",
+          "action": "CALL",
+          "amount": 2500,
+          "to_amount": 2500,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 6,
+          "actor_id": "Player1",
+          "action": "BET",
+          "amount": 5000,
+          "to_amount": 5000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 7,
+          "actor_id": "Player2",
+          "action": "CALL",
+          "amount": 5000,
+          "to_amount": 5000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "actor_id": "Player3",
+          "action": "RAISE",
+          "amount": 0,
+          "to_amount": 0,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 9,
+          "actor_id": "Player1",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 10,
+          "actor_id": "Player2",
+          "action": "CALL",
+          "amount": 32000,
+          "to_amount": 32000,
+          "all_in": false,
+          "note": null,
+          "street": "FLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "4h"
+      ],
+      "actions": [
+        {
+          "order": 11,
+          "actor_id": "Player2",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        },
+        {
+          "order": 12,
+          "actor_id": "Player3",
+          "action": "BET",
+          "amount": 79000,
+          "to_amount": 79000,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        },
+        {
+          "order": 13,
+          "actor_id": "Player2",
+          "action": "CALL",
+          "amount": 79000,
+          "to_amount": 79000,
+          "all_in": false,
+          "note": null,
+          "street": "TURN",
+          "posting_meta": null
+        }
+      ]
+    },
+    "RIVER": {
+      "board": [
+        "4h",
+        "2s"
+      ],
+      "actions": [
+        {
+          "order": 14,
+          "actor_id": "Player2",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        },
+        {
+          "order": 15,
+          "actor_id": "Player3",
+          "action": "RAISE",
+          "amount": 175000,
+          "to_amount": 175000,
+          "all_in": true,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        },
+        {
+          "order": 16,
+          "actor_id": "Player2",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "RIVER",
+          "posting_meta": null
+        }
+      ]
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

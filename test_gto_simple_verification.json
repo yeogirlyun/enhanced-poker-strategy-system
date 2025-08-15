@@ -1,0 +1,96 @@
+{
+  "test_summary": {
+    "total_actions": 15,
+    "valid_actions": 11,
+    "invalid_actions": 4
+  },
+  "action_log": [
+    "Action 1: CALL $10.00 - \u2705 Valid",
+    "Action 2: RAISE $15.00 - \u2705 Valid",
+    "Action 3: RAISE $30.00 - \u2705 Valid",
+    "Action 4: CALL $30.00 - \u2705 Valid",
+    "Action 5: UNKNOWN_MONEY_ACTION (stack_change=$20, bet_change=$-20.0) $20.00 - \u274c Invalid",
+    "Action 6: BET $60.00 - \u2705 Valid",
+    "Action 7: CALL $60.00 - \u2705 Valid",
+    "Action 8: UNKNOWN_MONEY_ACTION (stack_change=$60.0, bet_change=$0.0) $60.00 - \u274c Invalid",
+    "Action 9: CHECK $0.00 - \u2705 Valid",
+    "Action 10: CHECK $0.00 - \u2705 Valid",
+    "Action 11: CHECK $0.00 - \u2705 Valid",
+    "Action 12: BET $180.00 - \u2705 Valid",
+    "Action 13: CALL $180.00 - \u2705 Valid",
+    "Action 14: UNKNOWN_MONEY_ACTION (stack_change=$180.0, bet_change=$0.0) $180.00 - \u274c Invalid"
+  ],
+  "invalid_actions": [
+    {
+      "action_number": 5,
+      "actual_action": "UNKNOWN_MONEY_ACTION (stack_change=$20, bet_change=$-20.0)",
+      "issues": [
+        "Unrecognized action pattern"
+      ],
+      "player_index": 0,
+      "game_state_before": {
+        "pot": 100.0,
+        "current_bet": 40,
+        "player_bet": 20,
+        "player_stack": 980
+      },
+      "game_state_after": {
+        "pot": 120.0,
+        "current_bet": 0.0,
+        "player_bet": 0.0,
+        "player_stack": 960
+      }
+    },
+    {
+      "action_number": 8,
+      "actual_action": "UNKNOWN_MONEY_ACTION (stack_change=$60.0, bet_change=$0.0)",
+      "issues": [
+        "Unrecognized action pattern"
+      ],
+      "player_index": 2,
+      "game_state_before": {
+        "pot": 240.0,
+        "current_bet": 60.0,
+        "player_bet": 0.0,
+        "player_stack": 960.0
+      },
+      "game_state_after": {
+        "pot": 300.0,
+        "current_bet": 0.0,
+        "player_bet": 0.0,
+        "player_stack": 900.0
+      }
+    },
+    {
+      "action_number": 14,
+      "actual_action": "UNKNOWN_MONEY_ACTION (stack_change=$180.0, bet_change=$0.0)",
+      "issues": [
+        "Unrecognized action pattern"
+      ],
+      "player_index": 2,
+      "game_state_before": {
+        "pot": 660.0,
+        "current_bet": 180.0,
+        "player_bet": 0.0,
+        "player_stack": 900.0
+      },
+      "game_state_after": {
+        "pot": 840.0,
+        "current_bet": 0.0,
+        "player_bet": 0.0,
+        "player_stack": 720.0
+      }
+    },
+    {
+      "action_number": 15,
+      "error": "Action execution failed",
+      "player_index": 2,
+      "game_state": {
+        "pot": 840.0,
+        "current_bet": 0.0,
+        "player_bet": 0.0,
+        "player_stack": 720.0
+      }
+    }
+  ]
+}

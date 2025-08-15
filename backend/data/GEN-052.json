@@ -1,0 +1,226 @@
+{
+  "metadata": {
+    "table_id": "Table 1",
+    "hand_id": "GEN-052",
+    "variant": "NLHE",
+    "max_players": 6,
+    "small_blind": 30000,
+    "big_blind": 60000,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "hole_cards": {
+      "Player1": [
+        "8s",
+        "8c"
+      ],
+      "Player2": [
+        "As",
+        "4h"
+      ],
+      "Player3": [
+        "2d",
+        "7s"
+      ],
+      "Player4": [
+        "3h",
+        "9c"
+      ],
+      "Player5": [
+        "5s",
+        "Tc"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_id": "Player1",
+      "display_name": "Greg Raymer",
+      "starting_stack": 7300000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_id": "Player2",
+      "display_name": "David Williams",
+      "starting_stack": 2700000,
+      "is_button": false
+    },
+    {
+      "seat_no": 3,
+      "player_id": "Player3",
+      "display_name": "Folded Player 1",
+      "starting_stack": 150000,
+      "is_button": false
+    },
+    {
+      "seat_no": 4,
+      "player_id": "Player4",
+      "display_name": "Folded Player 2",
+      "starting_stack": 150000,
+      "is_button": false
+    },
+    {
+      "seat_no": 5,
+      "player_id": "Player5",
+      "display_name": "Folded Player 3",
+      "starting_stack": 150000,
+      "is_button": false
+    },
+    {
+      "seat_no": 6,
+      "player_id": "Player6",
+      "display_name": "Folded Player 4",
+      "starting_stack": 150000,
+      "is_button": false
+    }
+  ],
+  "hero_player_id": "Player1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "actor_id": "Player5",
+          "action": "POST_BLIND",
+          "amount": 30000,
+          "to_amount": 30000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "SB"
+          }
+        },
+        {
+          "order": 2,
+          "actor_id": "Player6",
+          "action": "POST_BLIND",
+          "amount": 60000,
+          "to_amount": 60000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": {
+            "blind_type": "BB"
+          }
+        },
+        {
+          "order": 3,
+          "actor_id": "Player3",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "actor_id": "Player4",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 5,
+          "actor_id": "Player5",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 6,
+          "actor_id": "Player6",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 7,
+          "actor_id": "Player1",
+          "action": "RAISE",
+          "amount": 0,
+          "to_amount": 0,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "actor_id": "Player2",
+          "action": "RAISE",
+          "amount": 2640000,
+          "to_amount": 2640000,
+          "all_in": true,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        },
+        {
+          "order": 9,
+          "actor_id": "Player1",
+          "action": "CALL",
+          "amount": 2525000,
+          "to_amount": 2525000,
+          "all_in": false,
+          "note": null,
+          "street": "PREFLOP",
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "8h",
+        "4s",
+        "6c"
+      ],
+      "actions": []
+    },
+    "TURN": {
+      "board": [
+        "8h",
+        "4s",
+        "6c",
+        "7d"
+      ],
+      "actions": []
+    },
+    "RIVER": {
+      "board": [
+        "8h",
+        "4s",
+        "6c",
+        "7d",
+        "5h"
+      ],
+      "actions": []
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

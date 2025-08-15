@@ -1,0 +1,235 @@
+{
+  "id": "test_gto_hand_001",
+  "initial_state": {
+    "players": [
+      {
+        "name": "Player 1",
+        "position": "BB",
+        "stack": 906.25,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "Kh",
+          "Kd"
+        ],
+        "cards_revealed": true
+      },
+      {
+        "name": "Player 2",
+        "position": "BTN",
+        "stack": 1187.5,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "As",
+          "Ac"
+        ],
+        "cards_revealed": true
+      },
+      {
+        "name": "Player 3",
+        "position": "SB",
+        "stack": 906.25,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "Ah",
+          "Kh"
+        ],
+        "cards_revealed": true
+      }
+    ],
+    "dealer_position": 1,
+    "small_blind": 5.0,
+    "big_blind": 10.0,
+    "starting_stacks": 1000.0
+  },
+  "actions": [
+    {
+      "street": "preflop",
+      "player_index": 2,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_2",
+      "pot_after": 25.0
+    },
+    {
+      "street": "preflop",
+      "player_index": 0,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_0",
+      "pot_after": 35.0
+    },
+    {
+      "street": "preflop",
+      "player_index": 1,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_1",
+      "pot_after": 40.0
+    },
+    {
+      "street": "flop",
+      "player_index": 2,
+      "action": "call",
+      "amount": -15.0,
+      "explanation": "GTO call from Pos_2",
+      "pot_after": 45.0
+    },
+    {
+      "street": "flop",
+      "player_index": 0,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_0",
+      "pot_after": 45.0
+    },
+    {
+      "street": "flop",
+      "player_index": 1,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_1",
+      "pot_after": 67.5
+    },
+    {
+      "street": "flop",
+      "player_index": 2,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_2",
+      "pot_after": 90.0
+    },
+    {
+      "street": "turn",
+      "player_index": 2,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_2",
+      "pot_after": 112.5
+    },
+    {
+      "street": "turn",
+      "player_index": 0,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_0",
+      "pot_after": 112.5
+    },
+    {
+      "street": "turn",
+      "player_index": 1,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_1",
+      "pot_after": 168.75
+    },
+    {
+      "street": "turn",
+      "player_index": 2,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_2",
+      "pot_after": 225.0
+    },
+    {
+      "street": "river",
+      "player_index": 2,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_2",
+      "pot_after": 281.25
+    },
+    {
+      "street": "river",
+      "player_index": 0,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_0",
+      "pot_after": 281.25
+    },
+    {
+      "street": "river",
+      "player_index": 1,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_1",
+      "pot_after": 281.25
+    },
+    {
+      "street": "river",
+      "player_index": 1,
+      "action": "check",
+      "amount": 0.0,
+      "explanation": "GTO check from Pos_1",
+      "pot_after": 281.25
+    }
+  ],
+  "final_state": {
+    "state": "end_hand",
+    "pot": 281.25,
+    "current_bet": 0.0,
+    "board": [
+      "Jh",
+      "Jd",
+      "9d",
+      "3s",
+      "6h"
+    ],
+    "players": [
+      {
+        "name": "Player 1",
+        "position": "BB",
+        "stack": 906.25,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "Kh",
+          "Kd"
+        ],
+        "cards_revealed": true
+      },
+      {
+        "name": "Player 2",
+        "position": "BTN",
+        "stack": 1187.5,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "As",
+          "Ac"
+        ],
+        "cards_revealed": true
+      },
+      {
+        "name": "Player 3",
+        "position": "SB",
+        "stack": 906.25,
+        "current_bet": 0.0,
+        "is_active": true,
+        "has_folded": false,
+        "is_human": false,
+        "cards": [
+          "Ah",
+          "Kh"
+        ],
+        "cards_revealed": true
+      }
+    ],
+    "action_player": 1,
+    "street": "river",
+    "hand_number": 1,
+    "dealer_position": 1
+  }
+}

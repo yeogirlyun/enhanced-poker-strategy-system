@@ -21,7 +21,7 @@ from typing import List, Dict, Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from core.bot_session_state_machine import GTOBotSession, HandsReviewBotSession
-from core.decision_engine import GTODecisionEngine, PreloadedDecisionEngine
+from core.decision_engine_v2 import GTODecisionEngine, PreloadedDecisionEngine
 from core.flexible_poker_state_machine import GameConfig
 from core.session_logger import SessionLogger
 
