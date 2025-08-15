@@ -58,7 +58,7 @@ def is_legendary_hand_obj(obj: Dict[str, Any]) -> bool:
         return False
     if "players" in obj and isinstance(obj.get("actions"), dict):
         return True
-    # Support the source format present in backend/tests/legendary_hands.json
+    # Support the source format present in backend/tools_data_generation/legendary_hands.json
     if "players_involved" in obj and isinstance(obj.get("actions"), list):
         return True
     return False

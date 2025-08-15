@@ -35,7 +35,7 @@ class HandSummary:
 class LegendaryHandsManager:
     """Manager for legendary poker hands database."""
     
-    def __init__(self, json_file_path: str = "tests/legendary_hands.json"):
+    def __init__(self, json_file_path: str = "tools_data_generation/legendary_hands.json"):
         """Initialize the manager with the JSON file path."""
         self.json_file_path = json_file_path
         self.data = None

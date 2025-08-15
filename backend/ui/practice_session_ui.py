@@ -367,11 +367,11 @@ class PracticeSessionUI(ttk.Frame, EventListener):
 
         # Try to apply LV-style background image if available (PIL → fallback PhotoImage)
         # Prefer bottom_panel_background.png if present
-        data_dir = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "data"
+        images_dir = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "images"
         )
-        preferred = os.path.join(data_dir, "bottom_panel_background.png")
-        fallback = os.path.join(data_dir, "LV style.png")
+        preferred = os.path.join(images_dir, "bottom_panel_background.png")
+        fallback = os.path.join(images_dir, "LV style.png")
         lv_path = preferred if os.path.exists(preferred) else fallback
         if os.path.exists(lv_path):
             bg_canvas = tk.Canvas(content_frame, highlightthickness=0, bd=0)
