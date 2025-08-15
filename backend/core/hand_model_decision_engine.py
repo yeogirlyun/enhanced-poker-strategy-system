@@ -102,8 +102,8 @@ class HandModelDecisionEngine(DecisionEngine):
         # Get the next action
         next_action = self.actions_for_replay[self.current_action_index]
         
-        # Convert player index to expected seat id; normalize by seat_no where available
-        expected_player_id = f"Player{player_index + 1}"
+        # Convert player index to expected canonical seat uid (lowercase)
+        expected_player_id = f"seat{player_index + 1}"
         # Try to map by seat order: find seat with seat_no == player_index+1
         try:
             seat_ids_by_order = {}
@@ -114,30 +114,29 @@ class HandModelDecisionEngine(DecisionEngine):
                 if sid is not None and pid:
                     seat_ids_by_order[int(sid)] = pid
             if (player_index + 1) in seat_ids_by_order:
-                expected_player_id = seat_ids_by_order[player_index + 1]
+                expected_player_id = str(seat_ids_by_order[player_index + 1]).lower()
         except Exception:
             pass
         
         print(f"🔍 HAND_MODEL_ENGINE: Action {self.current_action_index + 1}/{self.total_actions}")
-        print(f"   Expected player: {expected_player_id}, Action player: {next_action.actor_id}")
+        print(f"   Expected player: {expected_player_id}, Action player: {getattr(next_action,'actor_uid',None)}")
         print(f"   Action: {next_action.action.value}, Amount: {next_action.amount}")
         
-        # Verify this action is for the current player (using canonical comparison)
-        if self._canon(next_action.actor_id) != self._canon(expected_player_id):
+        # Verify this action is for the current player (canonical Seat*)
+        if self._canon(getattr(next_action,'actor_uid',None)) != self._canon(expected_player_id):
             print(f"⚠️  HAND_MODEL_ENGINE: Player mismatch - expected {expected_player_id}, got {next_action.actor_id}")
             
             # Try to find the correct action for this player in the next 20 actions (increased look-ahead)
             for look_ahead in range(min(20, self.total_actions - self.current_action_index)):
                 candidate_action = self.actions_for_replay[self.current_action_index + look_ahead]
-                if self._canon(candidate_action.actor_id) == self._canon(expected_player_id):
+                if self._canon(getattr(candidate_action,'actor_uid',None)) == self._canon(expected_player_id):
                     print(f"🔧 HAND_MODEL_ENGINE: Found correct action {look_ahead} steps ahead")
                     self.current_action_index += look_ahead
                     next_action = candidate_action
                     break
             else:
-                # No matching action found - return default WITHOUT advancing pointer
-                print(f"❌ HAND_MODEL_ENGINE: No matching action found for {expected_player_id}")
-                return self._default_action(player_index)
+                # No matching action found — this is invalid in canonical mode.
+                raise ValueError(f"Canonical mapping failed: expected {expected_player_id}, got {getattr(next_action,'actor_uid',None)}")
         
         # Convert Hand model action to decision engine format
         decision = self._convert_action_to_decision(next_action, player_index)
@@ -164,7 +163,7 @@ class HandModelDecisionEngine(DecisionEngine):
         return {
             'action': action.action,  # Keep ActionType enum
             'amount': float(action.amount),
-            'explanation': f"[Hand Model] {action_str.title()} from {action.actor_id}. {action.note or 'Replaying recorded action.'}",
+            'explanation': f"[Hand Model] {action_str.title()} from {getattr(action,'actor_uid',None)}. {action.note or 'Replaying recorded action.'}",
             'confidence': 1.0,
             'decision_number': self.current_action_index + 1,
             'street': action.street.value,

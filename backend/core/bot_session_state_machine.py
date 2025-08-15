@@ -10,7 +10,7 @@ consistent behavior and event flows.
 Key benefits:
 - Code reuse between GTO and hands review sessions
 - Consistent timing and animation behavior
-- Simplified architecture compared to GameDirector approach
+- Simplified architecture compared to complex event-driven approaches
 - Clean separation between decision logic and game flow
 """
 
@@ -19,7 +19,7 @@ import time
 
 from .flexible_poker_state_machine import FlexiblePokerStateMachine, GameConfig, GameEvent
 from .poker_types import Player, ActionType, PokerState
-from .decision_engine_v2 import DecisionEngine, GTODecisionEngine, PreloadedDecisionEngine
+from .decision_engine_v2 import DecisionEngine, GTODecisionEngine
 from .hand_model import Hand
 
 
@@ -129,6 +129,20 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
             print("🔥 BOT_ACTION_DEBUG: Session complete, stopping session")
             self.stop_session()
             return False
+        
+        # Align next actor with the engine's upcoming actor (canonical Seat*)
+        try:
+            idx = getattr(self.decision_engine, 'current_action_index', 0)
+            actions = getattr(self.decision_engine, 'actions_for_replay', [])
+            if 0 <= idx < len(actions):
+                next_uid = getattr(actions[idx], 'actor_id', None)
+                if next_uid:
+                    for i, p in enumerate(self.game_state.players):
+                        if getattr(p, 'name', '') == next_uid:
+                            self.action_player_index = i
+                            break
+        except Exception:
+            pass
         
         # Get current action player
         print(f"🔍 BOT_DEBUG: action_player_index={self.action_player_index}, num_players={len(self.game_state.players)}")
@@ -383,10 +397,29 @@ class GTOBotSession(BotSessionStateMachine):
 class HandsReviewBotSession(BotSessionStateMachine):
     """Specialized bot session for hands review using preloaded data."""
     
-    def __init__(self, config: GameConfig, decision_engine, mode: str = "review"):
-        """Initialize hands review session with preloaded decision engine."""
+    def __init__(self, config: GameConfig, session_logger=None, decision_engine=None, mode: str = "review"):
+        """Initialize hands review session.
+        - Accept optional session_logger for tests/backward-compat.
+        - If no decision_engine provided, use an empty PreloadedDecisionEngine.
+        """
+        if decision_engine is None:
+            # Create a simple fallback decision engine
+            class FallbackDecisionEngine(DecisionEngine):
+                def get_decision(self, player_index, game_state):
+                    return {'action': ActionType.CHECK, 'amount': 0.0, 'explanation': 'Fallback', 'confidence': 0.0}
+                def is_session_complete(self): return False
+                def reset(self): pass
+                def get_session_info(self): return {'engine_type': 'Fallback'}
+            
+            decision_engine = FallbackDecisionEngine()
         super().__init__(config, decision_engine, "hands_review", mode)
+        if session_logger is not None:
+            self.session_logger = session_logger
         self.preloaded_hand_data = None  # Will be set by the UI
+        # Compatibility fields for legacy tests
+        self.historical_actions: List[Dict[str, Any]] = []
+        self.current_hand_data: Dict[str, Any] = {}
+        self.action_index: int = 0
     
     def set_sound_manager(self, sound_manager):
         """Set sound manager for audio feedback."""
@@ -395,6 +428,172 @@ class HandsReviewBotSession(BotSessionStateMachine):
     def set_preloaded_hand_data(self, hand_data: Dict[str, Any]):
         """Set the preloaded hand data including initial player cards."""
         self.preloaded_hand_data = hand_data
+
+
+
+    # ----------------- Legacy Hands Review Compatibility -----------------
+    def _flatten_historical_actions(self, actions_in) -> List[Dict[str, Any]]:
+        """Flatten actions to a single chronological list.
+        Accepts either a list (already flat) or a dict keyed by streets.
+        """
+        # If already a flat list, return as-is
+        if isinstance(actions_in, list):
+            return list(actions_in)
+        # Else expect dict keyed by street names
+        order: List[str] = ["preflop", "flop", "turn", "river"]
+        flat: List[Dict[str, Any]] = []
+        actions_by_street = actions_in or {}
+        for street in order:
+            items = actions_by_street.get(street, []) or []
+            for a in items:
+                d = dict(a)
+                d.setdefault("street", street)
+                flat.append(d)
+        return flat
+
+    def load_hand_for_review(self, hand_data: Dict[str, Any]) -> bool:
+        """Load a single legacy-format hand dict for review.
+
+        Sets up players, posts blinds, prepares historical_actions, and
+        initializes state for step_forward().
+        """
+        try:
+            self.current_hand_data = hand_data
+            # Build players from hand data
+            players_src = hand_data.get("players", [])
+            loaded_players: List[Player] = []
+            # Map seat to index
+            seat_to_index: Dict[int, int] = {}
+            for i, p in enumerate(players_src):
+                seat_no = int(p.get("seat", i + 1))
+                name = f"Seat{seat_no}"
+                seat_to_index[seat_no] = i
+                starting_stack = float(p.get("starting_stack", p.get("stack", self.config.starting_stack)))
+                cards = p.get("hole_cards", p.get("cards", []))
+                loaded_players.append(
+                    Player(
+                        name=name,
+                        stack=starting_stack,
+                        position="",
+                        is_human=False,
+                        is_active=True,
+                        cards=list(cards) if isinstance(cards, list) else [],
+                    )
+                )
+
+            # Initialize core state
+            self.hand_number += 1
+            self.current_state = PokerState.START_HAND
+            self.game_state.players = loaded_players
+            self.game_state.board = []
+            self.game_state.pot = 0.0
+            self.game_state.current_bet = 0.0
+            self.game_state.street = "preflop"
+
+            # Dealer/button seat if provided
+            table = hand_data.get("table", {})
+            button_seat = int(table.get("button_seat", 1))
+            dealer_idx = None
+            # Find player index by button seat
+            for idx, p in enumerate(players_src):
+                if int(p.get("seat", idx + 1)) == button_seat:
+                    dealer_idx = idx
+                    break
+            self.dealer_position = dealer_idx if dealer_idx is not None else 0
+
+            # Blind positions
+            if self.config.num_players == 2:
+                self.small_blind_position = self.dealer_position
+                self.big_blind_position = (self.dealer_position + 1) % self.config.num_players
+            else:
+                self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
+                self.big_blind_position = (self.small_blind_position + 1) % self.config.num_players
+
+            # Post blinds
+            sb_amount = float(self.config.small_blind)
+            bb_amount = float(self.config.big_blind)
+            sb = self.game_state.players[self.small_blind_position]
+            bb = self.game_state.players[self.big_blind_position]
+            sb.current_bet = min(sb_amount, sb.stack)
+            sb.stack = max(0.0, sb.stack - sb.current_bet)
+            bb.current_bet = min(bb_amount, bb.stack)
+            bb.stack = max(0.0, bb.stack - bb.current_bet)
+            self.game_state.pot = round(sb.current_bet + bb.current_bet, 2)
+            self.game_state.current_bet = bb.current_bet
+
+            # Action pointer (UTG after BB preflop)
+            self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
+
+            # Transition to preflop betting and emit state
+            self.current_state = PokerState.PREFLOP_BETTING
+            self._emit_display_state_event()
+
+            # Prepare historical actions
+            actions_by_street = hand_data.get("actions", {}) or {}
+            self.historical_actions = self._flatten_historical_actions(actions_by_street)
+            self.action_index = 0
+
+            return True
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_system("ERROR", "HANDS_REVIEW_LOAD", f"Failed to load hand: {e}")
+            return False
+
+    def step_forward(self) -> bool:
+        """Execute the next historical action if available."""
+        try:
+            if self.action_index >= len(self.historical_actions):
+                # Already complete; emit hand_complete once
+                self._emit_event(
+                    GameEvent(event_type="hand_complete", timestamp=time.time(), data={"hand_number": self.hand_number})
+                )
+                return False
+
+            act = self.historical_actions[self.action_index]
+            action_type = str(act.get("action_type", "fold")).lower()
+            amount = float(act.get("amount", 0.0) or 0.0)
+
+            # Determine current player by sequence; prefer provided player index/name
+            player_idx = self.action_player_index
+            name = act.get("player_name")
+            seat = act.get("player_seat")
+            if seat is not None:
+                # Seats are 1-based; our players are in table order; try to find SeatX name
+                target = f"Seat{int(seat)}"
+                for i, p in enumerate(self.game_state.players):
+                    if p.name == target:
+                        player_idx = i
+                        break
+            elif name:
+                for i, p in enumerate(self.game_state.players):
+                    if p.name == name:
+                        player_idx = i
+                        break
+
+            # Execute mapped action
+            player = self.game_state.players[player_idx]
+            from .poker_types import ActionType as AT
+            if action_type == "fold":
+                ok = self.execute_action(player, AT.FOLD, 0.0)
+            elif action_type == "check":
+                ok = self.execute_action(player, AT.CHECK, 0.0)
+            elif action_type == "call":
+                call_amt = max(0.0, self.game_state.current_bet - player.current_bet)
+                ok = self.execute_action(player, AT.CALL, call_amt)
+            elif action_type == "bet":
+                ok = self.execute_action(player, AT.BET, amount)
+            elif action_type == "raise":
+                ok = self.execute_action(player, AT.RAISE, amount)
+            else:
+                ok = self.execute_action(player, AT.CHECK, 0.0)
+
+            # Advance pointer if executed (or even if failed to avoid infinite loop)
+            self.action_index += 1
+            return bool(ok)
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_system("ERROR", "HANDS_REVIEW_STEP", f"Error in step_forward: {e}")
+            return False
 
     def _sync_next_action_player_with_engine(self):
         """Align the next action player with the engine's next actor id."""
@@ -537,6 +736,115 @@ class HandsReviewBotSession(BotSessionStateMachine):
         self._emit_display_state_event()
         
         print(f"🃏 HANDS_REVIEW: Hand initialized with preloaded data, street={self.game_state.street}")
+        
+    def _start_hand_from_hand_model(self, hand_model: Hand):
+        """Initialize the poker session from a robust Hand Model object."""
+        from .poker_types import Player, PokerState
+        
+        print(f"🃏 HAND_MODEL: Starting hand {hand_model.metadata.hand_id}")
+        print(f"🃏 HAND_MODEL: Players: {len(hand_model.seats)}")
+        
+        # Create players from Hand Model seats (with hole cards)
+        loaded_players = []
+        for seat in hand_model.seats:
+            # Hand Model contains hole cards in metadata format - extract the actual cards
+            hole_cards = []
+            if hasattr(hand_model.metadata, 'hole_cards') and seat.player_uid in hand_model.metadata.hole_cards:
+                hole_cards = hand_model.metadata.hole_cards[seat.player_uid]
+            
+            player = Player(
+                name=seat.player_uid,  # Use canonical player UID (e.g., "seat1")
+                stack=seat.starting_stack,  # Use starting stack from Hand Model
+                position='UTG',  # Position will be set by the state machine
+                is_human=False,  # All hands review are bots
+                is_active=True,  # All players start active
+                cards=hole_cards,  # Use hole cards from Hand Model
+                current_bet=0.0,  # Always start with clean slate
+                has_folded=False,  # No one folded initially
+                has_acted_this_round=False,  # Fresh round
+                is_all_in=False  # No one all-in initially
+            )
+            loaded_players.append(player)
+        
+        print(f"🃏 HAND_MODEL: Loaded {len(loaded_players)} players")
+        for i, player in enumerate(loaded_players):
+            print(f"🃏 HAND_MODEL: {player.name} -> {player.cards} (stack: ${player.stack})")
+        
+        # Set up clean game state
+        self.hand_number += 1
+        self.current_state = PokerState.START_HAND
+        
+        # Set the players directly from Hand Model
+        self.game_state.players = loaded_players
+        
+        # Initialize pristine poker state
+        self.game_state.pot = 0.0
+        self.game_state.current_bet = 0.0
+        self.game_state.street = 'preflop'
+        self.game_state.board = []
+        
+        # Set dealer and blind positions
+        self.dealer_position = 0  # Hand Model doesn't store button position, use default
+        
+        if self.config.num_players == 2:
+            self.small_blind_position = self.dealer_position
+            self.big_blind_position = (self.dealer_position + 1) % self.config.num_players
+        else:
+            self.small_blind_position = (self.dealer_position + 1) % self.config.num_players
+            self.big_blind_position = (self.dealer_position + 2) % self.config.num_players
+        
+        # Post blinds to set up correct initial state
+        sb_player = self.game_state.players[self.small_blind_position]
+        bb_player = self.game_state.players[self.big_blind_position]
+        
+        sb_amount = self.config.small_blind
+        bb_amount = self.config.big_blind
+        
+        # CRITICAL: Post blinds correctly
+        sb_player.current_bet = sb_amount
+        sb_player.stack -= sb_amount
+        self.game_state.pot += sb_amount
+        
+        bb_player.current_bet = bb_amount
+        bb_player.stack -= bb_amount
+        self.game_state.pot += bb_amount
+        self.game_state.current_bet = bb_amount
+        
+        # Transition to preflop betting
+        self.current_state = PokerState.PREFLOP_BETTING
+        
+        # Set first action player (same logic as base class)
+        if self.config.num_players == 2:
+            # Heads-up: SB/BTN acts first preflop
+            self.action_player_index = self.small_blind_position
+        else:
+            # Multi-way: First action is UTG (after big blind)
+            self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
+        
+        print(f"🃏 HAND_MODEL: First action player: {self.action_player_index} ({self.game_state.players[self.action_player_index].name})")
+        
+        # Log successful initialization
+        if self.session_logger:
+            self.session_logger.log_system(
+                "INFO", "HANDS_REVIEW_HAND_MODEL",
+                f"Hand Model session started: {hand_model.metadata.hand_id}",
+                {
+                    "hand_id": hand_model.metadata.hand_id,
+                    "players": [p.name for p in loaded_players],
+                    "pot": self.game_state.pot,
+                    "current_bet": self.game_state.current_bet,
+                    "dealer": self.dealer_position,
+                    "sb": self.small_blind_position,
+                    "bb": self.big_blind_position,
+                    "first_action": self.action_player_index
+                }
+            )
+        
+        # Emit initial display state
+        self._emit_display_state_event()
+        
+        print(f"🃏 HAND_MODEL: Hand initialized successfully, street={self.game_state.street}")
+        return True
         
         
         

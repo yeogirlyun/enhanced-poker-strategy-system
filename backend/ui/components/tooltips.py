@@ -181,7 +181,7 @@ class ToolTip:
         self.widget.unbind("<Button-1>")
 
 
-class RichToolTip(ToolTip):
+class RichToolTip:
     """
     Enhanced tooltip with rich text formatting support.
     
@@ -193,8 +193,21 @@ class RichToolTip(ToolTip):
     """
     
     def __init__(self, widget, text, delay=1000, duration=5000):
-        super().__init__(widget, text, delay, duration)
+        self.widget = widget
+        self.text = text
+        self.delay = delay
+        self.duration = duration
+        self.tooltip_window = None
         self.formatted_text = self._format_text(text)
+        
+        # Bind events
+        self.widget.bind("<Enter>", self._rich_on_enter)
+        self.widget.bind("<Leave>", self._rich_on_leave)
+        self.widget.bind("<Button-1>", self._rich_on_click)
+        
+        # Schedule show/hide
+        self._show_after_id = None
+        self._hide_after_id = None
 
     def _format_text(self, text):
         """Format text with basic markdown-like syntax."""
@@ -213,9 +226,44 @@ class RichToolTip(ToolTip):
             formatted_lines.append(line)
         
         return '\n'.join(formatted_lines)
-
-    def show_tooltip(self, event=None):
-        """Show the tooltip with formatted text."""
+    
+    def _rich_on_enter(self, event):
+        """Handle mouse enter - schedule tooltip display."""
+        self._rich_schedule_show()
+    
+    def _rich_on_leave(self, event):
+        """Handle mouse leave - hide tooltip immediately."""
+        self._rich_hide_tooltip()
+    
+    def _rich_on_click(self, event):
+        """Handle click - hide tooltip."""
+        self._rich_hide_tooltip()
+    
+    def _rich_schedule_show(self):
+        """Schedule tooltip display after delay."""
+        self._rich_hide_tooltip()  # Cancel any pending hide
+        self._show_after_id = self.widget.after(self.delay, self.show_rich_tooltip)
+    
+    def _rich_schedule_hide(self):
+        """Schedule tooltip hide after duration."""
+        self._hide_after_id = self.widget.after(self.duration, self._rich_hide_tooltip)
+    
+    def _rich_hide_tooltip(self):
+        """Hide the tooltip immediately."""
+        if self._show_after_id:
+            self.widget.after_cancel(self._show_after_id)
+            self._show_after_id = None
+        
+        if self._hide_after_id:
+            self.widget.after_cancel(self._hide_after_id)
+            self._hide_after_id = None
+        
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+    
+    def show_rich_tooltip(self, event=None):
+        """Show the rich tooltip with formatted text."""
         if self.tooltip_window or not self.formatted_text:
             return
 
@@ -264,10 +312,40 @@ class RichToolTip(ToolTip):
         text_widget.config(height=min(content_height, 8))  # Max 8 lines
         
         # Ensure tooltip stays within screen bounds
-        self._adjust_position(tw)
+        self._rich_adjust_position(tw)
         
         # Schedule auto-hide
-        self._schedule_hide()
+        self._rich_schedule_hide()
+    
+    def _rich_adjust_position(self, tooltip_window):
+        """Adjust rich tooltip position to stay within screen bounds."""
+        # Get screen dimensions
+        screen_width = tooltip_window.winfo_screenwidth()
+        screen_height = tooltip_window.winfo_screenheight()
+        
+        # Get tooltip dimensions
+        tooltip_window.update_idletasks()
+        tooltip_width = tooltip_window.winfo_width()
+        tooltip_height = tooltip_window.winfo_height()
+        
+        # Get current position
+        x = tooltip_window.winfo_x()
+        y = tooltip_window.winfo_y()
+        
+        # Adjust X position if tooltip goes off right edge
+        if x + tooltip_width > screen_width:
+            x = screen_width - tooltip_width - 10
+        
+        # Adjust Y position if tooltip goes off bottom edge
+        if y + tooltip_height > screen_height:
+            y = y - tooltip_height - 50  # Move above widget
+        
+        # Ensure minimum positions
+        x = max(0, x)
+        y = max(0, y)
+        
+        # Apply adjusted position
+        tooltip_window.geometry(f"+{x}+{y}")
 
 
 # --- Usage Examples ---

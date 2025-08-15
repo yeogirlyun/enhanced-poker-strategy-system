@@ -1,0 +1,201 @@
+{
+  "metadata": {
+    "table_id": "Legendary-Table-1",
+    "hand_id": "CH002",
+    "variant": "NLHE",
+    "max_players": 2,
+    "small_blind": 5,
+    "big_blind": 10,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "button_seat_no": 1,
+    "hole_cards": {
+      "seat1": [
+        "7h",
+        "8h"
+      ],
+      "seat2": [
+        "Kh",
+        "Kd"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_uid": "seat1",
+      "display_name": "Player1",
+      "starting_stack": 1000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_uid": "seat2",
+      "display_name": "Player2",
+      "starting_stack": 1000,
+      "is_button": false
+    }
+  ],
+  "hero_player_uid": "seat1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "street": "PREFLOP",
+          "actor_uid": "seat1",
+          "action": "POST_BLIND",
+          "amount": 5,
+          "to_amount": 5,
+          "all_in": false,
+          "note": null,
+          "posting_meta": {
+            "blind_type": "SB"
+          }
+        },
+        {
+          "order": 2,
+          "street": "PREFLOP",
+          "actor_uid": "seat2",
+          "action": "POST_BLIND",
+          "amount": 10,
+          "to_amount": 10,
+          "all_in": false,
+          "note": null,
+          "posting_meta": {
+            "blind_type": "BB"
+          }
+        },
+        {
+          "order": 3,
+          "street": "PREFLOP",
+          "actor_uid": "seat1",
+          "action": "RAISE",
+          "amount": 30,
+          "to_amount": 30,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "street": "PREFLOP",
+          "actor_uid": "seat2",
+          "action": "CALL",
+          "amount": 30,
+          "to_amount": 30,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "Ks",
+        "Qd",
+        "Jd"
+      ],
+      "actions": [
+        {
+          "order": 5,
+          "street": "FLOP",
+          "actor_uid": "seat1",
+          "action": "BET",
+          "amount": 60,
+          "to_amount": 60,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 6,
+          "street": "FLOP",
+          "actor_uid": "seat2",
+          "action": "CALL",
+          "amount": 60,
+          "to_amount": 60,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "Ks",
+        "Qd",
+        "Jd",
+        "Kc"
+      ],
+      "actions": [
+        {
+          "order": 7,
+          "street": "TURN",
+          "actor_uid": "seat1",
+          "action": "BET",
+          "amount": 150,
+          "to_amount": 150,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "street": "TURN",
+          "actor_uid": "seat2",
+          "action": "CALL",
+          "amount": 150,
+          "to_amount": 150,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "RIVER": {
+      "board": [
+        "Ks",
+        "Qd",
+        "Jd",
+        "Kc",
+        "Td"
+      ],
+      "actions": [
+        {
+          "order": 9,
+          "street": "RIVER",
+          "actor_uid": "seat1",
+          "action": "BET",
+          "amount": 760,
+          "to_amount": 760,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 10,
+          "street": "RIVER",
+          "actor_uid": "seat2",
+          "action": "CALL",
+          "amount": 760,
+          "to_amount": 760,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

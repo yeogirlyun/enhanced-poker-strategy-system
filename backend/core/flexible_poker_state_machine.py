@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from .poker_types import ActionType, Player, GameState, PokerState
 
 from .deuces_hand_evaluator import DeucesHandEvaluator
-from .position_mapping import HandHistoryManager
+# from .position_mapping import HandHistoryManager  # Removed - unused functionality
 from utils.sound_manager import SoundManager
 from .session_logger import get_session_logger
 
@@ -136,7 +136,7 @@ class FlexiblePokerStateMachine:
 
         # Strategy integration (optional)
         self.strategy_integration = self._create_basic_strategy_integration()
-        self.hand_history_manager = HandHistoryManager()
+        # self.hand_history_manager = HandHistoryManager()  # Removed - unused
 
         # Callbacks (for backward compatibility)
         self.on_action_required: Optional[Callable] = None
@@ -251,8 +251,9 @@ class FlexiblePokerStateMachine:
         """Initialize players for the game."""
         self.game_state.players = []
         for i in range(self.config.num_players):
+            # Enforce canonical Seat* uid for identity
             player = Player(
-                name=f"Player {i + 1}",
+                name=f"Seat{i + 1}",
                 stack=self.config.starting_stack,
                 position="",
                 is_human=False,
@@ -1066,7 +1067,7 @@ class FlexiblePokerStateMachine:
         action_event = GameEvent(
             event_type="action_executed",
             timestamp=time.time(),
-            player_name=player.name,
+            player_name=player.name,  # canonical Seat*
             action=action,
             amount=amount,
         )

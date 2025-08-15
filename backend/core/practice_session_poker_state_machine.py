@@ -78,8 +78,7 @@ class PracticeSessionPokerStateMachine(FlexiblePokerStateMachine):
         self.strategy_data = strategy_data
         self.practice_mode = True
 
-        # GameDirector integration for event-driven architecture
-        self.game_director = None  # Will be set when GameDirector is created
+
 
         # Initialize improved GTO strategy engine for bot decision making
         if self.logger:
@@ -371,9 +370,7 @@ Pot: ${self.game_state.pot:.2f}"""
                             "state": self.current_state.name,
                         },
                     )
-                # GameDirector now handles bot scheduling
-                if self.game_director:
-                    self.game_director.schedule_next_bot_action()
+
             else:
                 if self.logger:
                     self.logger.log_system(
@@ -490,9 +487,7 @@ Pot: ${self.game_state.pot:.2f}"""
                     f"Transition scheduling: New state {new_state} is a betting state",
                     {"new_state": new_state.name},
                 )
-            # GameDirector now handles bot scheduling
-            if self.game_director:
-                self.game_director.schedule_next_bot_action()
+
         else:
             if self.logger:
                 self.logger.log_system(

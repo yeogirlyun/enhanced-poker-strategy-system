@@ -1078,55 +1078,15 @@ class GTOSimulationPanel(ttk.Frame):
         
         return right_frame
     
-    def _add_gto_explanation(self, message: str):
-        """Add a message to the GTO explanation area."""
-        if hasattr(self, "gto_explanation_text"):
-            self.gto_explanation_text.config(state=tk.NORMAL)
-            self.gto_explanation_text.delete(1.0, tk.END)
-            self.gto_explanation_text.insert(tk.END, message)
-            self.gto_explanation_text.config(state=tk.DISABLED)
-            self.gto_explanation_text.see(tk.END)
+    # Removed duplicate _add_gto_explanation method - defined earlier in file
     
-
-    
-    def _add_game_message(self, message: str):
-        """Add a message to the game message area."""
-        if hasattr(self, "game_message_text"):
-            self.game_message_text.config(state="normal")
-            
-            # Get current content and split into lines
-            current_content = self.game_message_text.get("1.0", tk.END).strip()
-            lines = current_content.split("\n") if current_content else []
-            
-            # Add new message
-            lines.append(message)
-            
-            # Keep only the last 2 lines
-            lines = lines[-2:]
-            
-            # Ensure we always have exactly 2 lines
-            while len(lines) < 2:
-                lines.insert(0, "")
-            
-            # Clear and set new content
-            self.game_message_text.delete("1.0", tk.END)
-            content = "\n".join(lines)
-            self.game_message_text.insert("1.0", content)
-            
-            # Apply centering and vertical padding
-            self.game_message_text.tag_add("center", "1.0", tk.END)
-            self.game_message_text.tag_add("vpad", "1.0", tk.END)
-            
-            self.game_message_text.config(state="disabled")
+    # Removed duplicate _add_game_message method - defined earlier in file
     
 
     
 
     
-    def _auto_play(self):
-        """Automatically play through the hand."""
-        # TODO: Implement auto-play functionality
-        self._update_game_message("Auto-play not yet implemented")
+    # Removed duplicate _auto_play method - defined earlier in file
     
     def _pause_auto_play(self):
         """Pause auto-play."""

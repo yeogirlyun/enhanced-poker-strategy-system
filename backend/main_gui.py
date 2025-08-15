@@ -2401,21 +2401,7 @@ def main():
         # Continue without logger rather than crash
         logger = None
 
-    # Setup enhanced graceful shutdown
-    def signal_handler(signum, frame):
-        print(
-            f"\n🔄 Received shutdown signal {signum} - gracefully exiting..."
-        )
-        if logger:
-            logger.log_system(
-                "INFO",
-                "SHUTDOWN",
-                f"Received signal {signum}",
-                {"signal": signum},
-            )
-        print("💾 Session data will be saved automatically...")
-        # The SessionLogger will handle the actual cleanup
-        sys.exit(0)
+    # Setup enhanced graceful shutdown - using existing signal_handler function
 
     def cleanup_on_exit():
         print("👋 Thank you for using Poker Training System!")

@@ -64,8 +64,7 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         # Store the state machine
         self.state_machine = state_machine
 
-        # GameDirector integration
-        self.game_director = None
+
 
         # Event loop detection to prevent infinite loops
         self.event_history = []
@@ -3621,83 +3620,9 @@ class ReusablePokerGameWidget(ttk.Frame, EventListener):
         if self.state_machine:
             self._update_from_fpsm_state()
 
-    def set_game_director(self, game_director):
-        """Set the game director for this widget."""
-        self.game_director = game_director
-        debug_log("GameDirector set for UI widget", "GAME_DIRECTOR")
 
-    def render_current_state(self):
-        """Pure render function - updates UI from current game state."""
-        if not self.game_director:
-            # Fallback to old method if no GameDirector
-            self._update_from_fpsm_state()
-            return
 
-        try:
-            # Get current state from GameDirector (single source of truth)
-            game_state = self.game_director.get_current_state()
 
-            if game_state:
-                # Render immediately from current state
-                self._render_from_game_state(game_state)
-            else:
-                debug_log(
-                    "No game state available for rendering", "GAME_DIRECTOR"
-                )
-
-        except Exception as e:
-            debug_log(f"Error in render_current_state: {e}", "GAME_DIRECTOR")
-            # Fallback to old method
-            self._update_from_fpsm_state()
-
-    def _render_from_game_state(self, game_state: dict):
-        """Render UI from game state dict (pure render function)."""
-        try:
-            # Update players
-            for i, player_info in enumerate(game_state.get("players", [])):
-                if i < len(self.player_seats) and self.player_seats[i]:
-                    self._update_player_from_display_state(i, player_info)
-
-            # Update community cards
-            board_cards = game_state.get("board", [])
-            filtered = [
-                c
-                for c in board_cards
-                if isinstance(c, str) and len(c) in (2, 3) and c != "**"
-            ]
-            self._update_community_cards_from_display_state(filtered)
-
-            # Update pot
-            pot_amount = game_state.get("pot", 0.0)
-            self.update_pot_amount(pot_amount)
-
-            # Store display state for dealer button update
-            self.last_display_state = game_state
-
-            # Update dealer button
-            self._update_dealer_button_display()
-
-            # Update current action player highlight (only if hand is still
-            # active)
-            action_player_index = game_state.get("action_player", -1)
-            current_state = game_state.get("current_state")
-
-            if (
-                action_player_index >= 0
-                and action_player_index < len(self.player_seats)
-                and "END_HAND" not in str(current_state)
-                and "SHOWDOWN" not in str(current_state)
-            ):
-                self._highlight_current_player(action_player_index)
-            elif "SHOWDOWN" in str(current_state):
-                # Clear highlights only for SHOWDOWN, not END_HAND (preserve
-                # winner highlighting)
-                self._reset_all_highlights()
-
-        except Exception as e:
-            debug_log(
-                f"Error in _render_from_game_state: {e}", "GAME_DIRECTOR"
-            )
 
     def _update_from_fpsm_state(self):
         """Update the entire display based on FPSM's current state."""

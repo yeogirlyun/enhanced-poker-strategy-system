@@ -103,9 +103,9 @@ class ActionType(str, Enum):
 
 @dataclass
 class Seat:
-    """Player seat information."""
+    """Player seat information (canonical UID)."""
     seat_no: int
-    player_id: str
+    player_uid: str
     display_name: Optional[str] = None
     starting_stack: int = 0  # in chips (or your base unit)
     is_button: bool = False
@@ -120,7 +120,7 @@ class Action:
     """One atomic action in order as it occurred."""
     order: int
     street: Street
-    actor_id: Optional[str]        # None for deal markers / system actions
+    actor_uid: Optional[str]        # None for deal markers / system actions
     action: ActionType
     amount: int = 0                # Incremental chips put in with THIS action (0 for check/fold)
     to_amount: Optional[int] = None  # Player's total contribution on this street *after* this action
@@ -137,20 +137,20 @@ class StreetState:
 @dataclass
 class PotShare:
     """Distribution result for a single pot (main or side)."""
-    player_id: str
+    player_uid: str
     amount: int          # chips collected from this pot
 
 @dataclass
 class Pot:
     """Pot information with eligibility and final distribution."""
     amount: int                  # total pot size before distribution (after rake taken if applicable)
-    eligible_player_ids: List[str]   # who was eligible for this pot when it formed
+    eligible_player_uids: List[str]   # who was eligible for this pot when it formed
     shares: List[PotShare] = field(default_factory=list)  # actual distribution at showdown
 
 @dataclass
 class ShowdownEntry:
     """Showdown information for a player."""
-    player_id: str
+    player_uid: str
     hole_cards: Optional[List[str]] = None  # None if mucked unseen
     hand_rank: Optional[str] = None         # "Full House", "Two Pair", etc.
     hand_description: Optional[str] = None  # "Aces full of Kings", etc.
@@ -177,7 +177,7 @@ class HandMetadata:
     session_type: Optional[str] = None  # "gto", "practice", "review"
     bot_strategy: Optional[str] = None   # "gto_v1", "loose_aggressive", etc.
     analysis_tags: List[str] = field(default_factory=list)  # ["premium_cards", "3bet_pot"]
-    hole_cards: Dict[str, List[str]] = field(default_factory=dict)  # player_id -> [card1, card2]
+    hole_cards: Dict[str, List[str]] = field(default_factory=dict)  # player_uid -> [card1, card2]
 
 @dataclass
 class Hand:
@@ -190,7 +190,7 @@ class Hand:
     """
     metadata: HandMetadata
     seats: List[Seat]
-    hero_player_id: Optional[str] = None  # if you want to mark a perspective
+    hero_player_uid: Optional[str] = None  # if you want to mark a perspective
     
     # Streets: store all actions and board per street for exact replay
     streets: Dict[Street, StreetState] = field(default_factory=lambda: {
@@ -203,7 +203,7 @@ class Hand:
     # Final state
     pots: List[Pot] = field(default_factory=list)
     showdown: List[ShowdownEntry] = field(default_factory=list)
-    final_stacks: Dict[str, int] = field(default_factory=dict)  # player_id -> ending stack
+    final_stacks: Dict[str, int] = field(default_factory=dict)  # player_uid -> ending stack
 
     # ------------- Serialization helpers -------------
     def to_dict(self) -> Dict[str, Any]:
@@ -275,10 +275,22 @@ class Hand:
                 })
             except Exception:
                 pass
+        # Add button seat if present (forward-compat)
+        if "button_seat_no" in md:
+            try:
+                setattr(metadata, "button_seat_no", int(md["button_seat_no"]))
+            except Exception:
+                pass
         
-        # Seats
-        seats = [Seat(**s) for s in d["seats"]]
-        hero = d.get("hero_player_id")
+        # Seats: accept either player_uid or legacy player_id; store as player_uid
+        seats = []
+        for s in d["seats"]:
+            s2 = dict(s)
+            if "player_id" in s2 and "player_uid" not in s2:
+                s2["player_uid"] = s2.pop("player_id")
+            seats.append(Seat(**s2))
+        # Hero uid alias
+        hero = d.get("hero_player_uid") or d.get("hero_player_id")
         
         # Streets
         streets: Dict[Street, StreetState] = {}
@@ -289,15 +301,19 @@ class Hand:
             actions: List[Action] = []
             for a in actions_in:
                 pm = a.get("posting_meta")
+                a2 = dict(a)
+                # actor id alias → actor_uid
+                if "actor_id" in a2 and "actor_uid" not in a2:
+                    a2["actor_uid"] = a2.pop("actor_id")
                 actions.append(Action(
-                    order=a["order"],
-                    street=Street(a["street"]),
-                    actor_id=a.get("actor_id"),
-                    action=ActionType(a["action"]),
-                    amount=a.get("amount", 0),
-                    to_amount=a.get("to_amount"),
-                    all_in=a.get("all_in", False),
-                    note=a.get("note"),
+                    order=a2["order"],
+                    street=Street(a2["street"]),
+                    actor_uid=a2.get("actor_uid"),
+                    action=ActionType(a2["action"]),
+                    amount=a2.get("amount", 0),
+                    to_amount=a2.get("to_amount"),
+                    all_in=a2.get("all_in", False),
+                    note=a2.get("note"),
                     posting_meta=PostingMeta(**pm) if pm else None,
                 ))
             streets[st_enum] = StreetState(board=s.get("board", []), actions=actions)
@@ -305,10 +321,18 @@ class Hand:
         # Pots
         pots = []
         for p in d.get("pots", []):
-            shares = [PotShare(**ps) for ps in p.get("shares", [])]
+            p2 = dict(p)
+            eligible = p2.get("eligible_player_uids") or p2.get("eligible_player_ids") or []
+            shares_in = p2.get("shares", [])
+            shares = []
+            for ps in shares_in:
+                ps2 = dict(ps)
+                if "player_id" in ps2 and "player_uid" not in ps2:
+                    ps2["player_uid"] = ps2.pop("player_id")
+                shares.append(PotShare(**ps2))
             pots.append(Pot(
-                amount=p["amount"], 
-                eligible_player_ids=p["eligible_player_ids"], 
+                amount=p2["amount"], 
+                eligible_player_uids=eligible, 
                 shares=shares
             ))
 
@@ -319,7 +343,7 @@ class Hand:
         return Hand(
             metadata=metadata,
             seats=seats,
-            hero_player_id=hero,
+            hero_player_uid=hero,
             streets=streets or {
                 Street.PREFLOP: StreetState(),
                 Street.FLOP: StreetState(),

@@ -20,8 +20,8 @@ import json
 import os
 import hashlib
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field
-from enum import Enum
+# from dataclasses import dataclass, field  # Removed - unused
+# from enum import Enum  # Removed - unused
 
 # Use internal backend module imports (run from backend/ per project convention)
 try:
@@ -34,57 +34,8 @@ try:
     from ui.components.reusable_poker_game_widget import ReusablePokerGameWidget
     from core.flexible_poker_state_machine import GameConfig
 except ImportError as e:
-    print(f"Import warning: {e}. Using fallbacks.")
-    # Fallback definitions if imports fail
-    class Hand:
-        def __init__(self, **kwargs):
-            # Set default attributes
-            self.actions = kwargs.get('actions', [])
-            self.metadata = kwargs.get('metadata', {})
-            self.seats = kwargs.get('seats', [])
-            # Set any other attributes
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-    
-    class HandModelDecisionEngine:
-        def __init__(self, hand):
-            self.hand = hand
-            self.current_step = 0
-            self.total_steps = len(getattr(hand, 'actions', []))
-        
-        def get_decision(self, player_id, game_state):
-            if self.current_step >= self.total_steps:
-                return ("CHECK", 0, "Hand complete")
-            action = self.hand.actions[self.current_step]
-            self.current_step += 1
-            return (action.action_type, action.amount, f"Replaying: {action.action_type}")
-        
-        def reset(self):
-            self.current_step = 0
-    
-    class GTOToHandConverter:
-        @staticmethod
-        def convert_gto_hand(gto_data):
-            return Hand(actions=[], metadata={})
-    class LegendaryToHandConverter:
-        def convert_hand(self, data):
-            return Hand(actions=[], metadata={})
-    def is_legendary_hand_obj(obj):
-        return False
-    
-    class HandsReviewBotSession:
-        def __init__(self, *args, **kwargs):
-            self.game_state = None
-    
-    class ReusablePokerGameWidget(ttk.Frame):
-        def __init__(self, parent, **kwargs):
-            super().__init__(parent)
-    
-    class GameConfig:
-        def __init__(self, **kwargs):
-            pass
-    
-    # Fallback theme
+    print(f"Import warning: {e}. Using minimal fallbacks.")
+    # Minimal fallback theme only
     THEME = {
         "primary_bg": "#2D3748",
         "widget_bg": "#4A5568", 
@@ -423,8 +374,8 @@ class UnifiedHandsReviewPanel(ttk.Frame):
             raise
     
     def _normalize_player_id(self, player_id: str) -> str:
-        """Normalize player ID format (e.g., 'Player 1' -> 'Player1')."""
-        return player_id.replace(' ', '')
+        """Normalize to canonical uid (lowercased, no spaces)."""
+        return (player_id or "").replace(' ', '').lower()
     
     def _load_selected_hand(self):
         """Load the selected hand for review (following GTO session architecture)."""

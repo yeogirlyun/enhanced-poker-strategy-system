@@ -136,7 +136,7 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
         # Check player properties
         for i, player in enumerate(players):
             self.assertIsInstance(player, Player)
-            self.assertEqual(player.name, f"Player {i + 1}")
+            self.assertEqual(player.name, f"Seat{i + 1}")
             self.assertEqual(player.stack, 200.0)
             self.assertTrue(player.is_active)
             self.assertEqual(len(player.cards), 0)  # No cards dealt yet
@@ -925,55 +925,68 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
         self.assertEqual(winners1, winners2)
 
     def test_historical_action_order_compatibility(self):
-        """Test FPSM compatibility with historical action sequences."""
-        print("\n🎯 Testing historical action order compatibility...")
+        """Test FPSM compatibility using the new Hand Model dataset."""
+        print("\n🎯 Testing historical action order compatibility (Hand Model)...")
 
-        # Load test data if available
-        json_file_path = "data/legendary_hands_complete_130_fixed.json"
-
+        # Load Hand-Model data
+        json_file_path = "data/legendary_hands.json"
         if not os.path.exists(json_file_path):
-            self.skipTest(f"Historical data file not found: {json_file_path}")
+            self.skipTest(f"Hand-Model data file not found: {json_file_path}")
 
         try:
             with open(json_file_path, "r", encoding="utf-8") as f:
                 json_data = json.load(f)
-
-            # Test first 3 hands for performance
-            hands = json_data["hands"][:3]
-
+            hands_in = json_data.get("hands", [])
+            # Test first 3 hands
+            hands = hands_in[:3]
         except Exception as e:
-            self.skipTest(f"Could not load historical data: {e}")
+            self.skipTest(f"Could not load hand-model data: {e}")
+
+        # Import Hand model locally to avoid changing top imports
+        from core.hand_model import Hand, Street
 
         successful_tests = 0
         total_tests = len(hands)
 
-        for i, hand_data in enumerate(hands):
-            hand_name = hand_data["name"]
+        for i, hand_dict in enumerate(hands):
+            try:
+                hand = Hand.from_dict(hand_dict)
+                hand_name = hand.metadata.hand_id
+            except Exception:
+                hand = None
+                hand_name = hand_dict.get("metadata", {}).get("hand_id", f"#{i+1}")
             print(f"  Testing hand {i + 1}/{total_tests}: {hand_name}")
 
             try:
-                # Create FPSM instance for this hand
+                # Derive config from metadata
+                md = hand.metadata
+                num_players = len(hand.seats)
                 config = TestableGameConfig(
-                    num_players=hand_data["game_config"]["num_players"],
-                    big_blind=hand_data["game_config"]["big_blind"],
-                    small_blind=hand_data["game_config"]["small_blind"],
+                    num_players=num_players,
+                    big_blind=float(md.big_blind),
+                    small_blind=float(md.small_blind),
                     starting_stack=1000.0,
                     test_mode=True,
                 )
                 fpsm = TestablePokerStateMachine(config)
 
-                # Create players from historical data
+                # Create players from seats (use canonical Seat* uid)
+                # Use metadata.hole_cards if available
+                hole = getattr(md, 'hole_cards', {}) or {}
                 players = []
-                for player_data in hand_data["players"]:
-                    player = Player(
-                        name=player_data["name"],
-                        stack=player_data["starting_stack"],
-                        position="BTN",  # Will be reassigned by FPSM
-                        is_human=False,
-                        is_active=True,
-                        cards=player_data.get("hole_cards", ["**", "**"]),
+                for seat in hand.seats:
+                    uid = getattr(seat, 'player_uid', None)
+                    cards = hole.get(uid, ["**", "**"])
+                    players.append(
+                        Player(
+                            name=uid,
+                            stack=float(seat.starting_stack),
+                            position="BTN",
+                            is_human=False,
+                            is_active=True,
+                            cards=cards,
+                        )
                     )
-                    players.append(player)
 
                 # Start the hand
                 fpsm.start_hand(existing_players=players)
@@ -981,34 +994,24 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
                 # Verify FPSM can handle the basic setup
                 self.assertIsNotNone(fpsm.game_state)
                 self.assertEqual(len(fpsm.game_state.players), len(players))
-                self.assertGreater(
-                    fpsm.game_state.pot, 0
-                )  # Should have blinds posted
+                self.assertGreater(fpsm.game_state.pot, 0)  # blinds posted
 
-                # Test basic FPSM functionality with historical data structure
+                # Analyze action structure from Hand model
                 action_types_found = set()
                 historical_actions_count = 0
+                for st in [Street.PREFLOP, Street.FLOP, Street.TURN, Street.RIVER]:
+                    s = hand.streets.get(st)
+                    if not s:
+                        continue
+                    for a in s.actions:
+                        # Only count standard betting actions for this check
+                        at = (a.action.value if hasattr(a.action, 'value') else str(a.action)).lower()
+                        action_types_found.add(at)
+                        historical_actions_count += 1
 
-                # Analyze historical action structure
-                for street in ["preflop", "flop", "turn", "river"]:
-                    if street in hand_data["actions"]:
-                        for action_data in hand_data["actions"][street]:
-                            action_type_str = action_data[
-                                "action_type"
-                            ].lower()
-                            action_types_found.add(action_type_str)
-                            historical_actions_count += 1
-
-                # Test that FPSM can handle common poker actions
                 common_actions = {"fold", "check", "call", "bet", "raise"}
-                historical_actions_recognized = (
-                    action_types_found.intersection(common_actions)
-                )
+                historical_actions_recognized = action_types_found.intersection(common_actions)
 
-                # Consider test successful if:
-                # 1. FPSM was initialized with historical data
-                # 2. Historical data contains recognizable poker actions
-                # 3. FPSM state is valid after setup
                 if (
                     historical_actions_count > 0
                     and len(historical_actions_recognized) > 0
@@ -1025,21 +1028,15 @@ class ConsolidatedFlexiblePokerStateMachineTest(unittest.TestCase):
 
             except Exception as e:
                 print(f"    ❌ ERROR - {str(e)}")
-                # Don't fail the test for data compatibility issues
                 continue
 
-        # Report results
         success_rate = (successful_tests / max(1, total_tests)) * 100
-        print(
-            f"\n📊 Historical compatibility: {successful_tests}/{total_tests} ({success_rate:.1f}%)"
-        )
+        print(f"\n📊 Historical compatibility: {successful_tests}/{total_tests} ({success_rate:.1f}%)")
 
-        # Test should pass if FPSM can handle at least basic historical data
-        # structure
         self.assertGreater(
             successful_tests,
             0,
-            "FPSM should be able to process historical poker data",
+            "FPSM should be able to process Hand-Model poker data",
         )
 
         print("✅ Historical action order compatibility test completed")

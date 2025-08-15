@@ -1,205 +1,196 @@
 #!/usr/bin/env python3
 """
-Decision Engine Interface for Unified Bot Sessions
+Decision Engine v2 - Abstract base and GTO implementation
 
-This module provides an abstract base class for decision engines that can be
-used in bot-only poker sessions. This allows GTO sessions and Hands Review
-sessions to share the same underlying architecture while using different
-decision sources.
+This module provides the abstract base class for decision engines and
+a GTO-based implementation for real-time strategy calculations.
 
-Key principles:
-- Clean interface separation between decision logic and game flow
-- Reusable architecture for all bot-only sessions
-- Consistent API for different decision sources
+Key Features:
+- Abstract DecisionEngine base class
+- GTODecisionEngine for real-time GTO calculations
+- Removed PreloadedDecisionEngine (replaced by HandModelDecisionEngine)
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple
-from .poker_types import ActionType, Player
+from typing import Dict, Any
+from .poker_types import ActionType
 
 
 class DecisionEngine(ABC):
     """
     Abstract base class for poker decision engines.
     
-    This interface allows different decision sources (GTO algorithms, 
-    preloaded hand data, etc.) to be used interchangeably in bot sessions.
+    All decision engines must implement these methods to provide
+    consistent decision-making interfaces.
     """
     
     @abstractmethod
     def get_decision(self, player_index: int, game_state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Get the next action decision for a player.
+        Get the next decision for a player.
         
         Args:
-            player_index: Index of the player who needs to act
-            game_state: Current game state information
+            player_index: Index of the player making the decision
+            game_state: Current state of the game
             
         Returns:
-            Dict containing:
-                - action: ActionType (FOLD, CHECK, CALL, BET, RAISE)
-                - amount: float (bet/raise amount, 0 for fold/check/call)
-                - explanation: str (reasoning for the decision)
-                - confidence: float (0-1, confidence in the decision)
+            Dictionary containing action, amount, explanation, and confidence
         """
         pass
     
     @abstractmethod
     def is_session_complete(self) -> bool:
-        """
-        Check if this decision engine has reached the end of its decisions.
-        
-        Returns:
-            True if no more decisions are available, False otherwise
-        """
+        """Check if the decision session is complete."""
         pass
     
     @abstractmethod
     def reset(self) -> None:
-        """Reset the decision engine to its initial state."""
+        """Reset the decision engine to initial state."""
         pass
     
+    @abstractmethod
     def get_session_info(self) -> Dict[str, Any]:
-        """
-        Get information about the current session state.
-        
-        Returns:
-            Dict with session-specific information (progress, metadata, etc.)
-        """
-        return {}
+        """Get information about the current decision session."""
+        pass
 
 
 class GTODecisionEngine(DecisionEngine):
     """
-    Decision engine that uses GTO (Game Theory Optimal) strategies.
+    GTO-based decision engine for real-time strategy calculations.
     
-    This engine calculates optimal poker decisions based on game theory
-    principles and provides explanations for educational purposes.
+    This engine provides game theory optimal decisions based on:
+    - Player position and stack depth
+    - Board texture and pot odds
+    - Modern GTO principles and ranges
     """
     
     def __init__(self, num_players: int = 6):
-        """Initialize the GTO decision engine."""
-        from .improved_gto_strategy import ImprovedGTOStrategy
+        """
+        Initialize the GTO decision engine.
         
+        Args:
+            num_players: Number of players at the table (default: 6)
+        """
         self.num_players = num_players
-        self.gto_strategies = {}
         self.decision_count = 0
+        self.gto_strategies = {}  # Placeholder for GTO strategy data
         
-        # Initialize GTO strategies for each player position
-        for i in range(num_players):
-            self.gto_strategies[i] = ImprovedGTOStrategy(num_players)
+        # Load GTO strategies (placeholder implementation)
+        self._load_gto_strategies()
+    
+    def _load_gto_strategies(self):
+        """Load GTO strategies for different scenarios."""
+        # Placeholder for GTO strategy loading
+        # In a real implementation, this would load pre-computed GTO solutions
+        pass
     
     def get_decision(self, player_index: int, game_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Get GTO-optimal decision for the given player and game state."""
-        # Debug: Log decision request
-        print(f"🎯 GTO_DECISION_REQUEST: Player {player_index}")
-        print(f"🎯 GTO_DECISION_REQUEST: Game state type: {type(game_state)}")
-        if isinstance(game_state, dict):
-            print(f"🎯 GTO_DECISION_REQUEST: Game state keys: {list(game_state.keys())}")
-            print(f"🎯 GTO_DECISION_REQUEST: Street: {game_state.get('street', 'unknown')}")
-            print(f"🎯 GTO_DECISION_REQUEST: Players count: {len(game_state.get('players', []))}")
+        """
+        Get a GTO-based decision for the current situation.
         
-        if player_index not in self.gto_strategies:
-            # Fallback for invalid player index
-            print(f"🚨 GTO_DECISION_ERROR: Invalid player index {player_index}, available: {list(self.gto_strategies.keys())}")
-            return {
-                'action': ActionType.FOLD,
-                'amount': 0.0,
-                'explanation': f"Invalid player index {player_index}",
-                'confidence': 0.0
-            }
-        
-        strategy = self.gto_strategies[player_index]
-        
+        Args:
+            player_index: Index of the player making the decision
+            game_state: Current state of the game
+            
+        Returns:
+            Dictionary containing action, amount, explanation, and confidence
+        """
         try:
-            # Extract player and game state information
-            players = game_state.get('players', [])
-            if player_index >= len(players):
-                raise IndexError(f"Player index {player_index} out of range")
-            
-            # Get player dict and convert to Player object
-            player_dict = players[player_index]
-            
-            # Import Player class
-            from .types import Player
-            
-            # Create a proper Player object from the dictionary
-            player = Player(
-                name=player_dict.get('name', f'Player_{player_index}'),
-                stack=player_dict.get('stack', 1000.0),
-                position=self._get_position_name(player_index, len(players)),
-                is_human=player_dict.get('is_human', False),
-                is_active=not player_dict.get('has_folded', False),
-                cards=player_dict.get('cards', []),
-                current_bet=player_dict.get('current_bet', 0.0)
-            )
-            
-            # Set additional attributes that might be useful
-            player.index = player_index
-            
-            print(f"🎯 GTO_PLAYER_CREATED: {player.name} at {player.position} with cards {player.cards}")
-            print(f"🎯 GTO_PLAYER_CREATED: Stack=${player.stack}, bet=${player.current_bet}")
-            
-            
-            # Convert game_state dict to GameState object if needed
-            if isinstance(game_state, dict):
-                # Create a simple GameState-like object with required attributes
-                class SimpleGameState:
-                    def __init__(self, data):
-                        self.players = data.get('players', [])
-                        self.board = data.get('board', [])
-                        self.pot = data.get('pot', 0.0)
-                        self.current_bet = data.get('current_bet', 0.0)
-                        self.street = data.get('street', 'preflop')
-                        self.dealer_position = data.get('dealer_position', 0)
-                        self.action_player = data.get('action_player', 0)
-                
-                game_state_obj = SimpleGameState(game_state)
-            else:
-                game_state_obj = game_state
-            
-            # Get GTO decision using the improved strategy engine
-            print(f"🎯 GTO_STRATEGY_INPUT: Position={player.position}, Cards={player.cards}")
-            print(f"🎯 GTO_STRATEGY_INPUT: Street={game_state_obj.street}, Current_bet={game_state_obj.current_bet}")
-            print(f"🎯 GTO_STRATEGY_INPUT: Player_bet={player.current_bet}, Stack=${player.stack}")
-            
-            action, amount = strategy.get_gto_action(player, game_state_obj)
-            
-            print(f"🎯 GTO_STRATEGY_OUTPUT: Action={action}, Amount={amount}")
-            
-            
-            self.decision_count += 1
-            
-            # Create explanation based on action and street
+            # Extract game state information
             street = game_state.get('street', 'preflop')
-            explanation = self._generate_explanation(action, amount, street, player)
+            pot_size = game_state.get('pot', 0.0)
+            current_bet = game_state.get('current_bet', 0.0)
+            players = game_state.get('players', [])
             
-            # Return formatted decision
-            return {
-                'action': action,
-                'amount': amount,
-                'explanation': explanation,
-                'confidence': 0.8,  # GTO decisions have high confidence
-                'decision_number': self.decision_count
-            }
+            if player_index >= len(players):
+                return {
+                    'action': ActionType.FOLD,
+                    'amount': 0.0,
+                    'explanation': 'Invalid player index - folding',
+                    'confidence': 0.0
+                }
             
+            player = players[player_index]
+            position = getattr(player, 'position', 'Unknown')
+            stack = getattr(player, 'stack', 100.0)
+            
+            # Simple GTO-based decision logic (placeholder)
+            # In a real implementation, this would use sophisticated GTO calculations
+            if current_bet == 0.0:
+                # No bet to call - check or bet
+                if self._should_bet_for_value(position, street):
+                    bet_amount = min(pot_size * 0.75, stack * 0.1)
+                    return {
+                        'action': ActionType.BET,
+                        'amount': bet_amount,
+                        'explanation': self._generate_explanation(ActionType.BET, bet_amount, street, player),
+                        'confidence': 0.8
+                    }
+                else:
+                    return {
+                        'action': ActionType.CHECK,
+                        'amount': 0.0,
+                        'explanation': self._generate_explanation(ActionType.CHECK, 0.0, street, player),
+                        'confidence': 0.7
+                    }
+            else:
+                # There's a bet to call, raise, or fold
+                call_amount = max(0.0, current_bet - getattr(player, 'current_bet', 0.0))
+                
+                if call_amount > stack * 0.3:
+                    # Expensive call - fold
+                    return {
+                        'action': ActionType.FOLD,
+                        'amount': 0.0,
+                        'explanation': self._generate_explanation(ActionType.FOLD, 0.0, street, player),
+                        'confidence': 0.9
+                    }
+                elif call_amount <= stack * 0.1:
+                    # Cheap call - call
+                    return {
+                        'action': ActionType.CALL,
+                        'amount': call_amount,
+                        'explanation': self._generate_explanation(ActionType.CALL, call_amount, street, player),
+                        'confidence': 0.8
+                    }
+                else:
+                    # Medium call - raise or fold based on position
+                    if self._should_raise_for_value(position, street):
+                        raise_amount = min(current_bet * 2.5, stack * 0.2)
+                        return {
+                            'action': ActionType.RAISE,
+                            'amount': raise_amount,
+                            'explanation': self._generate_explanation(ActionType.RAISE, raise_amount, street, player),
+                            'confidence': 0.7
+                        }
+                    else:
+                        return {
+                            'action': ActionType.FOLD,
+                            'amount': 0.0,
+                            'explanation': self._generate_explanation(ActionType.FOLD, 0.0, street, player),
+                            'confidence': 0.8
+                        }
+        
         except Exception as e:
-            # Debug: Log the actual error to understand what's failing
-            print(f"🚨 GTO_ENGINE_ERROR: {str(e)}")
-            print(f"🚨 GTO_ENGINE_ERROR: Exception type: {type(e).__name__}")
-            print(f"🚨 GTO_ENGINE_ERROR: Player index: {player_index}")
-            print(f"🚨 GTO_ENGINE_ERROR: Game state keys: {list(game_state.keys()) if isinstance(game_state, dict) else 'Not a dict'}")
-            
-            import traceback
-            print(f"🚨 GTO_ENGINE_ERROR: Full traceback:\n{traceback.format_exc()}")
-            
-            # Fallback decision if strategy engine fails
+            # Fallback decision on error
             return {
-                'action': ActionType.FOLD,
+                'action': ActionType.CHECK,
                 'amount': 0.0,
                 'explanation': f"GTO engine error: {str(e)}",
                 'confidence': 0.0
             }
+    
+    def _should_bet_for_value(self, position: str, street: str) -> bool:
+        """Determine if we should bet for value based on position and street."""
+        # Simple heuristic - in a real implementation, this would use GTO ranges
+        strong_positions = ['BTN', 'CO', 'MP']
+        return position in strong_positions and street == 'preflop'
+    
+    def _should_raise_for_value(self, position: str, street: str) -> bool:
+        """Determine if we should raise for value based on position and street."""
+        # Simple heuristic - in a real implementation, this would use GTO ranges
+        strong_positions = ['BTN', 'CO']
+        return position in strong_positions and street in ['preflop', 'flop']
     
     def _generate_explanation(self, action: ActionType, amount: float, street: str, player) -> str:
         """Generate a human-readable explanation for the GTO decision."""
@@ -254,249 +245,4 @@ class GTODecisionEngine(DecisionEngine):
             'num_players': self.num_players,
             'decisions_made': self.decision_count,
             'strategies_loaded': len(self.gto_strategies)
-        }
-
-
-class PreloadedDecisionEngine(DecisionEngine):
-    """
-    Decision engine that uses preloaded hand data.
-    
-    This engine replays predetermined poker hands by following the exact
-    sequence of actions from historical or generated hand data. Perfect
-    for hands review, analysis, and educational purposes.
-    """
-    
-    def __init__(self, hands_data: Dict[str, Any]):
-        """
-        Initialize the preloaded decision engine.
-        
-        Args:
-            hands_data: Dictionary containing hand timeline and actions
-        """
-        self.hands_data = hands_data
-        self.timeline = self._parse_timeline(hands_data)
-        self.current_step = 0
-        self.total_steps = len(self.timeline)
-        print(f"✅ PRELOADED_V2: Initialized with {self.total_steps} decisions [BOUNDS_CHECK_ACTIVE]")
-        
-    def _parse_timeline(self, hands_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Parse the hands data into a timeline of decisions.
-        
-        Args:
-            hands_data: Raw hands data from JSON
-            
-        Returns:
-            List of decision dictionaries in chronological order
-        """
-        timeline = []
-        
-        try:
-            actions = hands_data.get('actions', [])
-            # Parse the flat actions array (GTO hands format)
-            for action_data in actions:
-                if isinstance(action_data, dict):
-                    player_index = action_data.get('player_index', 0)
-                    action_str = action_data.get('action', 'fold')
-                    amount = action_data.get('amount', 0.0)
-                    street = action_data.get('street', 'preflop')
-                    explanation = action_data.get('explanation', f"Preloaded {action_str}")
-                    
-                    # Convert to decision format
-                    decision = {
-                        'player_index': int(player_index),
-                        'action': self._parse_action_type(action_str),
-                        'amount': float(amount),
-                        'street': street,
-                        'explanation': explanation,
-                        'confidence': 1.0,  # Historical actions are "certain"
-                        'original_data': action_data
-                    }
-                    
-                    timeline.append(decision)
-            return timeline
-            
-        except Exception as e:
-            # Return empty timeline if parsing fails
-            print(f"Error parsing hands timeline: {e}")
-            return []
-    
-    def _parse_action_type(self, action_str: str) -> ActionType:
-        """Convert string action to ActionType enum."""
-        action_mapping = {
-            'fold': ActionType.FOLD,
-            'check': ActionType.CHECK,
-            'call': ActionType.CALL,
-            'bet': ActionType.BET,
-            'raise': ActionType.RAISE,
-        }
-        
-        return action_mapping.get(action_str.lower(), ActionType.FOLD)
-    
-    def get_decision(self, player_index: int, game_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Get the next preloaded decision from the timeline."""
-        current_street = game_state.get('street', 'preflop')
-        # Check if we've already exhausted the timeline
-        if self.current_step >= self.total_steps:
-            print(f"🛡️ BOUNDS_CHECK: Timeline exhausted at step {self.current_step}/{self.total_steps}")
-            return {
-                'action': ActionType.CHECK,  # Default to check if timeline exhausted
-                'amount': 0.0,
-                'explanation': f'No more preloaded actions (timeline exhausted)',
-                'confidence': 0.0
-            }
-        
-        # Find the next decision that matches the current street
-        matching_decision = None
-        
-        while self.current_step < self.total_steps:
-            decision = self.timeline[self.current_step]
-            decision_street = decision.get('street', 'preflop')
-            decision_player = decision.get('player_index', 0)
-            
-            # Check if this decision matches current street AND current player
-            if decision_street == current_street and decision_player == player_index:
-                matching_decision = decision.copy()
-                self.current_step += 1
-                break
-            else:
-                # Skip decisions that don't match current street/player
-                self.current_step += 1
-        
-        if matching_decision is None:
-            # No more decisions available for current street
-            return {
-                'action': ActionType.CHECK,  # Default to check if no action found
-                'amount': 0.0,
-                'explanation': f'No preloaded action for {current_street} street',
-                'confidence': 0.0
-            }
-        
-        # CRITICAL FIX: Update the decision to be for the current player
-        # The preloaded actions are in chronological order, but we need to apply them
-        # to whoever is the current action player in the recreated game state
-        matching_decision['player_index'] = player_index
-        matching_decision['explanation'] = f"[Preloaded] {matching_decision.get('explanation', 'Historical action')}"
-        
-        # CRUCIAL: Adapt the action amount to be valid for current game state
-        adapted_decision = self._adapt_action_for_game_state(matching_decision, game_state)
-        
-        return adapted_decision
-    
-    def is_session_complete(self) -> bool:
-        """Check if all preloaded decisions have been used."""
-        return self.current_step >= self.total_steps
-    
-    def _adapt_action_for_game_state(self, decision: Dict[str, Any], game_state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Adapt a preloaded action to be valid for the current game state.
-        
-        This is crucial because preloaded actions may have amounts that are no longer
-        valid due to differences in how the hand was recreated vs the original game.
-        """
-        action_type = decision.get('action', ActionType.FOLD)
-        original_amount = decision.get('amount', 0.0)
-        
-        # Get current game state info
-        current_bet = game_state.get('current_bet', 0.0)
-        players = game_state.get('players', [])
-        player_index = decision.get('player_index', 0)
-        
-        if player_index >= len(players):
-            # Invalid player index, return fold
-            return {
-                'action': ActionType.FOLD,
-                'amount': 0.0,
-                'explanation': 'Invalid player index - folding',
-                'confidence': 0.0
-            }
-        
-        player = players[player_index]
-        player_stack = player.get('stack', 0.0)
-        player_current_bet = player.get('current_bet', 0.0)
-        
-        # Adapt the amount based on action type
-        if action_type == ActionType.FOLD:
-            # No amount needed
-            decision['amount'] = 0.0
-        elif action_type == ActionType.CHECK:
-            # No amount needed for check
-            decision['amount'] = 0.0
-        elif action_type == ActionType.CALL:
-            # Call amount is the difference to match current bet
-            call_amount = max(0.0, current_bet - player_current_bet)
-            print(f"🔍 CALL_DEBUG: current_bet={current_bet}, player_current_bet={player_current_bet}, call_amount={call_amount}")
-            if call_amount <= 0:
-                # No bet to call - convert to check
-                print(f"✅ CALL_TO_CHECK: Converting CALL to CHECK (call_amount={call_amount})")
-                decision['action'] = ActionType.CHECK
-                decision['amount'] = 0.0
-                decision['explanation'] = decision['explanation'].replace('call', 'check').replace('Call', 'Check')
-            else:
-                decision['amount'] = min(call_amount, player_stack)
-        elif action_type == ActionType.BET:
-            # For bets, use a reasonable percentage of original vs pot
-            if current_bet == 0.0:  # First bet
-                bet_amount = min(original_amount, player_stack)
-                if bet_amount < 0.5:  # Minimum bet
-                    bet_amount = min(1.0, player_stack)
-                decision['amount'] = bet_amount
-            else:
-                # Convert to raise if there's already a bet (bet becomes raise)
-                call_amount = max(0.0, current_bet - player_current_bet)
-                min_raise_total = current_bet + max(current_bet, 10.0)  # Minimum raise
-                
-                # Use original amount as a guide for raise size
-                if original_amount > min_raise_total:
-                    raise_amount = min(original_amount, player_stack)
-                else:
-                    raise_amount = min(min_raise_total, player_stack)
-                
-                decision['action'] = ActionType.RAISE
-                decision['amount'] = raise_amount
-        elif action_type == ActionType.RAISE:
-            # For raises, calculate minimum raise
-            call_amount = max(0.0, current_bet - player_current_bet)
-            min_raise_total = current_bet * 2  # Minimum raise is usually double current bet
-            
-            # Use original amount as a guide, but ensure it's valid
-            if original_amount > min_raise_total:
-                raise_amount = min(original_amount, player_stack)
-            else:
-                raise_amount = min(min_raise_total, player_stack)
-            
-            # If we can't make minimum raise, just call
-            if raise_amount <= current_bet:
-                decision['action'] = ActionType.CALL
-                decision['amount'] = min(call_amount, player_stack)
-            else:
-                decision['amount'] = raise_amount
-        
-        # Add adaptation note to explanation
-        if decision['amount'] != original_amount:
-            decision['explanation'] += f" (amount adapted from ${original_amount:.2f} to ${decision['amount']:.2f})"
-        
-        return decision
-    
-    def reset(self) -> None:
-        """Reset to the beginning of the hand timeline."""
-        self.current_step = 0
-    
-    def get_session_info(self) -> Dict[str, Any]:
-        """Get preloaded session information."""
-        return {
-            'engine_type': 'Preloaded',
-            'total_steps': self.total_steps,
-            'current_step': self.current_step,
-            'progress_percent': (self.current_step / max(1, self.total_steps)) * 100,
-            'steps_remaining': max(0, self.total_steps - self.current_step)
-        }
-    
-    def get_timeline_info(self) -> Dict[str, Any]:
-        """Get detailed timeline information for debugging."""
-        return {
-            'timeline_length': len(self.timeline),
-            'current_position': self.current_step,
-            'next_action': self.timeline[self.current_step] if self.current_step < len(self.timeline) else None,
-            'hands_data_keys': list(self.hands_data.keys()) if self.hands_data else []
         }

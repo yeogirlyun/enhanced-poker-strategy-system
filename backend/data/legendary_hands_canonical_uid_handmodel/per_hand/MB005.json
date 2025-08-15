@@ -1,0 +1,234 @@
+{
+  "metadata": {
+    "table_id": "Legendary-Table-1",
+    "hand_id": "MB005",
+    "variant": "NLHE",
+    "max_players": 2,
+    "small_blind": 5,
+    "big_blind": 10,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "button_seat_no": 1,
+    "hole_cards": {
+      "seat1": [
+        "5d",
+        "4d"
+      ],
+      "seat2": [
+        "Qc",
+        "9h"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_uid": "seat1",
+      "display_name": "Bluffer",
+      "starting_stack": 2000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_uid": "seat2",
+      "display_name": "Caller",
+      "starting_stack": 1800,
+      "is_button": false
+    }
+  ],
+  "hero_player_uid": "seat1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "street": "PREFLOP",
+          "actor_uid": "seat1",
+          "action": "POST_BLIND",
+          "amount": 5,
+          "to_amount": 5,
+          "all_in": false,
+          "note": null,
+          "posting_meta": {
+            "blind_type": "SB"
+          }
+        },
+        {
+          "order": 2,
+          "street": "PREFLOP",
+          "actor_uid": "seat2",
+          "action": "POST_BLIND",
+          "amount": 10,
+          "to_amount": 10,
+          "all_in": false,
+          "note": null,
+          "posting_meta": {
+            "blind_type": "BB"
+          }
+        },
+        {
+          "order": 3,
+          "street": "PREFLOP",
+          "actor_uid": "seat1",
+          "action": "RAISE",
+          "amount": 100,
+          "to_amount": 100,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 4,
+          "street": "PREFLOP",
+          "actor_uid": "seat2",
+          "action": "CALL",
+          "amount": 100,
+          "to_amount": 100,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "9s",
+        "2d",
+        "6s"
+      ],
+      "actions": [
+        {
+          "order": 5,
+          "street": "FLOP",
+          "actor_uid": "seat2",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 6,
+          "street": "FLOP",
+          "actor_uid": "seat1",
+          "action": "BET",
+          "amount": 175,
+          "to_amount": 175,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 7,
+          "street": "FLOP",
+          "actor_uid": "seat2",
+          "action": "RAISE",
+          "amount": 500,
+          "to_amount": 500,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 8,
+          "street": "FLOP",
+          "actor_uid": "seat1",
+          "action": "CALL",
+          "amount": 325,
+          "to_amount": 325,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "9s",
+        "2d",
+        "6s",
+        "8h"
+      ],
+      "actions": [
+        {
+          "order": 9,
+          "street": "TURN",
+          "actor_uid": "seat2",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 10,
+          "street": "TURN",
+          "actor_uid": "seat1",
+          "action": "CHECK",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    },
+    "RIVER": {
+      "board": [
+        "9s",
+        "2d",
+        "6s",
+        "8h",
+        "3h"
+      ],
+      "actions": [
+        {
+          "order": 11,
+          "street": "RIVER",
+          "actor_uid": "seat2",
+          "action": "BET",
+          "amount": 300,
+          "to_amount": 300,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 12,
+          "street": "RIVER",
+          "actor_uid": "seat1",
+          "action": "RAISE",
+          "amount": 1600,
+          "to_amount": 1600,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        },
+        {
+          "order": 13,
+          "street": "RIVER",
+          "actor_uid": "seat2",
+          "action": "FOLD",
+          "amount": 0,
+          "to_amount": null,
+          "all_in": false,
+          "note": null,
+          "posting_meta": null
+        }
+      ]
+    }
+  },
+  "pots": [],
+  "showdown": [],
+  "final_stacks": {}
+}

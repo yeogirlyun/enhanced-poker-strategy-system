@@ -17,52 +17,61 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from typing import List
+from typing import Any, Dict, List
 
-# Run-from-backend imports
-from core.hand_model import Hand
-from core.legendary_to_hand_converter import convert_legendary_collection
-
-
-def ensure_dir(path: str) -> None:
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
+# Local imports
+from core.legendary_to_hand_converter import convert_legendary_collection, is_legendary_hand_obj, LegendaryToHandConverter
 
 
-def save_hand(outdir: str, hand: Hand) -> str:
-    hand_id = hand.metadata.hand_id or "LEG-UNKNOWN"
-    # Sanitize filename
-    safe_id = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in hand_id)
-    outpath = os.path.join(outdir, f"{safe_id}.json")
-    hand.save_json(outpath)
-    return outpath
+def load_json(path: str) -> Any:
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Convert legendary JSON to Hand model files")
-    parser.add_argument("--input", required=True, help="Path to legendary JSON file")
-    parser.add_argument("--outdir", required=True, help="Directory to write Hand model JSON files")
+def save_json(path: str, data: Any) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Convert legendary JSON to Hand-model JSONs with canonical Seat* UIDs")
+    parser.add_argument('--input', '-i', required=True, help='Path to legendary JSON (dict with hands:[...]) or list of hand dicts')
+    parser.add_argument('--out_dir', '-o', required=True, help='Directory to write per-hand JSON files')
+    parser.add_argument('--combined', '-c', help='Optional combined JSON (array of Hand objects)')
     args = parser.parse_args()
 
-    ensure_dir(args.outdir)
+    raw = load_json(args.input)
 
-    with open(args.input, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    # Normalize to collection dict for the converter
+    if isinstance(raw, dict) and 'hands' in raw:
+        collection = raw
+    elif isinstance(raw, list):
+        collection = {'hands': raw}
+    else:
+        raise SystemExit('Input must be list of hands or dict with hands key')
 
-    hands: List[Hand] = convert_legendary_collection(data)
-    index = []
-    for h in hands:
-        path = save_hand(args.outdir, h)
-        index.append({"hand_id": h.metadata.hand_id, "path": path})
+    hands = convert_legendary_collection(collection)
+    print(f"Converted {len(hands)} hands")
 
-    with open(os.path.join(args.outdir, "hands_index.json"), "w", encoding="utf-8") as f:
-        json.dump({"count": len(index), "hands": index}, f, ensure_ascii=False, indent=2)
+    # Save individual files
+    count = 0
+    for hand in hands:
+        hand_id = hand.metadata.hand_id or f"LEG-{count+1:04d}"
+        out_path = os.path.join(args.out_dir, f"{hand_id}.json")
+        save_json(out_path, hand.to_dict())
+        count += 1
 
-    print(f"Converted {len(index)} hands → {args.outdir}")
-    return 0
+    print(f"Wrote {count} hand-model JSONs to {args.out_dir}")
+
+    # Save combined if requested
+    if args.combined:
+        combined_data = [h.to_dict() for h in hands]
+        save_json(args.combined, combined_data)
+        print(f"Wrote combined file to {args.combined}")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__ == '__main__':
+    main()
 
 

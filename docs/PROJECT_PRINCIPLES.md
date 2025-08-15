@@ -24,7 +24,7 @@ This document is the reference for AI/code review enforcement. All code, data, a
 
 ### 4) FPSM + Decision Engine
 - FPSM `Player.name == player_uid`. Maintain `uid↔index` maps; do not rely on display names.
-- Review mode: before each step, sync `action_player_index` to the engine’s next `actor_uid`.
+- Review mode: before each step, sync `action_player_index` to the engine's next `actor_uid`.
 - Street timing & animations depend on events: emit `action_executed`, `round_complete`, `state_change` deterministically.
 - Heads-up rules are codified: BTN posts SB, BB acts last preflop; postflop BTN acts first.
 
@@ -37,7 +37,7 @@ This document is the reference for AI/code review enforcement. All code, data, a
 - `order` strictly increasing; FLOP/TURN/RIVER board sizes 3/4/5 with continuity.
 - If `pots[]` present: `sum(shares) == amount`. If `final_stacks` present: chip conservation `sum(starting) == sum(final) + rake`.
 - Preflop has at most one SB and BB; straddle chain labeled in order.
-- Every action’s `actor_uid` ∈ `{Seat1..SeatN}`; no display names in actions.
+- Every action's `actor_uid` ∈ `{Seat1..SeatN}`; no display names in actions.
 
 ### 7) Backward Compatibility
 - Accept legacy `player_id`/`actor_id`; normalize once at ingress to `player_uid/actor_uid` and store canonical values.
@@ -59,5 +59,60 @@ This document is the reference for AI/code review enforcement. All code, data, a
 ### 10) Future-proofing
 - Support `metadata.run_count > 1` by allowing `streets[STREET].board_runs` while keeping `board` for single-run hands.
 - Keep `seat_uid` optional for debug-rich builds where seat numbering semantics differ across sources.
+
+### 11) DUPLICATE CODE PREVENTION — CRITICAL ENFORCEMENT
+**MANDATORY: All AI models and developers MUST follow these rules to prevent debugging nightmares.**
+
+#### 11.1 Pre-Development Duplicate Audit
+- **BEFORE writing any new code**, run `python3 py_duplicate_def_auditor.py --root .` to ensure 0 duplicates
+- **NEVER proceed** if duplicates are found - fix them first
+- **REJECT any PR** that introduces new duplicates
+
+#### 11.2 Strict Naming Conventions
+- **Class names**: Must be unique across the entire project
+- **Method names**: Must be unique within each class (inheritance overrides are legitimate)
+- **Function names**: Must be unique at module level (local functions are legitimate)
+- **Variable names**: Must be unique within their scope
+
+#### 11.3 Inheritance and Composition Rules
+- **Prefer composition over inheritance** to reduce method name conflicts
+- **When inheritance is necessary**: Use method overriding, not method redefinition
+- **Nested classes**: Must have unique names from outer classes
+- **Mixins**: Must not conflict with existing method names
+
+#### 11.4 Code Organization Requirements
+- **Single Responsibility**: Each class/function should have one clear purpose
+- **DRY Principle**: Never duplicate logic - extract to shared utilities
+- **Module Separation**: Related functionality should be in separate modules
+- **Interface Contracts**: Use abstract base classes to define clear contracts
+
+#### 11.5 AI Model Requirements
+- **ALWAYS check existing codebase** before proposing new implementations
+- **NEVER suggest duplicate class/method names** without checking conflicts
+- **ALWAYS propose refactoring** if similar functionality exists elsewhere
+- **ALWAYS run duplicate audit** after any code changes
+
+#### 11.6 Debugging Prevention
+- **Duplicate code creates debugging nightmares** because:
+  - Changes in one place don't propagate to duplicates
+  - Bug fixes become inconsistent across duplicates
+  - Code reviews miss duplicate-related issues
+  - Testing becomes unreliable with duplicate logic
+
+#### 11.7 Enforcement Actions
+- **Immediate rejection** of any code that introduces duplicates
+- **Mandatory refactoring** before code review approval
+- **Duplicate audit integration** in CI/CD pipeline
+- **Developer education** on duplicate prevention techniques
+
+#### 11.8 Legacy Duplicate Cleanup
+- **Existing duplicates** must be identified and documented
+- **Refactoring plan** required for any duplicate removal
+- **No new features** until critical duplicates are resolved
+- **Regular audits** to prevent duplicate accumulation
+
+**VIOLATION CONSEQUENCES**: Code with duplicates will be rejected, and developers must complete duplicate prevention training before continuing.
+
+**📖 DETAILED RULES**: See [DUPLICATE_PREVENTION_RULES.md](DUPLICATE_PREVENTION_RULES.md) for comprehensive guidelines.
 
 

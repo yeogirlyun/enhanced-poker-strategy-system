@@ -186,14 +186,11 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             )
         self._setup_ui()
 
-        # Initialize GameDirector after UI is set up
-        self._initialize_game_director()
-
         if self.logger:
             self.logger.log_system(
                 "INFO",
                 "PRACTICE_UI_INIT",
-                "PracticeSessionUI initialization completed successfully",
+                "Practice Session UI initialization completed successfully",
                 {},
             )
             self.logger.log_system(
@@ -202,60 +199,6 @@ class PracticeSessionUI(ttk.Frame, EventListener):
 
         # Initialize table felt style after UI setup
         self._initialize_table_felt()
-
-    def _initialize_game_director(self):
-        """Initialize GameDirector for event-driven architecture."""
-        try:
-            if self.logger:
-                self.logger.log_system(
-                    "INFO",
-                    "GAME_DIRECTOR_INIT",
-                    "Initializing GameDirector",
-                    {},
-                )
-
-            # Import GameDirector
-            from core.game_director import GameDirector
-            from utils.sound_manager import SoundManager
-
-            # Create sound manager
-            sound_manager = SoundManager(test_mode=False)
-
-            # Create GameDirector with all required components
-            self.game_director = GameDirector(
-                state_machine=self.state_machine,
-                ui_renderer=self.poker_widget,
-                audio_manager=sound_manager,
-                session_logger=self.logger,
-            )
-
-            # Set GameDirector in UI widget, state machine, and action
-            # interface
-            self.poker_widget.set_game_director(self.game_director)
-            self.state_machine.set_game_director(self.game_director)
-            self.action_interface.game_director = self.game_director
-
-            # Start GameDirector
-            self.game_director.start()
-
-            if self.logger:
-                self.logger.log_system(
-                    "INFO",
-                    "GAME_DIRECTOR_INIT",
-                    "GameDirector initialized and started successfully",
-                    {},
-                )
-
-        except Exception as e:
-            if self.logger:
-                self.logger.log_system(
-                    "ERROR",
-                    "GAME_DIRECTOR_INIT",
-                    f"Failed to initialize GameDirector: {e}",
-                    {"error": str(e)},
-                )
-            # Continue without GameDirector (fallback mode)
-            self.game_director = None
 
     def on_event(self, event: GameEvent):
         """Handle events from the specialized state machine."""
