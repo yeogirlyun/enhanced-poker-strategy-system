@@ -1,12 +1,10 @@
 """
 UI module for poker strategy practice system.
 
-This module contains the user interface components and
-interaction logic for the poker strategy practice application.
+New UI architecture using EventBus/Store pattern.
 """
 
-from .practice_session_ui import PracticeSessionUI
+# For new UI architecture, AppShell is the main entry point
+# Legacy components can be imported individually when needed
 
-__all__ = [
-    'PracticeSessionUI'
-] 
+__all__ = [] 

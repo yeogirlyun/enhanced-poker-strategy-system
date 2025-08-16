@@ -1,0 +1,13 @@
+{
+  "profile": "Royal Indigo",
+  "fonts": {
+    "main": [
+      "Arial",
+      14
+    ],
+    "pot_display": [
+      "Arial",
+      18
+    ]
+  }
+}

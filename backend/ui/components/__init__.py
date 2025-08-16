@@ -1,35 +1,23 @@
 """
 UI Components module for poker strategy practice system.
 
-This module contains reusable UI components and widgets
-for the poker strategy practice application.
+New UI architecture - only import existing components.
 """
 
-from .tier_panel import TierPanel
-from .decision_table_panel import DecisionTablePanel
-from .hand_grid import HandGridWidget
-from .tooltips import ToolTip, RichToolTip
-from .postflop_hs_editor import PostflopHSEditor
-from .dialogs import TierEditDialog, FileDialog, AboutDialog
-from .dynamic_position_manager import DynamicPositionManager
+# Only import components that actually exist
 from .card_widget import CardWidget
 from .reusable_poker_game_widget import ReusablePokerGameWidget
-# HandsReviewPokerWidget removed - replaced by unified bot session architecture
-from .practice_session_poker_widget import PracticeSessionPokerWidget
+from .modern_poker_widgets import ChipStackDisplay
+
+# These can be imported individually when needed for legacy compatibility
+# from .dialogs import *
+# from .bot_session_widget import *
+# from .practice_session_poker_widget import *
+# from .gto_poker_game_widget import *
+# from .hands_review_panel_unified_legacy import HandsReviewPanelUnified
 
 __all__ = [
-    'TierPanel',
-    'DecisionTablePanel', 
-    'HandGridWidget',
-    'ToolTip',
-    'RichToolTip',
-    'PostflopHSEditor',
-    'TierEditDialog',
-    'FileDialog',
-    'AboutDialog',
-    'DynamicPositionManager',
     'CardWidget',
-    'ReusablePokerGameWidget',
-    # 'HandsReviewPokerWidget', # removed - using unified bot session architecture
-    'PracticeSessionPokerWidget'
+    'ReusablePokerGameWidget', 
+    'ChipStackDisplay'
 ] 

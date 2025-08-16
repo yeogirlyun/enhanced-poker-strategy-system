@@ -7,13 +7,30 @@ Moved to separate module to avoid circular imports.
 """
 
 import tkinter as tk
-from core.gui_models import THEME
+
+# Handle theme import with fallback
+try:
+    from ...core.gui_models import THEME
+except ImportError:
+    try:
+        from core.gui_models import THEME
+    except ImportError:
+        # Fallback theme for when core module is not available
+        THEME = {
+            "card_bg": "#F8FAFC",
+            "card_border": "#E2E8F0", 
+            "text": "#1A202C",
+            "table_felt": "#0F5132"
+        }
 
 
 def debug_log(message: str, category: str = "CARD_WIDGET"):
     """Log debug messages to file instead of console."""
     try:
-        from core.session_logger import get_session_logger
+        try:
+            from ...core.session_logger import get_session_logger
+        except ImportError:
+            from core.session_logger import get_session_logger
         logger = get_session_logger()
         logger.log_system("DEBUG", category, message, {})
     except:

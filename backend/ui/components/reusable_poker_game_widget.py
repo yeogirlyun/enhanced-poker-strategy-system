@@ -7,9 +7,29 @@ by the FPSM's display state. It's designed to be used for both simulation
 and practice sessions, with no independent decision-making.
 """
 
-from core.session_logger import get_session_logger
-from core.flexible_poker_state_machine import EventListener, GameEvent
-from utils.sound_manager import SoundManager
+try:
+    from ...core.session_logger import get_session_logger
+    from ...core.flexible_poker_state_machine import EventListener, GameEvent  
+    from ...utils.sound_manager import SoundManager
+except ImportError:
+    try:
+        from core.session_logger import get_session_logger
+        from core.flexible_poker_state_machine import EventListener, GameEvent
+        from utils.sound_manager import SoundManager
+    except ImportError:
+        # Fallback classes for when imports fail
+        class EventListener:
+            pass
+        class GameEvent:
+            pass
+        class SoundManager:
+            def __init__(self): pass
+            def play_sound(self, *args, **kwargs): pass
+            def stop_all(self): pass
+        def get_session_logger():
+            class FallbackLogger:
+                def log_system(self, *args, **kwargs): pass
+            return FallbackLogger()
 import tkinter as tk
 from tkinter import ttk
 import math
@@ -20,18 +40,27 @@ import time as _time
 from .card_widget import CardWidget
 
 # Import theme and modern widgets
-from core.gui_models import THEME
-from .modern_poker_widgets import ChipStackDisplay
+try:
+    from ...core.gui_models import THEME
+    from ...core.poker_types import ActionType, PokerState
+except ImportError:
+    try:
+        from core.gui_models import THEME
+        from core.poker_types import ActionType, PokerState
+    except ImportError:
+        # Fallback theme and types
+        THEME = {"table_felt": "#2B2F36", "secondary_bg": "#4A5568", "text": "#E2E8F0"}
+        class ActionType:
+            pass
+        class PokerState:
+            pass
 
-# Import types
-from core.poker_types import ActionType, PokerState
+from .modern_poker_widgets import ChipStackDisplay
 
 
 def debug_log(message: str, category: str = "UI_DEBUG"):
     """Log debug messages to file instead of console."""
     try:
-        from core.session_logger import get_session_logger
-
         logger = get_session_logger()
         logger.log_system("DEBUG", category, message, {})
     except BaseException:

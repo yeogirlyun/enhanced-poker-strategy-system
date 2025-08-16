@@ -1,0 +1,68 @@
+{
+  "profile": "Crimson Gold",
+  "fonts": {
+    "main": [
+      "Arial",
+      19,
+      "normal"
+    ],
+    "pot_display": [
+      "Arial",
+      27,
+      "bold"
+    ],
+    "bet_amount": [
+      "Arial",
+      23,
+      "bold"
+    ],
+    "body": [
+      "Consolas",
+      19
+    ],
+    "small": [
+      "Consolas",
+      15
+    ],
+    "header": [
+      "Arial",
+      21,
+      "bold"
+    ],
+    "title": [
+      "Segoe UI",
+      18,
+      "bold"
+    ],
+    "large": [
+      "Segoe UI",
+      16,
+      "bold"
+    ],
+    "player_name": [
+      "Segoe UI",
+      13,
+      "bold"
+    ],
+    "stack_amount": [
+      "Segoe UI",
+      16,
+      "bold"
+    ],
+    "action_button": [
+      "Segoe UI",
+      14,
+      "bold"
+    ],
+    "cards": [
+      "Consolas",
+      14,
+      "bold"
+    ],
+    "stack_bet": [
+      "Segoe UI",
+      16,
+      "bold"
+    ]
+  }
+}

@@ -48,6 +48,17 @@ class HandModelDecisionEngine(DecisionEngine):
         self.total_actions = len(self.actions_for_replay)
         
         print(f"🎯 HAND_MODEL_ENGINE: Initialized with {self.total_actions} betting actions")
+    
+    def get_session_info(self) -> Dict[str, Any]:
+        """Get information about the current decision session."""
+        return {
+            "hand_id": getattr(self.hand, 'hand_id', 'Unknown'),
+            "total_actions": self.total_actions,
+            "current_action": self.current_action_index,
+            "current_street": self.current_street.name if hasattr(self.current_street, 'name') else str(self.current_street),
+            "engine_type": "HandModelDecisionEngine",
+            "session_complete": self.is_session_complete()
+        }
         print(f"   Hand ID: {self.hand.metadata.hand_id}")
         print(f"   Players: {len(self.hand.seats)}")
         self._log_action_summary()

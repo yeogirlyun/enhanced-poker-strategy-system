@@ -21,7 +21,17 @@ from .poker_types import ActionType, Player, GameState, PokerState
 
 from .deuces_hand_evaluator import DeucesHandEvaluator
 # from .position_mapping import HandHistoryManager  # Removed - unused functionality
-from utils.sound_manager import SoundManager
+try:
+    from ..utils.sound_manager import SoundManager
+except ImportError:
+    try:
+        from utils.sound_manager import SoundManager
+    except ImportError:
+        # Fallback: create a mock SoundManager
+        class SoundManager:
+            def __init__(self, *args, **kwargs): pass
+            def play_sound(self, *args, **kwargs): pass
+            def stop_all(self): pass
 from .session_logger import get_session_logger
 
 

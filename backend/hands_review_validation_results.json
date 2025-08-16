@@ -1,0 +1,1810 @@
+{
+  "validation_summary": {
+    "total_hands": 100,
+    "successful_hands": 0,
+    "failed_hands": 100,
+    "timestamp": "2025-01-01T00:00:00Z"
+  },
+  "detailed_results": [
+    {
+      "hand_index": 0,
+      "hand_id": "hand_0",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 1,
+      "hand_id": "hand_1",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 2,
+      "hand_id": "hand_2",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 3,
+      "hand_id": "hand_3",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 4,
+      "hand_id": "hand_4",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 5,
+      "hand_id": "hand_5",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 6,
+      "hand_id": "hand_6",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 7,
+      "hand_id": "hand_7",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 8,
+      "hand_id": "hand_8",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 9,
+      "hand_id": "hand_9",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 10,
+      "hand_id": "hand_10",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 11,
+      "hand_id": "hand_11",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 12,
+      "hand_id": "hand_12",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 13,
+      "hand_id": "hand_13",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 14,
+      "hand_id": "hand_14",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 15,
+      "hand_id": "hand_15",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 16,
+      "hand_id": "hand_16",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 17,
+      "hand_id": "hand_17",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 18,
+      "hand_id": "hand_18",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 19,
+      "hand_id": "hand_19",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=535, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1200, final=1190"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 20,
+      "hand_id": "hand_20",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 21,
+      "hand_id": "hand_21",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 22,
+      "hand_id": "hand_22",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 23,
+      "hand_id": "hand_23",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 24,
+      "hand_id": "hand_24",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 25,
+      "hand_id": "hand_25",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 26,
+      "hand_id": "hand_26",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 27,
+      "hand_id": "hand_27",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 28,
+      "hand_id": "hand_28",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 29,
+      "hand_id": "hand_29",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2915, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 30,
+      "hand_id": "hand_30",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 31,
+      "hand_id": "hand_31",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 32,
+      "hand_id": "hand_32",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 33,
+      "hand_id": "hand_33",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 34,
+      "hand_id": "hand_34",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 35,
+      "hand_id": "hand_35",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 36,
+      "hand_id": "hand_36",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 37,
+      "hand_id": "hand_37",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 38,
+      "hand_id": "hand_38",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 39,
+      "hand_id": "hand_39",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=2015, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 40,
+      "hand_id": "hand_40",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 41,
+      "hand_id": "hand_41",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 42,
+      "hand_id": "hand_42",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 43,
+      "hand_id": "hand_43",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 44,
+      "hand_id": "hand_44",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 45,
+      "hand_id": "hand_45",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 46,
+      "hand_id": "hand_46",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 47,
+      "hand_id": "hand_47",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 48,
+      "hand_id": "hand_48",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 49,
+      "hand_id": "hand_49",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=6015, final=15.0",
+          "Player seat1 stack mismatch: original=5000, final=4995",
+          "Player seat2 stack mismatch: original=4500, final=4490"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 50,
+      "hand_id": "hand_50",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 51,
+      "hand_id": "hand_51",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 52,
+      "hand_id": "hand_52",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 53,
+      "hand_id": "hand_53",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 54,
+      "hand_id": "hand_54",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 55,
+      "hand_id": "hand_55",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 56,
+      "hand_id": "hand_56",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 57,
+      "hand_id": "hand_57",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 58,
+      "hand_id": "hand_58",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 59,
+      "hand_id": "hand_59",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=3815, final=15.0",
+          "Player seat1 stack mismatch: original=2000, final=1995",
+          "Player seat2 stack mismatch: original=1800, final=1790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 60,
+      "hand_id": "hand_60",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 61,
+      "hand_id": "hand_61",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 62,
+      "hand_id": "hand_62",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 63,
+      "hand_id": "hand_63",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 64,
+      "hand_id": "hand_64",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 65,
+      "hand_id": "hand_65",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 66,
+      "hand_id": "hand_66",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 67,
+      "hand_id": "hand_67",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 68,
+      "hand_id": "hand_68",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 69,
+      "hand_id": "hand_69",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=1515, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 70,
+      "hand_id": "hand_70",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=195, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 71,
+      "hand_id": "hand_71",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=205, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 72,
+      "hand_id": "hand_72",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=215, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 73,
+      "hand_id": "hand_73",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=225, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 74,
+      "hand_id": "hand_74",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=195, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 75,
+      "hand_id": "hand_75",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=205, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 76,
+      "hand_id": "hand_76",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=215, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 77,
+      "hand_id": "hand_77",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=225, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 78,
+      "hand_id": "hand_78",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=195, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 79,
+      "hand_id": "hand_79",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=205, final=15.0",
+          "Player seat2 stack mismatch: original=1000, final=995",
+          "Player seat3 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 80,
+      "hand_id": "hand_80",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 81,
+      "hand_id": "hand_81",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 82,
+      "hand_id": "hand_82",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 83,
+      "hand_id": "hand_83",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 84,
+      "hand_id": "hand_84",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 85,
+      "hand_id": "hand_85",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 86,
+      "hand_id": "hand_86",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 87,
+      "hand_id": "hand_87",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 88,
+      "hand_id": "hand_88",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 89,
+      "hand_id": "hand_89",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=795, final=15.0",
+          "Player seat1 stack mismatch: original=1000, final=995",
+          "Player seat2 stack mismatch: original=1000, final=990"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 90,
+      "hand_id": "hand_90",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 91,
+      "hand_id": "hand_91",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 92,
+      "hand_id": "hand_92",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 93,
+      "hand_id": "hand_93",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 94,
+      "hand_id": "hand_94",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 95,
+      "hand_id": "hand_95",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 96,
+      "hand_id": "hand_96",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 97,
+      "hand_id": "hand_97",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 98,
+      "hand_id": "hand_98",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    },
+    {
+      "hand_index": 99,
+      "hand_id": "hand_99",
+      "success": false,
+      "errors": [],
+      "comparison": {
+        "matches": false,
+        "differences": [
+          "Pot size mismatch: original=295, final=15.0",
+          "Player seat1 stack mismatch: original=500, final=495",
+          "Player seat2 stack mismatch: original=800, final=790"
+        ],
+        "stack_matches": false,
+        "pot_matches": false,
+        "action_matches": true
+      },
+      "serialization_match": true
+    }
+  ]
+}

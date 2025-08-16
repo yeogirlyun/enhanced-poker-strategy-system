@@ -1,0 +1,4416 @@
+{
+  "summary": {
+    "total_duplicates": 510,
+    "scanned_directory": ".",
+    "ignore_patterns": [
+      "*/__pycache__/*",
+      "*/logs/*"
+    ],
+    "timestamp": "2025-08-15T20:01:06.596864"
+  },
+  "duplicates": [
+    {
+      "type": "duplicate_top_level_function",
+      "name": "test_session_export_import",
+      "file": "./tests/legacy/comprehensive_test_suite.py",
+      "line": 2493,
+      "severity": "medium",
+      "description": "Top-level function 'test_session_export_import' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "test_comprehensive_session_data",
+      "file": "./tests/legacy/comprehensive_test_suite.py",
+      "line": 2541,
+      "severity": "medium",
+      "description": "Top-level function 'test_comprehensive_session_data' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_should_collect_from_parameters",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 177,
+      "severity": "medium",
+      "description": "Top-level function '_should_collect_from_parameters' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_ConcatenateGenericAlias",
+      "name": "copy_with",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 2037,
+      "severity": "high",
+      "description": "Method 'copy_with' defined multiple times in class '_ConcatenateGenericAlias'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_ConcatenateGenericAlias",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 2047,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class '_ConcatenateGenericAlias'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_is_unpack",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 2479,
+      "severity": "medium",
+      "description": "Top-level function '_is_unpack' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TypeVarTuple",
+      "name": "__init_subclass__",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 2635,
+      "severity": "high",
+      "description": "Method '__init_subclass__' defined multiple times in class 'TypeVarTuple'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_is_param_expr",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 2978,
+      "severity": "medium",
+      "description": "Top-level function '_is_param_expr' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_check_generic",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 3054,
+      "severity": "medium",
+      "description": "Top-level function '_check_generic' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_is_unionable",
+      "file": "./.venv/lib/python3.13/site-packages/typing_extensions.py",
+      "line": 3544,
+      "severity": "medium",
+      "description": "Top-level function '_is_unionable' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BaseSpecifier",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/packaging/specifiers.py",
+      "line": 77,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'BaseSpecifier'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Specifier",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/packaging/specifiers.py",
+      "line": 273,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'Specifier'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpecifierSet",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/packaging/specifiers.py",
+      "line": 753,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'SpecifierSet'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "normalize_and_validate",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_headers.py",
+      "line": 141,
+      "severity": "medium",
+      "description": "Top-level function 'normalize_and_validate' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "normalize_and_validate",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_headers.py",
+      "line": 146,
+      "severity": "medium",
+      "description": "Top-level function 'normalize_and_validate' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "normalize_and_validate",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_headers.py",
+      "line": 152,
+      "severity": "medium",
+      "description": "Top-level function 'normalize_and_validate' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "send",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_connection.py",
+      "line": 508,
+      "severity": "high",
+      "description": "Method 'send' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "send",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_connection.py",
+      "line": 514,
+      "severity": "high",
+      "description": "Method 'send' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "send",
+      "file": "./.venv/lib/python3.13/site-packages/h11/_connection.py",
+      "line": 517,
+      "severity": "high",
+      "description": "Method 'send' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Config",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/config.py",
+      "line": 69,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'Config'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Config",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/config.py",
+      "line": 72,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'Config'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Config",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/config.py",
+      "line": 75,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'Config'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Config",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/config.py",
+      "line": 83,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'Config'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Config",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/config.py",
+      "line": 85,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'Config'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Jinja2Templates",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/templating.py",
+      "line": 77,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Jinja2Templates'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Jinja2Templates",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/templating.py",
+      "line": 84,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Jinja2Templates'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Jinja2Templates",
+      "name": "TemplateResponse",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/templating.py",
+      "line": 147,
+      "severity": "high",
+      "description": "Method 'TemplateResponse' defined multiple times in class 'Jinja2Templates'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Jinja2Templates",
+      "name": "TemplateResponse",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/templating.py",
+      "line": 159,
+      "severity": "high",
+      "description": "Method 'TemplateResponse' defined multiple times in class 'Jinja2Templates'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_async_callable",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/_utils.py",
+      "line": 33,
+      "severity": "medium",
+      "description": "Top-level function 'is_async_callable' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_async_callable",
+      "file": "./.venv/lib/python3.13/site-packages/starlette/_utils.py",
+      "line": 36,
+      "severity": "medium",
+      "description": "Top-level function 'is_async_callable' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GitIgnoreSpec",
+      "name": "from_lines",
+      "file": "./.venv/lib/python3.13/site-packages/pathspec/gitignore.py",
+      "line": 66,
+      "severity": "high",
+      "description": "Method 'from_lines' defined multiple times in class 'GitIgnoreSpec'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GitIgnoreSpec",
+      "name": "from_lines",
+      "file": "./.venv/lib/python3.13/site-packages/pathspec/gitignore.py",
+      "line": 74,
+      "severity": "high",
+      "description": "Method 'from_lines' defined multiple times in class 'GitIgnoreSpec'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_current_context",
+      "file": "./.venv/lib/python3.13/site-packages/click/globals.py",
+      "line": 17,
+      "severity": "medium",
+      "description": "Top-level function 'get_current_context' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_current_context",
+      "file": "./.venv/lib/python3.13/site-packages/click/globals.py",
+      "line": 20,
+      "severity": "medium",
+      "description": "Top-level function 'get_current_context' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Context",
+      "name": "lookup_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 674,
+      "severity": "high",
+      "description": "Method 'lookup_default' defined multiple times in class 'Context'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Context",
+      "name": "lookup_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 678,
+      "severity": "high",
+      "description": "Method 'lookup_default' defined multiple times in class 'Context'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Context",
+      "name": "invoke",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 746,
+      "severity": "high",
+      "description": "Method 'invoke' defined multiple times in class 'Context'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Context",
+      "name": "invoke",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 748,
+      "severity": "high",
+      "description": "Method 'invoke' defined multiple times in class 'Context'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Command",
+      "name": "main",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1286,
+      "severity": "high",
+      "description": "Method 'main' defined multiple times in class 'Command'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Command",
+      "name": "main",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1295,
+      "severity": "high",
+      "description": "Method 'main' defined multiple times in class 'Command'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Group",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1593,
+      "severity": "high",
+      "description": "Method 'command' defined multiple times in class 'Group'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Group",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1597,
+      "severity": "high",
+      "description": "Method 'command' defined multiple times in class 'Group'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Group",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1642,
+      "severity": "high",
+      "description": "Method 'group' defined multiple times in class 'Group'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Group",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 1646,
+      "severity": "high",
+      "description": "Method 'group' defined multiple times in class 'Group'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Parameter",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 2228,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'Parameter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Parameter",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 2232,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'Parameter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Option",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 2908,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'Option'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Option",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/click/core.py",
+      "line": 2912,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'Option'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "progressbar",
+      "file": "./.venv/lib/python3.13/site-packages/click/termui.py",
+      "line": 308,
+      "severity": "medium",
+      "description": "Top-level function 'progressbar' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "progressbar",
+      "file": "./.venv/lib/python3.13/site-packages/click/termui.py",
+      "line": 328,
+      "severity": "medium",
+      "description": "Top-level function 'progressbar' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "edit",
+      "file": "./.venv/lib/python3.13/site-packages/click/termui.py",
+      "line": 698,
+      "severity": "medium",
+      "description": "Top-level function 'edit' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "edit",
+      "file": "./.venv/lib/python3.13/site-packages/click/termui.py",
+      "line": 708,
+      "severity": "medium",
+      "description": "Top-level function 'edit' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "edit",
+      "file": "./.venv/lib/python3.13/site-packages/click/termui.py",
+      "line": 718,
+      "severity": "medium",
+      "description": "Top-level function 'edit' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_get_argv_encoding",
+      "file": "./.venv/lib/python3.13/site-packages/click/_compat.py",
+      "line": 559,
+      "severity": "medium",
+      "description": "Top-level function '_get_argv_encoding' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Editor",
+      "name": "edit",
+      "file": "./.venv/lib/python3.13/site-packages/click/_termui_impl.py",
+      "line": 613,
+      "severity": "high",
+      "description": "Method 'edit' defined multiple times in class 'Editor'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Editor",
+      "name": "edit",
+      "file": "./.venv/lib/python3.13/site-packages/click/_termui_impl.py",
+      "line": 615,
+      "severity": "high",
+      "description": "Method 'edit' defined multiple times in class 'Editor'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "raw_terminal",
+      "file": "./.venv/lib/python3.13/site-packages/click/_termui_impl.py",
+      "line": 805,
+      "severity": "medium",
+      "description": "Top-level function 'raw_terminal' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "getchar",
+      "file": "./.venv/lib/python3.13/site-packages/click/_termui_impl.py",
+      "line": 831,
+      "severity": "medium",
+      "description": "Top-level function 'getchar' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 144,
+      "severity": "medium",
+      "description": "Top-level function 'command' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 153,
+      "severity": "medium",
+      "description": "Top-level function 'command' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 163,
+      "severity": "medium",
+      "description": "Top-level function 'command' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "command",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 168,
+      "severity": "medium",
+      "description": "Top-level function 'command' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 269,
+      "severity": "medium",
+      "description": "Top-level function 'group' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 278,
+      "severity": "medium",
+      "description": "Top-level function 'group' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 288,
+      "severity": "medium",
+      "description": "Top-level function 'group' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "group",
+      "file": "./.venv/lib/python3.13/site-packages/click/decorators.py",
+      "line": 293,
+      "severity": "medium",
+      "description": "Top-level function 'group' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Protocol",
+      "name": "state",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/protocol.py",
+      "line": 173,
+      "severity": "high",
+      "description": "Method 'state' defined multiple times in class 'Protocol'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "connect_socks_proxy",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/client.py",
+      "line": 467,
+      "severity": "medium",
+      "description": "Top-level function 'connect_socks_proxy' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 253,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 256,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 259,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 264,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 268,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 342,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 345,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/connection.py",
+      "line": 347,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 120,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 123,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 126,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 129,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 131,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 206,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 209,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/sync/messages.py",
+      "line": 211,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_socks_proxy",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/client.py",
+      "line": 714,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_socks_proxy' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_uncancel_task",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/async_timeout.py",
+      "line": 62,
+      "severity": "medium",
+      "description": "Top-level function '_uncancel_task' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 250,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 253,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 255,
+      "severity": "high",
+      "description": "Method 'recv' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 328,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 331,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Connection",
+      "name": "recv_streaming",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/connection.py",
+      "line": 333,
+      "severity": "high",
+      "description": "Method 'recv_streaming' defined multiple times in class 'Connection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 123,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 126,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 128,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 192,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 195,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Assembler",
+      "name": "get_iter",
+      "file": "./.venv/lib/python3.13/site-packages/websockets/asyncio/messages.py",
+      "line": 197,
+      "severity": "high",
+      "description": "Method 'get_iter' defined multiple times in class 'Assembler'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Sprite",
+      "name": "layer",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/sprite.py",
+      "line": 239,
+      "severity": "high",
+      "description": "Method 'layer' defined multiple times in class 'Sprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DirtySprite",
+      "name": "visible",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/sprite.py",
+      "line": 325,
+      "severity": "high",
+      "description": "Method 'visible' defined multiple times in class 'DirtySprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DirtySprite",
+      "name": "layer",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/sprite.py",
+      "line": 340,
+      "severity": "high",
+      "description": "Method 'layer' defined multiple times in class 'DirtySprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GroupSingle",
+      "name": "sprite",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/sprite.py",
+      "line": 1453,
+      "severity": "high",
+      "description": "Method 'sprite' defined multiple times in class 'GroupSingle'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "test_sprite",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/tests/sprite_test.py",
+      "line": 643,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'test_sprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "test_sprite",
+      "name": "update",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/tests/sprite_test.py",
+      "line": 646,
+      "severity": "high",
+      "description": "Method 'update' defined multiple times in class 'test_sprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "test_sprite",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/tests/sprite_test.py",
+      "line": 1266,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'test_sprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "test_sprite",
+      "name": "update",
+      "file": "./.venv/lib/python3.13/site-packages/pygame/tests/sprite_test.py",
+      "line": 1269,
+      "severity": "high",
+      "description": "Method 'update' defined multiple times in class 'test_sprite'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IcoImageFile",
+      "name": "size",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/IcoImagePlugin.py",
+      "line": 339,
+      "severity": "high",
+      "description": "Method 'size' defined multiple times in class 'IcoImageFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Jpeg2KImageFile",
+      "name": "reduce",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/Jpeg2KImagePlugin.py",
+      "line": 333,
+      "severity": "high",
+      "description": "Method 'reduce' defined multiple times in class 'Jpeg2KImageFile'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "exif_transpose",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/ImageOps.py",
+      "line": 681,
+      "severity": "medium",
+      "description": "Top-level function 'exif_transpose' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "exif_transpose",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/ImageOps.py",
+      "line": 686,
+      "severity": "medium",
+      "description": "Top-level function 'exif_transpose' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ImageFileDirectory_v2",
+      "name": "legacy_api",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/TiffImagePlugin.py",
+      "line": 631,
+      "severity": "high",
+      "description": "Method 'legacy_api' defined multiple times in class 'ImageFileDirectory_v2'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ImagePalette",
+      "name": "palette",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/ImagePalette.py",
+      "line": 58,
+      "severity": "high",
+      "description": "Method 'palette' defined multiple times in class 'ImagePalette'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ImagePalette",
+      "name": "colors",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/ImagePalette.py",
+      "line": 75,
+      "severity": "high",
+      "description": "Method 'colors' defined multiple times in class 'ImagePalette'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IcnsImageFile",
+      "name": "size",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/IcnsImagePlugin.py",
+      "line": 283,
+      "severity": "high",
+      "description": "Method 'size' defined multiple times in class 'IcnsImageFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Image",
+      "name": "im",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/Image.py",
+      "line": 561,
+      "severity": "high",
+      "description": "Method 'im' defined multiple times in class 'Image'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Image",
+      "name": "readonly",
+      "file": "./.venv/lib/python3.13/site-packages/PIL/Image.py",
+      "line": 585,
+      "severity": "high",
+      "description": "Method 'readonly' defined multiple times in class 'Image'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BlockingPortal",
+      "name": "call",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/from_thread.py",
+      "line": 272,
+      "severity": "high",
+      "description": "Method 'call' defined multiple times in class 'BlockingPortal'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BlockingPortal",
+      "name": "call",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/from_thread.py",
+      "line": 276,
+      "severity": "high",
+      "description": "Method 'call' defined multiple times in class 'BlockingPortal'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BlockingPortal",
+      "name": "start_task_soon",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/from_thread.py",
+      "line": 302,
+      "severity": "high",
+      "description": "Method 'start_task_soon' defined multiple times in class 'BlockingPortal'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BlockingPortal",
+      "name": "start_task_soon",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/from_thread.py",
+      "line": 309,
+      "severity": "high",
+      "description": "Method 'start_task_soon' defined multiple times in class 'BlockingPortal'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RunVar",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/lowlevel.py",
+      "line": 120,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'RunVar'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RunVar",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/lowlevel.py",
+      "line": 122,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'RunVar'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 96,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "destroy",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 103,
+      "severity": "high",
+      "description": "Method 'destroy' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "call",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 107,
+      "severity": "high",
+      "description": "Method 'call' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 134,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "call",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 137,
+      "severity": "high",
+      "description": "Method 'call' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Worker",
+      "name": "destroy",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/to_interpreter.py",
+      "line": 144,
+      "severity": "high",
+      "description": "Method 'destroy' defined multiple times in class 'Worker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncBackend",
+      "name": "create_unix_datagram_socket",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/abc/_eventloop.py",
+      "line": 296,
+      "severity": "high",
+      "description": "Method 'create_unix_datagram_socket' defined multiple times in class 'AsyncBackend'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncBackend",
+      "name": "create_unix_datagram_socket",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/abc/_eventloop.py",
+      "line": 302,
+      "severity": "high",
+      "description": "Method 'create_unix_datagram_socket' defined multiple times in class 'AsyncBackend'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TaskStatus",
+      "name": "started",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/abc/_tasks.py",
+      "line": 27,
+      "severity": "high",
+      "description": "Method 'started' defined multiple times in class 'TaskStatus'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TaskStatus",
+      "name": "started",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/abc/_tasks.py",
+      "line": 29,
+      "severity": "high",
+      "description": "Method 'started' defined multiple times in class 'TaskStatus'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "deadline",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_trio.py",
+      "line": 147,
+      "severity": "high",
+      "description": "Method 'deadline' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "shield",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_trio.py",
+      "line": 163,
+      "severity": "high",
+      "description": "Method 'shield' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CapacityLimiter",
+      "name": "total_tokens",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_trio.py",
+      "line": 808,
+      "severity": "high",
+      "description": "Method 'total_tokens' defined multiple times in class 'CapacityLimiter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TrioBackend",
+      "name": "create_unix_datagram_socket",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_trio.py",
+      "line": 1224,
+      "severity": "high",
+      "description": "Method 'create_unix_datagram_socket' defined multiple times in class 'TrioBackend'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TrioBackend",
+      "name": "create_unix_datagram_socket",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_trio.py",
+      "line": 1229,
+      "severity": "high",
+      "description": "Method 'create_unix_datagram_socket' defined multiple times in class 'TrioBackend'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "deadline",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py",
+      "line": 632,
+      "severity": "high",
+      "description": "Method 'deadline' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "shield",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py",
+      "line": 654,
+      "severity": "high",
+      "description": "Method 'shield' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CapacityLimiter",
+      "name": "total_tokens",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py",
+      "line": 1962,
+      "severity": "high",
+      "description": "Method 'total_tokens' defined multiple times in class 'CapacityLimiter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncFile",
+      "name": "write",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 114,
+      "severity": "high",
+      "description": "Method 'write' defined multiple times in class 'AsyncFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncFile",
+      "name": "write",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 116,
+      "severity": "high",
+      "description": "Method 'write' defined multiple times in class 'AsyncFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncFile",
+      "name": "writelines",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 125,
+      "severity": "high",
+      "description": "Method 'writelines' defined multiple times in class 'AsyncFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "AsyncFile",
+      "name": "writelines",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 127,
+      "severity": "high",
+      "description": "Method 'writelines' defined multiple times in class 'AsyncFile'"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "open_file",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 157,
+      "severity": "medium",
+      "description": "Top-level async function 'open_file' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "open_file",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 169,
+      "severity": "medium",
+      "description": "Top-level async function 'open_file' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Path",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 577,
+      "severity": "high",
+      "description": "Method 'open' defined multiple times in class 'Path'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Path",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_fileio.py",
+      "line": 586,
+      "severity": "high",
+      "description": "Method 'open' defined multiple times in class 'Path'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CapacityLimiter",
+      "name": "total_tokens",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_synchronization.py",
+      "line": 527,
+      "severity": "high",
+      "description": "Method 'total_tokens' defined multiple times in class 'CapacityLimiter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CapacityLimiterAdapter",
+      "name": "total_tokens",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_synchronization.py",
+      "line": 644,
+      "severity": "high",
+      "description": "Method 'total_tokens' defined multiple times in class 'CapacityLimiterAdapter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 61,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'TemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 74,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'TemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "NamedTemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 161,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'NamedTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "NamedTemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 176,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'NamedTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 256,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 270,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "write",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 403,
+      "severity": "high",
+      "description": "Method 'write' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "write",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 405,
+      "severity": "high",
+      "description": "Method 'write' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "writelines",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 430,
+      "severity": "high",
+      "description": "Method 'writelines' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpooledTemporaryFile",
+      "name": "writelines",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 434,
+      "severity": "high",
+      "description": "Method 'writelines' defined multiple times in class 'SpooledTemporaryFile'"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "mkstemp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 530,
+      "severity": "medium",
+      "description": "Top-level async function 'mkstemp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "mkstemp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 538,
+      "severity": "medium",
+      "description": "Top-level async function 'mkstemp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "mkdtemp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 569,
+      "severity": "medium",
+      "description": "Top-level async function 'mkdtemp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "mkdtemp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tempfile.py",
+      "line": 576,
+      "severity": "medium",
+      "description": "Top-level async function 'mkdtemp' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "deadline",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tasks.py",
+      "line": 48,
+      "severity": "high",
+      "description": "Method 'deadline' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "CancelScope",
+      "name": "shield",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_tasks.py",
+      "line": 80,
+      "severity": "high",
+      "description": "Method 'shield' defined multiple times in class 'CancelScope'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TypedAttributeProvider",
+      "name": "extra",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_typedattr.py",
+      "line": 56,
+      "severity": "high",
+      "description": "Method 'extra' defined multiple times in class 'TypedAttributeProvider'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TypedAttributeProvider",
+      "name": "extra",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_typedattr.py",
+      "line": 59,
+      "severity": "high",
+      "description": "Method 'extra' defined multiple times in class 'TypedAttributeProvider'"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_tcp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_sockets.py",
+      "line": 78,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_tcp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_tcp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_sockets.py",
+      "line": 92,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_tcp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_tcp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_sockets.py",
+      "line": 107,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_tcp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_tcp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_sockets.py",
+      "line": 122,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_tcp' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_async_function",
+      "name": "connect_tcp",
+      "file": "./.venv/lib/python3.13/site-packages/anyio/_core/_sockets.py",
+      "line": 131,
+      "severity": "medium",
+      "description": "Top-level async function 'connect_tcp' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "MultiDomainBasicAuth",
+      "name": "keyring_provider",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_internal/network/auth.py",
+      "line": 247,
+      "severity": "high",
+      "description": "Method 'keyring_provider' defined multiple times in class 'MultiDomainBasicAuth'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ArchiveInfo",
+      "name": "hash",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_internal/models/direct_url.py",
+      "line": 115,
+      "severity": "high",
+      "description": "Method 'hash' defined multiple times in class 'ArchiveInfo'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PackageFinder",
+      "name": "search_scope",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_internal/index/package_finder.py",
+      "line": 675,
+      "severity": "high",
+      "description": "Method 'search_scope' defined multiple times in class 'PackageFinder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BaseSpecifier",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/packaging/specifiers.py",
+      "line": 77,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'BaseSpecifier'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Specifier",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/packaging/specifiers.py",
+      "line": 273,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'Specifier'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SpecifierSet",
+      "name": "prereleases",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/packaging/specifiers.py",
+      "line": 753,
+      "severity": "high",
+      "description": "Method 'prereleases' defined multiple times in class 'SpecifierSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "get_ca_certs",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 198,
+      "severity": "high",
+      "description": "Method 'get_ca_certs' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "get_ca_certs",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 201,
+      "severity": "high",
+      "description": "Method 'get_ca_certs' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "get_ca_certs",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 203,
+      "severity": "high",
+      "description": "Method 'get_ca_certs' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "check_hostname",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 211,
+      "severity": "high",
+      "description": "Method 'check_hostname' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "hostname_checks_common_name",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 219,
+      "severity": "high",
+      "description": "Method 'hostname_checks_common_name' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "keylog_filename",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 227,
+      "severity": "high",
+      "description": "Method 'keylog_filename' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "maximum_version",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 235,
+      "severity": "high",
+      "description": "Method 'maximum_version' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "minimum_version",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 245,
+      "severity": "high",
+      "description": "Method 'minimum_version' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "options",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 255,
+      "severity": "high",
+      "description": "Method 'options' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "post_handshake_auth",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 265,
+      "severity": "high",
+      "description": "Method 'post_handshake_auth' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "verify_flags",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 281,
+      "severity": "high",
+      "description": "Method 'verify_flags' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLContext",
+      "name": "verify_mode",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 291,
+      "severity": "high",
+      "description": "Method 'verify_mode' defined multiple times in class 'SSLContext'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_get_unverified_chain_bytes",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/truststore/_api.py",
+      "line": 311,
+      "severity": "medium",
+      "description": "Top-level function '_get_unverified_chain_bytes' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ScriptMaker",
+      "name": "dry_run",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/distlib/scripts.py",
+      "line": 397,
+      "severity": "high",
+      "description": "Method 'dry_run' defined multiple times in class 'ScriptMaker'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "where",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/certifi/core.py",
+      "line": 56,
+      "severity": "medium",
+      "description": "Top-level function 'where' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "contents",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/certifi/core.py",
+      "line": 82,
+      "severity": "medium",
+      "description": "Top-level function 'contents' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_in_proc_script_path",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pyproject_hooks/_in_process/__init__.py",
+      "line": 18,
+      "severity": "medium",
+      "description": "Top-level function '_in_proc_script_path' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Console",
+      "name": "file",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/console.py",
+      "line": 772,
+      "severity": "high",
+      "description": "Method 'file' defined multiple times in class 'Console'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Console",
+      "name": "_buffer_index",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/console.py",
+      "line": 787,
+      "severity": "high",
+      "description": "Method '_buffer_index' defined multiple times in class 'Console'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Console",
+      "name": "size",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/console.py",
+      "line": 1052,
+      "severity": "high",
+      "description": "Method 'size' defined multiple times in class 'Console'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Console",
+      "name": "width",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/console.py",
+      "line": 1072,
+      "severity": "high",
+      "description": "Method 'width' defined multiple times in class 'Console'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Console",
+      "name": "height",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/console.py",
+      "line": 1090,
+      "severity": "high",
+      "description": "Method 'height' defined multiple times in class 'Console'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Lines",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/containers.py",
+      "line": 83,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Lines'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Lines",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/containers.py",
+      "line": 86,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Lines'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "auto",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/repr.py",
+      "line": 33,
+      "severity": "medium",
+      "description": "Top-level function 'auto' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "auto",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/repr.py",
+      "line": 37,
+      "severity": "medium",
+      "description": "Top-level function 'auto' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "rich_repr",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/repr.py",
+      "line": 110,
+      "severity": "medium",
+      "description": "Top-level function 'rich_repr' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "rich_repr",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/repr.py",
+      "line": 114,
+      "severity": "medium",
+      "description": "Top-level function 'rich_repr' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Text",
+      "name": "plain",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/text.py",
+      "line": 410,
+      "severity": "high",
+      "description": "Method 'plain' defined multiple times in class 'Text'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Text",
+      "name": "spans",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/text.py",
+      "line": 426,
+      "severity": "high",
+      "description": "Method 'spans' defined multiple times in class 'Text'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Table",
+      "name": "expand",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/table.py",
+      "line": 292,
+      "severity": "high",
+      "description": "Method 'expand' defined multiple times in class 'Table'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Table",
+      "name": "padding",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/table.py",
+      "line": 360,
+      "severity": "high",
+      "description": "Method 'padding' defined multiple times in class 'Table'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PromptBase",
+      "name": "ask",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/prompt.py",
+      "line": 97,
+      "severity": "high",
+      "description": "Method 'ask' defined multiple times in class 'PromptBase'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PromptBase",
+      "name": "ask",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/prompt.py",
+      "line": 112,
+      "severity": "high",
+      "description": "Method 'ask' defined multiple times in class 'PromptBase'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PromptBase",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/prompt.py",
+      "line": 275,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'PromptBase'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PromptBase",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/prompt.py",
+      "line": 280,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'PromptBase'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/progress.py",
+      "line": 397,
+      "severity": "medium",
+      "description": "Top-level function 'open' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/progress.py",
+      "line": 421,
+      "severity": "medium",
+      "description": "Top-level function 'open' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Progress",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/progress.py",
+      "line": 1295,
+      "severity": "high",
+      "description": "Method 'open' defined multiple times in class 'Progress'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Progress",
+      "name": "open",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/progress.py",
+      "line": 1310,
+      "severity": "high",
+      "description": "Method 'open' defined multiple times in class 'Progress'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_windows_console_features",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/rich/_windows.py",
+      "line": 40,
+      "severity": "medium",
+      "description": "Top-level function 'get_windows_console_features' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HTTPConnection",
+      "name": "host",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/connection.py",
+      "line": 152,
+      "severity": "high",
+      "description": "Method 'host' defined multiple times in class 'HTTPConnection'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_retry_on_intr",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/util/wait.py",
+      "line": 47,
+      "severity": "medium",
+      "description": "Top-level function '_retry_on_intr' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_RetryMeta",
+      "name": "DEFAULT_METHOD_WHITELIST",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/util/retry.py",
+      "line": 46,
+      "severity": "high",
+      "description": "Method 'DEFAULT_METHOD_WHITELIST' defined multiple times in class '_RetryMeta'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_RetryMeta",
+      "name": "DEFAULT_REDIRECT_HEADERS_BLACKLIST",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/util/retry.py",
+      "line": 64,
+      "severity": "high",
+      "description": "Method 'DEFAULT_REDIRECT_HEADERS_BLACKLIST' defined multiple times in class '_RetryMeta'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_RetryMeta",
+      "name": "BACKOFF_MAX",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/util/retry.py",
+      "line": 82,
+      "severity": "high",
+      "description": "Method 'BACKOFF_MAX' defined multiple times in class '_RetryMeta'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "makefile",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/securetransport.py",
+      "line": 774,
+      "severity": "medium",
+      "description": "Top-level function 'makefile' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SecureTransportContext",
+      "name": "check_hostname",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/securetransport.py",
+      "line": 810,
+      "severity": "high",
+      "description": "Method 'check_hostname' defined multiple times in class 'SecureTransportContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SecureTransportContext",
+      "name": "options",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/securetransport.py",
+      "line": 828,
+      "severity": "high",
+      "description": "Method 'options' defined multiple times in class 'SecureTransportContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SecureTransportContext",
+      "name": "verify_mode",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/securetransport.py",
+      "line": 837,
+      "severity": "high",
+      "description": "Method 'verify_mode' defined multiple times in class 'SecureTransportContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "options",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/pyopenssl.py",
+      "line": 441,
+      "severity": "high",
+      "description": "Method 'options' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "verify_mode",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/contrib/pyopenssl.py",
+      "line": 450,
+      "severity": "high",
+      "description": "Method 'verify_mode' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_unbound_function",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 610,
+      "severity": "medium",
+      "description": "Top-level function 'get_unbound_function' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_unbound_method",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 616,
+      "severity": "medium",
+      "description": "Top-level function 'create_unbound_method' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "iterkeys",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 658,
+      "severity": "medium",
+      "description": "Top-level function 'iterkeys' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "itervalues",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 661,
+      "severity": "medium",
+      "description": "Top-level function 'itervalues' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "iteritems",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 664,
+      "severity": "medium",
+      "description": "Top-level function 'iteritems' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "iterlists",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 667,
+      "severity": "medium",
+      "description": "Top-level function 'iterlists' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "b",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 716,
+      "severity": "medium",
+      "description": "Top-level function 'b' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "u",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 721,
+      "severity": "medium",
+      "description": "Top-level function 'u' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "print_",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/six.py",
+      "line": 878,
+      "severity": "medium",
+      "description": "Top-level function 'print_' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "weakref_finalize",
+      "name": "atexit",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/urllib3/packages/backports/weakref_finalize.py",
+      "line": 96,
+      "severity": "high",
+      "description": "Method 'atexit' defined multiple times in class 'weakref_finalize'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_provider",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 419,
+      "severity": "medium",
+      "description": "Top-level function 'get_provider' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_provider",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 420,
+      "severity": "medium",
+      "description": "Top-level function 'get_provider' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_distribution",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 534,
+      "severity": "medium",
+      "description": "Top-level function 'get_distribution' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_distribution",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 535,
+      "severity": "medium",
+      "description": "Top-level function 'get_distribution' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_entry_map",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 557,
+      "severity": "medium",
+      "description": "Top-level function 'get_entry_map' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_entry_map",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 558,
+      "severity": "medium",
+      "description": "Top-level function 'get_entry_map' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "resolve",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 814,
+      "severity": "high",
+      "description": "Method 'resolve' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "resolve",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 824,
+      "severity": "high",
+      "description": "Method 'resolve' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "resolve",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 832,
+      "severity": "high",
+      "description": "Method 'resolve' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "find_plugins",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 946,
+      "severity": "high",
+      "description": "Method 'find_plugins' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "find_plugins",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 955,
+      "severity": "high",
+      "description": "Method 'find_plugins' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "WorkingSet",
+      "name": "find_plugins",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 962,
+      "severity": "high",
+      "description": "Method 'find_plugins' defined multiple times in class 'WorkingSet'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Environment",
+      "name": "best_match",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 1217,
+      "severity": "high",
+      "description": "Method 'best_match' defined multiple times in class 'Environment'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Environment",
+      "name": "best_match",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 1224,
+      "severity": "high",
+      "description": "Method 'best_match' defined multiple times in class 'Environment'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Environment",
+      "name": "obtain",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 1264,
+      "severity": "high",
+      "description": "Method 'obtain' defined multiple times in class 'Environment'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Environment",
+      "name": "obtain",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 1270,
+      "severity": "high",
+      "description": "Method 'obtain' defined multiple times in class 'Environment'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Environment",
+      "name": "obtain",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 1275,
+      "severity": "high",
+      "description": "Method 'obtain' defined multiple times in class 'Environment'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "normalize_path",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2602,
+      "severity": "medium",
+      "description": "Top-level function 'normalize_path' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "normalize_path",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2603,
+      "severity": "medium",
+      "description": "Top-level function 'normalize_path' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_cached",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2625,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_cached' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_cached",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2626,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_cached' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_cached",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2630,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_cached' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "EntryPoint",
+      "name": "load",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2719,
+      "severity": "high",
+      "description": "Method 'load' defined multiple times in class 'EntryPoint'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "EntryPoint",
+      "name": "load",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 2725,
+      "severity": "high",
+      "description": "Method 'load' defined multiple times in class 'EntryPoint'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Distribution",
+      "name": "get_entry_map",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 3186,
+      "severity": "high",
+      "description": "Method 'get_entry_map' defined multiple times in class 'Distribution'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Distribution",
+      "name": "get_entry_map",
+      "file": "./.venv/lib/python3.13/site-packages/pip/_vendor/pkg_resources/__init__.py",
+      "line": 3187,
+      "severity": "high",
+      "description": "Method 'get_entry_map' defined multiple times in class 'Distribution'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "where",
+      "file": "./.venv/lib/python3.13/site-packages/certifi/core.py",
+      "line": 56,
+      "severity": "medium",
+      "description": "Top-level function 'where' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "contents",
+      "file": "./.venv/lib/python3.13/site-packages/certifi/core.py",
+      "line": 82,
+      "severity": "medium",
+      "description": "Top-level function 'contents' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_errors",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 435,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_errors' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_model_rebuild",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 449,
+      "severity": "medium",
+      "description": "Top-level function '_model_rebuild' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_model_dump",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 452,
+      "severity": "medium",
+      "description": "Top-level function '_model_dump' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_get_model_config",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 457,
+      "severity": "medium",
+      "description": "Top-level function '_get_model_config' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_schema_from_model_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 460,
+      "severity": "medium",
+      "description": "Top-level function 'get_schema_from_model_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_compat_model_name_map",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 475,
+      "severity": "medium",
+      "description": "Top-level function 'get_compat_model_name_map' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_definitions",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 479,
+      "severity": "medium",
+      "description": "Top-level function 'get_definitions' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_scalar_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 496,
+      "severity": "medium",
+      "description": "Top-level function 'is_scalar_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_sequence_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 499,
+      "severity": "medium",
+      "description": "Top-level function 'is_sequence_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_scalar_sequence_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 502,
+      "severity": "medium",
+      "description": "Top-level function 'is_scalar_sequence_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_bytes_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 505,
+      "severity": "medium",
+      "description": "Top-level function 'is_bytes_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_bytes_sequence_field",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 508,
+      "severity": "medium",
+      "description": "Top-level function 'is_bytes_sequence_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "copy_field_info",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 511,
+      "severity": "medium",
+      "description": "Top-level function 'copy_field_info' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "serialize_sequence_value",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 514,
+      "severity": "medium",
+      "description": "Top-level function 'serialize_sequence_value' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_missing_field_error",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 517,
+      "severity": "medium",
+      "description": "Top-level function 'get_missing_field_error' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_body_model",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 522,
+      "severity": "medium",
+      "description": "Top-level function 'create_body_model' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_model_fields",
+      "file": "./.venv/lib/python3.13/site-packages/fastapi/_compat.py",
+      "line": 530,
+      "severity": "medium",
+      "description": "Top-level function 'get_model_fields' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Node",
+      "name": "prefix",
+      "file": "./.venv/lib/python3.13/site-packages/blib2to3/pytree.py",
+      "line": 320,
+      "severity": "high",
+      "description": "Method 'prefix' defined multiple times in class 'Node'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Leaf",
+      "name": "prefix",
+      "file": "./.venv/lib/python3.13/site-packages/blib2to3/pytree.py",
+      "line": 471,
+      "severity": "high",
+      "description": "Method 'prefix' defined multiple times in class 'Leaf'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "run",
+      "file": "./.venv/lib/python3.13/site-packages/uvloop/__init__.py",
+      "line": 51,
+      "severity": "medium",
+      "description": "Top-level function 'run' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookspecMarker",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pluggy/_hooks.py",
+      "line": 102,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'HookspecMarker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookspecMarker",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pluggy/_hooks.py",
+      "line": 111,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'HookspecMarker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookimplMarker",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pluggy/_hooks.py",
+      "line": 191,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'HookimplMarker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookimplMarker",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pluggy/_hooks.py",
+      "line": 202,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'HookimplMarker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ZstdDecoder",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 194,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'ZstdDecoder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ZstdDecoder",
+      "name": "decompress",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 197,
+      "severity": "high",
+      "description": "Method 'decompress' defined multiple times in class 'ZstdDecoder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ZstdDecoder",
+      "name": "flush",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 207,
+      "severity": "high",
+      "description": "Method 'flush' defined multiple times in class 'ZstdDecoder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BaseHTTPResponse",
+      "name": "url",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 418,
+      "severity": "high",
+      "description": "Method 'url' defined multiple times in class 'BaseHTTPResponse'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "BaseHTTPResponse",
+      "name": "retries",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 430,
+      "severity": "high",
+      "description": "Method 'retries' defined multiple times in class 'BaseHTTPResponse'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HTTPResponse",
+      "name": "url",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/response.py",
+      "line": 1289,
+      "severity": "high",
+      "description": "Method 'url' defined multiple times in class 'HTTPResponse'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HTTPConnection",
+      "name": "host",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/connection.py",
+      "line": 183,
+      "severity": "high",
+      "description": "Method 'host' defined multiple times in class 'HTTPConnection'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HTTPHeaderDict",
+      "name": "getlist",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/_collections.py",
+      "line": 372,
+      "severity": "high",
+      "description": "Method 'getlist' defined multiple times in class 'HTTPHeaderDict'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HTTPHeaderDict",
+      "name": "getlist",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/_collections.py",
+      "line": 374,
+      "severity": "high",
+      "description": "Method 'getlist' defined multiple times in class 'HTTPHeaderDict'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_host",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/connectionpool.py",
+      "line": 1142,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_host' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_host",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/connectionpool.py",
+      "line": 1145,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_host' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLTransport",
+      "name": "getpeercert",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssltransport.py",
+      "line": 180,
+      "severity": "high",
+      "description": "Method 'getpeercert' defined multiple times in class 'SSLTransport'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLTransport",
+      "name": "getpeercert",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssltransport.py",
+      "line": 182,
+      "severity": "high",
+      "description": "Method 'getpeercert' defined multiple times in class 'SSLTransport'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLTransport",
+      "name": "_ssl_io_loop",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssltransport.py",
+      "line": 224,
+      "severity": "high",
+      "description": "Method '_ssl_io_loop' defined multiple times in class 'SSLTransport'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLTransport",
+      "name": "_ssl_io_loop",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssltransport.py",
+      "line": 228,
+      "severity": "high",
+      "description": "Method '_ssl_io_loop' defined multiple times in class 'SSLTransport'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SSLTransport",
+      "name": "_ssl_io_loop",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssltransport.py",
+      "line": 235,
+      "severity": "high",
+      "description": "Method '_ssl_io_loop' defined multiple times in class 'SSLTransport'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "ssl_wrap_socket",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssl_.py",
+      "line": 393,
+      "severity": "medium",
+      "description": "Top-level function 'ssl_wrap_socket' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "ssl_wrap_socket",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/ssl_.py",
+      "line": 410,
+      "severity": "medium",
+      "description": "Top-level function 'ssl_wrap_socket' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_encode_invalid_chars",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/url.py",
+      "line": 221,
+      "severity": "medium",
+      "description": "Top-level function '_encode_invalid_chars' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_encode_invalid_chars",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/url.py",
+      "line": 227,
+      "severity": "medium",
+      "description": "Top-level function '_encode_invalid_chars' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_host",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/url.py",
+      "line": 298,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_host' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_normalize_host",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/util/url.py",
+      "line": 301,
+      "severity": "medium",
+      "description": "Top-level function '_normalize_host' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "options",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/pyopenssl.py",
+      "line": 434,
+      "severity": "high",
+      "description": "Method 'options' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "verify_flags",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/pyopenssl.py",
+      "line": 443,
+      "severity": "high",
+      "description": "Method 'verify_flags' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "verify_mode",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/pyopenssl.py",
+      "line": 452,
+      "severity": "high",
+      "description": "Method 'verify_mode' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "minimum_version",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/pyopenssl.py",
+      "line": 543,
+      "severity": "high",
+      "description": "Method 'minimum_version' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyOpenSSLContext",
+      "name": "maximum_version",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/pyopenssl.py",
+      "line": 552,
+      "severity": "high",
+      "description": "Method 'maximum_version' defined multiple times in class 'PyOpenSSLContext'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "EmscriptenHttpResponseWrapper",
+      "name": "url",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/emscripten/response.py",
+      "line": 60,
+      "severity": "high",
+      "description": "Method 'url' defined multiple times in class 'EmscriptenHttpResponseWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "EmscriptenHttpResponseWrapper",
+      "name": "retries",
+      "file": "./.venv/lib/python3.13/site-packages/urllib3/contrib/emscripten/response.py",
+      "line": 72,
+      "severity": "high",
+      "description": "Method 'retries' defined multiple times in class 'EmscriptenHttpResponseWrapper'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "field_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 387,
+      "severity": "medium",
+      "description": "Top-level function 'field_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "field_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 398,
+      "severity": "medium",
+      "description": "Top-level function 'field_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "field_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 407,
+      "severity": "medium",
+      "description": "Top-level function 'field_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 652,
+      "severity": "medium",
+      "description": "Top-level function 'model_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 661,
+      "severity": "medium",
+      "description": "Top-level function 'model_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_validators.py",
+      "line": 669,
+      "severity": "medium",
+      "description": "Top-level function 'model_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "with_config",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/config.py",
+      "line": 1150,
+      "severity": "medium",
+      "description": "Top-level function 'with_config' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "with_config",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/config.py",
+      "line": 1154,
+      "severity": "medium",
+      "description": "Top-level function 'with_config' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "with_config",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/config.py",
+      "line": 1157,
+      "severity": "medium",
+      "description": "Top-level function 'with_config' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "FieldInfo",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 628,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'FieldInfo'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "FieldInfo",
+      "name": "get_default",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 630,
+      "severity": "high",
+      "description": "Method 'get_default' defined multiple times in class 'FieldInfo'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "Field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 835,
+      "severity": "medium",
+      "description": "Top-level function 'Field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "Field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 874,
+      "severity": "medium",
+      "description": "Top-level function 'Field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "Field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 913,
+      "severity": "medium",
+      "description": "Top-level function 'Field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "Field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 950,
+      "severity": "medium",
+      "description": "Top-level function 'Field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "PrivateAttr",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 1235,
+      "severity": "medium",
+      "description": "Top-level function 'PrivateAttr' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "PrivateAttr",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 1241,
+      "severity": "medium",
+      "description": "Top-level function 'PrivateAttr' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "PrivateAttr",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 1245,
+      "severity": "medium",
+      "description": "Top-level function 'PrivateAttr' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "computed_field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 1347,
+      "severity": "medium",
+      "description": "Top-level function 'computed_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "computed_field",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/fields.py",
+      "line": 1362,
+      "severity": "medium",
+      "description": "Top-level function 'computed_field' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Examples",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/json_schema.py",
+      "line": 2537,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Examples'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Examples",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/json_schema.py",
+      "line": 2539,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'Examples'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TypeAdapter",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/type_adapter.py",
+      "line": 186,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'TypeAdapter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TypeAdapter",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/type_adapter.py",
+      "line": 195,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'TypeAdapter'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "field_serializer",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_serializers.py",
+      "line": 220,
+      "severity": "medium",
+      "description": "Top-level function 'field_serializer' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "field_serializer",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_serializers.py",
+      "line": 231,
+      "severity": "medium",
+      "description": "Top-level function 'field_serializer' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_serializer",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_serializers.py",
+      "line": 332,
+      "severity": "medium",
+      "description": "Top-level function 'model_serializer' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_serializer",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_serializers.py",
+      "line": 338,
+      "severity": "medium",
+      "description": "Top-level function 'model_serializer' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "model_serializer",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/functional_serializers.py",
+      "line": 346,
+      "severity": "medium",
+      "description": "Top-level function 'model_serializer' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_call",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/validate_call_decorator.py",
+      "line": 79,
+      "severity": "medium",
+      "description": "Top-level function 'validate_call' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_call",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/validate_call_decorator.py",
+      "line": 82,
+      "severity": "medium",
+      "description": "Top-level function 'validate_call' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/dataclasses.py",
+      "line": 49,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/dataclasses.py",
+      "line": 68,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/dataclasses.py",
+      "line": 83,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/dataclasses.py",
+      "line": 98,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_model",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/main.py",
+      "line": 1665,
+      "severity": "medium",
+      "description": "Top-level function 'create_model' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_model",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/main.py",
+      "line": 1679,
+      "severity": "medium",
+      "description": "Top-level function 'create_model' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_registered",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/_hypothesis_plugin.py",
+      "line": 190,
+      "severity": "medium",
+      "description": "Top-level function '_registered' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_registered",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/_hypothesis_plugin.py",
+      "line": 194,
+      "severity": "medium",
+      "description": "Top-level function '_registered' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SchemaExtraCallable",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/config.py",
+      "line": 25,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'SchemaExtraCallable'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_arguments",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/decorator.py",
+      "line": 26,
+      "severity": "medium",
+      "description": "Top-level function 'validate_arguments' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_arguments",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/decorator.py",
+      "line": 30,
+      "severity": "medium",
+      "description": "Top-level function 'validate_arguments' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_registered",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/types.py",
+      "line": 142,
+      "severity": "medium",
+      "description": "Top-level function '_registered' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_registered",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/types.py",
+      "line": 146,
+      "severity": "medium",
+      "description": "Top-level function '_registered' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "root_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/class_validators.py",
+      "line": 113,
+      "severity": "medium",
+      "description": "Top-level function 'root_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "root_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/class_validators.py",
+      "line": 119,
+      "severity": "medium",
+      "description": "Top-level function 'root_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_legacy_typeddict",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/annotated_types.py",
+      "line": 18,
+      "severity": "medium",
+      "description": "Top-level function 'is_legacy_typeddict' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/dataclasses.py",
+      "line": 123,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/dataclasses.py",
+      "line": 143,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/dataclasses.py",
+      "line": 159,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "dataclass",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/dataclasses.py",
+      "line": 176,
+      "severity": "medium",
+      "description": "Top-level function 'dataclass' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_is_field_cached_property",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/dataclasses.py",
+      "line": 426,
+      "severity": "medium",
+      "description": "Top-level function '_is_field_cached_property' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "evaluate_forwardref",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 63,
+      "severity": "medium",
+      "description": "Top-level function 'evaluate_forwardref' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "evaluate_forwardref",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 72,
+      "severity": "medium",
+      "description": "Top-level function 'evaluate_forwardref' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_origin",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 120,
+      "severity": "medium",
+      "description": "Top-level function 'get_origin' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "get_args",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 173,
+      "severity": "medium",
+      "description": "Top-level function 'get_args' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "convert_generics",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 206,
+      "severity": "medium",
+      "description": "Top-level function 'convert_generics' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_union",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 258,
+      "severity": "medium",
+      "description": "Top-level function 'is_union' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_none_type",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 350,
+      "severity": "medium",
+      "description": "Top-level function 'is_none_type' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_none_type",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/typing.py",
+      "line": 363,
+      "severity": "medium",
+      "description": "Top-level function 'is_none_type' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_model",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/main.py",
+      "line": 943,
+      "severity": "medium",
+      "description": "Top-level function 'create_model' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "create_model",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/v1/main.py",
+      "line": 956,
+      "severity": "medium",
+      "description": "Top-level function 'create_model' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GenerateSchema",
+      "name": "_get_args_resolving_forward_refs",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py",
+      "line": 955,
+      "severity": "high",
+      "description": "Method '_get_args_resolving_forward_refs' defined multiple times in class 'GenerateSchema'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GenerateSchema",
+      "name": "_get_args_resolving_forward_refs",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/_internal/_generate_schema.py",
+      "line": 957,
+      "severity": "high",
+      "description": "Method '_get_args_resolving_forward_refs' defined multiple times in class 'GenerateSchema'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "deprecated_instance_property",
+      "name": "__get__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/_internal/_utils.py",
+      "line": 421,
+      "severity": "high",
+      "description": "Method '__get__' defined multiple times in class 'deprecated_instance_property'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "deprecated_instance_property",
+      "name": "__get__",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/_internal/_utils.py",
+      "line": 422,
+      "severity": "high",
+      "description": "Method '__get__' defined multiple times in class 'deprecated_instance_property'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "validate_as",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 149,
+      "severity": "high",
+      "description": "Method 'validate_as' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "validate_as",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 152,
+      "severity": "high",
+      "description": "Method 'validate_as' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 177,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 180,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 183,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 186,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 191,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 196,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 201,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 204,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 209,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 212,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 215,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 218,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 221,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "constrain",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 223,
+      "severity": "high",
+      "description": "Method 'constrain' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "multiple_of",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 261,
+      "severity": "high",
+      "description": "Method 'multiple_of' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_Pipeline",
+      "name": "multiple_of",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/experimental/pipeline.py",
+      "line": 263,
+      "severity": "high",
+      "description": "Method 'multiple_of' defined multiple times in class '_Pipeline'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_arguments",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/deprecated/decorator.py",
+      "line": 36,
+      "severity": "medium",
+      "description": "Top-level function 'validate_arguments' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "validate_arguments",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/deprecated/decorator.py",
+      "line": 43,
+      "severity": "medium",
+      "description": "Top-level function 'validate_arguments' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "root_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/deprecated/class_validators.py",
+      "line": 172,
+      "severity": "medium",
+      "description": "Top-level function 'root_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "root_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/deprecated/class_validators.py",
+      "line": 185,
+      "severity": "medium",
+      "description": "Top-level function 'root_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "root_validator",
+      "file": "./.venv/lib/python3.13/site-packages/pydantic/deprecated/class_validators.py",
+      "line": 204,
+      "severity": "medium",
+      "description": "Top-level function 'root_validator' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TTFont",
+      "name": "shapable",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/pdfbase/ttfonts.py",
+      "line": 1390,
+      "severity": "high",
+      "description": "Method 'shapable' defined multiple times in class 'TTFont'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "shapeFragWord",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/pdfbase/ttfonts.py",
+      "line": 1442,
+      "severity": "medium",
+      "description": "Top-level function 'shapeFragWord' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "bidiText",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/pdfgen/textobject.py",
+      "line": 203,
+      "severity": "medium",
+      "description": "Top-level function 'bidiText' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "bidiShapedText",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/pdfgen/textobject.py",
+      "line": 209,
+      "severity": "medium",
+      "description": "Top-level function 'bidiShapedText' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "markfilename",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/lib/utils.py",
+      "line": 256,
+      "severity": "medium",
+      "description": "Top-level function 'markfilename' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_startswith_rl",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/lib/utils.py",
+      "line": 319,
+      "severity": "medium",
+      "description": "Top-level function '_startswith_rl' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "rl_glob",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/lib/utils.py",
+      "line": 321,
+      "severity": "medium",
+      "description": "Top-level function 'rl_glob' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "LinePlot",
+      "name": "joinedLines",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/charts/lineplots.py",
+      "line": 152,
+      "severity": "high",
+      "description": "Method 'joinedLines' defined multiple times in class 'LinePlot'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "USPS_4State",
+      "name": "barWidth",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/usps4s.py",
+      "line": 279,
+      "severity": "high",
+      "description": "Method 'barWidth' defined multiple times in class 'USPS_4State'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "USPS_4State",
+      "name": "pitch",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/usps4s.py",
+      "line": 290,
+      "severity": "high",
+      "description": "Method 'pitch' defined multiple times in class 'USPS_4State'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "USPS_4State",
+      "name": "barHeight",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/usps4s.py",
+      "line": 301,
+      "severity": "high",
+      "description": "Method 'barHeight' defined multiple times in class 'USPS_4State'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "USPS_4State",
+      "name": "width",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/usps4s.py",
+      "line": 322,
+      "severity": "high",
+      "description": "Method 'width' defined multiple times in class 'USPS_4State'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "USPS_4State",
+      "name": "height",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/usps4s.py",
+      "line": 325,
+      "severity": "high",
+      "description": "Method 'height' defined multiple times in class 'USPS_4State'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Barcode",
+      "name": "width",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/common.py",
+      "line": 111,
+      "severity": "high",
+      "description": "Method 'width' defined multiple times in class 'Barcode'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Barcode",
+      "name": "height",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/common.py",
+      "line": 119,
+      "severity": "high",
+      "description": "Method 'height' defined multiple times in class 'Barcode'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "value",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 47,
+      "severity": "high",
+      "description": "Method 'value' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "size",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 56,
+      "severity": "high",
+      "description": "Method 'size' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "border",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 65,
+      "severity": "high",
+      "description": "Method 'border' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "x",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 74,
+      "severity": "high",
+      "description": "Method 'x' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "y",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 83,
+      "severity": "high",
+      "description": "Method 'y' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "cellSize",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 92,
+      "severity": "high",
+      "description": "Method 'cellSize' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "encoding",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 101,
+      "severity": "high",
+      "description": "Method 'encoding' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "DataMatrix",
+      "name": "anchor",
+      "file": "./.venv/lib/python3.13/site-packages/reportlab/graphics/barcode/dmtx.py",
+      "line": 110,
+      "severity": "high",
+      "description": "Method 'anchor' defined multiple times in class 'DataMatrix'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SectionWrapper",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 51,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'SectionWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SectionWrapper",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 59,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'SectionWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SectionWrapper",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 68,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'SectionWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SectionWrapper",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 72,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'SectionWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "SectionWrapper",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 81,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'SectionWrapper'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IniConfig",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 155,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'IniConfig'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IniConfig",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 164,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'IniConfig'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IniConfig",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 174,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'IniConfig'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IniConfig",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 180,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'IniConfig'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "IniConfig",
+      "name": "get",
+      "file": "./.venv/lib/python3.13/site-packages/iniconfig/__init__.py",
+      "line": 189,
+      "severity": "high",
+      "description": "Method 'get' defined multiple times in class 'IniConfig'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_union_origin",
+      "file": "./.venv/lib/python3.13/site-packages/typing_inspection/introspection.py",
+      "line": 62,
+      "severity": "medium",
+      "description": "Top-level function 'is_union_origin' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "is_deprecated",
+      "file": "./.venv/lib/python3.13/site-packages/typing_inspection/typing_objects.py",
+      "line": 526,
+      "severity": "medium",
+      "description": "Top-level function 'is_deprecated' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TerminalReporter",
+      "name": "showfspath",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/terminal.py",
+      "line": 450,
+      "severity": "high",
+      "description": "Method 'showfspath' defined multiple times in class 'TerminalReporter'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "deprecated_call",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/recwarn.py",
+      "line": 52,
+      "severity": "medium",
+      "description": "Top-level function 'deprecated_call' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "deprecated_call",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/recwarn.py",
+      "line": 55,
+      "severity": "medium",
+      "description": "Top-level function 'deprecated_call' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "warns",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/recwarn.py",
+      "line": 98,
+      "severity": "medium",
+      "description": "Top-level function 'warns' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "warns",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/recwarn.py",
+      "line": 106,
+      "severity": "medium",
+      "description": "Top-level function 'warns' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "try_argcomplete",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_argcomplete.py",
+      "line": 114,
+      "severity": "medium",
+      "description": "Top-level function 'try_argcomplete' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getreports",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 330,
+      "severity": "high",
+      "description": "Method 'getreports' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getreports",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 336,
+      "severity": "high",
+      "description": "Method 'getreports' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getreports",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 344,
+      "severity": "high",
+      "description": "Method 'getreports' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getfailures",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 390,
+      "severity": "high",
+      "description": "Method 'getfailures' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getfailures",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 396,
+      "severity": "high",
+      "description": "Method 'getfailures' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HookRecorder",
+      "name": "getfailures",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pytester.py",
+      "line": 404,
+      "severity": "high",
+      "description": "Method 'getfailures' defined multiple times in class 'HookRecorder'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "PyobjMixin",
+      "name": "obj",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/python.py",
+      "line": 291,
+      "severity": "high",
+      "description": "Method 'obj' defined multiple times in class 'PyobjMixin'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "raises",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 83,
+      "severity": "medium",
+      "description": "Top-level function 'raises' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "raises",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 92,
+      "severity": "medium",
+      "description": "Top-level function 'raises' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "raises",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 96,
+      "severity": "medium",
+      "description": "Top-level function 'raises' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "raises",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 104,
+      "severity": "medium",
+      "description": "Top-level function 'raises' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesExc",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 602,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesExc'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesExc",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 612,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesExc'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesExc",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 614,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesExc'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 860,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 876,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 886,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 896,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 909,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 919,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 931,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__init__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 950,
+      "severity": "high",
+      "description": "Method '__init__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__enter__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1054,
+      "severity": "high",
+      "description": "Method '__enter__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "__enter__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1058,
+      "severity": "high",
+      "description": "Method '__enter__' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "matches",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1100,
+      "severity": "high",
+      "description": "Method 'matches' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "matches",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1105,
+      "severity": "high",
+      "description": "Method 'matches' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "_check_exceptions",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1262,
+      "severity": "high",
+      "description": "Method '_check_exceptions' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "RaisesGroup",
+      "name": "_check_exceptions",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/raises.py",
+      "line": 1268,
+      "severity": "high",
+      "description": "Method '_check_exceptions' defined multiple times in class 'RaisesGroup'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Node",
+      "name": "get_closest_marker",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/nodes.py",
+      "line": 363,
+      "severity": "high",
+      "description": "Method 'get_closest_marker' defined multiple times in class 'Node'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Node",
+      "name": "get_closest_marker",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/nodes.py",
+      "line": 365,
+      "severity": "high",
+      "description": "Method 'get_closest_marker' defined multiple times in class 'Node'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Session",
+      "name": "shouldstop",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/main.py",
+      "line": 606,
+      "severity": "high",
+      "description": "Method 'shouldstop' defined multiple times in class 'Session'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Session",
+      "name": "shouldfail",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/main.py",
+      "line": 624,
+      "severity": "high",
+      "description": "Method 'shouldfail' defined multiple times in class 'Session'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Session",
+      "name": "perform_collect",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/main.py",
+      "line": 744,
+      "severity": "high",
+      "description": "Method 'perform_collect' defined multiple times in class 'Session'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Session",
+      "name": "perform_collect",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/main.py",
+      "line": 748,
+      "severity": "high",
+      "description": "Method 'perform_collect' defined multiple times in class 'Session'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "MonkeyPatch",
+      "name": "setattr",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/monkeypatch.py",
+      "line": 173,
+      "severity": "high",
+      "description": "Method 'setattr' defined multiple times in class 'MonkeyPatch'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "MonkeyPatch",
+      "name": "setattr",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/monkeypatch.py",
+      "line": 181,
+      "severity": "high",
+      "description": "Method 'setattr' defined multiple times in class 'MonkeyPatch'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Testdir",
+      "name": "plugins",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/legacypath.py",
+      "line": 77,
+      "severity": "high",
+      "description": "Method 'plugins' defined multiple times in class 'Testdir'"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "_is_same",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/pathlib.py",
+      "line": 766,
+      "severity": "medium",
+      "description": "Top-level function '_is_same' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "fixture",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/fixtures.py",
+      "line": 1311,
+      "severity": "medium",
+      "description": "Top-level function 'fixture' defined multiple times"
+    },
+    {
+      "type": "duplicate_top_level_function",
+      "name": "fixture",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/fixtures.py",
+      "line": 1322,
+      "severity": "medium",
+      "description": "Top-level function 'fixture' defined multiple times"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "FixtureManager",
+      "name": "parsefactories",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/fixtures.py",
+      "line": 1778,
+      "severity": "high",
+      "description": "Method 'parsefactories' defined multiple times in class 'FixtureManager'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "FixtureManager",
+      "name": "parsefactories",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/fixtures.py",
+      "line": 1785,
+      "severity": "high",
+      "description": "Method 'parsefactories' defined multiple times in class 'FixtureManager'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "MarkDecorator",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/structures.py",
+      "line": 388,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'MarkDecorator'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "MarkDecorator",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/structures.py",
+      "line": 391,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class 'MarkDecorator'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_SkipMarkDecorator",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/structures.py",
+      "line": 483,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class '_SkipMarkDecorator'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "_XfailMarkDecorator",
+      "name": "__call__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/structures.py",
+      "line": 498,
+      "severity": "high",
+      "description": "Method '__call__' defined multiple times in class '_XfailMarkDecorator'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Scanner",
+      "name": "accept",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/expression.py",
+      "line": 145,
+      "severity": "high",
+      "description": "Method 'accept' defined multiple times in class 'Scanner'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Scanner",
+      "name": "accept",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/mark/expression.py",
+      "line": 149,
+      "severity": "high",
+      "description": "Method 'accept' defined multiple times in class 'Scanner'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Traceback",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_code/code.py",
+      "line": 416,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Traceback'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Traceback",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_code/code.py",
+      "line": 418,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Traceback'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "ExceptionInfo",
+      "name": "traceback",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_code/code.py",
+      "line": 636,
+      "severity": "high",
+      "description": "Method 'traceback' defined multiple times in class 'ExceptionInfo'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Source",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_code/source.py",
+      "line": 56,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Source'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Source",
+      "name": "__getitem__",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_code/source.py",
+      "line": 58,
+      "severity": "high",
+      "description": "Method '__getitem__' defined multiple times in class 'Source'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "TerminalWriter",
+      "name": "fullwidth",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_io/terminalwriter.py",
+      "line": 99,
+      "severity": "high",
+      "description": "Method 'fullwidth' defined multiple times in class 'TerminalWriter'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "LocalPath",
+      "name": "stat",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_py/path.py",
+      "line": 965,
+      "severity": "high",
+      "description": "Method 'stat' defined multiple times in class 'LocalPath'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "LocalPath",
+      "name": "stat",
+      "file": "./.venv/lib/python3.13/site-packages/_pytest/_py/path.py",
+      "line": 967,
+      "severity": "high",
+      "description": "Method 'stat' defined multiple times in class 'LocalPath'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Checker",
+      "name": "futuresAllowed",
+      "file": "./.venv/lib/python3.13/site-packages/pyflakes/checker.py",
+      "line": 802,
+      "severity": "high",
+      "description": "Method 'futuresAllowed' defined multiple times in class 'Checker'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "Checker",
+      "name": "annotationsFutureEnabled",
+      "file": "./.venv/lib/python3.13/site-packages/pyflakes/checker.py",
+      "line": 815,
+      "severity": "high",
+      "description": "Method 'annotationsFutureEnabled' defined multiple times in class 'Checker'"
+    }
+  ]
+}

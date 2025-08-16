@@ -9,7 +9,28 @@ and modern action buttons based on current industry standards.
 import tkinter as tk
 import math
 from typing import Callable, Optional
-from core.gui_models import THEME, FONTS
+
+# Handle theme import with fallback
+try:
+    from ...core.gui_models import THEME, FONTS
+except ImportError:
+    try:
+        from core.gui_models import THEME, FONTS
+    except ImportError:
+        # Fallback theme and fonts for when core module is not available
+        THEME = {
+            "table_felt": "#0F5132",
+            "secondary_bg": "#4A5568", 
+            "text": "#E2E8F0",
+            "chip_gold": "#F6E05E",
+            "card_bg": "#F8FAFC",
+            "card_border": "#E2E8F0"
+        }
+        FONTS = {
+            "main": ("Arial", 12),
+            "small": ("Arial", 10),
+            "large": ("Arial", 16, "bold")
+        }
 
 
 class BetSliderWidget(tk.Frame):

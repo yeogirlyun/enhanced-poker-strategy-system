@@ -1,0 +1,12 @@
+{
+  "summary": {
+    "total_duplicates": 0,
+    "scanned_directory": ".",
+    "ignore_patterns": [
+      "*/__pycache__/*",
+      "*/logs/*"
+    ],
+    "timestamp": "2025-08-16T11:33:41.551636"
+  },
+  "duplicates": []
+}
