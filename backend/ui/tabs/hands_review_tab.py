@@ -9,7 +9,7 @@ from ..state.store import Store
 from ..services.event_bus import EventBus
 from ..services.service_container import ServiceContainer
 from ..services.hands_repository import HandsRepository, HandsFilter, StudyMode
-from ..services.theme_factory import _get_theme_selection_highlight, _get_theme_emphasis_colors
+# Legacy imports removed - now using config-driven theme system
 from ..services.fpsm_adapter import FpsmEventAdapter
 from ..tableview.canvas_manager import CanvasManager
 from ..tableview.layer_manager import LayerManager
@@ -253,11 +253,8 @@ class HandsReviewTab(ttk.Frame):
                 print(f"❌ Failed to reload themes: {e}")
                 all_theme_names = ["Forest Green Professional"]  # Ultimate fallback
         
-        # Import enhanced theme system from ThemeManager
-        from ..services.theme_manager import THEME_ICONS, THEME_INTROS
-        
-        # Use centralized theme icons and introductions
-        self.THEME_INTROS = THEME_INTROS
+        # Theme icons are now embedded in theme names from JSON config
+        # No need for separate THEME_ICONS or THEME_INTROS - all data comes from poker_themes.json
         
         # Create clean 4x4 grid layout for 16 themes with 20px font
         # Configure grid weights for even distribution
@@ -268,9 +265,8 @@ class HandsReviewTab(ttk.Frame):
             row = i // 4  # 4 themes per row
             col = i % 4
             
-            # Get theme icon and create display
-            icon = THEME_ICONS.get(theme_name, "🎨")
-            display_name = f"{icon} {theme_name}"
+            # Theme names from JSON config already include icons and formatting
+            display_name = theme_name
             
             # Simple radiobutton with 20px font and equal spacing
             radio_btn = ttk.Radiobutton(theme_controls, text=display_name, 
@@ -370,7 +366,9 @@ class HandsReviewTab(ttk.Frame):
         try:
             # Get theme-specific selection highlight
             current_theme_name = self.theme.current() or 'Forest Green Professional'
-            selection_highlight = _get_theme_selection_highlight(current_theme_name)
+            # Get selection highlight from config-driven system
+            base_colors = self.theme.get_base_colors()
+            selection_highlight = {"color": base_colors.get("highlight", "#D4AF37")}
             
             self.hands_listbox.configure(
                 bg=theme.get("panel.bg", "#111827"),
@@ -671,12 +669,10 @@ class HandsReviewTab(ttk.Frame):
     
     def _show_theme_intro(self, theme_name):
         """Show artistic introduction for the selected theme with luxury museum placard styling."""
-        intro_text = self.THEME_INTROS.get(theme_name, "A unique poker table theme with its own distinctive character.")
-        
-        # Split intro into main description and poker persona
-        lines = intro_text.split('\n')
-        main_desc = lines[0] if lines else intro_text
-        persona = lines[1] if len(lines) > 1 else ""
+        # Get theme metadata from config-driven system
+        metadata = self.theme.get_theme_metadata(theme_name)
+        main_desc = metadata.get("intro", "A unique poker table theme with its own distinctive character.")
+        persona = metadata.get("persona", "")
         
         # Update the intro label with luxury styling
         self.theme_intro_label.config(state="normal")
@@ -689,7 +685,9 @@ class HandsReviewTab(ttk.Frame):
         if persona:
             self.theme_intro_label.insert(tk.END, "\n\n")
             persona_start = self.theme_intro_label.index(tk.INSERT)
-            self.theme_intro_label.insert(tk.END, persona)
+            # Format persona with attribution
+            persona_text = f"— {persona} style —"
+            self.theme_intro_label.insert(tk.END, persona_text)
             persona_end = self.theme_intro_label.index(tk.INSERT)
             
             # Apply italic styling to persona
@@ -734,8 +732,13 @@ class HandsReviewTab(ttk.Frame):
                 else:
                     raise Exception("Config-driven emphasis not available")
             except Exception:
-                # Legacy fallback
-                emphasis_colors = _get_theme_emphasis_colors(theme_name)
+                # Legacy fallback - use basic theme colors
+                base_colors = self.theme.get_base_colors()
+                emphasis_colors = {
+                    "bg_gradient": [base_colors.get("felt", "#2D5A3D"), base_colors.get("rail", "#4A3428")],
+                    "text": base_colors.get("emphasis_text", "#F8E7C9"),
+                    "accent": base_colors.get("raise", "#B63D3D")
+                }
                 placard_bg = emphasis_colors["bg_gradient"][0]  # Deep velvet gradient start
                 placard_border = emphasis_colors["bg_gradient"][1]  # Deep velvet gradient end
                 accent_glow = emphasis_colors["accent"]  # Crimson with glow
@@ -810,7 +813,9 @@ class HandsReviewTab(ttk.Frame):
             if hasattr(self, 'hands_listbox'):
                 # Get current theme name for dynamic highlighting
                 current_theme_name = self.theme.current() or 'Forest Green Professional'
-                selection_highlight = _get_theme_selection_highlight(current_theme_name)
+                # Get selection highlight from config-driven system
+            base_colors = self.theme.get_base_colors()
+            selection_highlight = {"color": base_colors.get("highlight", "#D4AF37")}
                 self.hands_listbox.configure(
                     bg=theme.get("panel.bg", "#111827"),
                     fg=theme.get("panel.fg", "#E5E7EB"),
@@ -1313,7 +1318,9 @@ class HandsReviewTab(ttk.Frame):
                 selection_color = base_colors.get("highlight", "#D4AF37")
                 selection_glow = base_colors.get("metal", "#C9A34E")
             except Exception:
-                selection_highlight = _get_theme_selection_highlight(current_theme_name)
+                # Get selection highlight from config-driven system
+            base_colors = self.theme.get_base_colors()
+            selection_highlight = {"color": base_colors.get("highlight", "#D4AF37")}
                 selection_color = selection_highlight["color"]
                 selection_glow = selection_highlight["glow"]
             

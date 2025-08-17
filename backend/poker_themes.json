@@ -26,7 +26,8 @@
   "themes": [
     {
       "id": "forest-green-pro",
-      "name": "Forest Green Professional",
+      "name": "Forest Green Professional 🌿",
+      "intro": "Classic casino green with dark wood rails—calm, familiar, and relentlessly focused. Unshakable fundamentals and discipline, echoing Doyle Brunson's steady command of the table.",
       "palette": {
         "felt": "#2D5A3D",
         "rail": "#4A3428",
@@ -39,11 +40,13 @@
         "highlight": "#D4AF37",
         "highlight_text": "#0B0B0E",
         "emphasis_text": "#F8E7C9"
-      }
+      },
+      "persona": "Doyle Brunson"
     },
     {
       "id": "velvet-burgundy",
-      "name": "Velvet Burgundy",
+      "name": "Velvet Burgundy 🍷",
+      "intro": "Wine-red felt and brass trim; a private salon after midnight, hushed and opulent. Charisma and showmanship refined, capturing Antonio Esfandiari's flair without losing precision.",
       "palette": {
         "felt": "#4B1C2B",
         "rail": "#3D0F1F",
@@ -56,198 +59,13 @@
         "highlight": "#A31D2B",
         "highlight_text": "#F9E7C9",
         "emphasis_text": "#F9E7C9"
-      }
-    },
-    {
-      "id": "obsidian-gold",
-      "name": "Obsidian Gold",
-      "palette": {
-        "felt": "#0A0A0A",
-        "rail": "#2C2C2C",
-        "metal": "#D4AF37",
-        "accent": "#3A3A3A",
-        "raise": "#A41E34",
-        "call":  "#2AA37A",
-        "neutral": "#A7A7A7",
-        "text": "#E6E6E6",
-        "highlight": "#4169E1",
-        "highlight_text": "#FFFFFF",
-        "emphasis_text": "#F5F2E6"
-      }
-    },
-    {
-      "id": "imperial-jade",
-      "name": "Imperial Jade",
-      "palette": {
-        "felt": "#0E8044",
-        "rail": "#1B1B1B",
-        "metal": "#D5C07E",
-        "accent": "#166A3E",
-        "raise": "#B23B43",
-        "call":  "#32B37A",
-        "neutral": "#9CB1A8",
-        "text": "#F9F3DD",
-        "highlight": "#00A86B",
-        "highlight_text": "#08110D",
-        "emphasis_text": "#F6F0DC"
-      }
-    },
-    {
-      "id": "monet-twilight",
-      "name": "Monet Twilight",
-      "palette": {
-        "felt": "#2A2D64",
-        "rail": "#1F1F1B",
-        "metal": "#C8BEDF",
-        "accent": "#B7A6D0",
-        "raise": "#B63D3D",
-        "call":  "#2AA37A",
-        "neutral": "#8EA6B5",
-        "text": "#F5F7FA",
-        "highlight": "#B7A6D0",
-        "highlight_text": "#0E0E15",
-        "emphasis_text": "#EDE8F6"
-      }
-    },
-    {
-      "id": "caravaggio-sepia-noir",
-      "name": "Caravaggio Sepia Noir",
-      "palette": {
-        "felt": "#2A1F1A",
-        "rail": "#101010",
-        "metal": "#D4A373",
-        "accent": "#9E0F28",
-        "raise": "#B3122E",
-        "call":  "#2AA37A",
-        "neutral": "#9C8F7A",
-        "text": "#FFF7E6",
-        "highlight": "#EAD6B7",
-        "highlight_text": "#1B130B",
-        "emphasis_text": "#F7E8CD"
-      }
-    },
-    {
-      "id": "klimt-royale",
-      "name": "Klimt Royale",
-      "palette": {
-        "felt": "#17130E",
-        "rail": "#23211B",
-        "metal": "#E4C97D",
-        "accent": "#166A3E",
-        "raise": "#B23B43",
-        "call":  "#32B37A",
-        "neutral": "#A38E6A",
-        "text": "#FFF2D9",
-        "highlight": "#B87333",
-        "highlight_text": "#0D0A07",
-        "emphasis_text": "#FFEBC6"
-      }
-    },
-    {
-      "id": "deco-luxe",
-      "name": "Deco Luxe",
-      "palette": {
-        "felt": "#1B1E2B",
-        "rail": "#111111",
-        "metal": "#D6C08F",
-        "accent": "#1A3E34",
-        "raise": "#5B1922",
-        "call":  "#2AA37A",
-        "neutral": "#9B9486",
-        "text": "#F8F4EA",
-        "highlight": "#E1B382",
-        "highlight_text": "#0E0C09",
-        "emphasis_text": "#F4EAD3"
-      }
-    },
-    {
-      "id": "sunset-mirage",
-      "name": "Sunset Mirage",
-      "palette": {
-        "felt": "#8C1C13",
-        "rail": "#2B1B0E",
-        "metal": "#E6B87A",
-        "accent": "#FF9E57",
-        "raise": "#C85C5C",
-        "call":  "#2AA37A",
-        "neutral": "#A68C7A",
-        "text": "#F7E7D6",
-        "highlight": "#FF9E57",
-        "highlight_text": "#2B160E",
-        "emphasis_text": "#FFE6C9"
-      }
-    },
-    {
-      "id": "oceanic-aqua",
-      "name": "Oceanic Aqua",
-      "palette": {
-        "felt": "#126E82",
-        "rail": "#0D1B2A",
-        "metal": "#B7C1C8",
-        "accent": "#4EEAFF",
-        "raise": "#6C94D2",
-        "call":  "#57C2B6",
-        "neutral": "#9DB3C4",
-        "text": "#F5F7FA",
-        "highlight": "#4EEAFF",
-        "highlight_text": "#071018",
-        "emphasis_text": "#EAF6FF"
-      }
-    },
-    {
-      "id": "velour-crimson",
-      "name": "Velour Crimson",
-      "palette": {
-        "felt": "#B22222",
-        "rail": "#1C0E0E",
-        "metal": "#C18F65",
-        "accent": "#3B0A0F",
-        "raise": "#A41E34",
-        "call":  "#2AA37A",
-        "neutral": "#A3928A",
-        "text": "#F5E2C8",
-        "highlight": "#FFD700",
-        "highlight_text": "#111111",
-        "emphasis_text": "#F9E7C9"
-      }
-    },
-    {
-      "id": "golden-dusk",
-      "name": "Golden Dusk",
-      "palette": {
-        "felt": "#7A4A1F",
-        "rail": "#3A1D0D",
-        "metal": "#C18F65",
-        "accent": "#A3622B",
-        "raise": "#B35A3B",
-        "call":  "#2AA37A",
-        "neutral": "#AF9A8A",
-        "text": "#F3E3D3",
-        "highlight": "#E4B564",
-        "highlight_text": "#23160D",
-        "emphasis_text": "#F8E6CF"
-      }
-    },
-    {
-      "id": "royal-sapphire",
-      "name": "Royal Sapphire",
-      "palette": {
-        "felt": "#0D3B66",
-        "rail": "#161616",
-        "metal": "#C7D3E0",
-        "accent": "#2656D9",
-        "raise": "#6C4AB6",
-        "call":  "#57C2B6",
-        "neutral": "#9AB1CF",
-        "text": "#F2F6FC",
-        "highlight": "#1E90FF",
-        "highlight_text": "#061224",
-        "emphasis_text": "#E8F1FF"
-      }
+      },
+      "persona": "Antonio Esfandiari"
     },
     {
       "id": "emerald-aurora",
-      "name": "Emerald Aurora",
+      "name": "Emerald Aurora 🌌",
+      "intro": "Emerald felt lit by aurora glow—crisp, modern, quietly electric. Analytical brilliance under pressure, reflecting Justin Bonomo's polished, high-precision edge.",
       "palette": {
         "felt": "#046D47",
         "rail": "#0C0C0C",
@@ -260,28 +78,51 @@
         "highlight": "#59FFAD",
         "highlight_text": "#062318",
         "emphasis_text": "#EAF9F2"
-      }
+      },
+      "persona": "Justin Bonomo"
     },
     {
-      "id": "stealth-graphite-steel",
-      "name": "Stealth Graphite Steel",
+      "id": "imperial-jade",
+      "name": "Imperial Jade 💎",
+      "intro": "Deep emerald with antique gold; stately and serene, a table that breathes confidence. Surgical decision-making and posture, channeling Stephen Chidwick's icy precision.",
       "palette": {
-        "felt": "#2E2E2E",
-        "rail": "#444444",
-        "metal": "#8D8D8D",
-        "accent": "#00D4FF",
-        "raise": "#9E3B49",
-        "call":  "#57C2B6",
-        "neutral": "#8E9196",
-        "text": "#E6E7EA",
-        "highlight": "#00D4FF",
-        "highlight_text": "#041014",
-        "emphasis_text": "#F2F3F5"
-      }
+        "felt": "#0E8044",
+        "rail": "#1B1B1B",
+        "metal": "#D5C07E",
+        "accent": "#166A3E",
+        "raise": "#B23B43",
+        "call":  "#32B37A",
+        "neutral": "#9CB1A8",
+        "text": "#F9F3DD",
+        "highlight": "#00A86B",
+        "highlight_text": "#08110D",
+        "emphasis_text": "#F6F0DC"
+      },
+      "persona": "Stephen Chidwick"
+    },
+    {
+      "id": "ruby-royale",
+      "name": "Ruby Royale ❤️‍🔥",
+      "intro": "Lustrous ruby felt in black lacquer with gilded edges—brilliant, precise, unmistakable. Controlled aggression and elite fitness, mirroring Jason Koon's poised dominance.",
+      "palette": {
+        "felt": "#9B111E",
+        "rail": "#0D0D0D",
+        "metal": "#FFD700",
+        "accent": "#C72C48",
+        "raise": "#A41E34",
+        "call":  "#2AA37A",
+        "neutral": "#B79B9B",
+        "text": "#FAFAFA",
+        "highlight": "#E0115F",
+        "highlight_text": "#19070B",
+        "emphasis_text": "#FFE5B2"
+      },
+      "persona": "Jason Koon"
     },
     {
       "id": "coral-royale",
-      "name": "Coral Royale",
+      "name": "Coral Royale 🪸",
+      "intro": "Warm coral red under soft gold—lively, magnetic, made for bold moves. Fearless table presence with generosity of spirit, channeling Alan Keating's big-game charisma.",
       "palette": {
         "felt": "#E34234",
         "rail": "#0F0F0F",
@@ -294,11 +135,184 @@
         "highlight": "#FF7F50",
         "highlight_text": "#2B120E",
         "emphasis_text": "#FFE6D8"
-      }
+      },
+      "persona": "Alan Keating"
+    },
+    {
+      "id": "golden-dusk",
+      "name": "Golden Dusk 🌇",
+      "intro": "Burnished amber over dark leather; cinematic nostalgia that never hurries. Street-smart reads and veteran poise, reflecting Jason Mercier's calm closing instinct.",
+      "palette": {
+        "felt": "#7A4A1F",
+        "rail": "#3A1D0D",
+        "metal": "#C18F65",
+        "accent": "#A3622B",
+        "raise": "#B35A3B",
+        "call":  "#2AA37A",
+        "neutral": "#AF9A8A",
+        "text": "#F3E3D3",
+        "highlight": "#E4B564",
+        "highlight_text": "#23160D",
+        "emphasis_text": "#F8E6CF"
+      },
+      "persona": "Jason Mercier"
+    },
+    {
+      "id": "klimt-royale",
+      "name": "Klimt Royale ✨",
+      "intro": "Obsidian field with ornamental gold; decadent patterns that shimmer like a gala. Elegant intellect and creative lines, echoing Liv Boeree's balance of logic and style.",
+      "palette": {
+        "felt": "#17130E",
+        "rail": "#23211B",
+        "metal": "#E4C97D",
+        "accent": "#166A3E",
+        "raise": "#B23B43",
+        "call":  "#32B37A",
+        "neutral": "#A38E6A",
+        "text": "#FFF2D9",
+        "highlight": "#B87333",
+        "highlight_text": "#0D0A07",
+        "emphasis_text": "#FFEBC6"
+      },
+      "persona": "Liv Boeree"
+    },
+    {
+      "id": "deco-luxe",
+      "name": "Deco Luxe 🏛️",
+      "intro": "Champagne geometry on jet black—sleek Art-Deco lines and effortless poise. Thoughtful innovation and studied restraint, channeling Phil Galfond's cerebral mastery.",
+      "palette": {
+        "felt": "#1B1E2B",
+        "rail": "#111111",
+        "metal": "#D6C08F",
+        "accent": "#1A3E34",
+        "raise": "#5B1922",
+        "call":  "#2AA37A",
+        "neutral": "#9B9486",
+        "text": "#F8F4EA",
+        "highlight": "#E1B382",
+        "highlight_text": "#0E0C09",
+        "emphasis_text": "#F4EAD3"
+      },
+      "persona": "Phil Galfond"
+    },
+    {
+      "id": "oceanic-aqua",
+      "name": "Oceanic Aqua 🌊",
+      "intro": "Midnight teal with bright aqua spray—refreshing, steady, quietly modern. Patience and clarity in deep waters, reflecting Erik Seidel's timeless control.",
+      "palette": {
+        "felt": "#126E82",
+        "rail": "#0D1B2A",
+        "metal": "#B7C1C8",
+        "accent": "#4EEAFF",
+        "raise": "#6C94D2",
+        "call":  "#57C2B6",
+        "neutral": "#9DB3C4",
+        "text": "#F5F7FA",
+        "highlight": "#4EEAFF",
+        "highlight_text": "#071018",
+        "emphasis_text": "#EAF6FF"
+      },
+      "persona": "Erik Seidel"
+    },
+    {
+      "id": "royal-sapphire",
+      "name": "Royal Sapphire 🔷",
+      "intro": "Jewel-blue confidence with crisp trim—bright, polished, commanding. Relentless precision and tournament steel, capturing Adrián Mateos's clinical edge.",
+      "palette": {
+        "felt": "#0D3B66",
+        "rail": "#161616",
+        "metal": "#C7D3E0",
+        "accent": "#2656D9",
+        "raise": "#6C4AB6",
+        "call":  "#57C2B6",
+        "neutral": "#9AB1CF",
+        "text": "#F2F6FC",
+        "highlight": "#1E90FF",
+        "highlight_text": "#061224",
+        "emphasis_text": "#E8F1FF"
+      },
+      "persona": "Adrián Mateos"
+    },
+    {
+      "id": "monet-twilight",
+      "name": "Monet Twilight 🎨",
+      "intro": "Navy-violet felt with misted glow—soft reflections, poetic and nocturnal. Grace under variance and stoic poise, echoing Patrik Antonius's midnight composure.",
+      "palette": {
+        "felt": "#2A2D64",
+        "rail": "#1F1F1B",
+        "metal": "#C8BEDF",
+        "accent": "#B7A6D0",
+        "raise": "#B63D3D",
+        "call":  "#2AA37A",
+        "neutral": "#8EA6B5",
+        "text": "#F5F7FA",
+        "highlight": "#B7A6D0",
+        "highlight_text": "#0E0E15",
+        "emphasis_text": "#EDE8F6"
+      },
+      "persona": "Patrik Antonius"
+    },
+    {
+      "id": "caravaggio-sepia-noir",
+      "name": "Caravaggio Sepia Noir 🕯️",
+      "intro": "Candlelit sepia over deep shadow—drama, heat, and fearless contrasts. Audacious pressure and theatrical lines, mirroring Tom Dwan's fearless brinkmanship.",
+      "palette": {
+        "felt": "#2A1F1A",
+        "rail": "#101010",
+        "metal": "#D4A373",
+        "accent": "#9E0F28",
+        "raise": "#B3122E",
+        "call":  "#2AA37A",
+        "neutral": "#9C8F7A",
+        "text": "#FFF7E6",
+        "highlight": "#EAD6B7",
+        "highlight_text": "#1B130B",
+        "emphasis_text": "#F7E8CD"
+      },
+      "persona": "Tom Dwan"
+    },
+    {
+      "id": "stealth-graphite-steel",
+      "name": "Stealth Graphite Steel 🖤",
+      "intro": "Matte blacks and brushed steel; silent, aerodynamic focus. Unreadable calm and surgical timing, channeling Phil Ivey's cold precision.",
+      "palette": {
+        "felt": "#2E2E2E",
+        "rail": "#444444",
+        "metal": "#8D8D8D",
+        "accent": "#00D4FF",
+        "raise": "#9E3B49",
+        "call":  "#57C2B6",
+        "neutral": "#8E9196",
+        "text": "#E6E7EA",
+        "highlight": "#00D4FF",
+        "highlight_text": "#041014",
+        "emphasis_text": "#F2F3F5"
+      },
+      "persona": "Phil Ivey"
+    },
+    {
+      "id": "sunset-mirage",
+      "name": "Sunset Mirage 🌅",
+      "intro": "Amber to violet across the felt—the warmth of desert dusk under velvet lights. Live-read mastery and table conversation, reflecting Daniel Negreanu's friendly edge.",
+      "palette": {
+        "felt": "#8C1C13",
+        "rail": "#2B1B0E",
+        "metal": "#E6B87A",
+        "accent": "#FF9E57",
+        "raise": "#C85C5C",
+        "call":  "#2AA37A",
+        "neutral": "#A68C7A",
+        "text": "#F7E7D6",
+        "highlight": "#FF9E57",
+        "highlight_text": "#2B160E",
+        "emphasis_text": "#FFE6C9"
+      },
+      "persona": "Daniel Negreanu"
     },
     {
       "id": "cyber-neon",
-      "name": "Cyber Neon",
+      "name": "Cyber Neon ⚡",
+      "intro": "Electric teals and magentas on charcoal—arcade energy for fast grinders. Hyper-focused volume and fearless optimization, channeling Fedor Holz's modern engine.",
       "palette": {
         "felt": "#0A0A0A",
         "rail": "#1C1C1C",
@@ -311,7 +325,8 @@
         "highlight": "#FF1AFF",
         "highlight_text": "#120614",
         "emphasis_text": "#DDF7FF"
-      }
+      },
+      "persona": "Fedor Holz"
     }
   ]
 }
