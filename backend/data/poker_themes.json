@@ -69,11 +69,11 @@
   "themes": [
     {
       "id": "forest-green-pro",
-      "name": "Forest Green Professional \ud83c\udf3f",
-      "intro": "Classic casino green with dark wood rails\u2014calm, familiar, relentlessly focused. Built on fundamentals and discipline, echoing Doyle Brunson\u2019s steady command under pressure.",
+      "name": "Forest Green Professional 🌿",
+      "intro": "Classic casino green with dark wood rails—calm, familiar, relentlessly focused. Built on fundamentals and discipline, echoing Doyle Brunson’s steady command under pressure.",
       "persona": "Doyle Brunson",
       "palette": {
-        "felt": "#2D5A3D",
+        "felt": "#FF0000",
         "rail": "#4A3428",
         "metal": "#C9A34E",
         "accent": "#1DB954",
@@ -106,8 +106,8 @@
     },
     {
       "id": "velvet-burgundy",
-      "name": "Velvet Burgundy \ud83c\udf77",
-      "intro": "Wine-red felt and brass trim; a private salon after midnight\u2014hushed and opulent. Charisma with calculation, channeling Antonio Esfandiari\u2019s flair without sacrificing precision.",
+      "name": "Velvet Burgundy 🍷",
+      "intro": "Wine-red felt and brass trim; a private salon after midnight—hushed and opulent. Charisma with calculation, channeling Antonio Esfandiari’s flair without sacrificing precision.",
       "persona": "Antonio Esfandiari",
       "palette": {
         "felt": "#4B1C2B",
@@ -143,8 +143,8 @@
     },
     {
       "id": "emerald-aurora",
-      "name": "Emerald Aurora \ud83c\udf0c",
-      "intro": "Emerald felt lit by aurora glow\u2014crisp, modern, quietly electric. Analytical brilliance and composure, reflecting Justin Bonomo\u2019s polished tournament edge.",
+      "name": "Emerald Aurora 🌌",
+      "intro": "Emerald felt lit by aurora glow—crisp, modern, quietly electric. Analytical brilliance and composure, reflecting Justin Bonomo’s polished tournament edge.",
       "persona": "Justin Bonomo",
       "palette": {
         "felt": "#046D47",
@@ -180,8 +180,8 @@
     },
     {
       "id": "imperial-jade",
-      "name": "Imperial Jade \ud83d\udc8e",
-      "intro": "Deep emerald with antique gold; stately and serene, breathing confidence. Surgical decisions and posture, echoing Stephen Chidwick\u2019s icy precision.",
+      "name": "Imperial Jade 💎",
+      "intro": "Deep emerald with antique gold; stately and serene, breathing confidence. Surgical decisions and posture, echoing Stephen Chidwick’s icy precision.",
       "persona": "Stephen Chidwick",
       "palette": {
         "felt": "#0E8044",
@@ -217,8 +217,8 @@
     },
     {
       "id": "ruby-royale",
-      "name": "Ruby Royale \u2764\ufe0f\u200d\ud83d\udd25",
-      "intro": "Lustrous ruby felt in black lacquer with gilded edges\u2014brilliant, precise, unmistakable. Controlled aggression and elite poise, mirroring Jason Koon\u2019s disciplined dominance.",
+      "name": "Ruby Royale ❤️‍🔥",
+      "intro": "Lustrous ruby felt in black lacquer with gilded edges—brilliant, precise, unmistakable. Controlled aggression and elite poise, mirroring Jason Koon’s disciplined dominance.",
       "persona": "Jason Koon",
       "palette": {
         "felt": "#9B111E",
@@ -254,8 +254,8 @@
     },
     {
       "id": "coral-royale",
-      "name": "Coral Royale \ud83e\udeb8",
-      "intro": "Warm coral red under soft gold\u2014lively, magnetic, made for bold moves. Big-game charisma with generosity, channeling Alan Keating\u2019s fearless table energy.",
+      "name": "Coral Royale 🪸",
+      "intro": "Warm coral red under soft gold—lively, magnetic, made for bold moves. Big-game charisma with generosity, channeling Alan Keating’s fearless table energy.",
       "persona": "Alan Keating",
       "palette": {
         "felt": "#E34234",
@@ -286,13 +286,13 @@
         "emphasis_bg_top": "#F15545",
         "emphasis_bg_bottom": "#A92F25",
         "emphasis_border": "#E4B564",
-        "emphasis_accent_text": "#FFE0C8"
+        "emphasis_accent_text": "#75ECC8"
       }
     },
     {
       "id": "golden-dusk",
-      "name": "Golden Dusk \ud83c\udf07",
-      "intro": "Burnished amber over dark leather; cinematic nostalgia that never hurries. Veteran reads and closing instinct, reflecting Jason Mercier\u2019s calm endgame edge.",
+      "name": "Golden Dusk 🌇",
+      "intro": "Burnished amber over dark leather; cinematic nostalgia that never hurries. Veteran reads and closing instinct, reflecting Jason Mercier’s calm endgame edge.",
       "persona": "Jason Mercier",
       "palette": {
         "felt": "#7A4A1F",
@@ -328,8 +328,8 @@
     },
     {
       "id": "klimt-royale",
-      "name": "Klimt Royale \u2728",
-      "intro": "Obsidian field with ornamental gold; decadent patterns that shimmer like a gala. Elegant intellect and creative lines, echoing Liv Boeree\u2019s balance of logic and style.",
+      "name": "Klimt Royale ✨",
+      "intro": "Obsidian field with ornamental gold; decadent patterns that shimmer like a gala. Elegant intellect and creative lines, echoing Liv Boeree’s balance of logic and style.",
       "persona": "Liv Boeree",
       "palette": {
         "felt": "#17130E",
@@ -365,8 +365,8 @@
     },
     {
       "id": "deco-luxe",
-      "name": "Deco Luxe \ud83c\udfdb\ufe0f",
-      "intro": "Champagne geometry on jet black\u2014sleek Art-Deco lines and effortless poise. Thoughtful innovation and restraint, channeling Phil Galfond\u2019s cerebral mastery.",
+      "name": "Deco Luxe 🏛️",
+      "intro": "Champagne geometry on jet black—sleek Art-Deco lines and effortless poise. Thoughtful innovation and restraint, channeling Phil Galfond’s cerebral mastery.",
       "persona": "Phil Galfond",
       "palette": {
         "felt": "#1B1E2B",
@@ -402,21 +402,21 @@
     },
     {
       "id": "oceanic-aqua",
-      "name": "Oceanic Aqua \ud83c\udf0a",
-      "intro": "Midnight teal with bright aqua spray\u2014refreshing, steady, quietly modern. Patience and clarity in deep waters, reflecting Erik Seidel\u2019s timeless control.",
+      "name": "Oceanic Aqua 🌊",
+      "intro": "Midnight teal with bright aqua spray—refreshing, steady, quietly modern. Patience and clarity in deep waters, reflecting Erik Seidel’s timeless control.",
       "persona": "Erik Seidel",
       "palette": {
         "felt": "#126E82",
         "rail": "#0D1B2A",
         "metal": "#B7C1C8",
         "accent": "#4EEAFF",
-        "raise": "#6C94D2",
+        "raise": "#ABCE00",
         "call": "#57C2B6",
         "neutral": "#9DB3C4",
         "text": "#F5F7FA",
         "highlight": "#4EEAFF",
         "highlight_text": "#071018",
-        "emphasis_text": "#F2FBFF",
+        "emphasis_text": "#00FAB7",
         "chip_face": "#126E82",
         "chip_edge": "#0D1B2A",
         "chip_rim": "#B7C1C8",
@@ -434,14 +434,14 @@
         "emphasis_bg_top": "#177C93",
         "emphasis_bg_bottom": "#0A4153",
         "emphasis_border": "#B7C1C8",
-        "emphasis_accent_text": "#C8F4FF"
+        "emphasis_accent_text": "#D9B4F9"
       }
     },
     {
       "id": "royal-sapphire",
-      "name": "Royal Sapphire \ud83d\udd37",
-      "intro": "Jewel-blue confidence with crisp trim\u2014bright, polished, commanding. Relentless precision and tournament steel, capturing Adri\u00e1n Mateos\u2019s clinical edge.",
-      "persona": "Adri\u00e1n Mateos",
+      "name": "Royal Sapphire 🔷",
+      "intro": "Jewel-blue confidence with crisp trim—bright, polished, commanding. Relentless precision and tournament steel, capturing Adrián Mateos’s clinical edge.",
+      "persona": "Adrián Mateos",
       "palette": {
         "felt": "#0D3B66",
         "rail": "#161616",
@@ -476,8 +476,8 @@
     },
     {
       "id": "monet-twilight",
-      "name": "Monet Twilight \ud83c\udfa8",
-      "intro": "Navy-violet felt with misted glow\u2014soft reflections, poetic and nocturnal. Grace under variance and stoic poise, echoing Patrik Antonius\u2019s midnight composure.",
+      "name": "Monet Twilight 🎨",
+      "intro": "Navy-violet felt with misted glow—soft reflections, poetic and nocturnal. Grace under variance and stoic poise, echoing Patrik Antonius’s midnight composure.",
       "persona": "Patrik Antonius",
       "palette": {
         "felt": "#2A2D64",
@@ -508,13 +508,13 @@
         "emphasis_bg_top": "#2F326E",
         "emphasis_bg_bottom": "#1B1E44",
         "emphasis_border": "#C8BEDF",
-        "emphasis_accent_text": "#D9CFF2"
+        "emphasis_accent_text": "#E6EF75"
       }
     },
     {
       "id": "caravaggio-sepia-noir",
-      "name": "Caravaggio Sepia Noir \ud83d\udd6f\ufe0f",
-      "intro": "Candlelit sepia over deep shadow\u2014drama, heat, fearless contrasts. Audacious pressure and brinkmanship, mirroring Tom Dwan\u2019s fearless lines.",
+      "name": "Caravaggio Sepia Noir 🕯️",
+      "intro": "Candlelit sepia over deep shadow—drama, heat, fearless contrasts. Audacious pressure and brinkmanship, mirroring Tom Dwan’s fearless lines.",
       "persona": "Tom Dwan",
       "palette": {
         "felt": "#2A1F1A",
@@ -545,13 +545,13 @@
         "emphasis_bg_top": "#3A2A22",
         "emphasis_bg_bottom": "#1F1612",
         "emphasis_border": "#D4A373",
-        "emphasis_accent_text": "#EBCFAA"
+        "emphasis_accent_text": "#EEB200"
       }
     },
     {
       "id": "stealth-graphite-steel",
-      "name": "Stealth Graphite Steel \ud83d\udda4",
-      "intro": "Matte blacks and brushed steel; silent, aerodynamic focus. Unreadable calm and surgical timing, channeling Phil Ivey\u2019s cold precision.",
+      "name": "Stealth Graphite Steel 🖤",
+      "intro": "Matte blacks and brushed steel; silent, aerodynamic focus. Unreadable calm and surgical timing, channeling Phil Ivey’s cold precision.",
       "persona": "Phil Ivey",
       "palette": {
         "felt": "#2E2E2E",
@@ -587,8 +587,8 @@
     },
     {
       "id": "sunset-mirage",
-      "name": "Sunset Mirage \ud83c\udf05",
-      "intro": "Amber to violet across the felt\u2014the warmth of desert dusk under velvet lights. Live-read mastery and table conversation, reflecting Daniel Negreanu\u2019s friendly edge.",
+      "name": "Sunset Mirage 🌅",
+      "intro": "Amber to violet across the felt—the warmth of desert dusk under velvet lights. Live-read mastery and table conversation, reflecting Daniel Negreanu’s friendly edge.",
       "persona": "Daniel Negreanu",
       "palette": {
         "felt": "#8C1C13",
@@ -624,8 +624,8 @@
     },
     {
       "id": "cyber-neon",
-      "name": "Cyber Neon \u26a1",
-      "intro": "Electric teals and magentas on charcoal\u2014arcade energy for fast grinders. Hyper-focused volume and fearless optimization, channeling Fedor Holz's modern engine.",
+      "name": "Cyber Neon ⚡",
+      "intro": "Electric teals and magentas on charcoal—arcade energy for fast grinders. Hyper-focused volume and fearless optimization, channeling Fedor Holz's modern engine.",
       "persona": "Fedor Holz",
       "palette": {
         "felt": "#0A0D10",

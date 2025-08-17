@@ -110,20 +110,50 @@ class AppShell(ttk.Frame):
         """Called when theme is changed via Theme Manager."""
         print("🎨 Theme changed - refreshing UI...")
         
-        # Reload theme manager
-        theme_manager = self.services.get_app("theme")
-        if hasattr(theme_manager, 'reload'):
-            theme_manager.reload()
-        
-        # Refresh all tabs
-        for i in range(self.notebook.index("end")):
-            tab = self.notebook.nametowidget(self.notebook.tabs()[i])
-            if hasattr(tab, '_refresh_ui_colors'):
-                tab._refresh_ui_colors()
-            elif hasattr(tab, 'refresh_theme'):
-                tab.refresh_theme()
-                
-        print("✅ Theme refresh completed")
+        try:
+            # Reload theme manager to get latest changes
+            theme_manager = self.services.get_app("theme")
+            if hasattr(theme_manager, 'reload'):
+                theme_manager.reload()
+            
+            # Force rebuild themes to pick up any live changes
+            try:
+                from .services.theme_factory import build_all_themes
+                themes = build_all_themes()
+                # Register updated themes
+                for name, tokens in themes.items():
+                    theme_manager.register(name, tokens)
+                print(f"🔄 Rebuilt and registered {len(themes)} themes")
+            except Exception as e:
+                print(f"⚠️ Theme rebuild warning: {e}")
+            
+            # Refresh all tabs with new theme
+            for i in range(self.notebook.index("end")):
+                try:
+                    tab = self.notebook.nametowidget(self.notebook.tabs()[i])
+                    
+                    # Try multiple refresh methods
+                    if hasattr(tab, '_refresh_ui_colors'):
+                        tab._refresh_ui_colors()
+                        print(f"✅ Refreshed tab {i} via _refresh_ui_colors")
+                    elif hasattr(tab, 'refresh_theme'):
+                        tab.refresh_theme()
+                        print(f"✅ Refreshed tab {i} via refresh_theme")
+                    elif hasattr(tab, '_on_theme_changed'):
+                        tab._on_theme_changed()
+                        print(f"✅ Refreshed tab {i} via _on_theme_changed")
+                    else:
+                        print(f"ℹ️ Tab {i} has no theme refresh method")
+                        
+                except Exception as e:
+                    print(f"⚠️ Error refreshing tab {i}: {e}")
+            
+            print("✅ Live theme refresh completed")
+            
+        except Exception as e:
+            print(f"❌ Theme refresh error: {e}")
+            import traceback
+            traceback.print_exc()
         
     def _show_about(self):
         """Show about dialog."""
