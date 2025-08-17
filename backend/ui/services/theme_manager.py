@@ -7,16 +7,20 @@ import os
 
 # Import the new token-driven theme system
 try:
-    from .theme_factory import build_all_themes, build_theme_from_config, get_available_theme_names, get_theme_by_name
+    from .theme_factory import build_all_themes
     from .theme_loader import get_theme_loader
-    from .state_styler import get_state_styler, get_selection_styler, get_emphasis_bar_styler
+    from .state_styler import (
+        get_state_styler,
+        get_selection_styler,
+        get_emphasis_bar_styler
+    )
     TOKEN_DRIVEN_THEMES_AVAILABLE = True
 except ImportError:
     TOKEN_DRIVEN_THEMES_AVAILABLE = False
 
 
 # Default theme name for fallbacks
-DEFAULT_THEME_NAME = "Forest Green Professional 🌿"  # Updated to match JSON config name
+DEFAULT_THEME_NAME = "Forest Green Professional 🌿"  # Updated to match JSON
 
 
 class ThemeManager:
@@ -102,6 +106,30 @@ class ThemeManager:
     def set_fonts(self, fonts: Dict[str, Any]) -> None:
         self._fonts = fonts
         self._save_config()
+    
+    def get_dimensions(self) -> Dict[str, Any]:
+        """Get theme dimensions for consistent spacing and sizing."""
+        try:
+            # Try to get dimensions from theme config
+            theme_data = self.get_theme()
+            if theme_data and "dimensions" in theme_data:
+                return theme_data["dimensions"]
+            
+            # Fallback to default dimensions
+            return {
+                "padding": {"small": 5, "medium": 8, "large": 16, "xlarge": 18},
+                "text_height": {"small": 3, "medium": 4, "large": 6},
+                "border_width": {"thin": 1, "medium": 2, "thick": 3},
+                "widget_width": {"narrow": 5, "medium": 8, "wide": 12}
+            }
+        except Exception:
+            # Ultimate fallback
+            return {
+                "padding": {"small": 5, "medium": 8, "large": 16, "xlarge": 18},
+                "text_height": {"small": 3, "medium": 4, "large": 6},
+                "border_width": {"thin": 1, "medium": 2, "thick": 3},
+                "widget_width": {"narrow": 5, "medium": 8, "wide": 12}
+            }
 
     def register(self, name: str, tokens: Dict[str, Any]) -> None:
         self._themes[name] = tokens
@@ -189,8 +217,26 @@ class ThemeManager:
             # Try new config-driven system first
             try:
                 loader = get_theme_loader()
-                # Convert display name to theme ID
-                theme_id = self._current.lower().replace(" ", "-").replace("🌿", "").replace("🍷", "").replace("💎", "").replace("🌌", "").replace("❤️‍🔥", "").replace("🪸", "").replace("🌇", "").replace("✨", "").replace("🏛️", "").replace("🌊", "").replace("🔷", "").replace("🎨", "").replace("🕯️", "").replace("🖤", "").replace("🌅", "").replace("⚡", "").strip() if self._current else "forest-green-pro"
+                # Convert display name to theme ID using proper mapping
+                name_to_id_map = {
+                    "Forest Green Professional 🌿": "forest-green-pro",
+                    "Velvet Burgundy 🍷": "velvet-burgundy", 
+                    "Emerald Aurora 🌌": "emerald-aurora",
+                    "Imperial Jade 💎": "imperial-jade",
+                    "Ruby Royale ❤️‍🔥": "ruby-royale",
+                    "Coral Royale 🪸": "coral-royale",
+                    "Golden Dusk 🌇": "golden-dusk",
+                    "Klimt Royale ✨": "klimt-royale",
+                    "Deco Luxe 🏛️": "deco-luxe",
+                    "Oceanic Aqua 🌊": "oceanic-aqua",
+                    "Royal Sapphire 🔷": "royal-sapphire",
+                    "Monet Twilight 🎨": "monet-twilight",
+                    "Caravaggio Sepia Noir 🕯️": "caravaggio-sepia-noir",
+                    "Stealth Graphite Steel 🖤": "stealth-graphite-steel",
+                    "Sunset Mirage 🌅": "sunset-mirage",
+                    "Cyber Neon ⚡": "cyber-neon"
+                }
+                theme_id = name_to_id_map.get(self._current, "forest-green-pro") if self._current else "forest-green-pro"
                 theme_config = loader.get_theme_by_id(theme_id)
                 return theme_config.get("palette", {})
             except Exception:

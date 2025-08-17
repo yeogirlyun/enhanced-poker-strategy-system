@@ -1,4 +1,20 @@
 import tkinter as tk
+import sys
+import os
+
+def check_terminal_compatibility():
+    """Check if we're running in VS Code integrated terminal and warn user."""
+    if os.environ.get('TERM_PROGRAM') == 'vscode':
+        print("⚠️  WARNING: Running GUI in VS Code integrated terminal may cause crashes!")
+        print("💡 RECOMMENDED: Run this from macOS Terminal app instead:")
+        print(f"   cd {os.getcwd()}")
+        print(f"   python3 {os.path.basename(__file__)}")
+        print()
+        
+        response = input("Continue anyway? (y/N): ").lower().strip()
+        if response not in ['y', 'yes']:
+            print("Exiting safely. Run from external terminal for best experience.")
+            sys.exit(0)
 
 try:  # Prefer package-relative import (python -m backend.run_new_ui)
     from .ui.app_shell import AppShell  # type: ignore
@@ -7,14 +23,14 @@ except Exception:
         from ui.app_shell import AppShell  # type: ignore
     except Exception:
         # Last resort: ensure repo root is on sys.path then import absolute
-        import sys
-        import os
-
         sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
         from backend.ui.app_shell import AppShell  # type: ignore
 
 
 def main() -> None:
+    # Check terminal compatibility before creating GUI
+    check_terminal_compatibility()
+    
     root = tk.Tk()
     root.title("Poker Trainer — New UI Preview")
     

@@ -10,11 +10,15 @@ from .services.hands_repository import HandsRepository, StudyMode
 from .state.store import Store
 from .state.reducers import root_reducer
 from .tabs.hands_review_tab import HandsReviewTab
+from .tabs.theme_editor_tab import ThemeEditorTab
+from .theme_manager import ThemeManager as AdvancedThemeManager
+from .menu_integration import add_theme_manager_to_menu
 
 
 class AppShell(ttk.Frame):
     def __init__(self, root):
         super().__init__(root)
+        self.root = root  # Store root reference for menu integration
         self.pack(fill="both", expand=True)
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True)
@@ -43,8 +47,12 @@ class AppShell(ttk.Frame):
         }
         self.services.provide_app("store", Store(initial_state, root_reducer))
 
+        # Create menu system
+        self._create_menu_system()
+        
         # tabs
         self._add_tab("Hands Review", HandsReviewTab)
+        self._add_tab("Theme Editor", ThemeEditorTab)
         # Bind global font size shortcuts (Cmd/Ctrl - and =)
         self._bind_font_shortcuts(root)
 
@@ -64,6 +72,72 @@ class AppShell(ttk.Frame):
         # Call on_show if available
         if hasattr(tab, "on_show"):
             tab.on_show()
+
+    def _create_menu_system(self):
+        """Create the application menu system."""
+        # Create menu bar
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+        
+        # File menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="New Session", command=self._new_session)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.root.quit)
+        
+        # View menu
+        view_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(label="Zoom In", accelerator="Cmd+=", command=lambda: self._increase_font(None))
+        view_menu.add_command(label="Zoom Out", accelerator="Cmd+-", command=lambda: self._decrease_font(None))
+        view_menu.add_command(label="Reset Zoom", accelerator="Cmd+0", command=lambda: self._reset_font(None))
+        
+        # Add Theme Manager to Settings menu using our integration helper
+        add_theme_manager_to_menu(menubar, self.root, self._on_theme_changed)
+        
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About", command=self._show_about)
+        
+    def _new_session(self):
+        """Start a new session."""
+        print("🔄 New session requested")
+        # TODO: Implement session reset
+        
+    def _on_theme_changed(self):
+        """Called when theme is changed via Theme Manager."""
+        print("🎨 Theme changed - refreshing UI...")
+        
+        # Reload theme manager
+        theme_manager = self.services.get_app("theme")
+        if hasattr(theme_manager, 'reload'):
+            theme_manager.reload()
+        
+        # Refresh all tabs
+        for i in range(self.notebook.index("end")):
+            tab = self.notebook.nametowidget(self.notebook.tabs()[i])
+            if hasattr(tab, '_refresh_ui_colors'):
+                tab._refresh_ui_colors()
+            elif hasattr(tab, 'refresh_theme'):
+                tab.refresh_theme()
+                
+        print("✅ Theme refresh completed")
+        
+    def _show_about(self):
+        """Show about dialog."""
+        from tkinter import messagebox
+        messagebox.showinfo(
+            "About Poker Pro Trainer",
+            "Poker Pro Trainer\n\n"
+            "Advanced poker training with luxury themes\n"
+            "and professional game analysis.\n\n"
+            "🎨 Theme Manager integrated\n"
+            "🃏 16 luxury themes available\n"
+            "📊 Comprehensive hand review\n"
+            "🤖 AI-powered training"
+        )
 
     def _bind_font_shortcuts(self, root):
         # macOS Command key bindings (Cmd - decreases, Cmd = increases)

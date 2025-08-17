@@ -669,23 +669,23 @@ def build_theme_from_config(theme_id: str) -> dict:
     # Add config-driven state styles
     state_styles = get_player_state_style(defaults, palette)
     for k, v in state_styles.items():
-        tokens[f"state.{k}"] = v
+        tokens[f"state.{k}"] = v  # type: ignore
 
     # Add selection styles
     selection_style = get_selection_style(defaults, palette)
     for k, v in selection_style.items():
-        tokens[f"selection.{k}"] = v
+        tokens[f"selection.{k}"] = v  # type: ignore
 
     # Add emphasis bar styles
     emphasis_style = get_emphasis_bar_style(defaults, palette)
     for k, v in emphasis_style.items():
-        tokens[f"emphasis.{k}"] = v
+        tokens[f"emphasis.{k}"] = v  # type: ignore
 
     # Add chip styles
     chip_styles = get_chip_styles(defaults, palette)
     for chip_type, styles in chip_styles.items():
         for k, v in styles.items():
-            tokens[f"chips.{chip_type}.{k}"] = v
+            tokens[f"chips.{chip_type}.{k}"] = v  # type: ignore
 
     # Add theme metadata
     tokens.update(
@@ -730,11 +730,12 @@ def build_all_themes():
         # Fallback to legacy system
         for name, base in THEME_BASES.items():
             theme = build_theme(base)
-            # Add theme-specific highlight colors for UI elements
-            selection_highlight = _get_theme_selection_highlight(name)
-            theme["ui.highlight"] = selection_highlight["color"]
-            theme["ui.highlight.text"] = "#FFFFFF"  # Bold white text for selections
-            theme["ui.highlight.glow"] = selection_highlight["glow"]
+            # Use actual JSON theme highlight colors instead of hardcoded values
+            # The theme already has the correct highlight values from build_theme()
+            # Don't override them with hardcoded selection_highlight values
+            theme["ui.highlight"] = theme.get("ui.highlight", base.get("highlight", "#D4AF37"))
+            theme["ui.highlight.text"] = theme.get("ui.highlight.text", base.get("highlight_text", "#FFFFFF"))
+            theme["ui.highlight.glow"] = theme.get("ui.highlight.glow", base.get("metal", base.get("accent", "#FFD700")))
             themes[name] = theme
 
     return themes
