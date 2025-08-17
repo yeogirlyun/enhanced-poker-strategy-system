@@ -34,15 +34,6 @@ class TableFelt:
         
         print(f"🎨 Professional TableFelt rendering: {w}x{h}, felt: {felt_color}, rail: {rail_color}")
         
-        # === CLEAR OLD LAYERS TO PREVENT COLOR CARRY-OVER ===
-        c.delete("layer:felt")
-        c.delete("canvas_bg")
-        c.delete("table_rail")
-        c.delete("rail_accent")
-        c.delete("felt_surface")
-        c.delete("center_highlight")
-        c.delete("edge_glow")
-        
         # === PROFESSIONAL OVAL POKER TABLE (MATCHING OLD UI SCREENSHOT) ===
         
         # Get additional theme colors for professional look
@@ -101,22 +92,6 @@ class TableFelt:
             outline="",
             tags=("layer:felt", "felt_main"),
         )
-        
-        # 5.5. Soft edge vignette for Monet midnight gradient effect
-        # Four translucent rectangles for velvet rim under low light
-        vignette_width = 20
-        c.create_rectangle(0, 0, w, vignette_width, 
-                          fill=edge_glow, outline="", stipple="gray25", 
-                          tags=("layer:felt", "vignette_top"))
-        c.create_rectangle(0, h-vignette_width, w, h, 
-                          fill=edge_glow, outline="", stipple="gray25", 
-                          tags=("layer:felt", "vignette_bottom"))
-        c.create_rectangle(0, 0, vignette_width, h, 
-                          fill=edge_glow, outline="", stipple="gray25", 
-                          tags=("layer:felt", "vignette_left"))
-        c.create_rectangle(w-vignette_width, 0, w, h, 
-                          fill=edge_glow, outline="", stipple="gray25", 
-                          tags=("layer:felt", "vignette_right"))
         
         # 6. Subtle center oval for community cards (like screenshot)
         center_width = min(180, felt_width // 2)

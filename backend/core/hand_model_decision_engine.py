@@ -44,15 +44,36 @@ class HandModelDecisionEngine(DecisionEngine):
         self.actions_by_street = self._organize_actions_by_street()
         self.current_action_index = 0
         self.current_street = Street.PREFLOP
-        self.actions_for_replay = self._get_betting_actions()
+        # Get all actions for replay (excluding system actions like DEAL_HOLE)
+        self.actions_for_replay = self._get_player_actions()
         self.total_actions = len(self.actions_for_replay)
         
-        print(f"🎯 HAND_MODEL_ENGINE: Initialized with {self.total_actions} betting actions")
+        print(f"🎯 HAND_MODEL_ENGINE: Initialized with {self.total_actions} player actions")
+    
+    def _get_player_actions(self) -> List[Action]:
+        """Get all player actions (excluding system actions like DEAL_HOLE)."""
+        player_actions = []
+        
+        # Get all actions from all streets
+        all_actions = self.hand.get_all_actions()
+        
+        # Filter out system actions, keep only player betting actions
+        betting_action_types = {
+            ActionType.POST_BLIND, ActionType.CHECK, ActionType.BET, 
+            ActionType.CALL, ActionType.RAISE, ActionType.FOLD
+        }
+        
+        for action in all_actions:
+            if action.action in betting_action_types and action.actor_uid:
+                player_actions.append(action)
+        
+        print(f"🎯 HAND_MODEL_ENGINE: Found {len(player_actions)} player actions out of {len(all_actions)} total actions")
+        return player_actions
     
     def get_session_info(self) -> Dict[str, Any]:
         """Get information about the current decision session."""
         return {
-            "hand_id": getattr(self.hand, 'hand_id', 'Unknown'),
+            "hand_id": getattr(self.hand.metadata, 'hand_id', 'Unknown'),
             "total_actions": self.total_actions,
             "current_action": self.current_action_index,
             "current_street": self.current_street.name if hasattr(self.current_street, 'name') else str(self.current_street),
@@ -135,7 +156,7 @@ class HandModelDecisionEngine(DecisionEngine):
         
         # Verify this action is for the current player (canonical Seat*)
         if self._canon(getattr(next_action,'actor_uid',None)) != self._canon(expected_player_id):
-            print(f"⚠️  HAND_MODEL_ENGINE: Player mismatch - expected {expected_player_id}, got {next_action.actor_id}")
+            print(f"⚠️  HAND_MODEL_ENGINE: Player mismatch - expected {expected_player_id}, got {getattr(next_action,'actor_uid',None)}")
             
             # Try to find the correct action for this player in the next 20 actions (increased look-ahead)
             for look_ahead in range(min(20, self.total_actions - self.current_action_index)):

@@ -126,23 +126,12 @@ class BotSessionStateMachine(FlexiblePokerStateMachine):
         
         # Check if session is complete
         if self.decision_engine.is_session_complete():
-            print("🔥 BOT_ACTION_DEBUG: Session complete, stopping session")
+            print(f"🔥 BOT_ACTION_DEBUG: Session complete - current_action: {self.decision_engine.current_action_index}, total: {self.decision_engine.total_actions}")
             self.stop_session()
             return False
         
-        # Align next actor with the engine's upcoming actor (canonical Seat*)
-        try:
-            idx = getattr(self.decision_engine, 'current_action_index', 0)
-            actions = getattr(self.decision_engine, 'actions_for_replay', [])
-            if 0 <= idx < len(actions):
-                next_uid = getattr(actions[idx], 'actor_id', None)
-                if next_uid:
-                    for i, p in enumerate(self.game_state.players):
-                        if getattr(p, 'name', '') == next_uid:
-                            self.action_player_index = i
-                            break
-        except Exception:
-            pass
+        # Let the decision engine handle player alignment internally
+        # Don't override action_player_index here - let the game state machine manage it
         
         # Get current action player
         print(f"🔍 BOT_DEBUG: action_player_index={self.action_player_index}, num_players={len(self.game_state.players)}")
@@ -578,6 +567,7 @@ class HandsReviewBotSession(BotSessionStateMachine):
             elif action_type == "check":
                 ok = self.execute_action(player, AT.CHECK, 0.0)
             elif action_type == "call":
+                # Calculate the incremental call amount needed
                 call_amt = max(0.0, self.game_state.current_bet - player.current_bet)
                 ok = self.execute_action(player, AT.CALL, call_amt)
             elif action_type == "bet":

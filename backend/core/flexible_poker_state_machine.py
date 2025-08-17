@@ -350,6 +350,19 @@ class FlexiblePokerStateMachine:
         import time
 
         display_state = self.get_game_info()
+        
+        # Debug logging for action replay issues
+        if hasattr(self, 'session_logger') and self.session_logger:
+            self.session_logger.log_system(
+                "DEBUG", "DISPLAY_STATE", 
+                f"Emitting display state: pot=${display_state.get('pot', 0)}, current_bet=${display_state.get('current_bet', 0)}",
+                {
+                    "pot": display_state.get('pot', 0),
+                    "current_bet": display_state.get('current_bet', 0),
+                    "players": [p.get('current_bet', 0) for p in display_state.get('players', [])]
+                }
+            )
+        
         event = GameEvent(
             event_type="display_state_update",
             timestamp=time.time(),

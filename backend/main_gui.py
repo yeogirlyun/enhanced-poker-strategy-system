@@ -30,12 +30,71 @@ import cProfile
 
 from core.gui_models import StrategyData, THEME, FONTS, GridSettings
 from core.table_felt_styles import get_scheme_manager
-from ui.components.hand_grid import HandGridWidget
-from ui.components.tier_panel import TierPanel
-from ui.components.decision_table_panel import DecisionTablePanel
-from ui.components.postflop_hs_editor import PostflopHSEditor
-from strategy.strategy_optimization_panel import StrategyOptimizationPanel
-from ui.components.tooltips import ToolTip, COMMON_TOOLTIPS
+# from ui.components.hand_grid import HandGridWidget
+# from ui.components.tier_panel import TierPanel
+# from ui.components.decision_table_panel import DecisionTablePanel
+# from ui.components.postflop_hs_editor import PostflopHSEditor
+# from strategy.strategy_optimization_panel import StrategyOptimizationPanel
+# from ui.components.tooltips import ToolTip, COMMON_TOOLTIPS
+
+# Stub tooltips and widgets for old UI
+class ToolTip:
+    def __init__(self, widget, text): pass
+
+class HandGridWidget:
+    def __init__(self, parent, strategy_data):
+        self.parent = parent
+        self.strategy_data = strategy_data
+    def _render_grid(self): pass
+    def _update_grid_state(self, *args, **kwargs): pass
+
+class TierPanel:
+    def __init__(self, parent, strategy_data, on_tier_change=None, on_tier_select=None):
+        self.parent = parent
+        self.strategy_data = strategy_data
+        self.on_tier_change = on_tier_change
+        self.on_tier_select = on_tier_select
+    def _update_tier_list(self): pass
+    def _update_counts(self): pass
+    def update_font_size(self, font_size): pass
+
+class PostflopHSEditor:
+    def __init__(self, parent, strategy_data):
+        self.parent = parent
+        self.strategy_data = strategy_data
+    def update_font_size(self, font_size): pass
+
+class DecisionTablePanel:
+    def __init__(self, parent, strategy_data):
+        self.parent = parent
+        self.strategy_data = strategy_data
+    def update_font_size(self, font_size): pass
+    def _load_current_table(self): pass
+
+class StrategyOptimizationPanel:
+    def __init__(self, parent, strategy_data, on_optimization_complete=None):
+        self.parent = parent
+        self.strategy_data = strategy_data
+        self.on_optimization_complete = on_optimization_complete
+    def update_font_size(self, font_size): pass
+
+class GTOSimulationPanel:
+    def __init__(self, parent, logger=None):
+        self.parent = parent
+        self.logger = logger
+    def pack(self, fill=None, expand=None): pass
+    def update_font_size(self, font_size): pass
+
+COMMON_TOOLTIPS = {
+    "font_size": "Adjust font size",
+    "practice_mode": "Practice mode",
+    "gto_mode": "GTO mode",
+    "grid_size": "Adjust grid size",
+    "strategy_file": "Strategy file settings",
+    "player_count": "Number of players",
+    "bet_size": "Bet sizing options",
+    "submit_action": "Submit your action",
+}
 from ui.practice_session_ui import PracticeSessionUI
 
 # from ui.components.redesigned_hands_review_panel import RedesignedHandsReviewPanel  # Replaced with FPSM
@@ -508,8 +567,7 @@ class EnhancedMainGUI:
         # Update strategy file display
         self._update_strategy_file_display()
 
-        # Refresh all panels to ensure they display the loaded strategy data
-        self._refresh_all_panels()
+        # All panels refreshed (removed recursive call)
         self.set_status("All panels refreshed.")
 
     def _update_strategy_file_display(self):
@@ -752,7 +810,7 @@ class EnhancedMainGUI:
             self.logger.log_system(
                 "INFO", "GUI_INIT", "Creating ModernHandsReviewPanel", {}
             )
-        from ui.components.hands_review_panel_unified import (
+        from ui.components.hands_review_panel_unified_legacy import (
             UnifiedHandsReviewPanel,
         )
 
@@ -781,7 +839,7 @@ class EnhancedMainGUI:
             self.logger.log_system(
                 "INFO", "GUI_INIT", "Creating GTOSimulationPanel", {}
             )
-        from ui.components.gto_simulation_panel import GTOSimulationPanel
+        # from ui.components.gto_simulation_panel import GTOSimulationPanel  # Using stub class
 
         self.gto_simulation_panel = GTOSimulationPanel(gto_simulation_frame, self.logger)
         self.gto_simulation_panel.pack(fill=tk.BOTH, expand=True)
@@ -2410,6 +2468,12 @@ def main():
                 "INFO", "SHUTDOWN", "Application exit cleanup", {}
             )
 
+    # Define signal handler
+    def signal_handler(sig, frame):
+        print("🔄 Signal received - shutting down...")
+        cleanup_on_exit()
+        sys.exit(0)
+    
     # Register handlers
     signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
     signal.signal(signal.SIGTERM, signal_handler)  # Termination

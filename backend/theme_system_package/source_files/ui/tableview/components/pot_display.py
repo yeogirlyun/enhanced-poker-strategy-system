@@ -1,6 +1,4 @@
 from ...services.theme_manager import ThemeManager
-from .chip_graphics import ChipGraphics
-from .premium_chips import draw_pot_chip, pulse_pot_glow
 
 
 def _tokens(canvas):
@@ -27,8 +25,6 @@ class PotDisplay:
         self._pot_bg_id = None
         self._pot_text_id = None
         self._pot_label_id = None
-        self._chip_graphics = None
-        self._pot_chips = []  # Track pot chip elements
 
     def render(self, state, canvas_manager, layer_manager) -> None:
         THEME, FONTS = _tokens(canvas_manager.canvas)
@@ -36,10 +32,6 @@ class PotDisplay:
         w, h = canvas_manager.size()
         if w <= 1 or h <= 1:
             return
-        
-        # Initialize chip graphics if needed
-        if self._chip_graphics is None:
-            self._chip_graphics = ChipGraphics(c)
         
         center_x, center_y = w // 2, int(h * 0.58)
         
@@ -52,12 +44,10 @@ class PotDisplay:
         
         text_value = f"${amount:,}" if amount > 0 else "$0"
 
-        # Use theme tokens (prefer badge keys; fall back to legacy)
-        text_fill = THEME.get("pot.valueText", THEME.get("text.primary", "#F6EFDD"))
-        bg_fill = (THEME.get("pot.badgeBg") or
-                   THEME.get("pot.bg") or "#15212B")
-        border_color = (THEME.get("pot.badgeRing") or
-                        THEME.get("pot.border") or "#C9B47A")
+        # Use theme tokens
+        text_fill = THEME.get("pot.valueText", THEME.get("chip_gold", "#FFD700"))
+        bg_fill = THEME.get("pot.bg", "#1E2937")
+        border_color = THEME.get("pot.border", "#374151")
         font = FONTS.get("font.display", ("Arial", 24, "bold"))
         label_font = FONTS.get("font.body", ("Arial", 12, "normal"))
 
@@ -113,72 +103,9 @@ class PotDisplay:
             c.coords(self._pot_text_id, center_x, center_y + 5)
             c.itemconfig(self._pot_text_id, text=text_value, fill=text_fill, font=font)
             
-        # Clear old pot chips
-        for chip_id in self._pot_chips:
-            try:
-                c.delete(chip_id)
-            except Exception:
-                pass
-        self._pot_chips = []
-        
-        # Render premium pot chips if amount > 0
-        if amount > 0:
-            self._render_premium_pot_chips(c, center_x, center_y, amount, THEME)
-        
         # Ensure proper layering
         c.addtag_withtag("layer:pot", self._pot_bg_id or "")
         c.addtag_withtag("layer:pot", self._pot_label_id or "")
         c.addtag_withtag("layer:pot", self._pot_text_id or "")
-        for chip_id in self._pot_chips:
-            c.addtag_withtag("layer:pot", chip_id)
-
-    def _render_premium_pot_chips(self, canvas, center_x: int, center_y: int, 
-                                  amount: int, tokens: dict) -> None:
-        """Render premium pot chips in an elegant arrangement around the pot."""
-        if amount <= 0:
-            return
-        
-        # Elegant chip arrangement around the pot badge
-        chip_positions = [
-            (center_x - 35, center_y + 25),   # Left
-            (center_x + 35, center_y + 25),   # Right  
-            (center_x - 20, center_y + 40),   # Left-center
-            (center_x + 20, center_y + 40),   # Right-center
-            (center_x, center_y + 45),        # Center bottom
-        ]
-        
-        # Determine number of chip positions based on pot size
-        if amount < 100:
-            positions = chip_positions[:1]  # Just center
-        elif amount < 500:
-            positions = chip_positions[:3]  # Left, right, center
-        else:
-            positions = chip_positions  # All positions for big pots
-        
-        # Draw premium pot chips at each position
-        chip_r = 12  # Slightly smaller for elegant clustering
-        for i, (chip_x, chip_y) in enumerate(positions):
-            # Vary chip values for visual interest
-            if i == 0:  # Center/first chip gets highest value
-                chip_value = min(amount // 2, 1000)
-            else:
-                chip_value = min(amount // len(positions), 500)
-            
-            if chip_value > 0:
-                # Add subtle breathing effect for large pots
-                breathing = amount > 1000
-                chip_id = draw_pot_chip(
-                    canvas, chip_x, chip_y, chip_value, tokens,
-                    r=chip_r, breathing=breathing,
-                    tags=("layer:pot", "pot_chips", f"pot_chip_{i}")
-                )
-                self._pot_chips.append(chip_id)
-
-    def pulse_pot_increase(self, center_pos: tuple) -> None:
-        """Trigger a pulsing glow effect when the pot increases."""
-        # Get theme tokens for glow effect
-        THEME, _ = _tokens(self._canvas if hasattr(self, '_canvas') else None)
-        if THEME:
-            pulse_pot_glow(self._canvas, center_pos, THEME, r=20, pulses=2)
 
 

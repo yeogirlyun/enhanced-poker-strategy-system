@@ -23,6 +23,17 @@ class CanvasManager:
             pass
 
     def size(self):
-        return self.canvas.winfo_width(), self.canvas.winfo_height()
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+        
+        # If canvas not sized yet, try to get requested size
+        if w <= 1 or h <= 1:
+            try:
+                w = self.canvas.winfo_reqwidth()
+                h = self.canvas.winfo_reqheight()
+            except Exception:
+                pass
+                
+        return w, h
 
 

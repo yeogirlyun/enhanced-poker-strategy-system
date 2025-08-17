@@ -1,0 +1,317 @@
+{
+  "version": "2.0",
+  "defaults": {
+    "state": {
+      "active":   { "glow": "$accent", "shimmer": "$metal", "strength": 1.0, "period_ms": 2000 },
+      "folded":   { "desaturate": 0.8, "opacity": 0.4 },
+      "winner":   { "glow": "$metal", "shimmer": "$accent", "strength": 1.4, "period_ms": 1500, "particles": true },
+      "showdown": { "spotlight": "#FFFFFF", "spotlight_opacity": 0.18, "duration_ms": 1500 },
+      "allin":    { "glow": "$raise", "shimmer": "$metal", "strength": 1.2, "flash_ms": 400 }
+    },
+    "selection": { "row_bg": "$highlight", "row_fg": "$highlight_text" },
+    "emphasis_bar": {
+      "bg_top": "$felt",
+      "bg_bottom": "$rail",
+      "text": "$emphasis_text",
+      "accent_text": "$raise",
+      "divider": "$metal",
+      "texture": "velvet_8pct"
+    },
+    "chips": {
+      "stack": { "face": "$chip_face", "edge": "$chip_edge", "rim": "$chip_rim", "text": "$chip_text" },
+      "bet":   { "face": "$bet_face",  "edge": "$bet_edge",  "rim": "$bet_rim",  "text": "$chip_text", "glow": "$bet_glow" },
+      "pot":   { "face": "$pot_face",  "edge": "$pot_edge",  "rim": "$pot_rim",  "text": "$pot_text", "glow": "$pot_glow" }
+    }
+  },
+  "themes": [
+    {
+      "id": "forest-green-pro",
+      "name": "Forest Green Professional",
+      "palette": {
+        "felt": "#2D5A3D",
+        "rail": "#4A3428",
+        "metal": "#C9A34E",
+        "accent": "#1DB954",
+        "raise": "#B63D3D",
+        "call":  "#2AA37A",
+        "neutral": "#9AA0A6",
+        "text": "#EDECEC",
+        "highlight": "#D4AF37",
+        "highlight_text": "#0B0B0E",
+        "emphasis_text": "#F8E7C9"
+      }
+    },
+    {
+      "id": "velvet-burgundy",
+      "name": "Velvet Burgundy",
+      "palette": {
+        "felt": "#4B1C2B",
+        "rail": "#3D0F1F",
+        "metal": "#C98B5E",
+        "accent": "#8C2233",
+        "raise": "#B53A44",
+        "call":  "#2AA37A",
+        "neutral": "#A29A90",
+        "text": "#F2E9DF",
+        "highlight": "#A31D2B",
+        "highlight_text": "#F9E7C9",
+        "emphasis_text": "#F9E7C9"
+      }
+    },
+    {
+      "id": "obsidian-gold",
+      "name": "Obsidian Gold",
+      "palette": {
+        "felt": "#0A0A0A",
+        "rail": "#2C2C2C",
+        "metal": "#D4AF37",
+        "accent": "#3A3A3A",
+        "raise": "#A41E34",
+        "call":  "#2AA37A",
+        "neutral": "#A7A7A7",
+        "text": "#E6E6E6",
+        "highlight": "#4169E1",
+        "highlight_text": "#FFFFFF",
+        "emphasis_text": "#F5F2E6"
+      }
+    },
+    {
+      "id": "imperial-jade",
+      "name": "Imperial Jade",
+      "palette": {
+        "felt": "#0E8044",
+        "rail": "#1B1B1B",
+        "metal": "#D5C07E",
+        "accent": "#166A3E",
+        "raise": "#B23B43",
+        "call":  "#32B37A",
+        "neutral": "#9CB1A8",
+        "text": "#F9F3DD",
+        "highlight": "#00A86B",
+        "highlight_text": "#08110D",
+        "emphasis_text": "#F6F0DC"
+      }
+    },
+    {
+      "id": "monet-twilight",
+      "name": "Monet Twilight",
+      "palette": {
+        "felt": "#2A2D64",
+        "rail": "#1F1F1B",
+        "metal": "#C8BEDF",
+        "accent": "#B7A6D0",
+        "raise": "#B63D3D",
+        "call":  "#2AA37A",
+        "neutral": "#8EA6B5",
+        "text": "#F5F7FA",
+        "highlight": "#B7A6D0",
+        "highlight_text": "#0E0E15",
+        "emphasis_text": "#EDE8F6"
+      }
+    },
+    {
+      "id": "caravaggio-sepia-noir",
+      "name": "Caravaggio Sepia Noir",
+      "palette": {
+        "felt": "#2A1F1A",
+        "rail": "#101010",
+        "metal": "#D4A373",
+        "accent": "#9E0F28",
+        "raise": "#B3122E",
+        "call":  "#2AA37A",
+        "neutral": "#9C8F7A",
+        "text": "#FFF7E6",
+        "highlight": "#EAD6B7",
+        "highlight_text": "#1B130B",
+        "emphasis_text": "#F7E8CD"
+      }
+    },
+    {
+      "id": "klimt-royale",
+      "name": "Klimt Royale",
+      "palette": {
+        "felt": "#17130E",
+        "rail": "#23211B",
+        "metal": "#E4C97D",
+        "accent": "#166A3E",
+        "raise": "#B23B43",
+        "call":  "#32B37A",
+        "neutral": "#A38E6A",
+        "text": "#FFF2D9",
+        "highlight": "#B87333",
+        "highlight_text": "#0D0A07",
+        "emphasis_text": "#FFEBC6"
+      }
+    },
+    {
+      "id": "deco-luxe",
+      "name": "Deco Luxe",
+      "palette": {
+        "felt": "#1B1E2B",
+        "rail": "#111111",
+        "metal": "#D6C08F",
+        "accent": "#1A3E34",
+        "raise": "#5B1922",
+        "call":  "#2AA37A",
+        "neutral": "#9B9486",
+        "text": "#F8F4EA",
+        "highlight": "#E1B382",
+        "highlight_text": "#0E0C09",
+        "emphasis_text": "#F4EAD3"
+      }
+    },
+    {
+      "id": "sunset-mirage",
+      "name": "Sunset Mirage",
+      "palette": {
+        "felt": "#8C1C13",
+        "rail": "#2B1B0E",
+        "metal": "#E6B87A",
+        "accent": "#FF9E57",
+        "raise": "#C85C5C",
+        "call":  "#2AA37A",
+        "neutral": "#A68C7A",
+        "text": "#F7E7D6",
+        "highlight": "#FF9E57",
+        "highlight_text": "#2B160E",
+        "emphasis_text": "#FFE6C9"
+      }
+    },
+    {
+      "id": "oceanic-aqua",
+      "name": "Oceanic Aqua",
+      "palette": {
+        "felt": "#126E82",
+        "rail": "#0D1B2A",
+        "metal": "#B7C1C8",
+        "accent": "#4EEAFF",
+        "raise": "#6C94D2",
+        "call":  "#57C2B6",
+        "neutral": "#9DB3C4",
+        "text": "#F5F7FA",
+        "highlight": "#4EEAFF",
+        "highlight_text": "#071018",
+        "emphasis_text": "#EAF6FF"
+      }
+    },
+    {
+      "id": "velour-crimson",
+      "name": "Velour Crimson",
+      "palette": {
+        "felt": "#B22222",
+        "rail": "#1C0E0E",
+        "metal": "#C18F65",
+        "accent": "#3B0A0F",
+        "raise": "#A41E34",
+        "call":  "#2AA37A",
+        "neutral": "#A3928A",
+        "text": "#F5E2C8",
+        "highlight": "#FFD700",
+        "highlight_text": "#111111",
+        "emphasis_text": "#F9E7C9"
+      }
+    },
+    {
+      "id": "golden-dusk",
+      "name": "Golden Dusk",
+      "palette": {
+        "felt": "#7A4A1F",
+        "rail": "#3A1D0D",
+        "metal": "#C18F65",
+        "accent": "#A3622B",
+        "raise": "#B35A3B",
+        "call":  "#2AA37A",
+        "neutral": "#AF9A8A",
+        "text": "#F3E3D3",
+        "highlight": "#E4B564",
+        "highlight_text": "#23160D",
+        "emphasis_text": "#F8E6CF"
+      }
+    },
+    {
+      "id": "royal-sapphire",
+      "name": "Royal Sapphire",
+      "palette": {
+        "felt": "#0D3B66",
+        "rail": "#161616",
+        "metal": "#C7D3E0",
+        "accent": "#2656D9",
+        "raise": "#6C4AB6",
+        "call":  "#57C2B6",
+        "neutral": "#9AB1CF",
+        "text": "#F2F6FC",
+        "highlight": "#1E90FF",
+        "highlight_text": "#061224",
+        "emphasis_text": "#E8F1FF"
+      }
+    },
+    {
+      "id": "emerald-aurora",
+      "name": "Emerald Aurora",
+      "palette": {
+        "felt": "#046D47",
+        "rail": "#0C0C0C",
+        "metal": "#C9A86A",
+        "accent": "#59FFAD",
+        "raise": "#B23B43",
+        "call":  "#32B37A",
+        "neutral": "#9CB1A8",
+        "text": "#F1F7F4",
+        "highlight": "#59FFAD",
+        "highlight_text": "#062318",
+        "emphasis_text": "#EAF9F2"
+      }
+    },
+    {
+      "id": "stealth-graphite-steel",
+      "name": "Stealth Graphite Steel",
+      "palette": {
+        "felt": "#2E2E2E",
+        "rail": "#444444",
+        "metal": "#8D8D8D",
+        "accent": "#00D4FF",
+        "raise": "#9E3B49",
+        "call":  "#57C2B6",
+        "neutral": "#8E9196",
+        "text": "#E6E7EA",
+        "highlight": "#00D4FF",
+        "highlight_text": "#041014",
+        "emphasis_text": "#F2F3F5"
+      }
+    },
+    {
+      "id": "coral-royale",
+      "name": "Coral Royale",
+      "palette": {
+        "felt": "#E34234",
+        "rail": "#0F0F0F",
+        "metal": "#E4B564",
+        "accent": "#FF7F50",
+        "raise": "#D64040",
+        "call":  "#2AA37A",
+        "neutral": "#B59C91",
+        "text": "#FFF0E6",
+        "highlight": "#FF7F50",
+        "highlight_text": "#2B120E",
+        "emphasis_text": "#FFE6D8"
+      }
+    },
+    {
+      "id": "cyber-neon",
+      "name": "Cyber Neon",
+      "palette": {
+        "felt": "#0A0A0A",
+        "rail": "#1C1C1C",
+        "metal": "#9BE3FF",
+        "accent": "#33FFF3",
+        "raise": "#D65DB1",
+        "call":  "#00D9A7",
+        "neutral": "#A3A8B3",
+        "text": "#EAF8FF",
+        "highlight": "#FF1AFF",
+        "highlight_text": "#120614",
+        "emphasis_text": "#DDF7FF"
+      }
+    }
+  ]
+}

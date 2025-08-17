@@ -54,8 +54,24 @@ class FpsmEventAdapter:
 
         self.store.dispatch({"type": "SET_POT", "amount": pot})
         self.store.dispatch({"type": "SET_BOARD", "board": board})
-        # Seats: keep a simple list length for now
-        self.store.dispatch({"type": "SET_SEATS", "seats": [{} for _ in players]})
+        
+        # Transform players data to seats format for UI
+        seats_data = []
+        for i, player in enumerate(players):
+            seat_data = {
+                "name": player.get("name", f"Player{i+1}"),
+                "stack": player.get("stack", 1000),
+                "cards": player.get("cards", []),
+                "position": player.get("position", ""),
+                "current_bet": player.get("current_bet", 0),
+                "folded": player.get("has_folded", False),
+                "all_in": player.get("stack", 1000) == 0,
+                "acting": i == ds.get("action_player", -1),
+                "active": player.get("is_active", True)
+            }
+            seats_data.append(seat_data)
+        
+        self.store.dispatch({"type": "SET_SEATS", "seats": seats_data})
         self.store.dispatch({"type": "SET_DEALER", "dealer": int(dealer)})
 
 

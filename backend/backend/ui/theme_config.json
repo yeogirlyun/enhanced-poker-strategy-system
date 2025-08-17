@@ -1,13 +1,66 @@
 {
-  "profile": "Royal Indigo",
+  "profile": "Velour Crimson",
   "fonts": {
     "main": [
       "Arial",
       14
     ],
+    "title": [
+      "Segoe UI",
+      18,
+      "bold"
+    ],
+    "header": [
+      "Arial",
+      22,
+      "bold"
+    ],
+    "small": [
+      "Consolas",
+      16
+    ],
+    "large": [
+      "Segoe UI",
+      16,
+      "bold"
+    ],
+    "player_name": [
+      "Segoe UI",
+      13,
+      "bold"
+    ],
+    "stack_amount": [
+      "Segoe UI",
+      16,
+      "bold"
+    ],
+    "bet_amount": [
+      "Arial",
+      24,
+      "bold"
+    ],
+    "action_button": [
+      "Segoe UI",
+      14,
+      "bold"
+    ],
+    "cards": [
+      "Consolas",
+      14,
+      "bold"
+    ],
     "pot_display": [
       "Arial",
       18
+    ],
+    "stack_bet": [
+      "Segoe UI",
+      16,
+      "bold"
+    ],
+    "body": [
+      "Consolas",
+      20
     ]
   }
 }

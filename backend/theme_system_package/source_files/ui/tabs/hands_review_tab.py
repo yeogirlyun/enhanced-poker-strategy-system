@@ -9,7 +9,6 @@ from ..state.store import Store
 from ..services.event_bus import EventBus
 from ..services.service_container import ServiceContainer
 from ..services.hands_repository import HandsRepository, HandsFilter, StudyMode
-from ..services.theme_factory import _get_theme_selection_highlight, _get_theme_emphasis_colors
 from ..services.fpsm_adapter import FpsmEventAdapter
 from ..tableview.canvas_manager import CanvasManager
 from ..tableview.layer_manager import LayerManager
@@ -31,11 +30,11 @@ except ImportError:
 
 # Core imports with fallbacks
 try:
-    from core.hand_model import Hand
-    from core.hand_model_decision_engine import HandModelDecisionEngine
-    from core.bot_session_state_machine import HandsReviewBotSession
-    from core.flexible_poker_state_machine import GameConfig
-    from core.session_logger import get_session_logger
+    from ...core.hand_model import Hand
+    from ...core.hand_model_decision_engine import HandModelDecisionEngine
+    from ...core.bot_session_state_machine import HandsReviewBotSession
+    from ...core.flexible_poker_state_machine import GameConfig
+    from ...core.session_logger import get_session_logger
 except ImportError:
     print("⚠️  Core modules not available - using fallbacks")
     class Hand:
@@ -65,9 +64,6 @@ except ImportError:
         def execute_next_bot_action(self): return True
         def is_session_complete(self): return False
         def reset_session(self): pass
-        def load_hand_for_review(self, hand_data): 
-            """Fallback method for loading hand data."""
-            return True
     class GameConfig:
         def __init__(self, **kwargs): pass
     def get_session_logger():
@@ -116,15 +112,8 @@ class ConcreteHandModelDecisionEngine:
     
     def get_session_info(self):
         if self._engine and hasattr(self._engine, 'hand'):
-            # Handle both fallback Hand class (hand.hand_id) and real Hand class (hand.metadata.hand_id)
-            hand_id = 'Unknown'
-            if hasattr(self._engine.hand, 'hand_id'):
-                hand_id = self._engine.hand.hand_id
-            elif hasattr(self._engine.hand, 'metadata') and hasattr(self._engine.hand.metadata, 'hand_id'):
-                hand_id = self._engine.hand.metadata.hand_id
-            
             return {
-                "hand_id": hand_id,
+                "hand_id": getattr(self._engine.hand.metadata, 'hand_id', 'Unknown'),
                 "total_actions": getattr(self._engine, 'total_actions', 0),
                 "current_action": getattr(self._engine, 'current_action_index', 0),
                 "engine_type": "HandModelDecisionEngine"
@@ -168,10 +157,9 @@ class HandsReviewTab(ttk.Frame):
     
     def on_mount(self):
         """Set up the tab layout per PRD design."""
-        # Two-column layout: Controls (20%) | Poker Table (80%)
-        # Using 1:4 ratio for poker table emphasis
-        self.grid_columnconfigure(0, weight=1)   # Library + Filters & Controls (20%)
-        self.grid_columnconfigure(1, weight=4)   # Poker Table (80%)
+        # Two-column layout: Controls (30%) | Poker Table (70%)
+        self.grid_columnconfigure(0, weight=30)  # Library + Filters & Controls  
+        self.grid_columnconfigure(1, weight=70)  # Poker Table (bigger)
         self.grid_rowconfigure(0, weight=1)
         
         # Create the two main sections
@@ -232,105 +220,26 @@ class HandsReviewTab(ttk.Frame):
         current_theme = self.theme.current_profile_name()
         self.theme_var = tk.StringVar(value=current_theme)
         
-        # All available themes from ThemeManager
-        all_theme_names = self.theme.names()
-        print(f"🎨 HandsReviewTab: Found {len(all_theme_names)} themes: {all_theme_names}")
+        # 5 Professional Casino Table Schemes
+        professional_themes = [
+            ("🟢 PokerStars Classic Pro", "PokerStars Classic Pro"),  # Deep green like screenshot
+            ("🏆 WSOP Championship", "WSOP Championship"),            # Tournament gold
+            ("⚫ Carbon Fiber Elite", "Carbon Fiber Elite"),         # Modern tech look
+            ("💎 Royal Casino Sapphire", "Royal Casino Sapphire"),   # Blue luxury
+            ("💚 Emerald Professional", "Emerald Professional")      # Traditional casino green
+        ]
         
-        # Fallback if no themes found
-        if not all_theme_names:
-            print("⚠️ No themes found, forcing theme manager reload...")
-            # Try to reload theme manager
-            try:
-                from ..services.theme_factory import build_all_themes
-                themes = build_all_themes()
-                print(f"🔄 Force-built {len(themes)} themes: {list(themes.keys())}")
-                # Register them with the theme manager
-                for name, tokens in themes.items():
-                    self.theme.register(name, tokens)
-                all_theme_names = self.theme.names()
-                print(f"🎨 After reload: {len(all_theme_names)} themes: {all_theme_names}")
-            except Exception as e:
-                print(f"❌ Failed to reload themes: {e}")
-                all_theme_names = ["Forest Green Professional"]  # Ultimate fallback
-        
-        # Import enhanced theme system from ThemeManager
-        from ..services.theme_manager import THEME_ICONS, THEME_INTROS
-        
-        # Use centralized theme icons and introductions
-        self.THEME_INTROS = THEME_INTROS
-        
-        # Create clean 4x4 grid layout for 16 themes with 20px font
-        # Configure grid weights for even distribution
-        for col_idx in range(4):
-            theme_controls.grid_columnconfigure(col_idx, weight=1)
-        
-        for i, theme_name in enumerate(all_theme_names):
-            row = i // 4  # 4 themes per row
-            col = i % 4
-            
-            # Get theme icon and create display
-            icon = THEME_ICONS.get(theme_name, "🎨")
-            display_name = f"{icon} {theme_name}"
-            
-            # Simple radiobutton with 20px font and equal spacing
-            radio_btn = ttk.Radiobutton(theme_controls, text=display_name, 
-                                      variable=self.theme_var, value=theme_name, 
-                                      command=self._on_theme_change)
-            radio_btn.grid(row=row, column=col, sticky="w", padx=5, pady=3)
-            
-            # Configure font size to 20px and store reference for styling
-            try:
-                radio_btn.configure(font=("Inter", 20, "normal"))
-            except:
-                # Fallback if font configuration fails
-                pass
-            
-            # Store radio button reference for theme styling
-            if not hasattr(self, 'theme_radio_buttons'):
-                self.theme_radio_buttons = []
-            self.theme_radio_buttons.append(radio_btn)
-            
-            # Bind hover events for artistic theme introductions
-            radio_btn.bind("<Enter>", lambda e, theme=theme_name: self._show_theme_intro(theme))
-            radio_btn.bind("<Leave>", lambda e: self._show_theme_intro(self.theme_var.get()))
-        
-        # Apply initial theme styling to radio buttons
-        self.after_idle(self._style_theme_radio_buttons)
-        
-        # Artistic Theme Info Panel - shows evocative descriptions (positioned AFTER theme controls)
-        info_frame = ttk.Frame(theme_frame)
-        info_frame.grid(row=1, column=0, sticky="ew", pady=(10, 0))
-        info_frame.grid_columnconfigure(0, weight=1)
-        
-        # Luxury Museum Placard - Theme intro with elegant styling
-        fonts = self.theme.get_fonts()
-        # Use elegant serif font for luxury feel
-        intro_font = ("Georgia", 16, "normal")  # Elegant serif instead of Inter
-        
-        # Create luxury museum placard frame with enhanced styling
-        placard_frame = tk.Frame(info_frame, relief="raised", borderwidth=2,
-                                bg="#2A2A2A", highlightbackground="#D4AF37", 
-                                highlightcolor="#D4AF37", highlightthickness=1)
-        placard_frame.grid(row=0, column=0, sticky="ew", padx=8, pady=8)
-        placard_frame.grid_columnconfigure(0, weight=1)
-        
-        # Store reference to placard frame for dynamic styling
-        self.placard_frame = placard_frame
-        
-        self.theme_intro_label = tk.Text(placard_frame, height=3, wrap=tk.WORD,
-                                        relief="flat", borderwidth=0,
-                                        font=intro_font,
-                                        state="disabled", cursor="arrow",
-                                        padx=18, pady=10,  # Reduced vertical padding
-                                        bg="#1A1A1A", fg="#F5F5DC")  # Initial luxury colors
-        self.theme_intro_label.grid(row=0, column=0, sticky="ew")
-        
-        # Show current theme's introduction
-        self._show_theme_intro(current_theme)
+        # Create radiobuttons for professional themes (2 rows)
+        for i, (display_name, theme_name) in enumerate(professional_themes):
+            row = i // 3  # 3 themes per row
+            col = i % 3
+            ttk.Radiobutton(theme_controls, text=display_name, variable=self.theme_var,
+                           value=theme_name, command=self._on_theme_change).grid(
+                           row=row, column=col, sticky="w", padx=(0, 15), pady=2)
         
         # Library type selector
         type_frame = ttk.Frame(library_frame)
-        type_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+        type_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         type_frame.grid_columnconfigure(0, weight=1)
         
         self.library_type = tk.StringVar(value="legendary")
@@ -343,7 +252,7 @@ class HandsReviewTab(ttk.Frame):
         
         # Collections dropdown
         collections_frame = ttk.Frame(library_frame)
-        collections_frame.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+        collections_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
         collections_frame.grid_columnconfigure(1, weight=1)
         
         ttk.Label(collections_frame, text="Collection:").grid(row=0, column=0, sticky="w", padx=(0, 5))
@@ -354,7 +263,7 @@ class HandsReviewTab(ttk.Frame):
         
         # Hands listbox
         hands_frame = ttk.Frame(library_frame)
-        hands_frame.grid(row=4, column=0, sticky="nsew", pady=(0, 10))
+        hands_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
         hands_frame.grid_columnconfigure(0, weight=1)
         hands_frame.grid_rowconfigure(0, weight=1)
         
@@ -366,17 +275,13 @@ class HandsReviewTab(ttk.Frame):
         self.hands_listbox.grid(row=0, column=0, sticky="nsew")
         self.hands_listbox.bind("<<ListboxSelect>>", self._on_hand_select)
         
-        # Apply theme colors to listbox with dynamic selection highlight
+        # Apply theme colors to listbox
         try:
-            # Get theme-specific selection highlight
-            current_theme_name = self.theme.current() or 'Forest Green Professional'
-            selection_highlight = _get_theme_selection_highlight(current_theme_name)
-            
             self.hands_listbox.configure(
                 bg=theme.get("panel.bg", "#111827"),
                 fg=theme.get("panel.fg", "#E5E7EB"),
-                selectbackground=selection_highlight["color"],  # Dynamic theme-specific highlight
-                selectforeground="#FFFFFF",  # Bold white text when highlighted
+                selectbackground=theme.get("btn.primaryBg", "#16A34A"),
+                selectforeground=theme.get("btn.primaryFg", "#F8FAFC"),
                 highlightbackground=theme.get("panel.border", "#1F2937"),
                 highlightcolor=theme.get("a11y.focusRing", "#22D3EE")
             )
@@ -389,7 +294,7 @@ class HandsReviewTab(ttk.Frame):
         
         # Hand details text (smaller in the combined layout)
         details_frame = ttk.LabelFrame(library_frame, text="Hand Details", padding=5)
-        details_frame.grid(row=5, column=0, sticky="ew")
+        details_frame.grid(row=4, column=0, sticky="ew")
         details_frame.grid_columnconfigure(0, weight=1)
         
         small_font = fonts.get("small", ("Consolas", 16))
@@ -665,140 +570,6 @@ class HandsReviewTab(ttk.Frame):
         
         # Force UI refresh with new theme
         self._refresh_ui_colors()
-        
-        # Update artistic theme introduction
-        self._show_theme_intro(theme_name)
-    
-    def _show_theme_intro(self, theme_name):
-        """Show artistic introduction for the selected theme with luxury museum placard styling."""
-        intro_text = self.THEME_INTROS.get(theme_name, "A unique poker table theme with its own distinctive character.")
-        
-        # Split intro into main description and poker persona
-        lines = intro_text.split('\n')
-        main_desc = lines[0] if lines else intro_text
-        persona = lines[1] if len(lines) > 1 else ""
-        
-        # Update the intro label with luxury styling
-        self.theme_intro_label.config(state="normal")
-        self.theme_intro_label.delete(1.0, tk.END)
-        
-        # Insert main description with elegant styling
-        self.theme_intro_label.insert(tk.END, main_desc)
-        
-        # Add poker persona in italic gold if present
-        if persona:
-            self.theme_intro_label.insert(tk.END, "\n\n")
-            persona_start = self.theme_intro_label.index(tk.INSERT)
-            self.theme_intro_label.insert(tk.END, persona)
-            persona_end = self.theme_intro_label.index(tk.INSERT)
-            
-            # Apply italic styling to persona
-            self.theme_intro_label.tag_add("persona", persona_start, persona_end)
-            self.theme_intro_label.tag_config("persona", font=("Georgia", 15, "italic"))
-        
-        self.theme_intro_label.config(state="disabled")
-        
-        # Apply DYNAMIC luxury museum placard styling based on current theme
-        theme = self.theme.get_theme()
-        
-        # Dynamic theme-aware colors for museum placard
-        # Use theme's panel colors but make them more luxurious
-        base_bg = theme.get("panel.bg", "#1A1A1A")
-        base_border = theme.get("panel.border", "#2A2A2A") 
-        accent_color = theme.get("table.inlay", theme.get("pot.badgeRing", "#D4AF37"))
-        text_primary = theme.get("text.primary", "#F5F5DC")
-        text_secondary = theme.get("text.secondary", "#E0E0C0")
-        
-        # Create theme-specific luxury styling
-        if theme_name == "Obsidian Gold":
-            # Minimalist vault-like luxury - stark elegance
-            placard_bg = "#0F0F0F"  # Deeper obsidian than table felt
-            placard_border = "#2C2C2C"  # Dark iron rails
-            accent_glow = "#D4AF37"  # Polished gold
-            text_color = "#E6E6E6"  # Platinum white
-            persona_color = "#D4AF37"  # Polished gold
-            
-        elif theme_name == "Velour Crimson":
-            # Dangerous seductive crimson - forbidden chamber with improved contrast
-            # Get emphasis colors using config-driven system with legacy fallback
-            try:
-                emphasis_bar_styler = self.theme.get_emphasis_bar_styler()
-                if emphasis_bar_styler:
-                    theme_id = self.theme.get_current_theme_id()
-                    emphasis_colors_config = emphasis_bar_styler.get_emphasis_bar_colors(theme_id)
-                    placard_bg = emphasis_colors_config["bg_top"]
-                    placard_border = emphasis_colors_config["bg_bottom"]
-                    accent_glow = emphasis_colors_config["accent_text"]
-                    text_color = emphasis_colors_config["text"]
-                    persona_color = emphasis_colors_config["accent_text"]
-                else:
-                    raise Exception("Config-driven emphasis not available")
-            except Exception:
-                # Legacy fallback
-                emphasis_colors = _get_theme_emphasis_colors(theme_name)
-                placard_bg = emphasis_colors["bg_gradient"][0]  # Deep velvet gradient start
-                placard_border = emphasis_colors["bg_gradient"][1]  # Deep velvet gradient end
-                accent_glow = emphasis_colors["accent"]  # Crimson with glow
-                text_color = emphasis_colors["text"]  # Ivory-gold for readability
-                persona_color = emphasis_colors["accent"]  # Crimson accent
-            
-        elif theme_name == "Golden Dusk":
-            # Cognac lounge refinement - cigar bar elegance
-            placard_bg = "#4A2F1A"  # Deeper cognac than table
-            placard_border = "#5C3A21"  # Cognac leather rails
-            accent_glow = "#C18F65"  # Brass glow
-            text_color = "#F3E3D3"  # Soft linen
-            persona_color = "#C18F65"  # Brass glow
-            
-        elif "Noir" in theme_name:
-            # Artistic noir themes - sophisticated dark
-            placard_bg = base_bg
-            placard_border = base_border
-            accent_glow = accent_color
-            text_color = text_primary
-            persona_color = accent_color
-            
-        elif theme_name in ["Cyber Neon", "Stealth Graphite"]:
-            # Modern/tech themes - sleek minimal
-            placard_bg = base_bg
-            placard_border = base_border
-            accent_glow = theme.get("a11y.focus", accent_color)
-            text_color = text_primary
-            persona_color = accent_glow
-            
-        else:
-            # Default luxury styling for other themes
-            placard_bg = base_bg
-            placard_border = base_border
-            accent_glow = accent_color
-            text_color = text_primary
-            persona_color = accent_color
-        
-        # Apply dynamic luxury styling
-        self.theme_intro_label.config(
-            bg=placard_bg,
-            fg=text_color,
-            insertbackground=text_color,
-            selectbackground=accent_glow,
-            selectforeground="#FFFFFF"
-        )
-        
-        # Style the placard frame with theme-aware metallic border
-        if hasattr(self, 'placard_frame'):
-            self.placard_frame.config(
-                bg=placard_border,  # Theme-aware border color
-                relief="raised",
-                borderwidth=2,  # Slightly thicker for luxury feel
-                highlightbackground=accent_glow,
-                highlightcolor=accent_glow,
-                highlightthickness=1
-            )
-        
-        # Apply theme-specific persona text color
-        if persona:
-            self.theme_intro_label.config(state="normal")
-            self.theme_intro_label.tag_config("persona", foreground=persona_color)
-            self.theme_intro_label.config(state="disabled")
     
     def _refresh_ui_colors(self):
         """Refresh all UI elements with new theme colors."""
@@ -806,20 +577,14 @@ class HandsReviewTab(ttk.Frame):
         
         # Update all themed elements
         try:
-            # Update listbox colors with dynamic theme-specific selection highlight
+            # Update listbox colors
             if hasattr(self, 'hands_listbox'):
-                # Get current theme name for dynamic highlighting
-                current_theme_name = self.theme.current() or 'Forest Green Professional'
-                selection_highlight = _get_theme_selection_highlight(current_theme_name)
                 self.hands_listbox.configure(
                     bg=theme.get("panel.bg", "#111827"),
                     fg=theme.get("panel.fg", "#E5E7EB"),
-                    selectbackground=selection_highlight["color"],  # Dynamic theme-specific highlight
-                    selectforeground="#FFFFFF"  # Bold white text when highlighted
+                    selectbackground=theme.get("btn.primaryBg", "#16A34A"),
+                    selectforeground=theme.get("btn.primaryFg", "#F8FAFC")
                 )
-            
-            # Update theme radio buttons with theme-specific highlight colors
-            self._style_theme_radio_buttons()
             
             # Update text areas
             for text_widget in [getattr(self, 'details_text', None), getattr(self, 'status_text', None)]:
@@ -867,10 +632,6 @@ class HandsReviewTab(ttk.Frame):
                     btn = getattr(self, btn_name)
                     if hasattr(btn, 'refresh_theme'):
                         btn.refresh_theme()
-            
-            # Update artistic theme intro panel colors
-            if hasattr(self, 'theme_intro_label'):
-                self._show_theme_intro(self.theme_var.get())
                 
         except Exception as e:
             print(f"⚠️  Error refreshing UI colors: {e}")
@@ -991,21 +752,13 @@ class HandsReviewTab(ttk.Frame):
     def _handle_load_hand_event(self, hand_data):
         """Handle the review:load event."""
         try:
-            hand_id = hand_data.get('hand_id', 'Unknown')
-            self._update_status(f"🔄 Loading hand {hand_id}...")
-            
-            # Session logging for debugging
-            if hasattr(self, 'session_logger') and self.session_logger:
-                self.session_logger.log_system(
-                    "INFO", "HAND_LOADING", f"Starting to load hand {hand_id}",
-                    {"hand_data_keys": list(hand_data.keys()), "hand_data_size": len(str(hand_data))}
-                )
+            self._update_status(f"🔄 Loading hand {hand_data.get('hand_id', 'Unknown')}...")
             
             # Store hand data for reset functionality
             self.last_loaded_hand = hand_data
             
             # Convert to Hand object (following validation tester pattern)
-            if isinstance(hand_data, dict) and 'metadata' in hand_data and 'hand_id' in hand_data['metadata']:
+            if isinstance(hand_data, dict) and 'hand_id' in hand_data:
                 hand = Hand.from_dict(hand_data)
             else:
                 self._update_status("❌ Invalid hand data format")
@@ -1015,36 +768,15 @@ class HandsReviewTab(ttk.Frame):
             decision_engine = ConcreteHandModelDecisionEngine(hand)
             
             # Create game config from hand metadata
-            # Handle both 'players' and 'seats' data structures
-            seats_data = hand_data.get('seats', [])
-            players_data = hand_data.get('players', seats_data)  # Fallback to seats if no players
-            
-            # Extract metadata from hand structure
-            metadata = hand_data.get('metadata', {})
-            small_blind = metadata.get('small_blind') or hand_data.get('small_blind', 5)
-            big_blind = metadata.get('big_blind') or hand_data.get('big_blind', 10)
-            
-            # Get starting stack from seats data
-            if seats_data:
-                starting_stack = max([seat.get('starting_stack', 1000) for seat in seats_data], default=1000)
-                num_players = len(seats_data)
-            elif players_data:
-                starting_stack = max([p.get('stack', 1000) for p in players_data], default=1000)
-                num_players = len(players_data)
-            else:
-                # Fallback to metadata if available
-                num_players = metadata.get('max_players', 2)
-                starting_stack = 1000
-            
             config = GameConfig(
-                num_players=num_players,
-                small_blind=small_blind,
-                big_blind=big_blind,
-                starting_stack=starting_stack
+                num_players=len(hand_data.get('players', [])),
+                small_blind=hand_data.get('small_blind', 5),
+                big_blind=hand_data.get('big_blind', 10),
+                initial_stack=max([p.get('stack', 1000) for p in hand_data.get('players', [])], default=1000)
             )
             
             # Create hands review session
-            self.current_session = HandsReviewBotSession(config, session_logger=None, decision_engine=decision_engine)
+            self.current_session = HandsReviewBotSession(config, decision_engine)
             
             # Set preloaded hand data
             self.current_session.set_preloaded_hand_data({"hand_model": hand})
@@ -1056,50 +788,6 @@ class HandsReviewTab(ttk.Frame):
             
             # Start the session
             success = self.current_session.start_session()
-            
-            # CRITICAL: Load the hand for review (posts blinds, sets up game state)
-            if success:
-                print("🎯 LOAD_HAND: Loading hand for review with proper initialization...")
-                
-                # Convert seats data to players format expected by load_hand_for_review
-                converted_hand_data = hand_data.copy()
-                if 'seats' in hand_data and 'players' not in hand_data:
-                    players_data = []
-                    for seat in hand_data['seats']:
-                        player_data = {
-                            'seat': seat.get('seat_no', 1),
-                            'name': seat.get('display_name', f"Player{seat.get('seat_no', 1)}"),
-                            'starting_stack': seat.get('starting_stack', 1000),
-                            'stack': seat.get('starting_stack', 1000),
-                            'hole_cards': [],  # Will be populated from metadata if available
-                            'cards': []
-                        }
-                        
-                        # Get hole cards from metadata if available
-                        metadata = hand_data.get('metadata', {})
-                        hole_cards = metadata.get('hole_cards', {})
-                        seat_key = f"seat{seat.get('seat_no', 1)}"
-                        if seat_key in hole_cards:
-                            player_data['hole_cards'] = hole_cards[seat_key]
-                            player_data['cards'] = hole_cards[seat_key]
-                        
-                        players_data.append(player_data)
-                    
-                    converted_hand_data['players'] = players_data
-                
-                # Also ensure table/button information is available
-                if 'table' not in converted_hand_data:
-                    metadata = hand_data.get('metadata', {})
-                    converted_hand_data['table'] = {
-                        'button_seat': metadata.get('button_seat_no', 1)
-                    }
-                
-                load_success = self.current_session.load_hand_for_review(converted_hand_data)
-                if not load_success:
-                    print("❌ LOAD_HAND: Failed to load hand for review")
-                    success = False
-                else:
-                    print("✅ LOAD_HAND: Hand loaded successfully with blinds and game state")
             if success:
                 self.session_active = True
                 
@@ -1110,81 +798,22 @@ class HandsReviewTab(ttk.Frame):
                 })
                 
                 # Initialize poker table display state
-                # Note: Hand data uses 'seats' not 'players'
-                players_data = hand_data.get('seats', hand_data.get('players', []))
+                players_data = hand_data.get('players', [])
                 seats_data = []
-                
-                # Session logging for players data debugging
-                if hasattr(self, 'session_logger') and self.session_logger:
-                    self.session_logger.log_system(
-                        "DEBUG", "PLAYERS_DATA", f"Players data extracted from hand",
-                        {
-                            "players_count": len(players_data),
-                            "players_data": players_data,
-                            "hand_data_players_key_exists": 'players' in hand_data,
-                            "all_hand_keys": list(hand_data.keys())
-                        }
-                    )
-                
-                # Get hole cards from hand metadata
-                hole_cards_data = {}
-                if 'metadata' in hand_data and 'hole_cards' in hand_data['metadata']:
-                    hole_cards_data = hand_data['metadata']['hole_cards']
-                    print(f"🃏 Found hole cards in metadata: {hole_cards_data}")
-                    if hasattr(self, 'session_logger') and self.session_logger:
-                        self.session_logger.log_system(
-                            "DEBUG", "HOLE_CARDS", f"Hole cards found in metadata",
-                            {"hole_cards_data": hole_cards_data}
-                        )
-                else:
-                    print(f"🃏 No hole cards found in hand metadata. Keys: {list(hand_data.get('metadata', {}).keys())}")
-                    if hasattr(self, 'session_logger') and self.session_logger:
-                        self.session_logger.log_system(
-                            "WARNING", "HOLE_CARDS", f"No hole cards found in hand metadata",
-                            {"metadata_keys": list(hand_data.get('metadata', {}).keys())}
-                        )
-                
-                print(f"🃏 Players data: {players_data}")
                 for i, p in enumerate(players_data):
-                    # Get player UID for hole cards lookup - use the actual player_uid from seat data
-                    player_uid = p.get('player_uid', f'seat{i+1}')
-                    
-                    # Try different UID formats for hole cards lookup
-                    player_hole_cards = []
-                    for uid_candidate in [player_uid, f'seat{i+1}', f'player_{i}', p.get('display_name', '')]:
-                        if uid_candidate in hole_cards_data:
-                            player_hole_cards = hole_cards_data[uid_candidate]
-                            break
-                    
-                    print(f"🃏 Player {p.get('display_name', f'seat{i+1}')} (UID: {player_uid}) cards: {player_hole_cards}")
-                    print(f"🃏 Available hole card UIDs: {list(hole_cards_data.keys())}")
-                    
-                    # Session logging for each player
-                    if hasattr(self, 'session_logger') and self.session_logger:
-                        self.session_logger.log_system(
-                            "DEBUG", "PLAYER_MAPPING", f"Processing player {i}",
-                            {
-                                "player_data": p,
-                                "player_uid": player_uid,
-                                "hole_cards_found": len(player_hole_cards) > 0,
-                                "hole_cards": player_hole_cards
-                            }
-                        )
-                    
                     seat_data = {
-                        "name": p.get('display_name', f'seat{i+1}'), 
-                        "stack": p.get('starting_stack', 1000),  # Use starting_stack from hand data
-                        "cards": player_hole_cards,  # Use hole cards from metadata
+                        "name": p.get('name', f'seat{i+1}'), 
+                        "stack": p.get('stack', 0), 
+                        "cards": p.get('cards', []), 
                         "position": p.get('position', ''),
-                        "current_bet": 0,  # Will be updated by FPSM
-                        "folded": False,   # Will be updated by FPSM
-                        "all_in": False,   # Will be updated by FPSM
-                        "acting": False,   # Will be set by FPSM updates
-                        "active": True     # Start as active
+                        "current_bet": p.get('current_bet', 0),
+                        "folded": p.get('folded', False),
+                        "all_in": p.get('all_in', False),
+                        "acting": False,  # Will be set by FPSM updates
+                        "active": not p.get('folded', False)
                     }
                     seats_data.append(seat_data)
                 
-                print(f"🃏 Final seats_data being dispatched: {seats_data}")
                 self.store.dispatch({
                     "type": SET_SEATS,
                     "seats": seats_data
@@ -1195,15 +824,10 @@ class HandsReviewTab(ttk.Frame):
                     "amount": hand_data.get('pot_size', 0)
                 })
                 
-                # Initialize community cards (board)
-                community_cards = hand_data.get('community_cards', [])
-                if not community_cards and 'board' in hand_data:
-                    community_cards = hand_data['board']
-                print(f"🃏 Community cards: {community_cards}")
-                
-                self.store.dispatch({
-                    "type": SET_BOARD,
-                    "board": community_cards
+                if hand_data.get('community_cards'):
+                    self.store.dispatch({
+                        "type": SET_BOARD,
+                        "board": hand_data.get('community_cards', [])
                     })
                 
                 self.store.dispatch({
@@ -1211,7 +835,7 @@ class HandsReviewTab(ttk.Frame):
                     "dealer": hand_data.get('dealer', 0)
                 })
                 
-                self._update_status(f"✅ Hand {hand.metadata.hand_id} loaded! Hole cards visible. Click 'Next →' to advance.")
+                self._update_status(f"✅ Hand {hand.hand_id} loaded! Hole cards visible. Click 'Next →' to advance.")
                 
                 # Force a table render
                 self.after_idle(lambda: self.renderer_pipeline.render_once(self.store.get_state()))
@@ -1223,7 +847,24 @@ class HandsReviewTab(ttk.Frame):
             import traceback
             traceback.print_exc()
     
-    # Removed duplicate method - using the more complete implementation below
+    def _next_action(self):
+        """Execute the next action in replay."""
+        if not self.current_session or not self.session_active:
+            self._update_status("⚠️  No active session. Please load a hand first.")
+            return
+            
+        try:
+            result = self.current_session.execute_next_bot_action()
+            if result:
+                action_info = result.get('explanation', 'Action executed')
+                self._update_status(f"▶ {action_info}")
+                
+                if self.current_session.is_session_complete():
+                    self._update_status("🏁 Hand replay completed!")
+            else:
+                self._update_status("🏁 Hand replay completed")
+        except Exception as e:
+            self._update_status(f"❌ Error executing action: {e}")
     
     def _toggle_auto(self):
         """Toggle automatic playback."""
@@ -1269,11 +910,6 @@ class HandsReviewTab(ttk.Frame):
         if hasattr(self, 'status_text'):
             self.status_text.configure(font=small_font)
         
-        # Update theme intro label font (luxury serif)
-        if hasattr(self, 'theme_intro_label'):
-            intro_font = ("Georgia", 16, "normal")  # Luxury serif font
-            self.theme_intro_label.configure(font=intro_font)
-        
         # Update enhanced button themes (handles both fonts and colors)
         enhanced_buttons = []
         if hasattr(self, 'load_btn') and hasattr(self.load_btn, 'refresh_theme'): 
@@ -1288,127 +924,29 @@ class HandsReviewTab(ttk.Frame):
         for btn in enhanced_buttons:
             btn.refresh_theme()
     
-    def _style_theme_radio_buttons(self):
-        """Apply theme-specific styling to radio buttons to eliminate default green highlights."""
-        if not hasattr(self, 'theme_radio_buttons'):
-            return
-            
-        try:
-            # Get current theme and highlight colors
-            current_theme_name = self.theme.current() or 'Forest Green Professional'
-            theme = self.theme.get_theme()
-            
-            # Create a custom style for radio buttons
-            style = ttk.Style()
-            
-            # Apply config-driven selection styling
-            selection_styler = self.theme.get_selection_styler()
-            if selection_styler:
-                theme_id = self.theme.get_current_theme_id()
-                selection_styler.apply_selection_styles(style, theme_id)
-            
-            # Get selection highlight colors (config-driven with legacy fallback)
-            try:
-                base_colors = self.theme.get_base_colors()
-                selection_color = base_colors.get("highlight", "#D4AF37")
-                selection_glow = base_colors.get("metal", "#C9A34E")
-            except Exception:
-                selection_highlight = _get_theme_selection_highlight(current_theme_name)
-                selection_color = selection_highlight["color"]
-                selection_glow = selection_highlight["glow"]
-            
-            # Configure the radio button style with theme-specific colors
-            style.configure("Themed.TRadiobutton",
-                           background=theme.get("panel.bg", "#1F2937"),
-                           foreground=theme.get("panel.fg", "#E5E7EB"),
-                           focuscolor=selection_color)
-            
-            # Configure the selection/active state colors
-            style.map("Themed.TRadiobutton",
-                     background=[("active", theme.get("panel.bg", "#1F2937")),
-                                ("selected", theme.get("panel.bg", "#1F2937"))],
-                     foreground=[("active", theme.get("panel.fg", "#E5E7EB")),
-                                ("selected", theme.get("panel.fg", "#E5E7EB"))],
-                     indicatorcolor=[("selected", selection_color),
-                                    ("active", selection_glow),
-                                    ("!selected", theme.get("panel.border", "#374151"))])
-            
-            # Apply the custom style to all radio buttons
-            for radio_btn in self.theme_radio_buttons:
-                if radio_btn.winfo_exists():
-                    radio_btn.configure(style="Themed.TRadiobutton")
-                    
-        except Exception as e:
-            # Fallback styling if custom styling fails
-            print(f"⚠️ Radio button styling failed: {e}")
-            pass
-    
-    def _on_theme_change(self):
-        """Handle theme change from radio buttons."""
-        try:
-            selected_theme = self.theme_var.get()
-            if selected_theme:
-                print(f"🎨 Theme changed to: {selected_theme}")
-                
-                # Set the theme using the theme manager
-                self.theme.set_profile(selected_theme)
-                
-                # Update all UI colors including radio button styling
-                self._refresh_ui_colors()
-                
-                # Update the theme introduction display
-                self._show_theme_intro(selected_theme)
-                
-                # Force a table render with new theme
-                if hasattr(self, 'renderer_pipeline') and self.renderer_pipeline:
-                    self.after_idle(lambda: self.renderer_pipeline.render_once(self.store.get_state()))
-                    
-        except Exception as e:
-            print(f"⚠️ Theme change error: {e}")
-    
     def _next_action(self):
         """Advance to the next action in the hand."""
-        print("🎯 NEXT_ACTION: Button clicked!")
-        
-        # Debug session state
-        print(f"🎯 NEXT_ACTION: session_active={self.session_active}")
-        print(f"🎯 NEXT_ACTION: current_session={self.current_session}")
-        
         if not self.session_active or not self.current_session:
             self._update_status("⚠️ No hand loaded. Please select and load a hand first.")
             return
             
         try:
-            # Debug session state
-            print(f"🎯 NEXT_ACTION: Session type: {type(self.current_session)}")
-            print(f"🎯 NEXT_ACTION: Session active: {getattr(self.current_session, 'session_active', 'N/A')}")
-            
             # Check if session is complete first
-            if hasattr(self.current_session, 'decision_engine') and self.current_session.decision_engine.is_session_complete():
+            if self.current_session.decision_engine.is_session_complete():
                 self._update_status("🏁 Hand complete - no more actions")
                 return
             
             # Execute next action through the session (using correct method name from validation tester)
-            print("🎯 NEXT_ACTION: Calling execute_next_bot_action...")
             result = self.current_session.execute_next_bot_action()
-            print(f"🎯 NEXT_ACTION: Result: {result}")
-            
             if result:
-                # Get explanation if available
-                explanation = getattr(self.current_session, 'current_decision_explanation', 'Action executed')
-                self._update_status(f"▶️ {explanation}")
-                
+                self._update_status("▶️ Advanced to next action")
                 # The FPSM adapter should automatically update the poker table display
                 # Force a render to ensure UI is updated
-                print("🎯 NEXT_ACTION: Forcing UI update...")
                 self.after_idle(lambda: self.renderer_pipeline.render_once(self.store.get_state()))
             else:
                 self._update_status("🏁 Hand complete - no more actions")
         except Exception as e:
             self._update_status(f"❌ Error advancing hand: {e}")
-            print(f"🎯 NEXT_ACTION: Exception: {e}")
-            import traceback
-            traceback.print_exc()
     
     def _toggle_auto(self):
         """Toggle auto-play mode."""
