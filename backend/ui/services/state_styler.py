@@ -577,7 +577,7 @@ class EmphasisBarStyler:
                     text_y,
                     text=word,
                     anchor="w",
-                    font=("Arial", 12, "bold"),
+                    font=fonts.get("label", ("Arial", 12, "bold")),
                     fill=color,
                     tags=("layer:emphasis", "emphasis_text"),
                 )

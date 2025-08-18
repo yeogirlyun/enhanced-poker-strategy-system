@@ -5,8 +5,16 @@ import importlib
 class CanvasManager:
     def __init__(self, parent):
         # Resolve theme dynamically to avoid static import issues
-        # Start with a neutral bg; components draw felt based on ThemeManager
-        self.canvas = tk.Canvas(parent, bg="#000000", highlightthickness=0)
+        # Start with theme-aware bg; components draw felt based on ThemeManager
+        try:
+            from backend.ui.services.theme_manager import ThemeManager
+            theme_manager = ThemeManager()
+            theme_colors = theme_manager.get()
+            canvas_bg = theme_colors.get("table.bg", theme_colors.get("panel.bg", "#000000"))
+        except Exception:
+            canvas_bg = "#000000"  # Fallback only if theme system unavailable
+            
+        self.canvas = tk.Canvas(parent, bg=canvas_bg, highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         # Optional overlay canvas for animations; safe default None
         self.overlay = None

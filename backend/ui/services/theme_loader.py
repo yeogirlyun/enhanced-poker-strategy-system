@@ -14,9 +14,9 @@ class ThemeLoader:
     def __init__(self, theme_pack_path: Optional[str] = None):
         """Initialize theme loader with optional custom path."""
         if theme_pack_path is None:
-            # Default to poker_themes.json in backend directory
+            # Default to poker_themes.json in backend/data directory
             backend_dir = Path(__file__).parent.parent.parent
-            theme_pack_path = str(backend_dir / "poker_themes.json")
+            theme_pack_path = str(backend_dir / "data" / "poker_themes.json")
 
         self.theme_pack_path = theme_pack_path
         self._defaults: Optional[Dict[str, Any]] = None
@@ -58,19 +58,23 @@ class ThemeLoader:
             return self._get_fallback_config()
 
     def get_theme_by_id(self, theme_id: str) -> Dict[str, Any]:
-        """Get a specific theme by ID."""
+        """Get a specific theme by ID with auto-generated emphasis tokens."""
         defaults, themes = self.load_theme_pack()
+        
+        theme_config = None
         if theme_id in themes:
-            return themes[theme_id]
+            theme_config = themes[theme_id].copy()  # Make a copy to avoid modifying original
+        else:
+            # Fallback to first available theme
+            if themes:
+                fallback_id = list(themes.keys())[0]
+                print(f"⚠️ Theme '{theme_id}' not found, using '{fallback_id}'")
+                theme_config = themes[fallback_id].copy()
+            else:
+                # Ultimate fallback
+                theme_config = self._get_fallback_theme()
 
-        # Fallback to first available theme
-        if themes:
-            fallback_id = list(themes.keys())[0]
-            print(f"⚠️ Theme '{theme_id}' not found, using '{fallback_id}'")
-            return themes[fallback_id]
-
-        # Ultimate fallback
-        return self._get_fallback_theme()
+        return theme_config
 
     def get_theme_list(self) -> list[Dict[str, str]]:
         """Get list of available themes with id and name."""
@@ -84,6 +88,8 @@ class ThemeLoader:
         """Get configuration defaults."""
         defaults, _ = self.load_theme_pack()
         return defaults
+    
+
 
     def _get_fallback_config(self) -> Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]:
         """Provide fallback configuration if JSON loading fails."""
@@ -115,7 +121,7 @@ class ThemeLoader:
                     "flash_ms": 400,
                 },
             },
-            "selection": {"row_bg": "#D4AF37", "row_fg": "#0B0B0E"},
+            "selection": {"row_bg": "$highlight", "row_fg": "$highlight_text"},
             "emphasis_bar": {
                 "bg_top": "#2D5A3D",
                 "bg_bottom": "#4A3428",
@@ -171,6 +177,14 @@ class ThemeLoader:
                 "emphasis_text": "#F8E7C9",
             },
         }
+    
+    def reload(self):
+        """Force reload themes from file."""
+        print("🔄 ThemeLoader: Forcing reload from file...")
+        self._loaded = False
+        self._defaults = None
+        self._themes = None
+        return self.load_theme_pack()
 
 
 # Global instance for easy access

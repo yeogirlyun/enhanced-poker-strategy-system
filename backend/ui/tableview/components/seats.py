@@ -258,7 +258,7 @@ class Seats:
                     x,
                     nameplate_y,  # Centered in nameplate
                     text=display_name,
-                    font=("Arial", name_font_size, "bold"),
+                    font=(FONTS.get("font.body", ("Arial", 12))[0], name_font_size, "bold"),
                     fill=THEME.get("player.name", "#E5E7EB"),
                     tags=("layer:seats", f"name:{idx}"),
                 )
@@ -289,7 +289,7 @@ class Seats:
                         stack_x,
                         stack_text_y,
                         text=f"${stack:,}",  # Exact amount with commas
-                        font=("Arial", max(10, stack_font_size - 4), "normal"),
+                        font=(FONTS.get("font.body", ("Arial", 10))[0], max(10, stack_font_size - 4), "normal"),
                         fill=THEME.get("text.secondary", "#B0B0B0"),  # Subtle text
                         tags=("layer:seats", f"stack_text:{idx}"),
                     )
@@ -308,7 +308,10 @@ class Seats:
 
                 # Professional hole cards with dynamic sizing based on player count
                 cards = seat.get("cards", [])
-                if cards and len(cards) >= 2:
+                # Show card backs for initial setup, or actual cards if available
+                show_cards = len(cards) >= 2 or (seat.get("active", True) and not cards)
+                
+                if show_cards:
                     # Dynamic card sizing: 2-3 players: 6%, 4-6 players: 5%, 7-9 players: 4%
                     # Use same active seat logic as community cards for consistency
                     active_seats = [s for s in seats_data if s.get("active", True)]
@@ -330,8 +333,10 @@ class Seats:
                     print(
                         f"🃏 Rendering cards for seat {idx}: {cards}, size: {card_width}x{card_height}, players: {num_players}"
                     )
-
-                    for i, card in enumerate(cards[:2]):  # Only show 2 hole cards
+                    # Ensure we have exactly 2 cards to display (use card backs if no actual cards)
+                    display_cards = cards[:2] if len(cards) >= 2 else ["**", "**"]
+                    
+                    for i, card in enumerate(display_cards):  # Show 2 hole cards
                         card_x = (
                             x - card_width + i * card_width
                         )  # Cards touching each other
@@ -422,7 +427,7 @@ class Seats:
                             card_y + card_height // 2 - 6,  # Upper symbol
                             text="♣",  # Club
                             fill=card_back_pattern,  # Theme-aware pattern color
-                            font=("Arial", symbol_font_size, "bold"),
+                            font=(FONTS.get("font.body", ("Arial", 12))[0], symbol_font_size, "bold"),
                             tags=("layer:seats", f"card_pattern_top:{idx}:{i}"),
                         )
 
@@ -431,14 +436,14 @@ class Seats:
                             card_y + card_height // 2 + 6,  # Lower symbol
                             text="♦",  # Diamond
                             fill=card_back_pattern,  # Theme-aware pattern color
-                            font=("Arial", symbol_font_size, "bold"),
+                            font=(FONTS.get("font.body", ("Arial", 12))[0], symbol_font_size, "bold"),
                             tags=("layer:seats", f"card_pattern_bottom:{idx}:{i}"),
                         )
 
                         # Show actual card if revealed (not face down)
                         if (
-                            card and card != "XX" and card != ""
-                        ):  # "XX" means face down, "" means empty
+                            card and card not in ["XX", "**", ""]
+                        ):  # "XX"/"**" means face down, "" means empty
                             try:
                                 # Clear the card back pattern first
                                 c.delete(f"card_pattern_top:{idx}:{i}")
@@ -472,7 +477,7 @@ class Seats:
                                     card_x + card_width // 2,
                                     card_y + card_height // 2,
                                     text=display_text,
-                                    font=("Arial", card_font_size, "bold"),
+                                    font=(FONTS.get("font.body", ("Arial", 12))[0], card_font_size, "bold"),
                                     fill=text_color,
                                     tags=("layer:seats", f"card_text:{idx}:{i}"),
                                 )

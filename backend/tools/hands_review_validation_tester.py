@@ -19,6 +19,7 @@ _mod = types.ModuleType('utils.sound_manager')
 class _SM:
     def __init__(self, *a, **k): pass
     def play(self, *a, **k): pass
+    def play_poker_event_sound(self, *a, **k): pass
 _mod.SoundManager = _SM
 _sys.modules['utils.sound_manager'] = _mod
 # Optional: stub core.deuces_hand_evaluator if present elsewhere on path
@@ -47,7 +48,7 @@ from core.hand_model import Street, StreetState
 class HandsReviewValidator:
     """Validates hands review poker state machine accuracy."""
     
-    def __init__(self, legendary_hands_path: str = "data/legendary_hands.json"):
+    def __init__(self, legendary_hands_path: str = "data/legendary_hands_normalized.json"):
         self.legendary_hands_path = legendary_hands_path
         self.results = []
         self.errors = []
@@ -88,18 +89,106 @@ class HandsReviewValidator:
                 num_players=len(hand_model.seats)
             )
             
-            # Create a decision engine with the hand model
+            # Create hands review session first (with temporary decision engine)
             from core.hand_model_decision_engine import HandModelDecisionEngine
-            decision_engine = HandModelDecisionEngine(hand_model)
             
-            # Create hands review session with the decision engine
+            # Create session with a placeholder decision engine
+            class PlaceholderEngine:
+                def get_decision(self, *args, **kwargs): return {}
+                def is_session_complete(self): return True
+                def reset(self): pass
+            
             session = HandsReviewBotSession(
                 config=config,
-                decision_engine=decision_engine
+                decision_engine=PlaceholderEngine()
             )
             
+            # Now create the real decision engine with FPSM reference
+            decision_engine = HandModelDecisionEngine(hand_model, fpsm=session.fpsm)
+            
+            # Replace the placeholder with the real engine
+            session.decision_engine = decision_engine
+            
             # Set the hand model data for the session to use
-            session.preloaded_hand_data = {'hand_model': hand_model}
+            # Convert hand model to the format expected by HandsReviewBotSession
+            # Initialize pot/current_bet from blind postings in preflop only
+            initial_pot = 0.0
+            initial_current_bet = 0.0
+            try:
+                preflop = hand_model.streets.get(Street.PREFLOP, StreetState())
+                for action in preflop.actions:
+                    if action.action.value == 'POST_BLIND':
+                        initial_pot += action.amount
+                        # Some datasets store the total to-amount
+                        to_amt = getattr(action, 'to_amount', None)
+                        if to_amt is not None:
+                            initial_current_bet = max(initial_current_bet, to_amt)
+                        else:
+                            initial_current_bet = max(initial_current_bet, action.amount)
+            except Exception:
+                pass
+            
+            # Determine dealer position robustly
+            button_index = 0
+            try:
+                # 1) Prefer metadata.button_seat_no if present
+                button_seat_no = getattr(hand_model.metadata, 'button_seat_no', None)
+                if button_seat_no is not None:
+                    for idx, seat in enumerate(hand_model.seats):
+                        if getattr(seat, 'seat_no', None) == button_seat_no:
+                            button_index = idx
+                            break
+                else:
+                    # 2) Infer from preflop blinds: in heads-up, SB is the dealer
+                    preflop = hand_model.streets.get(Street.PREFLOP, StreetState())
+                    sb_uid = None
+                    sb_amt = getattr(hand_model.metadata, 'small_blind', None)
+                    for a in preflop.actions:
+                        if getattr(a, 'action', None) == 'POST_BLIND':
+                            # If amount matches configured SB (or is the smaller of two blinds), take it
+                            if sb_amt is not None and abs(a.amount - sb_amt) < 1e-6:
+                                sb_uid = a.actor_uid
+                                break
+                    if sb_uid is None:
+                        # Fall back: pick the smaller blind
+                        blinds = [a for a in preflop.actions if getattr(a, 'action', None) == 'POST_BLIND']
+                        if blinds:
+                            sb_uid = min(blinds, key=lambda x: getattr(x, 'amount', 0)).actor_uid
+                    if sb_uid is not None:
+                        for idx, seat in enumerate(hand_model.seats):
+                            if getattr(seat, 'player_uid', None) == sb_uid or getattr(seat, 'player_id', None) == sb_uid:
+                                button_index = idx
+                                break
+                    else:
+                        # 3) Fallback to seat.is_button flag
+                        for idx, seat in enumerate(hand_model.seats):
+                            if getattr(seat, 'is_button', False):
+                                button_index = idx
+                                break
+            except Exception:
+                button_index = 0
+
+            initial_state = {
+                'players': [
+                    {
+                        'name': seat.player_uid,
+                        'stack': seat.starting_stack,
+                        'position': f'seat{seat.seat_no}',
+                        'is_human': False,
+                        'is_active': True,
+                        'cards': hand_model.metadata.hole_cards.get(seat.player_uid, []),
+                        'current_bet': 0.0
+                    }
+                    for seat in hand_model.seats
+                ],
+                'pot': initial_pot,
+                'current_bet': initial_current_bet,
+                'street': 'preflop',
+                'board': [],
+                'dealer_position': button_index
+            }
+            
+            session.preloaded_hand_data = {'initial_state': initial_state}
             
             # Start the session
             if not session.start_session():

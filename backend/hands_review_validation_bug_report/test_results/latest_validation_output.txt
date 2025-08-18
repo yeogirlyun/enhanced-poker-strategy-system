@@ -1,0 +1,2884 @@
+🏆 CONCRETE PPSM HANDS REVIEW VALIDATION
+======================================================================
+🎯 Testing concrete PPSM architecture against real poker data
+🃏 Using new replay_hand_model() interface with DecisionEngineProtocol
+======================================================================
+✅ Loaded 100 hands from data/legendary_hands_normalized.json
+📊 Testing 20 hands with concrete architecture
+
+✅ Shutdown handlers registered successfully
+🔧 FIXED_PPSM: Initialized with 2 players
+🎲 Testing Hand 1: hand_0
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB001
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Kh', 'Kd', 'Ad', '2c', '4h', '4s', 'Qh', '2h', '2d']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['AD', '8D']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['6S', 'TH']}]
+
+🎲 Testing Hand 2: hand_1
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB002
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['As', 'Ah', '7d', '2c', 'Th', '9h', '3h', '5h', 'Kd']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['5H', 'KS']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['KC', '5S']}]
+
+🎲 Testing Hand 3: hand_2
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB003
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['9s', '9d', 'Jh', 'Tc', 'Kh', '3c', '7h', '6c', 'Js']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['4S', '8H']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['JD', 'TS']}]
+
+🎲 Testing Hand 4: hand_3
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB004
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Kh', 'Kd', 'Ah', '2s', '9c', '5d', '4c', 'Qs', 'Qc']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['QS', '4H']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['QC', '9C']}]
+
+🎲 Testing Hand 5: hand_4
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB005
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Qh', 'Qd', 'Jc', '9s', '2s', 'Jd', '6c', 'Ac', 'As']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['8H', '7S']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['3H', '9D']}]
+
+🎲 Testing Hand 6: hand_5
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB006
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Ah', 'Kd', '7c', '2s', 'Jd', '5c', 'Qs', 'Th', '9d']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['KS', 'AC']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['AH', '3H']}]
+
+🎲 Testing Hand 7: hand_6
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB007
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Jh', 'Jd', 'Tc', '9s', 'Ad', 'Qd', '4d', '5h', 'Qs']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['9H', '8C']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['JH', '7C']}]
+
+🎲 Testing Hand 8: hand_7
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB008
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Th', 'Td', '9c', '8s', '5h', 'As', '7c', '9h', '9s']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['9S', 'QS']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['4D', '8S']}]
+
+🎲 Testing Hand 9: hand_8
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB009
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['9h', '9d', '8c', '7s', 'Qd', 'Qh', '8h', 'Th', 'Ac']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['5S', 'KH']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['KC', 'QS']}]
+
+🎲 Testing Hand 10: hand_9
+   Players: 2, Actions: 11
+   Expected final pot: $2000.0
+🎯 PPSM: Replaying Hand Model BB010
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['8h', '8d', '7c', '6s', 'Qh', '7h', '6d', 'Qd', '5c']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 30.0 (street: Street.PREFLOP)
+  1: seat2 CALL 30.0 (street: Street.PREFLOP)
+  2: seat1 BET 60.0 (street: Street.FLOP)
+  3: seat2 CALL 60.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $40.0 (pot: $50.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $80.0)
+🃏 FIXED_PPSM: Street ended, pot now: $80.0
+🃏 FIXED_PPSM: seat1 BET $60.0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $200.0)
+🃏 FIXED_PPSM: Street ended, pot now: $200.0
+🃏 FIXED_PPSM: seat1 BET $150.0 (pot: $350.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $500.0)
+🃏 FIXED_PPSM: Street ended, pot now: $500.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: Action advances to seat1
+🎯 PPSM: Hand complete - 6/8 actions successful
+🎯 PPSM: Pot: $500.00 (expected: $2015.00)
+   ❌ FAILED: Pot $500.00 (expected $2000.00), 6/8 actions
+      Error: Invalid action: BET 760.0
+      Error: Invalid action: CALL None
+      Error: INFINITE_LOOP_DETECTED: Loop guard tripped.
+street=river state=river_betting pot=500.0
+dealer=0 action_idx=0
+need_action_from=[0, 1]
+steps_this_street=201 steps_this_hand=207
+players=[{'name': 'seat1', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'SB', 'cards': ['KD', '5D']}, {'name': 'seat2', 'stack': 750.0, 'current_bet': 0.0, 'is_active': True, 'has_folded': False, 'position': 'BB', 'cards': ['9D', '7H']}]
+
+🎲 Testing Hand 11: hand_10
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC001
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Ah', 'Jd', 'Ks', 'Qs', '4h', '9c', 'Ts', '7s', 'Kh']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['3C', 'JC']) + ['TH', '4H', '3H', 'KC', '8C'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['AD', '4S']) + ['TH', '4H', '3H', 'KC', '8C'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 12: hand_11
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC002
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Qd', 'Jh', 'Ks', 'Qs', '8s', 'Kd', '8d', 'Ts', '6h']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['3S', 'KH']) + ['TD', '3D', 'KC', '2D', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['JD', '6H']) + ['TD', '3D', 'KC', '2D', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 13: hand_12
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC003
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Jh', 'Td', 'Ks', 'Qs', 'Qh', '5d', '3d', '7c', 'Qd']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['8D', '5S']) + ['TH', 'QH', 'TS', 'AC', '6D'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['6H', '2C']) + ['TH', 'QH', 'TS', 'AC', '6D'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 14: hand_13
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC004
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['Th', '9d', 'Ks', 'Qs', '8s', '8c', 'Qd', '4h', '8d']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['2S', '5S']) + ['AH', '9C', '7H', '4H', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['5H', '9S']) + ['AH', '9C', '7H', '4H', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 15: hand_14
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC005
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['9h', '8d', 'Ks', 'Qs', 'Tc', '6c', '2c', 'Kc', '4s']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['JD', '8H']) + ['3D', 'JC', '9C', '7C', 'JS'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['4D', '5H']) + ['3D', 'JC', '9C', '7C', 'JS'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 16: hand_15
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC006
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['8h', '7d', 'Ks', 'Qs', 'As', 'Kc', '2s', 'Ad', '7c']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['TC', '3C']) + ['9S', 'JS', 'KD', '7H', '9C'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['TH', '7S']) + ['9S', 'JS', 'KD', '7H', '9C'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 17: hand_16
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC007
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['7h', '6d', 'Ks', 'Qs', '7s', '6c', '5s', '8h', '6h']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['3C', '6S']) + ['6C', 'JD', '6D', 'QD', 'JS'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['9H', '4H']) + ['6C', 'JD', '6D', 'QD', 'JS'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 18: hand_17
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC008
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['6h', '5d', 'Ks', 'Qs', '6s', 'Td', 'As', '2c', '5h']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['AC', 'TH']) + ['JC', 'AH', '7D', 'QH', '4C'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['8S', 'QC']) + ['JC', 'AH', '7D', 'QH', '4C'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 19: hand_18
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC009
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['5h', '4d', 'Ks', 'Qs', '2d', '8c', 'Ac', '5s', 'Qh']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['JS', '9H']) + ['KH', '6S', '5S', '6H', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['6D', '3H']) + ['KH', '6S', '5S', '6H', '8H'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+🎲 Testing Hand 20: hand_19
+   Players: 2, Actions: 11
+   Expected final pot: $520.0
+🎯 PPSM: Replaying Hand Model HC010
+🎯 PPSM: Deterministic deck created with 9 predetermined cards: ['4h', '3d', 'Ks', 'Qs', '5h', 'Qd', 'As', '9h', 'Ac']
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🔄 HAND_MODEL_ENGINE: Skipping POST_BLIND action (blinds already posted)
+🎯 HAND_MODEL_ENGINE: Found 8 player actions out of 11 total actions
+🎯 HAND_MODEL_ENGINE: Actions now in chronological order (first 4):
+  0: seat1 RAISE 25.0 (street: Street.PREFLOP)
+  1: seat2 CALL 25.0 (street: Street.PREFLOP)
+  2: seat2 CHECK 0.0 (street: Street.FLOP)
+  3: seat1 CHECK 0.0 (street: Street.FLOP)
+🎯 HAND_MODEL_ENGINE: Initialized with 8 player actions
+🃏 PURE_FPSM: Posted blinds - SB: $5, BB: $10
+🃏 PURE_FPSM: PokerState.START_HAND → PokerState.PREFLOP_BETTING
+🃏 FIXED_PPSM: Hand 1 started, action on seat1
+🃏 FIXED_PPSM: seat1 RAISE $35.0 (pot: $45.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CALL $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Street ended, pot now: $70.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $70.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $35.0 (pot: $105.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $140.0)
+🃏 FIXED_PPSM: Street ended, pot now: $140.0
+🃏 FIXED_PPSM: seat1 CHECK $0 (pot: $140.0)
+🃏 FIXED_PPSM: Action advances to seat2
+🃏 FIXED_PPSM: seat2 BET $200.0 (pot: $340.0)
+🃏 FIXED_PPSM: Action advances to seat1
+🃏 FIXED_PPSM: seat1 CALL $0 (pot: $540.0)
+🃏 FIXED_PPSM: Street ended, pot now: $540.0
+🃏 PPSM: Resolving showdown, final pot: $540.0
+🃏 PPSM: seat1 (['JC', '7D']) + ['5S', '9D', '3C', 'KS', '2D'] = Invalid Hand (score=9999, strength=0.0%)
+🃏 PPSM: seat2 (['TC', '5C']) + ['5S', '9D', '3C', 'KS', '2D'] = Invalid Hand (score=9999, strength=0.0%)
+🏆 PPSM: Tie between seat1, seat2 with Invalid Hand
+🏆 PPSM: Split pot - seat1, seat2 each win $270.00
+🎯 PPSM: Hand complete - 10/10 actions successful
+🎯 PPSM: Pot: $540.00 (expected: $535.00)
+   ❌ FAILED: Pot $540.00 (expected $520.00), 10/10 actions
+
+======================================================================
+🏆 CONCRETE PPSM VALIDATION RESULTS
+======================================================================
+📊 Hands tested: 20
+✅ Successful: 0 (0.0%)
+❌ Failed: 20
+⚡ Actions: 160/180 successful (88.9%)
+⏱️  Time: 0.0s (2390.1 hands/sec)
+
+🎯 FINAL VERDICT:
+🔴 NOT READY - Major problems detected
+💾 Results saved to: concrete_ppsm_validation_results.json
+🔄 Normal exit detected - saving final session data...
+✅ Final session data saved!

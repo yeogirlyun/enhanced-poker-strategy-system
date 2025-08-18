@@ -1,0 +1,991 @@
+{
+  "total_hands": 100,
+  "hands": [
+    {
+      "hand_index": 0,
+      "hand_id": "BB001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 1,
+      "hand_id": "BB002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 2,
+      "hand_id": "BB003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 3,
+      "hand_id": "BB004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 4,
+      "hand_id": "BB005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 5,
+      "hand_id": "BB006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 6,
+      "hand_id": "BB007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 7,
+      "hand_id": "BB008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 8,
+      "hand_id": "BB009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 9,
+      "hand_id": "BB010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 10,
+      "hand_id": "HC001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 11,
+      "hand_id": "HC002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 12,
+      "hand_id": "HC003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 13,
+      "hand_id": "HC004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 14,
+      "hand_id": "HC005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 15,
+      "hand_id": "HC006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 16,
+      "hand_id": "HC007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 17,
+      "hand_id": "HC008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 18,
+      "hand_id": "HC009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 19,
+      "hand_id": "HC010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 20,
+      "hand_id": "MB001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 21,
+      "hand_id": "MB002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 22,
+      "hand_id": "MB003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 23,
+      "hand_id": "MB004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 24,
+      "hand_id": "MB005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 25,
+      "hand_id": "MB006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 26,
+      "hand_id": "MB007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 27,
+      "hand_id": "MB008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 28,
+      "hand_id": "MB009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 29,
+      "hand_id": "MB010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 30,
+      "hand_id": "CH001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 31,
+      "hand_id": "CH002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 32,
+      "hand_id": "CH003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 33,
+      "hand_id": "CH004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 34,
+      "hand_id": "CH005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 35,
+      "hand_id": "CH006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 36,
+      "hand_id": "CH007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 37,
+      "hand_id": "CH008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 38,
+      "hand_id": "CH009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 39,
+      "hand_id": "CH010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 40,
+      "hand_id": "WS001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 41,
+      "hand_id": "WS002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 42,
+      "hand_id": "WS003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 43,
+      "hand_id": "WS004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 44,
+      "hand_id": "WS005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 45,
+      "hand_id": "WS006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 46,
+      "hand_id": "WS007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 47,
+      "hand_id": "WS008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 48,
+      "hand_id": "WS009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 49,
+      "hand_id": "WS010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 50,
+      "hand_id": "TV001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 51,
+      "hand_id": "TV002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 52,
+      "hand_id": "TV003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 53,
+      "hand_id": "TV004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 54,
+      "hand_id": "TV005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 55,
+      "hand_id": "TV006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 56,
+      "hand_id": "TV007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 57,
+      "hand_id": "TV008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 58,
+      "hand_id": "TV009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 59,
+      "hand_id": "TV010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 60,
+      "hand_id": "HU001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 61,
+      "hand_id": "HU002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 62,
+      "hand_id": "HU003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 63,
+      "hand_id": "HU004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 64,
+      "hand_id": "HU005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 65,
+      "hand_id": "HU006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 66,
+      "hand_id": "HU007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 67,
+      "hand_id": "HU008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 68,
+      "hand_id": "HU009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 69,
+      "hand_id": "HU010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 70,
+      "hand_id": "MW001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 71,
+      "hand_id": "MW002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 72,
+      "hand_id": "MW003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[7]: CALL with to_call=0",
+        "PREFLOP.actions[7]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 73,
+      "hand_id": "MW004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[7]: CALL with to_call=0",
+        "PREFLOP.actions[7]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[8]: CALL with to_call=0",
+        "PREFLOP.actions[8]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 74,
+      "hand_id": "MW005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 75,
+      "hand_id": "MW006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 76,
+      "hand_id": "MW007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[7]: CALL with to_call=0",
+        "PREFLOP.actions[7]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 77,
+      "hand_id": "MW008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[7]: CALL with to_call=0",
+        "PREFLOP.actions[7]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[8]: CALL with to_call=0",
+        "PREFLOP.actions[8]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 78,
+      "hand_id": "MW009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 79,
+      "hand_id": "MW010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing",
+        "PREFLOP.actions[3]: CALL with to_call=0",
+        "PREFLOP.actions[3]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[4]: CALL with to_call=0",
+        "PREFLOP.actions[4]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[5]: CALL with to_call=0",
+        "PREFLOP.actions[5]: CALL amount 10 != to_call 0",
+        "PREFLOP.actions[6]: CALL with to_call=0",
+        "PREFLOP.actions[6]: CALL amount 10 != to_call 0"
+      ]
+    },
+    {
+      "hand_index": 80,
+      "hand_id": "SP001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 81,
+      "hand_id": "SP002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 82,
+      "hand_id": "SP003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 83,
+      "hand_id": "SP004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 84,
+      "hand_id": "SP005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 85,
+      "hand_id": "SP006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 86,
+      "hand_id": "SP007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 87,
+      "hand_id": "SP008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 88,
+      "hand_id": "SP009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 89,
+      "hand_id": "SP010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 90,
+      "hand_id": "BP001",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 91,
+      "hand_id": "BP002",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 92,
+      "hand_id": "BP003",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 93,
+      "hand_id": "BP004",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 94,
+      "hand_id": "BP005",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 95,
+      "hand_id": "BP006",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 96,
+      "hand_id": "BP007",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 97,
+      "hand_id": "BP008",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 98,
+      "hand_id": "BP009",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    },
+    {
+      "hand_index": 99,
+      "hand_id": "BP010",
+      "issues": [
+        "FLOP.actions[0].order not strictly increasing",
+        "TURN.actions[0].order not strictly increasing",
+        "RIVER.actions[0].order not strictly increasing"
+      ]
+    }
+  ]
+}

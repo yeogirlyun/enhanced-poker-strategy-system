@@ -630,7 +630,7 @@ class PracticeSessionUI(ttk.Frame, EventListener):
             relief="flat",
             borderwidth=0,
             insertbackground="#EAECEE",  # Cursor color
-            selectbackground="#3980A6",  # Selection color (teal)
+            selectbackground=self.theme.get().get("panel.highlight", "#3980A6"),  # Theme-aware selection color
             padx=10,
             pady=6,
         )

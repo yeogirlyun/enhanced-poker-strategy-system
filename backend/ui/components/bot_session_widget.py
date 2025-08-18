@@ -1,229 +1,374 @@
 #!/usr/bin/env python3
 """
-Bot Session Widget - UI wrapper for bot-only poker sessions.
-Provides a unified interface for GTO and Hands Review sessions.
+Unified Bot Session Widget
+
+This module provides a unified poker widget for all bot-only sessions,
+including GTO simulation and hands review. By reusing the same rendering
+logic and event handling, both session types have consistent behavior
+and appearance.
+
+Key benefits:
+- Single widget codebase for both GTO and hands review
+- Consistent animations, sounds, and visual effects
+- Simplified maintenance and bug fixes
+- Clean separation from practice session complexity
 """
 
 import tkinter as tk
-from tkinter import ttk
 from typing import Optional, Dict, Any
-from core.session_logger import SessionLogger
+
+from .reusable_poker_game_widget import ReusablePokerGameWidget
+from core.bot_session_state_machine import BotSessionStateMachine
+from core.gui_models import THEME, FONTS
 
 
-class BotSessionWidget(ttk.Frame):
-    """Base widget for bot-only poker sessions."""
+class BotSessionWidget(ReusablePokerGameWidget):
+    """
+    Unified poker widget for all bot-only sessions.
     
-    def __init__(self, parent_frame: tk.Frame, session, logger: SessionLogger):
-        """Initialize bot session widget."""
-        super().__init__(parent_frame)
-        self.parent_frame = parent_frame
-        self.session = session
-        self.logger = logger
-        self.is_active = False
+    This widget can display both GTO simulation and hands review sessions
+    using the same rendering logic. The only difference is the decision
+    source (GTO algorithm vs preloaded hand data).
+    """
+    
+    def __init__(self, parent, session: BotSessionStateMachine, **kwargs):
+        """
+        Initialize the bot session widget.
         
-    def start_session(self) -> bool:
-        """Start the bot session."""
-        try:
-            success = self.session.start_session()
-            self.is_active = success
-            return success
-        except Exception as e:
-            self.logger.log_system("ERROR", "BOT_WIDGET", f"Failed to start session: {e}")
-            return False
+        Args:
+            parent: Parent tkinter widget
+            session: Bot session state machine (GTO or hands review)
+            **kwargs: Additional widget configuration
+        """
+        super().__init__(parent, session, **kwargs)
+        
+        # Store session reference
+        self.bot_session = session
+        self.session_type = session.session_type
+        
+        # Mark this as a bot widget for conditional positioning
+        self._is_bot_widget = True
+        self._is_gto_widget = (session.session_type == "gto")
+        
+        # Bot session specific attributes
+        self.current_decision: Optional[Dict[str, Any]] = None
+        self.decision_explanation_var = tk.StringVar()
+        
+        # Initialize bot-specific UI
+        self._setup_bot_ui()
+        
+        # Bind to session updates
+        self._bind_bot_events()
     
-    def stop_session(self):
-        """Stop the bot session."""
-        try:
-            if hasattr(self.session, 'stop_session'):
-                self.session.stop_session()
-            self.is_active = False
-        except Exception as e:
-            self.logger.log_system("ERROR", "BOT_WIDGET", f"Failed to stop session: {e}")
+    def _setup_ui(self):
+        """Override parent's _setup_ui to optimize for bot sessions."""
+        # Configure grid weights for proper sizing
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Create canvas for the poker table (use grid to match container)
+        self.canvas = tk.Canvas(
+            self, bg=THEME["table_felt"], highlightthickness=0
+        )
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+
+        # Initialize player seats (will be set dynamically)
+        self.player_seats = []
+
+        # Force initial draw
+        self._force_initial_draw()
+        
+        # Create table elements when canvas is properly sized
+        self._schedule_table_creation()
+    
+    def _schedule_table_creation(self):
+        """Schedule table creation when canvas is properly sized."""
+        # Check if canvas is properly sized
+        if self.canvas.winfo_width() > 1 and self.canvas.winfo_height() > 1:
+            # Canvas is ready, draw the table now
+            self._draw_table()
+        else:
+            # Canvas not ready yet, schedule retry
+            self.after(50, self._schedule_table_creation)
+    
+    def _setup_bot_ui(self):
+        """Setup bot session specific UI elements."""
+        # Initialize variables for communication with parent panels
+        self.current_decision = None
+        self.decision_explanation_var.set("Ready for bot session...")
+        
+        if self.session_logger:
+            self.session_logger.log_system(
+                "DEBUG", "BOT_WIDGET",
+                f"Bot widget initialized for {self.session_type} session",
+                {"session_type": self.session_type}
+            )
+    
+    def _bind_bot_events(self):
+        """Bind to bot session events."""
+        if self.bot_session:
+            # Register as event listener
+            self.bot_session.add_event_listener(self)
     
     def execute_next_action(self) -> bool:
-        """Execute the next action in the session."""
-        if not self.is_active:
+        """
+        Execute the next bot action in the session.
+        
+        Returns:
+            True if action was executed successfully, False otherwise
+        """
+        if not self.bot_session:
             return False
-            
+        
         try:
-            # Direct call to session's action execution
-            result = self.session.execute_next_bot_action()
+            success = self.bot_session.execute_next_bot_action()
             
-            # Update display after action
-            if result and hasattr(self, 'update_display'):
-                self.update_display("action_complete")
+            if success:
+                # Update display after action
+                self.after(100, self._update_display)
                 
-            return result
-        except Exception as e:
-            self.logger.log_system("ERROR", "BOT_WIDGET", f"Failed to execute action: {e}")
-            return False
-    
-    def get_game_info(self) -> Dict[str, Any]:
-        """Get current game information."""
-        if hasattr(self.session, 'get_game_info'):
-            return self.session.get_game_info()
-        return {}
-    
-    def update_display(self, update_type: str = "general"):
-        """Update the display (override in subclasses)."""
-        pass
-
-
-class HandsReviewSessionWidget(BotSessionWidget):
-    """Widget specifically for Hands Review sessions."""
-    
-    def __init__(self, parent_frame: tk.Frame, session, logger: SessionLogger):
-        """Initialize hands review session widget."""
-        super().__init__(parent_frame, session, logger)
-        self.logger.log_system("INFO", "HANDS_REVIEW_WIDGET", "HandsReviewSessionWidget initialized")
-        self._create_ui()
-    
-    def _create_ui(self):
-        """Create the hands review UI."""
-        # Create a simple placeholder for now - the actual poker table will be managed
-        # by the ReusablePokerGameWidget that the panel creates separately
-        self.info_label = ttk.Label(self, text="Hands Review Session Ready")
-        self.info_label.pack(pady=10)
-        
-        # Control buttons frame
-        self.controls_frame = ttk.Frame(self)
-        self.controls_frame.pack(pady=5)
-        
-        # Next button (main functionality)
-        self.next_button = ttk.Button(
-            self.controls_frame, 
-            text="Next", 
-            command=self._next_action,
-            state="disabled"
-        )
-        self.next_button.pack(side="left", padx=5)
-        
-        # Reset button
-        self.reset_button = ttk.Button(
-            self.controls_frame,
-            text="Reset",
-            command=self.reset_session,
-            state="disabled"
-        )
-        self.reset_button.pack(side="left", padx=5)
-    
-    def _next_action(self):
-        """Handle Next button click."""
-        try:
-            self.logger.log_system("DEBUG", "HANDS_REVIEW_WIDGET", "Next button clicked")
-            result = self.execute_next_action()
+                if self.session_logger:
+                    self.session_logger.log_system(
+                        "DEBUG", "BOT_WIDGET",
+                        "Bot action executed successfully",
+                        {"session_type": self.session_type}
+                    )
             
-            if not result:
-                # Session complete or error
-                self.next_button.config(state="disabled")
-                self.info_label.config(text="Hand complete")
-                
+            return success
+            
         except Exception as e:
-            self.logger.log_system("ERROR", "HANDS_REVIEW_WIDGET", f"Next action failed: {e}")
-    
-    def enable_controls(self):
-        """Enable the control buttons."""
-        self.next_button.config(state="normal")
-        self.reset_button.config(state="normal")
-        self.info_label.config(text="Hand loaded - ready to review")
-    
-    def disable_controls(self):
-        """Disable the control buttons."""
-        self.next_button.config(state="disabled") 
-        self.reset_button.config(state="disabled")
-        self.info_label.config(text="No hand loaded")
-    
-    def load_hand(self, hand_data: Dict[str, Any]) -> bool:
-        """Load a specific hand for review."""
-        try:
-            if hasattr(self.session, 'set_preloaded_hand_data'):
-                self.session.set_preloaded_hand_data(hand_data)
-                self.logger.log_system("INFO", "HANDS_REVIEW_WIDGET", f"Hand loaded: {hand_data.get('hand_id', 'unknown')}")
-                return True
-            return False
-        except Exception as e:
-            self.logger.log_system("ERROR", "HANDS_REVIEW_WIDGET", f"Failed to load hand: {e}")
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "ERROR", "BOT_WIDGET",
+                    f"Error executing bot action: {e}",
+                    {"session_type": self.session_type}
+                )
             return False
     
-    def reset_session(self):
-        """Reset the session to beginning of hand."""
-        try:
-            if hasattr(self.session, 'decision_engine') and hasattr(self.session.decision_engine, 'reset'):
-                self.session.decision_engine.reset()
-                self.logger.log_system("INFO", "HANDS_REVIEW_WIDGET", "Session reset to beginning")
-        except Exception as e:
-            self.logger.log_system("ERROR", "HANDS_REVIEW_WIDGET", f"Failed to reset session: {e}")
-    
-    def get_current_action_info(self) -> Dict[str, Any]:
-        """Get information about the current action."""
-        try:
-            if hasattr(self.session, 'decision_engine'):
-                engine = self.session.decision_engine
-                return {
-                    'current_index': getattr(engine, 'current_action_index', 0),
-                    'total_actions': getattr(engine, 'total_actions', 0),
-                    'is_complete': engine.is_session_complete() if hasattr(engine, 'is_session_complete') else False
-                }
-        except Exception as e:
-            self.logger.log_system("ERROR", "HANDS_REVIEW_WIDGET", f"Failed to get action info: {e}")
+    def start_session(self) -> bool:
+        """Start the bot session."""
+        if not self.bot_session:
+            return False
         
-        return {'current_index': 0, 'total_actions': 0, 'is_complete': True}
+        success = self.bot_session.start_session()
+        
+        if success:
+            # Update display to show initial state
+            self.after(100, self._update_display)
+            
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "INFO", "BOT_WIDGET",
+                    f"Bot session started: {self.session_type}",
+                    {"session_type": self.session_type}
+                )
+        
+        return success
     
-    def update_display(self, update_type: str = "general"):
-        """Update the hands review display."""
-        # This would typically update UI elements, but since we're working
-        # with the panel directly, we'll let the panel handle display updates
-        self.logger.log_system("DEBUG", "HANDS_REVIEW_WIDGET", f"Display update requested: {update_type}")
+    def stop_session(self):
+        """Stop the current bot session."""
+        if self.bot_session:
+            self.bot_session.stop_session()
+            
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "INFO", "BOT_WIDGET",
+                    f"Bot session stopped: {self.session_type}",
+                    {"session_type": self.session_type}
+                )
     
     def _update_display(self):
-        """Internal display update method (called by panel)."""
-        self.update_display("internal")
+        """Update the poker table display based on current session state."""
+        try:
+            if not self.bot_session:
+                return
+            
+            # Get current display state from session
+            display_state = self.bot_session.get_display_state()
+            
+            # Update the poker table display using parent's logic
+            self._update_from_display_state(display_state)
+            
+            # Update decision explanation
+            current_explanation = self.bot_session.get_current_explanation()
+            self.decision_explanation_var.set(current_explanation)
+            
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "DEBUG", "BOT_WIDGET",
+                    "Display updated successfully",
+                    {
+                        "session_type": self.session_type,
+                        "player_count": len(display_state.get("players", [])),
+                        "current_street": display_state.get("street", "unknown")
+                    }
+                )
+            
+        except Exception as e:
+            if self.session_logger:
+                self.session_logger.log_system(
+                    "ERROR", "BOT_WIDGET",
+                    f"Error updating display: {e}",
+                    {"session_type": self.session_type}
+                )
     
-    def update_font_size(self, base_size: int):
-        """Update font size for the widget (called by panel)."""
-        self.logger.log_system("DEBUG", "HANDS_REVIEW_WIDGET", f"Font size update requested: {base_size}")
-        # Font update would be implemented here if needed
+    def _update_from_display_state(self, display_state: Dict[str, Any]):
+        """Update UI based on display state from bot session."""
+        # Use parent's display state update logic
+        # This ensures consistent rendering with practice sessions
+        super()._update_from_fpsm_state()
+        
+        # Handle bot-specific display elements
+        players = display_state.get("players", [])
+        highlights = display_state.get("player_highlights", [])
+        card_visibilities = display_state.get("card_visibilities", [])
+        
+        # Update player highlights (show current action player)
+        for i, should_highlight in enumerate(highlights):
+            if i < len(self.player_seats) and should_highlight:
+                self._highlight_current_player(i)
+        
+        # Show all cards for bot sessions (no hidden information)
+        for i, player_info in enumerate(players):
+            if i < len(card_visibilities) and card_visibilities[i]:
+                self._show_player_cards(i, player_info.get("cards", []))
+        
+        # Update bet displays (use chip graphics)
+        for i, player_info in enumerate(players):
+            current_bet = player_info.get("current_bet", 0.0)
+            if current_bet > 0:
+                self._show_bet_display_for_player(i, "bet", current_bet)
+    
+    def _show_player_cards(self, player_index: int, cards: list):
+        """Show cards for a specific player."""
+        if player_index < len(self.player_seats):
+            player_frame = self.player_seats[player_index]
+            # Update card display logic here
+            # This would integrate with the existing card display system
+            pass
+    
+    def get_decision_history(self) -> list:
+        """Get the complete decision history for this session."""
+        if self.bot_session:
+            return self.bot_session.get_decision_history()
+        return []
+    
+    def get_session_info(self) -> Dict[str, Any]:
+        """Get current session information."""
+        if self.bot_session:
+            display_state = self.bot_session.get_display_state()
+            return display_state.get("session_info", {})
+        return {}
+    
+    def reset_session(self):
+        """Reset the session to its initial state."""
+        if self.bot_session:
+            self.bot_session.reset_session()
+            self.decision_explanation_var.set("Session reset - ready to start")
+            
+            # Clear display
+            self._clear_table_display()
+    
+    def _clear_table_display(self):
+        """Clear all table display elements."""
+        # Clear player highlights
+        for i in range(len(self.player_seats)):
+            self._remove_player_highlight(i)
+        
+        # Clear bet displays
+        for player_index in list(self.bet_displays.keys()):
+            self._hide_bet_display_for_player(player_index)
+        
+        # Reset pot display
+        if hasattr(self, 'pot_display') and self.pot_display:
+            self.pot_display.set_amount(0.0)
+    
+    def _should_play_action_sounds(self) -> bool:
+        """
+        Override: Bot sessions should NOT play action sounds at widget level.
+        
+        The bot state machines (GTOPokerStateMachine, BotSessionStateMachine) 
+        handle their own action sounds, so we disable widget-level sounds
+        to prevent duplicate audio.
+        """
+        return False
+    
+    def _should_show_card(self, player_index: int, card: str) -> bool:
+        """
+        Override: Always show all cards in bot sessions for educational purposes.
+        
+        Both GTO and hands review sessions should show all player cards
+        to provide complete information for learning and analysis.
+        """
+        # Always show cards in bot sessions (no hidden information)
+        return True
+    
+    def _transform_card_data(self, player_index: int, card: str, card_index: int = 0) -> str:
+        """
+        Override: Convert placeholder cards to real card data from state machine.
+        
+        This ensures that bot sessions show actual card values instead of
+        placeholder symbols like "**".
+        """
+        if card == "**" and hasattr(self, 'state_machine') and self.state_machine:
+            # Get real card data from state machine
+            try:
+                if (hasattr(self.state_machine, 'game_state') and 
+                    self.state_machine.game_state):
+                    players = self.state_machine.game_state.players
+                    if player_index < len(players):
+                        player_cards = players[player_index].cards
+                        if card_index < len(player_cards):
+                            return player_cards[card_index]
+            except Exception:
+                pass  # Fall back to original card
+        
+        return card
 
 
 class GTOSessionWidget(BotSessionWidget):
-    """Widget specifically for GTO simulation sessions."""
+    """Specialized widget for GTO simulation sessions."""
     
-    def __init__(self, parent_frame: tk.Frame, session, logger: SessionLogger):
+    def __init__(self, parent, gto_session, **kwargs):
         """Initialize GTO session widget."""
-        super().__init__(parent_frame, session, logger)
-        self.logger.log_system("INFO", "GTO_WIDGET", "GTOSessionWidget initialized")
-    
-    def start_new_hand(self) -> bool:
-        """Start a new random hand."""
-        try:
-            if hasattr(self.session, 'start_hand'):
-                self.session.start_hand()
-                return True
-            return False
-        except Exception as e:
-            self.logger.log_system("ERROR", "GTO_WIDGET", f"Failed to start new hand: {e}")
-            return False
+        super().__init__(parent, gto_session, **kwargs)
+        
+        # GTO-specific attributes
+        self.gto_session = gto_session
     
     def get_gto_explanation(self) -> str:
-        """Get explanation for the last GTO decision."""
-        try:
-            if hasattr(self.session, 'decision_history') and self.session.decision_history:
-                last_decision = self.session.decision_history[-1]
-                return last_decision.get('explanation', 'No explanation available')
-        except Exception as e:
-            self.logger.log_system("ERROR", "GTO_WIDGET", f"Failed to get GTO explanation: {e}")
-        
-        return "No explanation available"
+        """Get the current GTO decision explanation."""
+        return self.decision_explanation_var.get()
 
 
-# Factory function for creating appropriate widgets
-def create_session_widget(session_type: str, parent_frame: tk.Frame, session, logger: SessionLogger):
-    """Factory function to create the appropriate session widget."""
+
+class HandsReviewSessionWidget(BotSessionWidget):
+    """Specialized widget for hands review sessions."""
     
-    if session_type.lower() in ['hands_review', 'review']:
-        return HandsReviewSessionWidget(parent_frame, session, logger)
-    elif session_type.lower() in ['gto', 'simulation']:
-        return GTOSessionWidget(parent_frame, session, logger)
-    else:
-        # Default to base widget
-        return BotSessionWidget(parent_frame, session, logger)
+    def __init__(self, parent, hands_review_session, logger=None):
+        """Initialize hands review session widget."""
+        super().__init__(parent, hands_review_session)
+        
+        # Use same positioning as GTO widget
+        self._is_gto_widget = True
+        
+        # Hands review specific attributes
+        self.hands_review_session = hands_review_session
+    
+    def get_review_explanation(self) -> str:
+        """Get the current hands review explanation."""
+        if self.hands_review_session:
+            return self.hands_review_session.get_current_explanation()
+        return "No explanation available"
+    
+    def get_review_progress(self) -> Dict[str, Any]:
+        """Get progress information for the hands review."""
+        session_info = self.get_session_info()
+        engine_info = session_info.get("engine_info", {})
+        
+        return {
+            "current_step": engine_info.get("current_step", 0),
+            "total_steps": engine_info.get("total_steps", 0),
+            "progress_percent": engine_info.get("progress_percent", 0),
+            "steps_remaining": engine_info.get("steps_remaining", 0)
+        }

@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "table_id": "Legendary-Table-1",
+    "hand_id": "HC001",
+    "variant": "NLHE",
+    "max_players": 2,
+    "small_blind": 5,
+    "big_blind": 10,
+    "ante": 0,
+    "rake": 0,
+    "currency": "CHIPS",
+    "started_at_utc": null,
+    "ended_at_utc": null,
+    "run_count": 1,
+    "session_type": "review",
+    "bot_strategy": null,
+    "analysis_tags": [],
+    "button_seat_no": 1,
+    "hole_cards": {
+      "seat1": [
+        "Ah",
+        "Jd"
+      ],
+      "seat2": [
+        "Ks",
+        "Qs"
+      ]
+    }
+  },
+  "seats": [
+    {
+      "seat_no": 1,
+      "player_uid": "seat1",
+      "display_name": "Hero",
+      "starting_stack": 1000,
+      "is_button": true
+    },
+    {
+      "seat_no": 2,
+      "player_uid": "seat2",
+      "display_name": "Villain",
+      "starting_stack": 1200,
+      "is_button": false
+    }
+  ],
+  "hero_player_uid": "seat1",
+  "streets": {
+    "PREFLOP": {
+      "board": [],
+      "actions": [
+        {
+          "order": 1,
+          "street": "PREFLOP",
+          "action": "DEAL_HOLE",
+          "amount": 0.0
+        },
+        {
+          "order": 2,
+          "street": "PREFLOP",
+          "action": "POST_BLIND",
+          "actor_uid": "seat1",
+          "amount": 5.0
+        },
+        {
+          "order": 3,
+          "street": "PREFLOP",
+          "action": "POST_BLIND",
+          "actor_uid": "seat2",
+          "amount": 10.0
+        },
+        {
+          "order": 4,
+          "street": "PREFLOP",
+          "action": "RAISE",
+          "actor_uid": "seat1",
+          "amount": 25.0
+        },
+        {
+          "order": 5,
+          "street": "PREFLOP",
+          "action": "CALL",
+          "actor_uid": "seat2",
+          "amount": 25.0
+        }
+      ]
+    },
+    "FLOP": {
+      "board": [
+        "4h",
+        "9c",
+        "Ts"
+      ],
+      "actions": [
+        {
+          "order": 1,
+          "street": "FLOP",
+          "action": "CHECK",
+          "actor_uid": "seat2",
+          "amount": 0.0
+        },
+        {
+          "order": 2,
+          "street": "FLOP",
+          "action": "CHECK",
+          "actor_uid": "seat1",
+          "amount": 0.0
+        }
+      ]
+    },
+    "TURN": {
+      "board": [
+        "4h",
+        "9c",
+        "Ts",
+        "7s"
+      ],
+      "actions": [
+        {
+          "order": 1,
+          "street": "TURN",
+          "action": "BET",
+          "actor_uid": "seat2",
+          "amount": 35.0
+        },
+        {
+          "order": 2,
+          "street": "TURN",
+          "action": "CALL",
+          "actor_uid": "seat1",
+          "amount": 35.0
+        }
+      ]
+    },
+    "RIVER": {
+      "board": [
+        "4h",
+        "9c",
+        "Ts",
+        "7s",
+        "Kh"
+      ],
+      "actions": [
+        {
+          "order": 1,
+          "street": "RIVER",
+          "action": "BET",
+          "actor_uid": "seat2",
+          "amount": 200.0
+        },
+        {
+          "order": 2,
+          "street": "RIVER",
+          "action": "CALL",
+          "actor_uid": "seat1",
+          "amount": 200.0
+        }
+      ]
+    }
+  },
+  "pots": [
+    {
+      "amount": 535,
+      "eligible_player_uids": [
+        "seat1",
+        "seat2"
+      ],
+      "shares": []
+    }
+  ],
+  "showdown": [],
+  "final_stacks": {}
+}

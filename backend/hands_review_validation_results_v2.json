@@ -1,0 +1,20 @@
+{
+  "total_hands": 1,
+  "successful_hands": 0,
+  "failed_hands": 1,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "hand_index": 0,
+      "hand_id": "BB001",
+      "success": false,
+      "actions_executed": 2,
+      "final_pot": 60.0,
+      "original_pot": 0,
+      "pot_match": false,
+      "errors": [
+        "Pot mismatch: expected 0, got 60.0"
+      ]
+    }
+  ]
+}

@@ -41,7 +41,18 @@ def debug_log(message: str, category: str = "CARD_WIDGET"):
 class CardWidget(tk.Canvas):
     """A custom widget to display a single, styled playing card."""
     def __init__(self, parent, width=50, height=70):
-        super().__init__(parent, width=width, height=height, highlightthickness=1, highlightbackground="black", bg="white")
+        # Get theme-aware colors for card widget
+        try:
+            from backend.ui.services.theme_manager import ThemeManager
+            theme_manager = ThemeManager()
+            theme_colors = theme_manager.get()
+            card_bg = theme_colors.get("card.bg", "#FFFFFF")
+            card_border = theme_colors.get("card.border", "#000000")
+        except Exception:
+            card_bg = "white"
+            card_border = "black"
+            
+        super().__init__(parent, width=width, height=height, highlightthickness=1, highlightbackground=card_border, bg=card_bg)
         self.width, self.height = width, height
         
         # Ensure canvas is properly configured for drawing
@@ -69,8 +80,15 @@ class CardWidget(tk.Canvas):
             # Card is empty - show transparent/empty space
             self._draw_empty_card()
         else:
-            # Valid card - show the actual card
-            self.config(bg="white")
+            # Valid card - show the actual card with theme-aware background
+            try:
+                from backend.ui.services.theme_manager import ThemeManager
+                theme_manager = ThemeManager()
+                theme_colors = theme_manager.get()
+                card_bg = theme_colors.get("card.bg", "#FFFFFF")
+            except Exception:
+                card_bg = "white"
+            self.config(bg=card_bg)
             self._draw_card_content(card_str)
         
         # Force update to ensure the drawing is applied

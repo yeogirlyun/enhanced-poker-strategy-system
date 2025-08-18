@@ -4,7 +4,17 @@ import uuid
 from typing import Dict, Any, Optional
 
 # New UI Architecture imports
-from ..state.actions import SET_TABLE_DIM, SET_POT, SET_SEATS, SET_BOARD, SET_DEALER
+from ..state.actions import (
+    SET_TABLE_DIM,
+    SET_POT,
+    SET_SEATS,
+    SET_BOARD,
+    SET_DEALER,
+    SET_REVIEW_HANDS,
+    SET_REVIEW_FILTER,
+    SET_LOADED_HAND,
+    SET_STUDY_MODE
+)
 from ..state.store import Store
 from ..services.event_bus import EventBus
 from ..services.service_container import ServiceContainer
@@ -30,16 +40,21 @@ except ImportError:
     # Fallback to basic buttons if enhanced buttons not available
     PrimaryButton = SecondaryButton = tk.Button
 
-# Core imports with fallbacks
+# Core imports - fail fast if not available
+USE_DEV_STUBS = False  # set True only in a test harness
+
 try:
     from core.hand_model import Hand
     from core.hand_model_decision_engine import HandModelDecisionEngine
     from core.bot_session_state_machine import HandsReviewBotSession
     from core.flexible_poker_state_machine import GameConfig
     from core.session_logger import get_session_logger
-except ImportError:
-    print("⚠️  Core modules not available - using fallbacks")
-
+except ImportError as e:
+    if not USE_DEV_STUBS:
+        raise ImportError(f"Critical core modules not available: {e}. This will break hands review functionality.") from e
+    print("⚠️ Using dev stubs due to import error:", e)
+    
+    # Minimal stubs for development only
     class Hand:
         def __init__(self, data):
             if isinstance(data, dict):
@@ -62,30 +77,6 @@ except ImportError:
 
         def is_session_complete(self):
             return False
-
-    class HandsReviewBotSession:
-        def __init__(self, config, decision_engine):
-            self.session_active = False
-            self.decision_engine = decision_engine
-
-        def start_session(self):
-            return True
-
-        def set_preloaded_hand_data(self, data):
-            pass
-
-        def execute_next_bot_action(self):
-            return True
-
-        def is_session_complete(self):
-            return False
-
-        def reset_session(self):
-            pass
-
-        def load_hand_for_review(self, hand_data):
-            """Fallback method for loading hand data."""
-            return True
 
     class GameConfig:
         def __init__(self, **kwargs):
@@ -1281,6 +1272,47 @@ class HandsReviewTab(ttk.Frame):
                     converted_hand_data["table"] = {
                         "button_seat": metadata.get("button_seat_no", 1)
                     }
+                
+                # Copy metadata to converted hand data so blind amounts are available
+                if "metadata" in hand_data:
+                    converted_hand_data["metadata"] = hand_data["metadata"]
+                    print(f"🎯 LOAD_HAND: Copied metadata with blinds: SB=${hand_data['metadata'].get('small_blind', 'N/A')}, BB=${hand_data['metadata'].get('big_blind', 'N/A')}")
+                
+                # Convert actions from legendary hands format to expected format
+                if "streets" in hand_data:
+                    print("🎯 LOAD_HAND: Converting legendary hands actions format...")
+                    actions_converted = {}
+                    
+                    # Map legendary hands street names to expected names
+                    street_mapping = {
+                        "PREFLOP": "preflop",
+                        "FLOP": "flop", 
+                        "TURN": "turn",
+                        "RIVER": "river"
+                    }
+                    
+                    for legendary_street, street_data in hand_data["streets"].items():
+                        if legendary_street in street_mapping:
+                            expected_street = street_mapping[legendary_street]
+                            if "actions" in street_data:
+                                # Convert action format
+                                converted_actions = []
+                                for action in street_data["actions"]:
+                                    converted_action = {
+                                        "action_type": action.get("action", "check").lower(),
+                                        "amount": action.get("amount", 0.0),
+                                        "player_seat": action.get("actor_uid", "seat1"),
+                                        "street": expected_street
+                                    }
+                                    converted_actions.append(converted_action)
+                                
+                                actions_converted[expected_street] = converted_actions
+                                print(f"   • {legendary_street} -> {expected_street}: {len(converted_actions)} actions")
+                    
+                    converted_hand_data["actions"] = actions_converted
+                    print(f"🎯 LOAD_HAND: Converted {len(actions_converted)} streets with actions")
+                else:
+                    print("🎯 LOAD_HAND: No streets data found, using original actions if available")
 
                 load_success = self.current_session.load_hand_for_review(
                     converted_hand_data
@@ -1632,9 +1664,9 @@ class HandsReviewTab(ttk.Frame):
                 self._update_status("🏁 Hand complete - no more actions")
                 return
 
-            # Execute next action through the session (using correct method name from validation tester)
-            print("🎯 NEXT_ACTION: Calling execute_next_bot_action...")
-            result = self.current_session.execute_next_bot_action()
+            # Execute next action through the session (using the correct method for hands review)
+            print("🎯 NEXT_ACTION: Calling step_forward...")
+            result = self.current_session.step_forward()
             print(f"🎯 NEXT_ACTION: Result: {result}")
 
             if result:
@@ -1706,7 +1738,7 @@ class HandsReviewTab(ttk.Frame):
                 return
 
             # Execute next action
-            result = self.current_session.execute_next_bot_action()
+            result = self.current_session.step_forward()
             if result:
                 # Force a render
                 self.after_idle(

@@ -18,6 +18,10 @@ from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 
 from .poker_types import ActionType, Player, GameState, PokerState
+try:
+    from ..providers.deck_provider import DeckProvider
+except ImportError:
+    DeckProvider = None
 
 from .deuces_hand_evaluator import DeucesHandEvaluator
 # from .position_mapping import HandHistoryManager  # Removed - unused functionality
@@ -32,6 +36,7 @@ except ImportError:
             def __init__(self, *args, **kwargs): pass
             def play_sound(self, *args, **kwargs): pass
             def stop_all(self): pass
+            def play_poker_event_sound(self, *args, **kwargs): pass
 from .session_logger import get_session_logger
 
 
@@ -102,7 +107,9 @@ class FlexiblePokerStateMachine:
     - Testing (automated scenarios)
     """
 
-    def __init__(self, config: GameConfig = None, mode: str = "live"):
+    def __init__(
+        self, config: GameConfig = None, mode: str = "live", deck_provider=None
+    ):
         """Initialize the flexible poker state machine."""
         self.config = config or GameConfig()
 
@@ -162,6 +169,15 @@ class FlexiblePokerStateMachine:
         # Initialize players
         self._initialize_players()
 
+        # Initialize deck provider
+        if deck_provider is None and DeckProvider is not None:
+            try:
+                from ..providers.random_deck import RandomDeck
+                deck_provider = RandomDeck()
+            except ImportError:
+                deck_provider = None
+        self.deck_provider = deck_provider
+        
         # Initialize session logger
         self.session_logger = get_session_logger()
         self.session_logger.log_system(
@@ -472,9 +488,18 @@ class FlexiblePokerStateMachine:
         # Assign positions based on dealer position
         self._assign_positions()
 
-        # Initialize and shuffle deck
-        self.game_state.deck = self._create_deck()
-        random.shuffle(self.game_state.deck)
+        # Initialize deck using deck provider if available
+        if self.deck_provider is not None:
+            self.game_state.deck = self.deck_provider.get_deck()
+            print(f"🔍 DECK_DEBUG: Using deck provider, first 10 cards: {self.game_state.deck[:10]}")
+        else:
+            # Fallback to original logic
+            self.game_state.deck = self._create_deck()
+            if not getattr(self, "skip_shuffle", False):
+                random.shuffle(self.game_state.deck)
+                print(f"🔍 DECK_DEBUG: Shuffled deck, first 10 cards: {self.game_state.deck[:10]}")
+            else:
+                print(f"🔍 DECK_DEBUG: Skipped shuffle due to skip_shuffle flag")
 
         # Deal cards to all players
         for player in self.game_state.players:
@@ -540,6 +565,24 @@ class FlexiblePokerStateMachine:
         cards = self.game_state.deck[:num_cards]
         self.game_state.deck = self.game_state.deck[num_cards:]
         return cards
+    
+    def _auto_deal_remaining_board(self, street: str, num_cards: int):
+        """Auto-deal remaining board cards for all-in fast-forward."""
+        if hasattr(self, 'deck_provider') and self.deck_provider is not None:
+            # Use deck provider to get the next cards
+            if hasattr(self.deck_provider, 'get_next_cards'):
+                next_cards = self.deck_provider.get_next_cards(num_cards)
+                if next_cards:
+                    self.game_state.board.extend(next_cards)
+                    return
+        
+        # Fallback to regular dealing
+        if len(self.game_state.deck) >= num_cards:
+            self.game_state.board.extend(self._deal_cards(num_cards))
+        else:
+            # Deck is empty, create placeholder cards
+            placeholder_cards = [f"placeholder_{street}_{i}" for i in range(num_cards)]
+            self.game_state.board.extend(placeholder_cards)
 
     # Valid state transitions
     STATE_TRANSITIONS = {
@@ -632,7 +675,7 @@ class FlexiblePokerStateMachine:
                 self.transition_to(PokerState.FLOP_BETTING)
 
         elif new_state == PokerState.DEAL_TURN:
-            self.game_state.board.append(self._deal_cards(1)[0])
+            self._auto_deal_remaining_board("turn", 1)
             self.game_state.street = "turn"
             self._reset_bets_for_new_round()
             self.actions_this_round = 0
@@ -660,7 +703,7 @@ class FlexiblePokerStateMachine:
                 self.transition_to(PokerState.TURN_BETTING)
 
         elif new_state == PokerState.DEAL_RIVER:
-            self.game_state.board.append(self._deal_cards(1)[0])
+            self._auto_deal_remaining_board("river", 1)
             self.game_state.street = "river"
             self._reset_bets_for_new_round()
             self.actions_this_round = 0
@@ -877,8 +920,6 @@ class FlexiblePokerStateMachine:
 
     def _reset_bets_for_new_round(self):
         """Reset bets for a new betting round."""
-        if self.mode == "review":
-            return
         # IMPORTANT: Pot is already incremented during actions and blind posting.
         # Do NOT add player.current_bet again here or pot will double-count.
         for player in self.game_state.players:
@@ -1042,6 +1083,8 @@ class FlexiblePokerStateMachine:
             if amount >= self.game_state.current_bet:
                 # No Limit Hold'em: Allow any raise amount (capped at stack if
                 # needed)
+                # amount is the TOTAL bet amount (e.g., "raise to $30")
+                # Calculate how much more the player needs to put in
                 total_needed = amount - player.current_bet
                 actual_total = min(total_needed, player.stack)
                 actual_amount = player.current_bet + actual_total
@@ -1050,21 +1093,30 @@ class FlexiblePokerStateMachine:
                 # issues
                 actual_total = round(actual_total, 2)
                 actual_amount = round(actual_amount, 2)
+                
+                # Update player state
                 player.current_bet = actual_amount
                 player.stack = round(player.stack - actual_total, 2)
+                
+                # Update pot and current bet
                 self.game_state.pot = round(
                     self.game_state.pot + actual_total, 2
                 )
                 self.game_state.current_bet = actual_amount
+                
                 self._safe_print(
                     f"   {player.name} raises to ${actual_amount:.2f}"
                 )
+                print(f"💰 RAISE_DEBUG: {player.name} raised from ${player.current_bet - actual_total:.2f} to ${actual_amount:.2f}, pot: ${self.game_state.pot:.2f}, current_bet: ${self.game_state.current_bet:.2f}")
                 
                 # CRITICAL: When someone raises, reset players_acted_this_round
                 # because all other players now need a chance to act to the new bet level
                 old_acted = self.players_acted_this_round.copy()
                 self.players_acted_this_round.clear()
                 self.players_acted_this_round.add(player.name)  # Only the raiser has acted to this bet level
+            else:
+                self._safe_print(f"❌ Invalid raise: {player.name} cannot raise to ${amount:.2f} (current bet is ${self.game_state.current_bet:.2f})")
+                return False
 
         # Mark player as acted this round
         self.players_acted_this_round.add(player.name)

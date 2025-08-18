@@ -102,6 +102,48 @@ class ThemeManager:
 
     def get_fonts(self) -> Dict[str, Any]:
         return self._fonts
+    
+    def reload(self):
+        """Reload themes from file - critical for Theme Manager integration."""
+        print("🔄 ThemeManager: Reloading themes from file...")
+        
+        # Clear cached themes
+        self._themes = {}
+        
+        # Reload using the same logic as __init__
+        if TOKEN_DRIVEN_THEMES_AVAILABLE:
+            try:
+                # Force reload from file
+                loader = get_theme_loader()
+                if hasattr(loader, 'reload'):
+                    loader.reload()
+                
+                # Rebuild all themes
+                themes = build_all_themes()
+                
+                # Register all themes
+                for name, tokens in themes.items():
+                    self.register(name, tokens)
+                
+                print(f"🔄 ThemeManager: Reloaded {len(themes)} themes from file")
+                
+                # Reload current theme if it still exists
+                current_name = self.current_profile_name()
+                if current_name in self._themes:
+                    self._theme = self._themes[current_name]
+                    print(f"🎯 ThemeManager: Restored current theme: {current_name}")
+                else:
+                    # Fallback to first available theme
+                    if self._themes:
+                        first_theme_name = list(self._themes.keys())[0]
+                        self._theme = self._themes[first_theme_name]
+                        self._current_profile = first_theme_name
+                        print(f"🔄 ThemeManager: Switched to: {first_theme_name}")
+                
+            except Exception as e:
+                print(f"⚠️ ThemeManager: Reload failed: {e}")
+        else:
+            print("⚠️ ThemeManager: Token-driven themes not available for reload")
 
     def set_fonts(self, fonts: Dict[str, Any]) -> None:
         self._fonts = fonts
