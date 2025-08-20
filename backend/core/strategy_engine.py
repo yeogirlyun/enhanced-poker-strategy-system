@@ -9,7 +9,8 @@ from typing import Tuple, Optional, Dict, List, Any
 import random
 
 # Import shared types from types module
-from .poker_types import ActionType, Player, GameState
+from .hand_model import ActionType
+from .poker_types import Player, GameState
 
 
 class GTOStrategyEngine:

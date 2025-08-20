@@ -24,11 +24,22 @@ class GTODecisionEngineAdapter(DecisionEngineProtocol):
                 current_bet=int(p.current_bet), is_active=p.is_active, has_acted=p.has_acted_this_round
             ) for p in ppsm_game_state.players
         )
-        legal_actions = frozenset(ActionType[a.name] for a in ppsm_game_state.get_legal_actions())
+        
+        # *** FIX: Handle when no player is to act (end of round) ***
+        if ppsm_game_state.action_player is None:
+            to_act_player_index = -1
+            current_bet_to_call = 0
+            legal_actions = frozenset()
+        else:
+            to_act_player_index = ppsm_game_state.action_player
+            acting_player = ppsm_game_state.players[to_act_player_index]
+            current_bet_to_call = int(ppsm_game_state.current_bet - acting_player.current_bet)
+            legal_actions = frozenset(ActionType[a.name] for a in ppsm_game_state.get_legal_actions())
+
         return StandardGameState(
             pot=int(ppsm_game_state.displayed_pot()), street=ppsm_game_state.street, board=tuple(ppsm_game_state.board),
-            players=players, current_bet_to_call=int(ppsm_game_state.current_bet - ppsm_game_state.players[ppsm_game_state.action_player].current_bet),
-            to_act_player_index=ppsm_game_state.action_player, legal_actions=legal_actions
+            players=players, current_bet_to_call=current_bet_to_call,
+            to_act_player_index=to_act_player_index, legal_actions=legal_actions
         )
 
     def has_decision_for_player(self, player_name: str) -> bool:

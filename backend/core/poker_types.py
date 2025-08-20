@@ -25,14 +25,8 @@ class PokerState(Enum):
     END_HAND = "end_hand"
 
 
-class ActionType(Enum):
-    """Valid poker actions."""
-
-    FOLD = "FOLD"
-    CHECK = "CHECK"
-    CALL = "CALL"
-    BET = "BET"
-    RAISE = "RAISE"
+# Import unified ActionType from hand_model to avoid enum mismatch issues
+from .hand_model import ActionType
 
 
 @dataclass
@@ -82,6 +76,8 @@ class GameState:
     deck: List[str] = field(default_factory=list)
     big_blind: float = 1.0
     _round_state: RoundState = field(default_factory=RoundState)
+    # *** FIX: Add action_player for GTO adapter compatibility ***
+    action_player: Optional[int] = None
 
     def displayed_pot(self) -> float:
         """What the UI should show right now."""
@@ -94,3 +90,46 @@ class GameState:
     @round_state.setter
     def round_state(self, rs: RoundState) -> None:
         self._round_state = rs
+
+    def get_legal_actions(self) -> Set[ActionType]:
+        """
+        *** FIX: Get legal actions for GTO adapter compatibility ***
+        
+        This is a simplified implementation that returns basic legal actions.
+        For full validation, the PPSM's _is_valid_action method should be used.
+        """
+        if self.action_player is None or self.action_player < 0:
+            return set()  # No one to act
+        
+        if self.action_player >= len(self.players):
+            return set()  # Invalid player index
+        
+        player = self.players[self.action_player]
+        
+        # Basic checks
+        if player.has_folded or not player.is_active or player.stack == 0:
+            return set()
+        
+        legal_actions = set()
+        
+        # FOLD is always legal when facing action
+        legal_actions.add(ActionType.FOLD)
+        
+        # CHECK: only if player has matched the current bet
+        current_bet = player.current_bet if player.current_bet is not None else 0.0
+        game_current_bet = self.current_bet if self.current_bet is not None else 0.0
+        
+        if current_bet == game_current_bet:
+            legal_actions.add(ActionType.CHECK)
+        else:
+            # CALL: if player is behind the current bet
+            legal_actions.add(ActionType.CALL)
+        
+        # BET/RAISE: if player has chips remaining
+        if player.stack > 0:
+            if game_current_bet == 0:
+                legal_actions.add(ActionType.BET)
+            else:
+                legal_actions.add(ActionType.RAISE)
+        
+        return legal_actions

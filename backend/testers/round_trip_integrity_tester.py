@@ -21,13 +21,12 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.core.hand_model import Hand, ActionType as HandModelActionType
-from backend.core.pure_poker_state_machine import PurePokerStateMachine, GameConfig
-from backend.core.poker_types import ActionType as PPSMActionType
-from backend.gto.industry_gto_engine import IndustryGTOEngine
-from backend.gto.gto_decision_engine_adapter import GTODecisionEngineAdapter
+from backend.core.hand_model import Hand, HandMetadata, Seat
+from backend.core.pure_poker_state_machine import GameConfig
+from backend.core.sessions.hands_review_session import HandsReviewSession
+from backend.core.hand_model_decision_engine import HandModelDecisionEngine
 from backend.gto.gto_hands_generator import GTOHandsGenerator
 
 @dataclass
@@ -62,9 +61,53 @@ class RoundTripIntegrityTester:
         self.test_results: List[RoundTripTestResult] = []
         print(f"🧪 RoundTripIntegrityTester: Initialized with output dir {self.output_dir}")
     
+    def convert_gto_hand_to_hand_model(self, gto_hand_data: Dict[str, Any]) -> Hand:
+        """
+        Convert GTO hand data to Hand model for deterministic replay.
+        
+        Args:
+            gto_hand_data: Generated GTO hand data
+            
+        Returns:
+            Hand model for hands review session
+        """
+        try:
+            print(f"📋 Converting GTO hand {gto_hand_data.get('hand_id', 'unknown')} to Hand model")
+            
+            # Create metadata
+            metadata = HandMetadata(
+                table_id='gto_table',
+                hand_id=gto_hand_data.get('hand_id', 'gto_unknown'),
+                big_blind=100.0,  # From our GTO config
+                small_blind=50.0  # From our GTO config
+            )
+            
+            # Create seats from players data
+            seats = []
+            players_data = gto_hand_data.get('players', [])
+            
+            for i, player_data in enumerate(players_data):
+                seat = Seat(
+                    seat_no=i+1,
+                    player_uid=player_data.get('name', f'Seat{i+1}'),
+                    starting_stack=player_data.get('stack', 10000.0),
+                    is_button=(i == 0)  # First seat is button for simplicity
+                )
+                seats.append(seat)
+            
+            # Create Hand model
+            hand = Hand(metadata=metadata, seats=seats)
+            
+            print(f"✅ Converted GTO hand to Hand model with {len(seats)} players")
+            return hand
+            
+        except Exception as e:
+            print(f"❌ Error converting GTO hand to Hand model: {e}")
+            raise
+    
     def test_hand_model_to_ppsm_replay(self, hand_model: Hand) -> Tuple[bool, Dict[str, Any]]:
         """
-        Test HandModel → PPSM replay using existing HandModelDecisionEngineAdapter.
+        Test HandModel → PPSM replay using HandsReviewSession with deterministic deck.
         
         Args:
             hand_model: Hand model to replay
@@ -75,27 +118,69 @@ class RoundTripIntegrityTester:
         try:
             print(f"🎯 Testing HandModel → PPSM replay for hand {hand_model.metadata.hand_id}")
             
-            # Create PPSM instance for replay
-            player_count = len(hand_model.players)
+            # Create game config matching the hand
             config = GameConfig(
-                num_players=player_count,
-                starting_stack=max(p.starting_stack for p in hand_model.players),
+                num_players=len(hand_model.seats),
+                starting_stack=max(seat.starting_stack for seat in hand_model.seats),
                 small_blind=hand_model.metadata.small_blind,
                 big_blind=hand_model.metadata.big_blind
             )
             
-            ppsm = PurePokerStateMachine(config=config)
+            # Create decision engine with hand model (provides deterministic actions)
+            decision_engine = HandModelDecisionEngine(hand_model)
             
-            # Replay using existing PPSM method
-            replay_results = ppsm.replay_hand_model(hand_model)
+            # Create hands review session (this uses deterministic deck)
+            session = HandsReviewSession(config, decision_engine)
+            
+            # Initialize session
+            if not session.initialize_session():
+                raise Exception("Failed to initialize hands review session")
+            
+            # Link decision engine to FPSM
+            decision_engine.fpsm = session.fpsm
+            
+            # Replay the hand by stepping through
+            max_actions = 50
+            actions_executed = 0
+            start_time = time.time()
+            timeout_seconds = 10.0
+            
+            print(f"   Starting replay with max {max_actions} actions...")
+            
+            while (not session.is_replay_complete() and 
+                   actions_executed < max_actions and 
+                   session.session_active):
+                
+                # Check timeout
+                if time.time() - start_time > timeout_seconds:
+                    print(f"   ⏰ TIMEOUT: Hand took longer than {timeout_seconds} seconds")
+                    break
+                
+                if not session.step_forward():
+                    break
+                
+                actions_executed += 1
+            
+            # Get final state
+            final_game_info = session.get_game_info()
+            final_pot = final_game_info.get('pot', 0)
             
             success = (
-                replay_results.get('success', False) and
-                replay_results.get('final_pot', 0) > 0 and
-                len(replay_results.get('action_log', [])) > 0
+                final_pot > 0 and
+                actions_executed > 0 and
+                session.is_replay_complete()
             )
             
-            print(f"✅ HandModel → PPSM replay {'SUCCESS' if success else 'FAILED'}")
+            replay_results = {
+                'success': success,
+                'final_pot': final_pot,
+                'actions_executed': actions_executed,
+                'action_log': [],  # Would need to be captured from session
+                'execution_time_ms': (time.time() - start_time) * 1000
+            }
+            
+            print(f"✅ HandModel → PPSM replay {'SUCCESS' if success else 'FAILED'} "
+                  f"({actions_executed} actions, pot: ${final_pot})")
             return success, replay_results
             
         except Exception as e:
@@ -194,17 +279,28 @@ class RoundTripIntegrityTester:
             errors.append(f"PPSM replay failed: {ppsm_results.get('error', 'Unknown error')}")
         
         # Step 2: PPSM → GTO generation  
-        player_count = len(hand_model.players)
+        player_count = len(hand_model.seats)
         gto_success, gto_hands = self.test_ppsm_to_gto_generation(player_count, num_hands=1)
         if not gto_success:
             errors.append("GTO generation failed")
         
-        # Step 3: GTO → HandModel conversion
+        # Step 3: GTO → HandModel conversion and replay test
         conversion_success = False
+        replay_gto_success = False
         if gto_success and gto_hands:
-            conversion_success, converted_hand = self.test_gto_to_hand_model_conversion(gto_hands[0])
-            if not conversion_success:
-                errors.append("GTO to HandModel conversion failed")
+            try:
+                # Convert GTO hand back to Hand model
+                converted_hand = self.convert_gto_hand_to_hand_model(gto_hands[0])
+                conversion_success = True
+                
+                # Test replay of the converted hand using hands review
+                replay_gto_success, replay_gto_results = self.test_hand_model_to_ppsm_replay(converted_hand)
+                if not replay_gto_success:
+                    errors.append("GTO hand replay failed")
+                    
+            except Exception as e:
+                conversion_success = False
+                errors.append(f"GTO to HandModel conversion failed: {e}")
         
         # Performance metrics
         total_time = time.time() - start_time
@@ -215,12 +311,12 @@ class RoundTripIntegrityTester:
             "conversion_time_ms": 0       # Would be measured in actual implementation
         }
         
-        # Overall success
-        overall_success = ppsm_success and gto_success and conversion_success
+        # Overall success - all steps must pass
+        overall_success = ppsm_success and gto_success and conversion_success and replay_gto_success
         
         # Create detailed comparison
         detailed_comparison = {
-            "original_pot": sum(p.starting_stack for p in hand_model.players),
+            "original_pot": sum(seat.starting_stack for seat in hand_model.seats),
             "ppsm_final_pot": ppsm_results.get('final_pot', 0),
             "gto_final_pot": gto_hands[0].get('final_pot', 0) if gto_hands else 0,
             "original_actions": len(hand_model.actions),

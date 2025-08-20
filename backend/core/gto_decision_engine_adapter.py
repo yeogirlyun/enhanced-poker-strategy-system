@@ -7,7 +7,8 @@ interface that PPSM expects, enabling GTO-based hand generation.
 
 from typing import Optional, Tuple
 from .pure_poker_state_machine import DecisionEngineProtocol
-from .poker_types import ActionType, GameState
+from .hand_model import ActionType
+from .poker_types import GameState
 from .decision_engine_v2 import GTODecisionEngine
 
 

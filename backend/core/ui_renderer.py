@@ -10,7 +10,8 @@ from typing import Dict, Any, List, Tuple
 import math
 
 # Import shared types
-from .poker_types import GameState, PokerState, ActionType
+from .hand_model import ActionType
+from .poker_types import GameState, PokerState
 
 
 @dataclass

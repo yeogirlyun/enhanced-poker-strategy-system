@@ -15,7 +15,8 @@ Key principles:
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional, Tuple
-from .poker_types import ActionType, Player
+from .hand_model import ActionType
+from .poker_types import Player
 
 
 class DecisionEngine(ABC):

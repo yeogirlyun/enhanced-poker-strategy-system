@@ -13,7 +13,7 @@ Key Features:
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any
-from .poker_types import ActionType
+from .hand_model import ActionType
 
 
 class DecisionEngine(ABC):

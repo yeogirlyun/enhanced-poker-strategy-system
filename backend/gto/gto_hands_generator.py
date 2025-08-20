@@ -19,13 +19,16 @@ class GTOHandsGenerator:
             # Use PPSM's built-in play_hand_with_decision_engine method
             result = self.ppsm.play_hand_with_decision_engine(self.adapter)
             
+            # Get current game state for player information
+            game_info = self.ppsm.get_game_info()
+            
             # Extract final state information
             return {
                 "hand_id": f"gto_generated_{random.randint(1000, 9999)}",
                 "player_count": self.player_count, 
                 "final_pot": result.get('final_pot', 0),
                 "board": result.get('board', []), 
-                "players": result.get('players', []),
+                "players": game_info.get('players', []),  # Use game_info instead of result
                 "success": result.get('success', False),
                 "actions_taken": len(result.get('action_log', [])),
                 "result_summary": result.get('result_summary', {})

@@ -131,6 +131,7 @@ class PurePokerStateMachine:
         self.current_state = PokerState.START_HAND
         self.hand_number = 0
         self.action_player_index = 0
+        self.game_state.action_player = 0
         self.dealer_position = 0
         self.small_blind_position = 0
         self.big_blind_position = 1
@@ -297,6 +298,9 @@ class PurePokerStateMachine:
             else:
                 self.action_player_index = (self.big_blind_position + 1) % self.config.num_players
         
+        # *** FIX: Keep GameState.action_player synchronized ***
+        self.game_state.action_player = self.action_player_index
+        
         self.transition_to(PokerState.PREFLOP_BETTING)
         print(f"🃏 FIXED_PPSM: Hand {self.hand_number} started, action on {self.game_state.players[self.action_player_index].name}")
     
@@ -405,6 +409,7 @@ class PurePokerStateMachine:
                 if self.decision_engine:
                     try:
                         decision = self.decision_engine.get_decision(current_player.name, self.game_state)
+                        
                         if decision:
                             ppsm_action_type, ppsm_amount = decision
                             
@@ -424,10 +429,10 @@ class PurePokerStateMachine:
                             action_count += 1
                         else:
                             self._advance_to_next_player()
-                            continue
                     except Exception as e:
                         play_results['failed_actions'] += 1
                         play_results['errors'].append(f"Exception getting decision: {str(e)}")
+                        self._advance_to_next_player()
                         action_count += 1
                 else:
                     self._advance_to_next_player()
@@ -993,14 +998,17 @@ class PurePokerStateMachine:
             self.transition_to(PokerState.DEAL_FLOP)
             # Reset action player for dealing state
             self.action_player_index = -1
+            self.game_state.action_player = None
         elif self.current_state == PokerState.FLOP_BETTING:
             self.transition_to(PokerState.DEAL_TURN)
             # Reset action player for dealing state
             self.action_player_index = -1
+            self.game_state.action_player = None
         elif self.current_state == PokerState.TURN_BETTING:
             self.transition_to(PokerState.DEAL_RIVER)
             # Reset action player for dealing state
             self.action_player_index = -1
+            self.game_state.action_player = None
         elif self.current_state == PokerState.RIVER_BETTING:
             self.transition_to(PokerState.SHOWDOWN)
         else:
@@ -1017,6 +1025,7 @@ class PurePokerStateMachine:
             i = (i + 1) % n
             if i in rs.need_action_from:
                 self.action_player_index = i
+                self.game_state.action_player = i  # *** FIX: Keep synchronized ***
                 print(f"🃏 FIXED_PPSM: Action advances to {self.game_state.players[i].name}")
                 return
         # If we somehow didn't find one, fail safe by closing street
@@ -1077,6 +1086,9 @@ class PurePokerStateMachine:
         else:
             # Default: first active player after dealer
             self.action_player_index = self._find_first_active_after_dealer()
+        
+        # *** FIX: Keep GameState.action_player synchronized ***
+        self.game_state.action_player = self.action_player_index
     
     def _find_first_active_after_dealer(self) -> int:
         """Find first active player after dealer."""

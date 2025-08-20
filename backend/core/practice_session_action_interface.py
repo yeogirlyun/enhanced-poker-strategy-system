@@ -11,7 +11,7 @@ but should have a simple interface to request actions.
 
 from typing import Optional, Dict, Any, List
 
-from .poker_types import ActionType
+from .hand_model import ActionType
 from .practice_session_poker_state_machine import (
     PracticeSessionPokerStateMachine,
 )

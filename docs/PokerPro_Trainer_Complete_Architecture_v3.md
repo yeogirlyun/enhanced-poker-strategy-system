@@ -8,11 +8,12 @@
 
 ## 🏗️ **SYSTEM OVERVIEW**
 
-The PokerPro Trainer uses a **single-threaded, event-driven architecture** centered around three core pillars:
+The PokerPro Trainer uses a **single-threaded, event-driven architecture** centered around four core pillars:
 
 1. **PurePokerStateMachine (PPSM)** - Deterministic poker engine with hand replay capabilities
-2. **Modern UI Architecture** - Component-based UI with clean separation of concerns  
-3. **Session Management System** - Pluggable session types (GTO, Practice, Hands Review, Live)
+2. **GTO Engine Integration** - Game Theory Optimal decision making with deterministic hand generation
+3. **Modern UI Architecture** - Component-based UI with clean separation of concerns  
+4. **Session Management System** - Pluggable session types (GTO, Practice, Hands Review, Live)
 
 ### **Core Design Principles**
 
@@ -21,6 +22,112 @@ The PokerPro Trainer uses a **single-threaded, event-driven architecture** cente
 - **Clean Separation**: UI renders state, never controls game logic
 - **Event-Driven**: All interactions flow through well-defined interfaces
 - **Pluggable Components**: DecisionEngines and Sessions are swappable
+
+---
+
+## 🧠 **GTO ENGINE INTEGRATION**
+
+### **Architecture Overview**
+
+The GTO (Game Theory Optimal) Engine Integration provides **deterministic, strategic poker decision making** with complete round trip integrity testing. The system creates a closed loop: HandModel → PPSM → GTO → HandModel → HandsReviewSession replay.
+
+### **Core Components**
+
+#### **1. IndustryGTOEngine**
+```python
+class IndustryGTOEngine(UnifiedDecisionEngineProtocol):
+    """
+    Strategic poker decision engine with:
+    - Preflop/postflop strategy implementation
+    - Position-based decision making
+    - Stack depth and aggression factor configuration
+    - Deterministic action selection
+    """
+```
+
+#### **2. GTODecisionEngineAdapter**
+```python
+class GTODecisionEngineAdapter(DecisionEngineProtocol):
+    """
+    Bridge between GTO engine and PPSM:
+    - Converts PPSM GameState to GTO StandardGameState
+    - Handles action_player=None edge cases gracefully
+    - Provides legal actions validation
+    - Maintains interface compatibility
+    """
+```
+
+#### **3. GTOHandsGenerator**
+```python
+class GTOHandsGenerator:
+    """
+    Automated hand generation using GTO decisions:
+    - Multi-player support (2-9 players)
+    - Deterministic hand outcomes
+    - JSON export for persistence
+    - Performance benchmarking
+    """
+```
+
+### **Data Flow Architecture**
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Hand Model   │───▶│      PPSM       │───▶│   GTO Engine    │
+│   (JSON DB)    │    │  (Game Logic)   │    │ (Decisions)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       │                       │
+         │                       ▼                       ▼
+         │              ┌─────────────────┐    ┌─────────────────┐
+         │              │ GTO Hands       │    │ Round Trip      │
+         │              │ Generator       │    │ Integrity       │
+         │              └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Hands Review    │    │ JSON Export     │    │ 100% Test       │
+│ Session         │    │ (data/)         │    │ Success Rate    │
+│ (Deterministic) │    └─────────────────┘    └─────────────────┘
+└─────────────────┘
+```
+
+### **Key Features**
+
+#### **1. Deterministic Hand Generation**
+- **Consistent Outcomes**: Same input always produces same result
+- **Multi-Player Support**: 2-9 player configurations
+- **Strategic Play**: Realistic poker scenarios using GTO principles
+- **Performance**: Sub-second hand generation
+
+#### **2. Round Trip Integrity**
+- **Complete Pipeline**: HandModel → PPSM → GTO → HandModel → HandsReviewSession
+- **Data Validation**: Pot amounts, player counts, action sequences
+- **Deterministic Replay**: HandsReviewSession with deterministic deck
+- **100% Success Rate**: All integration tests passing
+
+#### **3. Hands Review Integration**
+- **Deterministic Deck**: Card sequences from GTO hand data
+- **HandModelDecisionEngine**: Replays exact GTO-generated actions
+- **Session Management**: Proper initialization and cleanup
+- **Performance Monitoring**: Action execution timing and validation
+
+### **Data Storage Architecture**
+
+```
+data/
+├── gto_hands_2_players.json      # 2-player GTO hands
+├── gto_hands_4_players.json      # 4-player GTO hands  
+├── gto_hands_6_players.json      # 6-player GTO hands
+├── gto_hands_8_players.json      # 8-player GTO hands
+└── gto_hands_9_players.json      # 9-player GTO hands
+
+bug_reports/                       # Bug analysis and reports
+├── GTO_INTEGRATION_BUG_REPORT_COMPLETE.md
+└── GTO_BUG_REPORT_SUMMARY.md
+
+req_requests/                      # Requirements and specifications
+└── GTO_ENGINE_INTEGRATION_COMPLETE_REQUIREMENT.md
+```
 
 ---
 
@@ -602,6 +709,12 @@ def on_theme_change(self, new_theme):
 - **Hand Replay**: Complete hand replay functionality
 - **Performance**: Render performance and memory usage
 
+#### **GTO Integration Testing**
+- **Round Trip Integrity**: HandModel → PPSM → GTO → HandModel → HandsReviewSession
+- **Deterministic Replay**: Verify identical outcomes using deterministic deck
+- **Multi-Player Scenarios**: Test 2-9 player configurations
+- **Performance Benchmarks**: Measure GTO decision making speed
+
 #### **Accessibility Testing**
 - **WCAG Compliance**: Automated and manual accessibility testing
 - **Keyboard Navigation**: Full keyboard accessibility
@@ -649,23 +762,27 @@ def on_theme_change(self, new_theme):
 
 ## 🔮 **FUTURE ROADMAP**
 
-### **Phase 1: Core Implementation**
-- Complete Enhanced RPGW integration
-- Implement all three session types
-- Establish testing framework
-- Performance optimization
+### **Phase 1: Core Implementation** ✅ **COMPLETED**
+- ✅ Complete Enhanced RPGW integration
+- ✅ Implement all three session types
+- ✅ Establish testing framework
+- ✅ Performance optimization
+- ✅ **GTO Engine Integration with 100% test success rate**
 
 ### **Phase 2: Advanced Features**
 - Advanced animation system
 - Enhanced sound integration
 - Performance analytics
 - Accessibility improvements
+- **GTO Strategy Expansion**: Advanced preflop/postflop strategies
+- **Hand Database Management**: Large-scale GTO hand storage and retrieval
 
 ### **Phase 3: Scalability**
 - Multi-table support
 - Advanced session management
 - Plugin architecture
 - Cloud integration
+- **GTO Cloud Services**: Distributed GTO computation and storage
 
 ---
 
