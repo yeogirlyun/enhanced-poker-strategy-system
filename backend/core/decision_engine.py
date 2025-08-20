@@ -79,15 +79,17 @@ class GTODecisionEngine(DecisionEngine):
     
     def __init__(self, num_players: int = 6):
         """Initialize the GTO decision engine."""
-        from .improved_gto_strategy import ImprovedGTOStrategy
+        # Temporarily disabled due to syntax errors in improved_gto_strategy
+        # from .improved_gto_strategy import ImprovedGTOStrategy
         
         self.num_players = num_players
         self.gto_strategies = {}
         self.decision_count = 0
         
         # Initialize GTO strategies for each player position
-        for i in range(num_players):
-            self.gto_strategies[i] = ImprovedGTOStrategy(num_players)
+        # Temporarily disabled due to syntax errors
+        # for i in range(num_players):
+        #     self.gto_strategies[i] = ImprovedGTOStrategy(num_players)
     
     def get_decision(self, player_index: int, game_state: Dict[str, Any]) -> Dict[str, Any]:
         """Get GTO-optimal decision for the given player and game state."""
@@ -121,7 +123,7 @@ class GTODecisionEngine(DecisionEngine):
             player_dict = players[player_index]
             
             # Import Player class
-            from .types import Player
+            from .poker_types import Player
             
             # Create a proper Player object from the dictionary
             player = Player(
@@ -227,16 +229,30 @@ class GTODecisionEngine(DecisionEngine):
         return base_explanation
     
     def _get_position_name(self, player_index: int, num_players: int) -> str:
-        """Convert player index to position name for 6-max poker."""
-        if num_players == 6:
+        """Convert player index to position name for different table sizes."""
+        if num_players == 2:
+            # Heads-up: SB and BB positions
+            positions = ["SB", "BB"]
+            return positions[player_index % 2]
+        elif num_players == 6:
             positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
             return positions[player_index % 6]
         elif num_players == 9:
             positions = ["UTG", "UTG+1", "MP", "MP+1", "CO", "BTN", "SB", "BB", "UTG"]
             return positions[player_index % 9]
         else:
-            # Fallback for other table sizes
-            return f"Pos_{player_index}"
+            # For other table sizes, use appropriate position names
+            if num_players <= 3:
+                # Small tables: SB, BB, BTN
+                positions = ["SB", "BB", "BTN"]
+                return positions[player_index % len(positions)]
+            elif num_players <= 5:
+                # Medium tables: UTG, MP, BTN, SB, BB
+                positions = ["UTG", "MP", "BTN", "SB", "BB"]
+                return positions[player_index % len(positions)]
+            else:
+                # Large tables: use generic position names
+                return f"Pos_{player_index}"
     
     def is_session_complete(self) -> bool:
         """GTO sessions continue indefinitely until manually stopped."""

@@ -6,7 +6,6 @@ New UI architecture - only import existing components.
 
 # Only import components that actually exist
 from .card_widget import CardWidget
-from .reusable_poker_game_widget import ReusablePokerGameWidget
 from .modern_poker_widgets import ChipStackDisplay
 
 # These can be imported individually when needed for legacy compatibility
@@ -18,6 +17,5 @@ from .modern_poker_widgets import ChipStackDisplay
 
 __all__ = [
     'CardWidget',
-    'ReusablePokerGameWidget', 
     'ChipStackDisplay'
 ] 

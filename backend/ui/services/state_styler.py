@@ -6,7 +6,32 @@ Handles luxury highlighting and animations for player states.
 import time
 import math
 from typing import Dict, Any, Optional
-from .theme_loader import get_theme_loader
+try:
+    # Prefer consolidated loader available in this project
+    from .theme_loader_consolidated import load_themes as _load_themes
+except Exception:
+    _load_themes = None
+
+def get_theme_loader():
+    """Compatibility shim that exposes get_defaults/get_theme_by_id API."""
+    class _Accessor:
+        def __init__(self):
+            try:
+                self._config = _load_themes() if _load_themes else {"defaults": {}, "themes": []}
+            except Exception:
+                self._config = {"defaults": {}, "themes": []}
+
+        def get_defaults(self) -> Dict[str, Any]:
+            return self._config.get("defaults", {})
+
+        def get_theme_by_id(self, theme_id: str) -> Dict[str, Any]:
+            for t in self._config.get("themes", []):
+                if t.get("id") == theme_id:
+                    return t
+            themes = self._config.get("themes", [])
+            return themes[0] if themes else {"palette": {}}
+
+    return _Accessor()
 from .theme_derive import get_player_state_style
 
 

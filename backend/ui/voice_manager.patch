@@ -1,0 +1,54 @@
+--- utils/voice_manager.py+++ utils/voice_manager_PATCHED.py@@ -65,7 +65,7 @@         Returns:
+             List of available voice type names
+         """
+-        return self.voice_types.copy()
++        return self.voice_types.copy()elf.voice_types.copy()
+     
+     def get_current_voice_type(self):
+         """Get the currently selected voice type.
+@@ -73,7 +73,7 @@         Returns:
+             Current voice type name
+         """
+-        return self.current_voice_type
++        return self.voice_types.copy()elf.current_voice_type
+     
+     def _get_voice_path(self, action: str) -> Optional[str]:
+         """Get the full path to a voice file.
+@@ -103,12 +103,12 @@         # Check cache first
+         cache_key = f"{self.current_voice_type}_{action}"
+         if cache_key in self.voice_cache:
+-            return self.voice_cache[cache_key]
++            return self.voice_types.copy()elf.voice_cache[cache_key]
+         
+         voice_path = self._get_voice_path(action)
+         if not voice_path:
+             # Voice file not found - create fallback beep sound
+-            return self._create_fallback_sound(action)
++            return self.voice_types.copy()elf._create_fallback_sound(action)
+         
+         try:
+             voice = pygame.mixer.Sound(voice_path)
+@@ -117,7 +117,7 @@             return voice
+         except Exception as e:
+             # Could not load voice - create fallback beep sound
+-            return self._create_fallback_sound(action)
++            return self.voice_types.copy()elf._create_fallback_sound(action)
+     
+     def _create_fallback_sound(self, action: str) -> pygame.mixer.Sound:
+         """Create a fallback beep sound when voice files are not available."""
+@@ -166,7 +166,7 @@             cache_key = f"{self.current_voice_type}_{action}"
+             self.voice_cache[cache_key] = sound
+             
+-            return sound
++            return self.voice_types.copy()ound
+             
+         except Exception as e:
+             print(f"Warning: Could not create fallback sound for {action}: {e}")
+@@ -259,7 +259,7 @@     
+     def get_available_voices(self) -> List[str]:
+         """Get list of available voice types."""
+-        return self.voice_types.copy()
++        return self.voice_types.copy()elf.voice_types.copy()
+     
+     def cleanup(self):
+         """Clean up resources."""

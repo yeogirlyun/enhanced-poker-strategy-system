@@ -4,7 +4,7 @@ Token-driven animations with smooth easing and particle effects
 """
 
 import math
-from ..services.theme_utils import ease_in_out_cubic
+from ...services.theme_utils import ease_in_out_cubic
 
 class ChipAnimations:
     def __init__(self, theme_manager):
@@ -74,25 +74,27 @@ class ChipAnimations:
         return chip_ids
     
     def fly_chips_to_pot(self, canvas, from_x, from_y, to_x, to_y, amount, callback=None):
-        """Animate chips flying from player bet area to pot"""
+        """Animate chips flying from player bet area to pot - ONLY at end of street"""
         animation_id = f"bet_to_pot_{from_x}_{from_y}"
         tokens = self.theme.get_all_tokens()
         
-        # Create temporary chips for animation
-        num_chips = min(5, max(1, int(amount / 100)))
+        # Create temporary chips for animation with proper denominations
+        chip_plan = self._break_down_amount(amount)
         chip_ids = []
         
-        for i in range(num_chips):
+        for i, denom in enumerate(chip_plan):
             # Slight spread for natural look
-            start_x = from_x + (i - num_chips//2) * 8
-            start_y = from_y + (i - num_chips//2) * 4
+            start_x = from_x + (i - len(chip_plan)//2) * 8
+            start_y = from_y + (i - len(chip_plan)//2) * 4
             
-            chip_id = self.draw_chip(canvas, start_x, start_y, "chip.$25", 
-                                   tags=["flying_chip", "temp_animation"])
-            chip_ids.append((chip_id, start_x, start_y))
+            # Create chip with proper denomination and label
+            chip_size = 12  # Standard chip size for animations
+            chip_id = self._create_chip_with_label(canvas, start_x, start_y, denom, 
+                                                 tokens, chip_size, tags=["flying_chip", "temp_animation"])
+            chip_ids.append((chip_id, start_x, start_y, denom))
         
-        # Animation parameters
-        frames = 20
+        # Animation parameters - slower for visibility
+        frames = 30  # Increased from 20 for better visibility
         
         def animate_step(frame):
             if frame >= frames:
@@ -109,18 +111,18 @@ class ChipAnimations:
             eased_progress = ease_in_out_cubic(progress)
             
             # Update each chip position
-            for i, (chip_id, start_x, start_y) in enumerate(chip_ids):
+            for i, (chip_id, start_x, start_y, denom) in enumerate(chip_ids):
                 # Calculate current position with slight arc
                 current_x = start_x + (to_x - start_x) * eased_progress
                 current_y = start_y + (to_y - start_y) * eased_progress
                 
                 # Add arc effect (parabolic path)
-                arc_height = 25 * math.sin(progress * math.pi)
+                arc_height = 30 * math.sin(progress * math.pi)
                 current_y -= arc_height
                 
                 # Add slight randomness for natural movement
-                wobble_x = math.sin(frame * 0.5 + i) * 2
-                wobble_y = math.cos(frame * 0.3 + i) * 1
+                wobble_x = math.sin(frame * 0.3 + i) * 3
+                wobble_y = math.cos(frame * 0.2 + i) * 2
                 
                 # Update chip position
                 try:
@@ -131,23 +133,23 @@ class ChipAnimations:
                     pass  # Chip may have been deleted
             
             # Add motion blur/glow effect
-            if frame % 3 == 0:  # Every 3rd frame
+            if frame % 2 == 0:  # Every 2nd frame for more glow
                 glow_color = tokens.get("bet.glow", "#FFD700")
-                for _, (chip_id, _, _) in enumerate(chip_ids):
+                for _, (chip_id, _, _, _) in enumerate(chip_ids):
                     try:
                         bbox = canvas.bbox(chip_id)
                         if bbox:
                             x1, y1, x2, y2 = bbox
                             canvas.create_oval(
-                                x1 - 3, y1 - 3, x2 + 3, y2 + 3,
-                                outline=glow_color, width=1,
+                                x1 - 4, y1 - 4, x2 + 4, y2 + 4,
+                                outline=glow_color, width=2,
                                 tags=("motion_glow", "temp_animation")
                             )
                     except:
                         pass
             
-            # Schedule next frame
-            canvas.after(40, lambda: animate_step(frame + 1))
+            # Schedule next frame - slower for visibility
+            canvas.after(80, lambda: animate_step(frame + 1))  # Increased from 40ms
         
         self.active_animations[animation_id] = animate_step
         animate_step(0)
@@ -212,6 +214,123 @@ class ChipAnimations:
         
         self.active_animations[animation_id] = animate_step
         animate_step(0)
+    
+    def place_bet_chips(self, canvas, x, y, amount, tokens, tags=()):
+        """Place bet chips in front of player (NOT flying to pot) - for betting rounds"""
+        # Get chip size from sizing system if available
+        chip_size = 14  # Default fallback
+        if hasattr(self, 'theme') and hasattr(self.theme, 'get_all_tokens'):
+            try:
+                # Try to get sizing system from theme
+                sizing_system = getattr(self.theme, 'sizing_system', None)
+                if sizing_system:
+                    chip_size = sizing_system.get_chip_size('bet')
+            except Exception:
+                pass
+        
+        chip_plan = self._break_down_amount(amount)
+        chip_ids = []
+        
+        # Position chips in a neat stack in front of player
+        for i, denom in enumerate(chip_plan):
+            chip_x = x + (i - len(chip_plan)//2) * 6  # Horizontal spread
+            chip_y = y - (i * 3)  # Vertical stack
+            
+            # Create chip with denomination label
+            chip_id = self._create_chip_with_label(canvas, chip_x, chip_y, denom, 
+                                                 tokens, chip_size, tags=tags + (f"bet_chip_{i}",))
+            chip_ids.append(chip_id)
+        
+        # Add total amount label above the chips
+        label_y = y - (len(chip_plan) * 3) - 20
+        
+        # Get text size from sizing system if available
+        text_size = 12  # Default fallback
+        if hasattr(self, 'theme') and hasattr(self.theme, 'get_all_tokens'):
+            try:
+                sizing_system = getattr(self.theme, 'sizing_system', None)
+                if sizing_system:
+                    text_size = sizing_system.get_text_size('bet_amount')
+            except Exception:
+                pass
+        
+        label_id = canvas.create_text(
+            x, label_y,
+            text=f"${amount}",
+            font=("Arial", text_size, "bold"),
+            fill="#FFFFFF",
+            tags=tags + ("bet_label",)
+        )
+        
+        return chip_ids + [label_id]
+    
+    def _create_chip_with_label(self, canvas, x, y, denom, tokens, chip_size, tags=()):
+        """Create a chip with denomination label"""
+        # Get chip colors based on denomination
+        bg_color, ring_color, text_color = self._get_chip_colors(denom, tokens)
+        
+        # Create chip body
+        chip_id = canvas.create_oval(
+            x - chip_size, y - chip_size, x + chip_size, y + chip_size,
+            fill=bg_color, outline=ring_color, width=2,
+            tags=tags
+        )
+        
+        # Get text size from sizing system if available
+        text_size = max(8, int(chip_size * 0.4))  # Default proportional sizing
+        if hasattr(self, 'theme') and hasattr(self.theme, 'get_all_tokens'):
+            try:
+                sizing_system = getattr(self.theme, 'sizing_system', None)
+                if sizing_system:
+                    text_size = sizing_system.get_text_size('action_label')
+            except Exception:
+                pass
+        
+        # Create denomination label
+        label_id = canvas.create_text(
+            x, y,
+            text=f"${denom}",
+            font=("Arial", text_size, "bold"),
+            fill=text_color,
+            tags=tags
+        )
+        
+        return chip_id
+    
+    def _get_chip_colors(self, denom, tokens):
+        """Get appropriate colors for chip denomination"""
+        if denom >= 1000:
+            return "#2D1B69", "#FFD700", "#FFFFFF"  # Purple with gold ring
+        elif denom >= 500:
+            return "#8B0000", "#FFD700", "#FFFFFF"  # Red with gold ring
+        elif denom >= 100:
+            return "#006400", "#FFFFFF", "#FFFFFF"  # Green with white ring
+        elif denom >= 25:
+            return "#4169E1", "#FFFFFF", "#FFFFFF"  # Blue with white ring
+        else:
+            return "#FFFFFF", "#000000", "#000000"  # White with black ring
+    
+    def _break_down_amount(self, amount):
+        """Break down amount into chip denominations"""
+        denominations = [1000, 500, 100, 25, 5, 1]
+        chip_plan = []
+        remaining = amount
+        
+        for denom in denominations:
+            if remaining >= denom:
+                count = min(remaining // denom, 5)  # Max 5 chips per denomination
+                chip_plan.extend([denom] * count)
+                remaining -= denom * count
+                
+            if len(chip_plan) >= 8:  # Max 8 chips total
+                break
+        
+        # If we still have remaining, add smaller denominations
+        if remaining > 0 and len(chip_plan) < 8:
+            remaining_space = 8 - len(chip_plan)
+            chip_plan.extend([1] * min(remaining_space, remaining))
+        
+        return chip_plan
     
     def _show_winner_celebration(self, canvas, x, y, tokens):
         """Show celebration effect at winner position"""

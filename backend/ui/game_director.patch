@@ -1,0 +1,525 @@
+--- game_director.py+++ game_director_PATCHED.py@@ -1,395 +1,168 @@ #!/usr/bin/env python3
+ """
+-GameDirector - Centralized timing, autoplay, and effect sequencing
+-===============================================================
+-
+-This service implements the GameDirector role as specified in the UI Implementation Handbook:
+-- Maintains play/pause/seek/speed for session playback
+-- Schedules AUTO_ADVANCE during autoplay at configured intervals
+-- Gates effects so autoplay only advances after required animations/sounds complete
+-- Emits time events (TIMER_TICK, TIMER_EXPIRED) when sessions use timers
+-- Coordinates the EffectBus (sounds/animations/haptics) via completion events
+-
+-The Director ensures behavior is deterministic, cancellable, and single-threaded.
++GameDirector - Centralized timing, autoplay, and effect sequencing (minimal, single-threaded)
+ """
++from __future__ import annotations
+ 
+ import time
+-import uuid
++import heapq
++import itertools
+ from typing import Dict, Any, List, Optional, Callable
+ from enum import Enum
+ from dataclasses import dataclass
+ 
+-
+ class PlaybackState(Enum):
+-    """Playback state enumeration."""
+     STOPPED = "stopped"
+     PLAYING = "playing"
+-    PAUSED = "paused"
+-
++    PAUSED  = "paused"
+ 
+ @dataclass
+-class ScheduledEvent:
+-    """Represents a scheduled event."""
+-    token: str
+-    delay_ms: int
++class _Scheduled:
++    due_ms: int
++    seq: int
+     event: Dict[str, Any]
+-    callback: Optional[Callable] = None
+-    created_at: float = 0.0
+-
++    callback: Optional[Callable]
+ 
+ class GameDirector:
+-    """
+-    GameDirector - Centralized timing and effect coordination.
+-    
+-    The Director does:
+-    - Maintain play/pause/seek/speed for session playback
+-    - Schedule AUTO_ADVANCE during autoplay at configured intervals
+-    - Gate effects so autoplay only advances after required animations/sounds complete
+-    - Emit time events (TIMER_TICK, TIMER_EXPIRED) when sessions use timers
+-    - Coordinate the EffectBus (sounds/animations/haptics) via completion events
+-    
+-    The Director does NOT do:
+-    - Poker legality or domain rules (PPSM only)
+-    - Hold domain state (Store is the single source of truth)
+-    - Use threads or blocking calls (everything single-threaded and queued)
+-    """
+-    
+-    def __init__(self, event_bus=None, speed_multiplier: float = 1.0):
+-        """
+-        Initialize the GameDirector.
+-        
+-        Args:
+-            event_bus: EventBus for publishing events
+-            speed_multiplier: Speed multiplier for timing (1.0 = normal, 2.0 = 2x speed)
+-        """
++    def __init__(self, event_bus=None):
+         self.event_bus = event_bus
+-        self.speed_multiplier = speed_multiplier
+-        
+-        # Playback state
+         self.playback_state = PlaybackState.STOPPED
++        self.speed = 1.0
++        self.autoplay_interval_ms = 600
+         self.current_step = 0
+         self.total_steps = 0
+-        
+-        # Autoplay configuration
+-        self.autoplay_interval_ms = 1000  # Default 1 second
+-        self.autoplay_enabled = False
+-        
+-        # Effect gating
+-        self.gate_count = 0
+-        self.gate_events = []
+-        
+-        # Scheduled events
+-        self.scheduled_events: Dict[str, ScheduledEvent] = {}
+-        self.event_counter = 0
+-        
+-        # Callbacks
+-        self.on_advance_callback: Optional[Callable] = None
+-        self.on_step_change_callback: Optional[Callable] = None
+-        
++        self.on_advance_callback: Optional[Callable[[int], None]] = None
++        self.on_step_change_callback: Optional[Callable[[int], None]] = None
++
++        self._q: List[_Scheduled] = []
++        self._seq = itertools.count()
++        self._gate_count = 0
++        self._cancelled = set()
++        self._last_now = self._now_ms()
+         print("🎬 GameDirector: Initialized")
+-    
+-    def set_event_bus(self, event_bus):
+-        """Set the event bus for publishing events."""
+-        self.event_bus = event_bus
+-        print("🎬 GameDirector: Event bus connected")
+-    
+-    def set_advance_callback(self, callback: Callable):
+-        """Set the callback for advancing to the next step."""
+-        self.on_advance_callback = callback
+-    
+-    def set_step_change_callback(self, callback: Callable):
+-        """Set the callback for step changes."""
+-        self.on_step_change_callback = callback
+-    
++
++    # Wiring
++    def set_event_bus(self, event_bus): self.event_bus = event_bus
++    def set_advance_callback(self, callback: Callable[[int], None]): self.on_advance_callback = callback
++    def set_step_change_callback(self, callback: Callable[[int], None]): self.on_step_change_callback = callback
+     def set_total_steps(self, total: int):
+-        """Set the total number of steps in the session."""
+-        self.total_steps = total
+-        print(f"🎬 GameDirector: Total steps set to {total}")
+-    
++        self.total_steps = max(0, int(total))
++        print(f"🎬 GameDirector: Total steps set to {self.total_steps}")
++
++    # Playback controls
+     def play(self) -> None:
+-        """Start autoplay."""
+         if self.playback_state == PlaybackState.STOPPED:
+-            self.current_step = 0
+-        
++            self.current_step = max(0, self.current_step)
+         self.playback_state = PlaybackState.PLAYING
+-        self.autoplay_enabled = True
+-        
+-        # Schedule first autoplay event
+-        self._schedule_autoplay()
+-        
+-        print("🎬 GameDirector: Autoplay started")
+-    
++        print("🎬 GameDirector: PLAY")
++        self._schedule_next_auto()
++
+     def pause(self) -> None:
+-        """Pause autoplay."""
+         self.playback_state = PlaybackState.PAUSED
+-        self.autoplay_enabled = False
+-        
+-        # Cancel all scheduled autoplay events
+-        self._cancel_autoplay_events()
+-        
+-        print("🎬 GameDirector: Autoplay paused")
+-    
++        print("🎬 GameDirector: PAUSE")
++
+     def stop(self) -> None:
+-        """Stop autoplay and reset to beginning."""
+         self.playback_state = PlaybackState.STOPPED
+-        self.autoplay_enabled = False
+-        self.current_step = 0
+-        
+-        # Cancel all scheduled events
+-        self._cancel_all_events()
+-        
+-        print("🎬 GameDirector: Autoplay stopped")
+-    
++        self._q.clear()
++        self._gate_count = 0
++        print("🎬 GameDirector: STOP")
++
+     def step_forward(self, n: int = 1) -> None:
+-        """Step forward n steps."""
+-        if self.current_step + n < self.total_steps:
+-            self.current_step += n
+-            self._notify_step_change()
+-            print(f"🎬 GameDirector: Stepped forward to step {self.current_step}")
+-        else:
+-            print(f"🎬 GameDirector: Cannot step forward beyond step {self.total_steps - 1}")
+-    
++        for _ in range(max(1, n)):
++            self._advance_once()
++
+     def step_back(self, n: int = 1) -> None:
+-        """Step backward n steps."""
+-        if self.current_step - n >= 0:
+-            self.current_step -= n
+-            self._notify_step_change()
+-            print(f"🎬 GameDirector: Stepped back to step {self.current_step}")
+-        else:
+-            print("🎬 GameDirector: Cannot step back before step 0")
+-    
+-    def seek(self, step_index: int) -> None:
+-        """Seek to a specific step."""
+-        if 0 <= step_index < self.total_steps:
+-            self.current_step = step_index
+-            self._notify_step_change()
+-            print(f"🎬 GameDirector: Seeked to step {self.current_step}")
+-        else:
+-            print(f"🎬 GameDirector: Invalid step index {step_index}")
+-    
+-    def set_speed(self, multiplier: float) -> None:
+-        """Set the speed multiplier for timing."""
+-        self.speed_multiplier = max(0.1, min(5.0, multiplier))  # Clamp between 0.1x and 5x
+-        print(f"🎬 GameDirector: Speed set to {self.speed_multiplier}x")
+-    
+-    def set_autoplay_interval(self, ms: int) -> None:
+-        """Set the autoplay interval in milliseconds."""
+-        self.autoplay_interval_ms = max(100, ms)  # Minimum 100ms
+-        print(f"🎬 GameDirector: Autoplay interval set to {self.autoplay_interval_ms}ms")
+-    
+-    def schedule(self, delay_ms: int, event: Dict[str, Any], callback: Optional[Callable] = None) -> str:
+-        """
+-        Schedule an event to occur after a delay.
+-        
+-        Args:
+-            delay_ms: Delay in milliseconds
+-            event: Event data to publish
+-            callback: Optional callback to execute when event occurs
+-            
+-        Returns:
+-            Token string for cancelling the event
+-        """
+-        # Apply speed multiplier to delay
+-        adjusted_delay = int(delay_ms / self.speed_multiplier)
+-        
+-        # Create unique token
+-        token = f"event_{self.event_counter}_{uuid.uuid4().hex[:8]}"
+-        self.event_counter += 1
+-        
+-        # Create scheduled event
+-        scheduled_event = ScheduledEvent(
+-            token=token,
+-            delay_ms=adjusted_delay,
+-            event=event,
+-            callback=callback,
+-            created_at=time.time()
+-        )
+-        
+-        self.scheduled_events[token] = scheduled_event
+-        
+-        # Schedule the event using Tkinter's after method
+-        # Note: This requires the director to be integrated with a Tkinter widget
+-        # For now, we'll store it and let the UI handle the actual scheduling
+-        
+-        print(f"🎬 GameDirector: Scheduled event {token} in {adjusted_delay}ms")
+-        return token
+-    
+-    def cancel(self, token: str) -> None:
+-        """Cancel a scheduled event."""
+-        if token in self.scheduled_events:
+-            del self.scheduled_events[token]
+-            print(f"🎬 GameDirector: Cancelled event {token}")
+-        else:
+-            print(f"🎬 GameDirector: Event {token} not found")
+-    
+-    def gate_begin(self) -> None:
+-        """Begin effect gating - prevents autoplay from advancing."""
+-        self.gate_count += 1
+-        print(f"🎬 GameDirector: Effect gate begin (count: {self.gate_count})")
+-    
+-    def gate_end(self) -> None:
+-        """End effect gating - allows autoplay to advance if no other gates are active."""
+-        if self.gate_count > 0:
+-            self.gate_count -= 1
+-            print(f"🎬 GameDirector: Effect gate end (count: {self.gate_count})")
+-            
+-            # If all gates are closed and autoplay is enabled, schedule next advance
+-            if self.gate_count == 0 and self.autoplay_enabled:
+-                self._schedule_autoplay()
+-    
+-    def notify_animation_complete(self) -> None:
+-        """Notify that an animation has completed."""
+-        self.gate_end()
+-        
+-        if self.event_bus:
+-            self.event_bus.publish("game_director:animation_complete", {
+-                "step": self.current_step,
+-                "timestamp": time.time()
+-            })
+-    
+-    def notify_sound_complete(self) -> None:
+-        """Notify that a sound has completed."""
+-        self.gate_end()
+-        
+-        if self.event_bus:
+-            self.event_bus.publish("game_director:sound_complete", {
+-                "step": self.current_step,
+-                "timestamp": time.time()
+-            })
+-    
+-    def _schedule_autoplay(self) -> None:
+-        """Schedule the next autoplay advance."""
+-        if not self.autoplay_enabled or self.gate_count > 0:
+-            return
+-        
+-        if self.current_step < self.total_steps - 1:
+-            # Schedule AUTO_ADVANCE event
+-            token = self.schedule(
+-                self.autoplay_interval_ms,
+-                {"type": "AUTO_ADVANCE", "step": self.current_step + 1}
+-            )
+-            
+-            # Store the autoplay token for cancellation
+-            self._autoplay_token = token
+-            
+-            print(f"🎬 GameDirector: Scheduled autoplay advance to step {self.current_step + 1}")
+-        else:
+-            # Reached the end
+-            self.stop()
+-            print("🎬 GameDirector: Autoplay complete - reached end")
+-    
+-    def _cancel_autoplay_events(self) -> None:
+-        """Cancel all autoplay-related events."""
+-        if hasattr(self, '_autoplay_token'):
+-            self.cancel(self._autoplay_token)
+-            delattr(self, '_autoplay_token')
+-    
+-    def _cancel_all_events(self) -> None:
+-        """Cancel all scheduled events."""
+-        for token in list(self.scheduled_events.keys()):
+-            self.cancel(token)
+-    
+-    def _notify_step_change(self) -> None:
+-        """Notify that the step has changed."""
++        self.current_step = max(0, self.current_step - max(1, n))
+         if self.on_step_change_callback:
+             self.on_step_change_callback(self.current_step)
+-        
++
++    def seek(self, step_index: int) -> None:
++        self.current_step = max(0, min(int(step_index), self.total_steps - 1))
++        if self.on_step_change_callback:
++            self.on_step_change_callback(self.current_step)
++
++    def set_speed(self, multiplier: float) -> None:
++        self.speed = max(0.1, float(multiplier))
++        print(f"🎬 GameDirector: Speed={self.speed}x")
++
++    def set_autoplay_interval(self, ms: int) -> None:
++        self.autoplay_interval_ms = max(60, int(ms))
++
++    # Gate controls (effects)
++    def gate_begin(self) -> None:
++        self._gate_count += 1
++        print(f"🎬 GameDirector: GATE ++ ({self._gate_count})")
++
++    def gate_end(self) -> None:
++        self._gate_count = max(0, self._gate_count - 1)
++        print(f"🎬 GameDirector: GATE -- ({self._gate_count})")
++        if self.playback_state == PlaybackState.PLAYING and self._gate_count == 0:
++            self._schedule_next_auto()
++
++    def notify_animation_complete(self) -> None: self.gate_end()
++    def notify_sound_complete(self) -> None: self.gate_end()
++
++    # Scheduling
++    def schedule(self, delay_ms: int, event: Dict[str, Any], callback: Optional[Callable] = None) -> str:
++        due = self._now_ms() + int(max(0, delay_ms) / max(0.1, self.speed))
++        seq = next(self._seq)
++        heapq.heappush(self._q, _Scheduled(due, seq, event, callback))
++        token = f"t{seq}"
+         if self.event_bus:
+-            self.event_bus.publish("game_director:step_changed", {
+-                "step": self.current_step,
+-                "total": self.total_steps
+-            })
+-    
+-    def handle_auto_advance(self) -> None:
+-        """Handle AUTO_ADVANCE event - called by the UI when the scheduled time arrives."""
+-        if self.autoplay_enabled and self.gate_count == 0:
+-            if self.current_step < self.total_steps - 1:
+-                self.current_step += 1
+-                self._notify_step_change()
+-                
+-                # Execute the advance callback
+-                if self.on_advance_callback:
+-                    self.on_advance_callback(self.current_step)
+-                
+-                # Schedule next advance
+-                self._schedule_autoplay()
+-                
+-                print(f"🎬 GameDirector: Auto-advanced to step {self.current_step}")
++            try: self.event_bus.publish("game_director:scheduled_event", event)
++            except Exception: pass
++        return token
++
++    def cancel(self, token: str) -> None:
++        try:
++            seq = int(token[1:])
++            self._cancelled.add(seq)
++        except Exception:
++            pass
++
++    def update(self, delta_time_ms: float = 16.67) -> None:
++        # Pump scheduled events
++        now = self._now_ms()
++        while self._q and self._q[0].due_ms <= now:
++            s = heapq.heappop(self._q)
++            if s.seq in self._cancelled: 
++                self._cancelled.discard(s.seq)
++                continue
++            evt = s.event or {}
++            if evt.get("type") == "AUTO_ADVANCE":
++                self._advance_once()
+             else:
+-                self.stop()
+-    
+-    def get_status(self) -> Dict[str, Any]:
+-        """Get the current status of the GameDirector."""
+-        return {
+-            "playback_state": self.playback_state.value,
+-            "current_step": self.current_step,
+-            "total_steps": self.total_steps,
+-            "autoplay_enabled": self.autoplay_enabled,
+-            "gate_count": self.gate_count,
+-            "speed_multiplier": self.speed_multiplier,
+-            "autoplay_interval_ms": self.autoplay_interval_ms,
+-            "scheduled_events_count": len(self.scheduled_events)
+-        }
+-    
+-    def update(self, delta_time_ms: float = 16.67):
+-        """
+-        Update the GameDirector - called by the UI main loop.
+-        
+-        Args:
+-            delta_time_ms: Time since last update in milliseconds
+-        """
+-        # Check for expired scheduled events
+-        current_time = time.time()
+-        expired_events = []
+-        
+-        for token, event in self.scheduled_events.items():
+-            if current_time - event.created_at >= (event.delay_ms / 1000.0):
+-                expired_events.append(token)
+-        
+-        # Execute expired events
+-        for token in expired_events:
+-            event = self.scheduled_events[token]
+-            
+-            # Publish the event
+-            if self.event_bus:
+-                self.event_bus.publish("game_director:scheduled_event", event.event)
+-            
+-            # Execute callback if provided
+-            if event.callback:
+-                try:
+-                    event.callback()
+-                except Exception as e:
+-                    print(f"⚠️ GameDirector: Error executing callback for event {token}: {e}")
+-            
+-            # Remove the event
+-            del self.scheduled_events[token]
+-            
+-            # Handle AUTO_ADVANCE events
+-            if event.event.get("type") == "AUTO_ADVANCE":
+-                self.handle_auto_advance()
++                # Surface event to event bus
++                if self.event_bus:
++                    try: self.event_bus.publish("game_director:event", evt)
++                    except Exception: pass
++                if s.callback:
++                    try: s.callback()
++                    except Exception as e:
++                        print(f"⚠️ GameDirector: scheduled callback error: {e}")
+ 
++        self._last_now = now
+ 
+-class NoopDirector:
+-    """
+-    No-op director for testing or when GameDirector is not needed.
+-    """
+-    
+-    def __init__(self):
+-        pass
+-    
+-    def play(self) -> None: pass
+-    def pause(self) -> None: pass
+-    def stop(self) -> None: pass
+-    def step_forward(self, n: int = 1) -> None: pass
+-    def step_back(self, n: int = 1) -> None: pass
+-    def seek(self, step_index: int) -> None: pass
+-    def set_speed(self, multiplier: float) -> None: pass
+-    def set_autoplay_interval(self, ms: int) -> None: pass
+-    def schedule(self, delay_ms: int, event: Dict[str, Any], callback: Optional[Callable] = None) -> str: return "noop"
+-    def cancel(self, token: str) -> None: pass
+-    def gate_begin(self) -> None: pass
+-    def gate_end(self) -> None: pass
+-    def notify_animation_complete(self) -> None: pass
+-    def notify_sound_complete(self) -> None: pass
+-    def get_status(self) -> Dict[str, Any]: return {"type": "noop"}
+-    def update(self, delta_time_ms: float = 16.67) -> None: pass
++    # Internals
++    def _advance_once(self):
++        if self.on_advance_callback and self.current_step < self.total_steps:
++            try:
++                self.on_advance_callback(self.current_step)
++            except Exception as e:
++                print(f"⚠️ GameDirector: advance callback error: {e}")
++            self.current_step += 1
++            if self.on_step_change_callback:
++                try: self.on_step_change_callback(self.current_step)
++                except Exception: pass
++        if self.playback_state == PlaybackState.PLAYING and self._gate_count == 0:
++            self._schedule_next_auto()
++
++    def _schedule_next_auto(self):
++        # Only schedule if playing and not gated
++        if self.playback_state != PlaybackState.PLAYING or self._gate_count > 0: 
++            return
++        self.schedule(self.autoplay_interval_ms, {"type": "AUTO_ADVANCE"})
++
++    @staticmethod
++    def _now_ms() -> int:
++        return int(time.monotonic() * 1000)

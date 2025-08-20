@@ -1,0 +1,58 @@
+{
+  "summary": {
+    "total_duplicates": 5,
+    "scanned_directory": ".",
+    "ignore_patterns": [
+      "*/__pycache__/*",
+      "*/logs/*"
+    ],
+    "timestamp": "2025-08-19T22:44:17.233123"
+  },
+  "duplicates": [
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HandsReviewTab",
+      "name": "_on_theme_change",
+      "file": "./ui/tabs/hands_review_tab.py",
+      "line": 1887,
+      "severity": "high",
+      "description": "Method '_on_theme_change' defined multiple times in class 'HandsReviewTab'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HandsReviewTab",
+      "name": "_reset_hand",
+      "file": "./ui/tabs/hands_review_tab.py",
+      "line": 1975,
+      "severity": "high",
+      "description": "Method '_reset_hand' defined multiple times in class 'HandsReviewTab'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HandsReviewTab",
+      "name": "_next_action",
+      "file": "./ui/tabs/hands_review_tab.py",
+      "line": 2298,
+      "severity": "high",
+      "description": "Method '_next_action' defined multiple times in class 'HandsReviewTab'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "HandsReviewTab",
+      "name": "_reset_hand",
+      "file": "./ui/tabs/hands_review_tab.py",
+      "line": 2543,
+      "severity": "high",
+      "description": "Method '_reset_hand' defined multiple times in class 'HandsReviewTab'"
+    },
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GameState",
+      "name": "round_state",
+      "file": "./core/poker_types.py",
+      "line": 95,
+      "severity": "high",
+      "description": "Method 'round_state' defined multiple times in class 'GameState'"
+    }
+  ]
+}

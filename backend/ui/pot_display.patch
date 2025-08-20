@@ -1,0 +1,21 @@
+--- pot_display.py+++ pot_display_PATCHED.py@@ -1,6 +1,20 @@ from ...services.theme_manager import ThemeManager
+ from .chip_graphics import ChipGraphics
+-from .premium_chips import draw_pot_chip, pulse_pot_glow
++
++try:
++    from .premium_chips import draw_pot_chip, pulse_pot_glow
++except Exception:
++    def draw_pot_chip(canvas, x, y, theme, fonts, scale=1.0, tags=()):
++        r = int(10*scale)
++        canvas.create_oval(x-r, y-r, x+r, y+r, fill=theme.get("chip.gold","#D97706"), outline="black", width=1, tags=tags)
++    def pulse_pot_glow(canvas, pot_bg_id, theme):
++        # simple glow by toggling outline width
++        try:
++            w = int(canvas.itemcget(pot_bg_id, "width") or 2)
++            canvas.itemconfig(pot_bg_id, width=(w%4)+1)
++        except Exception:
++            pass
++
+ 
+ 
+ def _tokens(canvas):

@@ -1,0 +1,22 @@
+--- bet_display.py+++ bet_display_PATCHED.py@@ -1,6 +1,21 @@ from ...state.selectors import get_seat_positions, get_num_seats
+ from ...services.theme_manager import ThemeManager
+-from .chip_graphics import ChipGraphics, BetDisplay as ChipBetDisplay
++
++try:
++    from .chip_graphics import ChipGraphics, BetDisplay as ChipBetDisplay
++except Exception:
++    # Fallback: define minimal ChipGraphics inline if chip_graphics module is missing
++    class ChipGraphics:
++        @staticmethod
++        def draw_chip_stack(canvas, x, y, amount, theme, fonts, tags=()):
++            # Simple circle + text fallback
++            r = 16
++            canvas.create_oval(x-r, y-r, x+r, y+r, fill=theme.get("chip.gold","#D97706"), outline="black", width=1, tags=tags)
++            canvas.create_text(x, y, text=str(amount), fill="white", font=fonts.get("font.body", ("Arial", 10, "bold")), tags=tags)
++    class ChipBetDisplay:
++        def render(self, canvas, pos, amount, theme, fonts):
++            ChipGraphics.draw_chip_stack(canvas, pos[0], pos[1], amount, theme, fonts, tags=("layer:chips",))
++
+ 
+ 
+ def _tokens(canvas):

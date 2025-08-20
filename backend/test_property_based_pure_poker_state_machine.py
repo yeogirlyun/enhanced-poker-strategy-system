@@ -83,11 +83,11 @@ class PokerPropertyTests:
     
     @staticmethod
     def calculate_total_chips(ppsm: PurePokerStateMachine) -> float:
-        """Calculate total chips in play (stacks + pot + current bets)."""
-        total = ppsm.game_state.pot
+        """Calculate total chips in play (stacks + pot)."""
+        # The displayed_pot() already includes current street bets, so we don't double-count
+        total = ppsm.game_state.displayed_pot()
         for player in ppsm.game_state.players:
             total += player.stack
-            total += player.current_bet
         return total
     
     @staticmethod
@@ -273,8 +273,8 @@ class PokerPropertyTests:
                 # Calculate expected total chips in play
                 total_in_play = 0
                 for p in ppsm.game_state.players:
-                    total_in_play += p.stack + p.current_bet
-                total_in_play += ppsm.game_state.pot
+                    total_in_play += p.stack
+                total_in_play += ppsm.game_state.displayed_pot()  # displayed_pot includes current bets
                 
                 expected_total = len(ppsm.game_state.players) * config.starting_stack
                 

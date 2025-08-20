@@ -9,9 +9,10 @@ from .services.theme_manager import ThemeManager
 from .services.hands_repository import HandsRepository, StudyMode
 from .state.store import Store
 from .state.reducers import root_reducer
-from .tabs.hands_review_tab import HandsReviewTab
-from .tabs.theme_editor_tab import ThemeEditorTab
-from .theme_manager import ThemeManager as AdvancedThemeManager
+from .mvu.hands_review_integrated import MVUHandsReviewTabIntegrated
+from .tabs.practice_session_tab import PracticeSessionTab
+from .tabs.gto_session_tab import GTOSessionTab
+
 from .menu_integration import add_theme_manager_to_menu
 
 
@@ -28,6 +29,60 @@ class AppShell(ttk.Frame):
         self.services.provide_app("event_bus", EventBus())
         self.services.provide_app("theme", ThemeManager())
         self.services.provide_app("hands_repository", HandsRepository())
+        
+        # Create global GameDirector for action sequencing
+        from .services.game_director import GameDirector
+        game_director = GameDirector(event_bus=self.services.get_app("event_bus"))
+        self.services.provide_app("game_director", game_director)
+        
+        # Create global EffectBus service for sound management
+        from .services.effect_bus import EffectBus
+        effect_bus = EffectBus(
+            game_director=game_director,
+            event_bus=self.services.get_app("event_bus")
+        )
+        self.services.provide_app("effect_bus", effect_bus)
+        
+        # Create architecture compliant hands review controller
+        from .services.hands_review_event_controller import HandsReviewEventController
+        
+        # Initialize Store with initial state and reducer
+        initial_state = {
+            "table": {"dim": {"width": 800, "height": 600}},
+            "seats": [],
+            "board": [],
+            "pot": {"amount": 0},
+            "dealer": {},
+            "review": {},
+            "enhanced_rpgw": {},
+            "event_bus": self.services.get_app("event_bus")
+        }
+        store = Store(initial_state, root_reducer)
+        self.services.provide_app("store", store)
+        
+        hands_review_controller = HandsReviewEventController(
+            event_bus=self.services.get_app("event_bus"),
+            store=store,
+            services=self.services
+        )
+        self.services.provide_app("hands_review_controller", hands_review_controller)
+        
+        # Subscribe to voice events to keep architecture event-driven
+        def _on_voice(payload):
+            try:
+                action = (payload or {}).get("action")
+                vm = getattr(effect_bus, "voice_manager", None)
+                if not (vm and action):
+                    return
+                cfg = getattr(effect_bus, "config", {}) or {}
+                voice_type = getattr(effect_bus, "voice_type", "")
+                table = (cfg.get("voice_sounds", {}) or {}).get(voice_type, {})
+                rel = table.get(action)
+                if rel:
+                    vm.play(rel)
+            except Exception:
+                pass
+        self.services.get_app("event_bus").subscribe("effect_bus:voice", _on_voice)
         
         # Create shared store for poker game state (per architecture doc)
         initial_state = {
@@ -50,9 +105,10 @@ class AppShell(ttk.Frame):
         # Create menu system
         self._create_menu_system()
         
-        # tabs
-        self._add_tab("Hands Review", HandsReviewTab)
-        self._add_tab("Theme Editor", ThemeEditorTab)
+        # tabs (order: Practice, GTO, Hands Review - main product features only)
+        self._add_tab("Practice Session", PracticeSessionTab)
+        self._add_tab("GTO Session", GTOSessionTab)
+        self._add_tab("Hands Review (MVU)", MVUHandsReviewTabIntegrated)
         # Bind global font size shortcuts (Cmd/Ctrl - and =)
         self._bind_font_shortcuts(root)
 
@@ -93,8 +149,17 @@ class AppShell(ttk.Frame):
         view_menu.add_command(label="Zoom Out", accelerator="Cmd+-", command=lambda: self._decrease_font(None))
         view_menu.add_command(label="Reset Zoom", accelerator="Cmd+0", command=lambda: self._reset_font(None))
         
+        # Settings menu
+        settings_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Settings", menu=settings_menu)
+        
+        # Theme management
+        settings_menu.add_command(label="Theme Editor", command=self._open_theme_editor)
+        settings_menu.add_command(label="Sound Settings", command=self._open_sound_settings)
+        settings_menu.add_separator()
+        
         # Add Theme Manager to Settings menu using our integration helper
-        add_theme_manager_to_menu(menubar, self.root, self._on_theme_changed)
+        add_theme_manager_to_menu(settings_menu, self.root, self._on_theme_changed)
         
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -236,5 +301,57 @@ class AppShell(ttk.Frame):
     def _reset_font(self, event=None):
         print("🔧 Reset font called!")
         self._set_global_font_scale(None)
+
+    def _open_theme_editor(self):
+        """Open the Theme Editor in a new window."""
+        try:
+            from .tabs.theme_editor_tab import ThemeEditorTab
+            # Create a new toplevel window for the theme editor
+            theme_window = tk.Toplevel(self.root)
+            theme_window.title("Theme Editor - Poker Pro Trainer")
+            theme_window.geometry("900x700")
+            theme_window.resizable(True, True)
+            
+            # Center the window on screen
+            theme_window.update_idletasks()
+            x = (theme_window.winfo_screenwidth() // 2) - (900 // 2)
+            y = (theme_window.winfo_screenheight() // 2) - (700 // 2)
+            theme_window.geometry(f"900x700+{x}+{y}")
+            
+            # Create the theme editor tab in the new window
+            theme_editor = ThemeEditorTab(theme_window, self.services)
+            theme_editor.pack(fill=tk.BOTH, expand=True)
+            
+            print("🎨 Theme Editor opened in new window")
+        except Exception as e:
+            print(f"❌ Error opening Theme Editor: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _open_sound_settings(self):
+        """Open the Sound Settings in a new window."""
+        try:
+            from .tabs.sound_settings_tab import SoundSettingsTab
+            # Create a new toplevel window for the sound settings
+            sound_window = tk.Toplevel(self.root)
+            sound_window.title("Sound Settings - Poker Pro Trainer")
+            sound_window.geometry("1200x800")
+            sound_window.resizable(True, True)
+            
+            # Center the window on screen
+            sound_window.update_idletasks()
+            x = (sound_window.winfo_screenwidth() // 2) - (1200 // 2)
+            y = (sound_window.winfo_screenheight() // 2) - (800 // 2)
+            sound_window.geometry(f"1200x800+{x}+{y}")
+            
+            # Create the sound settings tab in the new window
+            sound_settings = SoundSettingsTab(sound_window, self.services)
+            sound_settings.pack(fill=tk.BOTH, expand=True)
+            
+            print("🔊 Sound Settings opened in new window")
+        except Exception as e:
+            print(f"❌ Error opening Sound Settings: {e}")
+            import traceback
+            traceback.print_exc()
 
 

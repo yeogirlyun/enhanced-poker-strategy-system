@@ -1,9 +1,10 @@
 {
-  "profile": "Forest Green Professional \ud83c\udf3f",
+  "profile": "Oceanic Aqua \ud83c\udf0a",
   "fonts": {
     "main": [
-      "Arial",
-      14
+      "Segoe UI",
+      13,
+      "normal"
     ],
     "title": [
       "Segoe UI",
@@ -11,13 +12,13 @@
       "bold"
     ],
     "header": [
-      "Arial",
-      22,
+      "Segoe UI",
+      15,
       "bold"
     ],
     "small": [
       "Consolas",
-      16
+      10
     ],
     "large": [
       "Segoe UI",
@@ -35,8 +36,8 @@
       "bold"
     ],
     "bet_amount": [
-      "Arial",
-      24,
+      "Segoe UI",
+      17,
       "bold"
     ],
     "action_button": [
@@ -50,8 +51,9 @@
       "bold"
     ],
     "pot_display": [
-      "Arial",
-      18
+      "Segoe UI",
+      21,
+      "bold"
     ],
     "stack_bet": [
       "Segoe UI",
@@ -60,7 +62,7 @@
     ],
     "body": [
       "Consolas",
-      20
+      13
     ]
   }
 }

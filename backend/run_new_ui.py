@@ -9,12 +9,14 @@ def check_terminal_compatibility():
         print("💡 RECOMMENDED: Run this from macOS Terminal app instead:")
         print(f"   cd {os.getcwd()}")
         print(f"   python3 {os.path.basename(__file__)}")
+        print("🚀 Continuing automatically...")
         print()
         
-        response = input("Continue anyway? (y/N): ").lower().strip()
-        if response not in ['y', 'yes']:
-            print("Exiting safely. Run from external terminal for best experience.")
-            sys.exit(0)
+        # Commented out for convenience during development
+        # response = input("Continue anyway? (y/N): ").lower().strip()
+        # if response not in ['y', 'yes']:
+        #     print("Exiting safely. Run from external terminal for best experience.")
+        #     sys.exit(0)
 
 try:  # Prefer package-relative import (python -m backend.run_new_ui)
     from .ui.app_shell import AppShell  # type: ignore
@@ -24,10 +26,20 @@ except Exception:
     except Exception:
         # Last resort: ensure repo root is on sys.path then import absolute
         sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-        from backend.ui.app_shell import AppShell  # type: ignore
+        from ui.app_shell import AppShell  # type: ignore
 
 
 def main() -> None:
+    # Apply runtime fixes before starting the application
+    try:
+        print("🔧 Applying runtime fixes...")
+        from fix_runtime_errors import main as apply_fixes
+        apply_fixes()
+        print("✅ Runtime fixes applied successfully!")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not apply runtime fixes: {e}")
+        print("🎯 Continuing anyway...")
+    
     # Check terminal compatibility before creating GUI
     check_terminal_compatibility()
     

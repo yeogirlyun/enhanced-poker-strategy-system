@@ -1,0 +1,184 @@
+[
+  {
+    "metadata": {
+      "table_id": "TEST-Table-1",
+      "hand_id": "TEST_2P_H001",
+      "variant": "NLHE",
+      "max_players": 2,
+      "small_blind": 5,
+      "big_blind": 10,
+      "ante": 0,
+      "rake": 0,
+      "currency": "CHIPS",
+      "started_at_utc": "2025-08-18T16:14:44.706979Z",
+      "ended_at_utc": null,
+      "run_count": 1,
+      "session_type": "test",
+      "bot_strategy": "test_v1",
+      "analysis_tags": [
+        "test_generated",
+        "bot_vs_bot"
+      ],
+      "hole_cards": {
+        "Player1": [
+          "AS",
+          "KS"
+        ],
+        "Player2": [
+          "QD",
+          "JD"
+        ]
+      }
+    },
+    "seats": [
+      {
+        "seat_no": 1,
+        "player_uid": "Player1",
+        "display_name": "Test_Bot_1",
+        "starting_stack": 1000,
+        "is_button": true
+      },
+      {
+        "seat_no": 2,
+        "player_uid": "Player2",
+        "display_name": "Test_Bot_2",
+        "starting_stack": 1000,
+        "is_button": false
+      }
+    ],
+    "hero_player_uid": "Player1",
+    "streets": {
+      "PREFLOP": {
+        "board": [],
+        "actions": [
+          {
+            "order": 1,
+            "actor_uid": "Player1",
+            "action": "POST_BLIND",
+            "amount": 5,
+            "to_amount": 5,
+            "all_in": false,
+            "note": null,
+            "street": "PREFLOP",
+            "posting_meta": {
+              "blind_type": "SB"
+            }
+          },
+          {
+            "order": 2,
+            "actor_uid": "Player2",
+            "action": "POST_BLIND",
+            "amount": 10,
+            "to_amount": 10,
+            "all_in": false,
+            "note": null,
+            "street": "PREFLOP",
+            "posting_meta": {
+              "blind_type": "BB"
+            }
+          },
+          {
+            "order": 3,
+            "actor_uid": "Player1",
+            "action": "CALL",
+            "amount": 5,
+            "to_amount": 10,
+            "all_in": false,
+            "note": null,
+            "street": "PREFLOP"
+          },
+          {
+            "order": 4,
+            "actor_uid": "Player2",
+            "action": "CHECK",
+            "amount": 0,
+            "to_amount": 10,
+            "all_in": false,
+            "note": null,
+            "street": "PREFLOP"
+          }
+        ]
+      },
+      "FLOP": {
+        "board": ["AS", "KS", "QD"],
+        "actions": [
+          {
+            "order": 1,
+            "actor_uid": "Player2",
+            "action": "BET",
+            "amount": 20,
+            "to_amount": 30,
+            "all_in": false,
+            "note": null,
+            "street": "FLOP"
+          },
+          {
+            "order": 2,
+            "actor_uid": "Player1",
+            "action": "RAISE",
+            "amount": 40,
+            "to_amount": 70,
+            "all_in": false,
+            "note": null,
+            "street": "FLOP"
+          },
+          {
+            "order": 3,
+            "actor_uid": "Player2",
+            "action": "CALL",
+            "amount": 30,
+            "to_amount": 70,
+            "all_in": false,
+            "note": null,
+            "street": "FLOP"
+          }
+        ]
+      },
+      "TURN": {
+        "board": ["AS", "KS", "QD", "JC"],
+        "actions": [
+          {
+            "order": 1,
+            "actor_uid": "Player1",
+            "action": "BET",
+            "amount": 50,
+            "to_amount": 120,
+            "all_in": false,
+            "note": null,
+            "street": "TURN"
+          },
+          {
+            "order": 2,
+            "actor_uid": "Player2",
+            "action": "FOLD",
+            "amount": 0,
+            "to_amount": 120,
+            "all_in": false,
+            "note": null,
+            "street": "TURN"
+          }
+        ]
+      },
+      "RIVER": {
+        "board": [],
+        "actions": []
+      }
+    },
+    "pots": [
+      {
+        "amount": 120,
+        "eligible_player_uids": [
+          "Player1"
+        ],
+        "winners": [
+          {
+            "player_uid": "Player1",
+            "amount": 120,
+            "hand_rank": "THREE_OF_A_KIND",
+            "hand_description": "Three of a Kind, Aces"
+          }
+        ]
+      }
+    ]
+  }
+]

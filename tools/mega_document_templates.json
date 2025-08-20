@@ -1,0 +1,139 @@
+{
+  "templates": {
+    "custom_bug_report": {
+      "title": "🔍 **CUSTOM BUG ANALYSIS MEGA DOCUMENT**",
+      "description": "Focused bug analysis with specific components and targeted source code.",
+      "output_dir": "bug_analysis",
+      "filename": "CUSTOM_BUG_ANALYSIS.md",
+      "categories": [
+        {
+          "name": "BUG DESCRIPTION",
+          "files": [
+            "*BUG*.md",
+            "*ERROR*.md",
+            "*ISSUE*.md"
+          ]
+        },
+        {
+          "name": "MVU IMPLEMENTATION",
+          "files": [
+            "backend/ui/mvu/**/*.py"
+          ]
+        },
+        {
+          "name": "TABLE RENDERING",
+          "files": [
+            "backend/ui/tableview/**/*.py"
+          ]
+        },
+        {
+          "name": "EFFECT SYSTEM",
+          "files": [
+            "backend/ui/services/effect_bus.py",
+            "backend/utils/sound_manager.py"
+          ]
+        }
+      ]
+    },
+    "hands_review_complete": {
+      "title": "🃏 **HANDS REVIEW COMPLETE IMPLEMENTATION**",
+      "description": "Everything needed for hands review tab development and maintenance.",
+      "output_dir": "hands_review_docs",
+      "filename": "HANDS_REVIEW_COMPLETE.md",
+      "categories": [
+        {
+          "name": "REQUIREMENTS & SPECIFICATIONS",
+          "files": [
+            "*HANDS_REVIEW*.md",
+            "*REQUIREMENTS*.md"
+          ]
+        },
+        {
+          "name": "MVU ARCHITECTURE",
+          "files": [
+            "backend/ui/mvu/**/*.py",
+            "docs/*MVU*.md"
+          ]
+        },
+        {
+          "name": "POKER TABLE RENDERING",
+          "files": [
+            "backend/ui/tableview/**/*.py",
+            "backend/ui/renderers/**/*.py"
+          ]
+        },
+        {
+          "name": "HANDS REVIEW TAB",
+          "files": [
+            "**/*hands_review*.py"
+          ]
+        },
+        {
+          "name": "AUDIO & EFFECTS",
+          "files": [
+            "backend/ui/services/effect_bus.py",
+            "backend/utils/*sound*.py",
+            "backend/utils/*voice*.py"
+          ]
+        },
+        {
+          "name": "THEME SYSTEM",
+          "files": [
+            "backend/data/poker_themes.json",
+            "backend/ui/theme_tokens.json"
+          ]
+        },
+        {
+          "name": "TEST CASES",
+          "files": [
+            "**/test_*hands*.py",
+            "**/test_*mvu*.py"
+          ]
+        }
+      ]
+    },
+    "architecture_review": {
+      "title": "🏗️ **ARCHITECTURE REVIEW MEGA DOCUMENT**",
+      "description": "Complete architecture analysis with compliance checking and best practices.",
+      "output_dir": "architecture_review",
+      "filename": "ARCHITECTURE_REVIEW_COMPLETE.md",
+      "categories": [
+        {
+          "name": "ARCHITECTURE DOCUMENTATION",
+          "files": [
+            "docs/**/*.md"
+          ]
+        },
+        {
+          "name": "CORE ARCHITECTURE",
+          "files": [
+            "backend/core/**/*.py",
+            "backend/services/**/*.py"
+          ]
+        },
+        {
+          "name": "UI ARCHITECTURE",
+          "files": [
+            "backend/ui/services/**/*.py",
+            "backend/ui/mvu/**/*.py"
+          ]
+        },
+        {
+          "name": "STATE MANAGEMENT",
+          "files": [
+            "**/store.py",
+            "**/reducers.py",
+            "**/update.py"
+          ]
+        },
+        {
+          "name": "COMPLIANCE TESTS",
+          "files": [
+            "**/test_*architecture*.py",
+            "**/test_*compliance*.py"
+          ]
+        }
+      ]
+    }
+  }
+}

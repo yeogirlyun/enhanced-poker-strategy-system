@@ -183,6 +183,49 @@ class VoiceManager:
         else:
             # Default to a generic announcement
             self.play_voice("your_turn")
+
+    # --- Direct file playback support for EffectBus ---
+    def play(self, rel_path: str) -> None:
+        """Play a specific audio file path (relative or absolute).
+
+        This is used by the EffectBus when a config maps voice lines
+        directly to files. It attempts several resolution strategies:
+        - Absolute path as provided
+        - Relative to configured voice_dir
+        - Relative to the project's sounds directory next to this module
+        """
+        if not self.enabled:
+            return
+        try:
+            # Candidate 1: use path as-is
+            path_candidates = [rel_path]
+
+            # Candidate 2: under voice_dir
+            path_candidates.append(os.path.join(self.voice_dir, rel_path))
+
+            # Candidate 3: backend/sounds/<rel_path>
+            here = os.path.dirname(__file__)
+            path_candidates.append(os.path.join(here, '..', 'sounds', rel_path))
+
+            chosen = None
+            for p in path_candidates:
+                p_abs = os.path.abspath(p)
+                if os.path.exists(p_abs) and os.path.getsize(p_abs) > 0:
+                    chosen = p_abs
+                    break
+
+            if not chosen:
+                print(f"⚠️ VoiceManager: missing voice file {rel_path}")
+                return
+
+            try:
+                snd = pygame.mixer.Sound(chosen)
+                snd.set_volume(self.volume)
+                snd.play()
+            except Exception as e:
+                print(f"⚠️ VoiceManager: failed to play {chosen}: {e}")
+        except Exception as e:
+            print(f"⚠️ VoiceManager: error resolving {rel_path}: {e}")
     
     def play_game_voice(self, game_event: str):
         """Play voice for game events.

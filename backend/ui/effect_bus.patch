@@ -1,0 +1,15 @@
+--- ui/services/effect_bus.py+++ ui/services/effect_bus_PATCHED.py@@ -298,11 +298,15 @@                     self.director.gate_begin()
+                 
+                 # Play the sound
++                try:
+                 self.sounds[sound_name].play()
++            except Exception:
++                pass
+                 print(f"🔊 EffectBus: Playing sound: {sound_name}")
+                 
+                 # Schedule gate end after sound duration
+                 if self.director:
++                    self.director.gate_begin()
+                     def end_gate():
+                         self.director.gate_end()
+                         print(f"🎭 EffectBus: Completed sound effect: {effect.id}")

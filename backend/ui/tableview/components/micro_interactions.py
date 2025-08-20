@@ -4,7 +4,7 @@ Subtle glows, pulses, and state transitions for premium feel
 """
 
 import math
-from ..services.theme_utils import ease_color_transition, lighten, alpha_over
+from ...services.theme_utils import ease_color_transition, lighten, alpha_over
 
 class MicroInteractions:
     def __init__(self, theme_manager):

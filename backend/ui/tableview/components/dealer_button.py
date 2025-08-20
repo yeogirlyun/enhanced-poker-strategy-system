@@ -1,8 +1,6 @@
-import math
 from ...state.selectors import (
     get_seat_positions,
     get_dealer_position,
-    get_num_seats,
 )
 from ...services.theme_manager import ThemeManager
 
@@ -38,23 +36,20 @@ class DealerButton:
         if w <= 1 or h <= 1:
             return
         
-        count = get_num_seats(state)
-        if count <= 0:
-            count = 6  # Default to 6 seats
+        # Get seat count from state - use direct seats array if available
+        seats_data = state.get('seats', [])
+        count = len(seats_data) if seats_data else 6  # Default to 6 seats
             
         dealer_pos = get_dealer_position(state)
         
-        # Calculate seat positions using actual canvas size
-        cx, cy = w // 2, int(h * 0.52)
-        radius = int(min(w, h) * 0.36)
-        positions = []
-        for i in range(count):
-            theta = -math.pi / 2 + (2 * math.pi * i) / count
-            x = cx + int(radius * math.cos(theta))
-            y = cy + int(radius * math.sin(theta))
-            positions.append((x, y))
+        # Use consistent seat positions from geometry helper  
+        positions = get_seat_positions(
+            state, seat_count=count, 
+            canvas_width=w, canvas_height=h
+        )
         
-        print(f"🏷️ DealerButton on {w}x{h}: {count} seats, dealer pos: {dealer_pos}")
+        print(f"🏷️ DealerButton on {w}x{h}: {count} seats, "
+              f"dealer pos: {dealer_pos}")
             
         if dealer_pos < 0 or dealer_pos >= len(positions):
             print(f"🏷️ Invalid dealer position {dealer_pos}, using 0")

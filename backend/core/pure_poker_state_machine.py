@@ -806,26 +806,40 @@ class PurePokerStateMachine:
         if player.stack == 0:
             return False
         
-        # CHECK: only if already matched
+        # CHECK: only if already matched (with defensive None handling)
         if action_type == ActionType.CHECK:
-            return player.current_bet == self.game_state.current_bet
+            current_bet = player.current_bet if player.current_bet is not None else 0.0
+            game_current_bet = self.game_state.current_bet if self.game_state.current_bet is not None else 0.0
+            return current_bet == game_current_bet
         
         # FOLD: always allowed when facing action
         if action_type == ActionType.FOLD:
             return True
 
-        # CALL: ignore to_amount; legal if player is behind the current_bet
+        # CALL: ignore to_amount; legal if player is behind the current_bet (with defensive None handling)
         if action_type == ActionType.CALL:
             # Allow all-in calls (engine will clamp payment to stack)
-            return player.current_bet < self.game_state.current_bet
+            current_bet = player.current_bet if player.current_bet is not None else 0.0
+            game_current_bet = self.game_state.current_bet if self.game_state.current_bet is not None else 0.0
+            return current_bet < game_current_bet
         
         # For BET/RAISE only: require a to-amount (CALL is handled above)
         if action_type in (ActionType.BET, ActionType.RAISE):
-            if to_amount is None or to_amount <= player.current_bet:
+            if to_amount is None:
                 return False
+            # Defensive None handling for player.current_bet
+            current_bet = player.current_bet if player.current_bet is not None else 0.0
+            if to_amount <= current_bet:
+                return False
+            addl = to_amount - current_bet
+        else:
+            # For other action types, addl is not used
+            addl = 0.0
+            current_bet = player.current_bet if player.current_bet is not None else 0.0
         
-        addl = to_amount - player.current_bet
-        if addl > player.stack + 1e-9:  # allow for tiny float noise
+        # Defensive None handling for player.stack
+        stack = player.stack if player.stack is not None else 0.0
+        if addl > stack + 1e-9:  # allow for tiny float noise
             return False
         
         bb = self.config.big_blind
@@ -1266,6 +1280,20 @@ class HandModelDecisionEngineAdapter:
         """
         return self.current_action_index < len(self.actions_for_replay)
 
+    def _to_float(self, x, default=0.0) -> float:
+        """Defensive float conversion that handles None/empty strings."""
+        try:
+            if x is None or x == "":
+                return float(default)
+            return float(x)
+        except Exception:
+            return float(default)
+
+    def _need_set(self, game_state):
+        """Get the set of seats that need to act."""
+        rs = getattr(game_state, "round_state", None)
+        return set(getattr(rs, "need_action_from", set()) or set())
+
     def _seat_index(self, game_state, player_name):
         for i, pl in enumerate(game_state.players):
             if pl.name == player_name:
@@ -1278,20 +1306,16 @@ class HandModelDecisionEngineAdapter:
         idx = self._seat_index(game_state, player_name)
         if idx is None:
             return False
-        rs = getattr(game_state, "round_state", None)
-        need = set(getattr(rs, "need_action_from", set()) or set())
-        curr = float(getattr(game_state, "current_bet", 0.0) or 0.0)
-
-        # Postflop: when no wager yet, anyone who still owes action may CHECK.
+        need = self._need_set(game_state)
+        curr = self._to_float(getattr(game_state, "current_bet", 0.0))
+        # Postflop: if no wager yet, any seat that owes action may CHECK
         if street in ("flop", "turn", "river"):
             return curr == 0.0 and idx in need
-
-        # Preflop "BB option" after limps: allow BB to check when curr==BB and BB owes action.
+        # Preflop "BB option" when limped: BB can CHECK if still owes action and no raise
         if street == "preflop":
-            bb_amt = float(getattr(game_state, "big_blind", 0.0) or 0.0)
+            bb_amt = self._to_float(getattr(game_state, "big_blind", 0.0))
             pos = getattr(game_state.players[idx], "position", "")
             return pos == "BB" and idx in need and abs(curr - bb_amt) < 1e-9
-
         return False
 
     def _should_inject_fold(self, player_name, game_state) -> bool:
@@ -1302,28 +1326,27 @@ class HandModelDecisionEngineAdapter:
         pl = game_state.players[idx]
         if not pl.is_active or pl.has_folded:
             return False
-        curr = float(getattr(game_state, "current_bet", 0.0) or 0.0)
-        if curr <= pl.current_bet + 1e-9:  # not facing a wager
-            return False
-        rs = getattr(game_state, "round_state", None)
-        need = set(getattr(rs, "need_action_from", set()) or set())
-        return idx in need
+        curr = self._to_float(getattr(game_state, "current_bet", 0.0))
+        if curr <= self._to_float(pl.current_bet):
+            return False  # not facing a wager
+        return idx in self._need_set(game_state)
 
-    def _is_nonbetting_noise(self, act) -> bool:
-        # Extend as needed for your hand source
-        name = getattr(act, "action", None)
-        return str(name) in {"SHOW", "MUCK", "COLLECT", "WIN", "SHOWHAND"}
+    def _is_noise(self, act) -> bool:
+        """True for non-betting noise lines that should be skipped."""
+        n = str(getattr(act, "action", "")).upper()
+        return n in {"SHOW", "SHOWHAND", "MUCK", "COLLECT", "WIN", "RESULT", "SUMMARY"}
         
     def get_decision(self, player_name: str, game_state):
         """
+        BULLETPROOF Hand-Model adapter for PPSM integration.
         Return (ActionType, to_amount_or_None) for the engine seat to act.
-        - Uses to-amount semantics for BET/RAISE.
-        - Injects implicit CHECKs and FOLDs when logs omit them.
+        Uses to-amount semantics, never consumes wrong player's log, injects implied CHECK/FOLD.
         """
+        # Import HM with a local alias to avoid enum name collisions
         from core.hand_model import ActionType as HM
         from core.poker_types import ActionType
 
-        # If out of actions, we may still need to inject a closing CHECK.
+        # If we're out of logged actions, we might still need to close the street.
         if self.current_action_index >= len(self.actions_for_replay):
             if self._can_inject_check(player_name, game_state):
                 return ActionType.CHECK, None
@@ -1333,7 +1356,13 @@ class HandModelDecisionEngineAdapter:
 
         act = self.actions_for_replay[self.current_action_index]
 
-        # Not this player's logged turn → inject implied action; DO NOT consume the log.
+        # Skip any non-betting "noise" lines by consuming them and re-evaluating
+        if self._is_noise(act):
+            self.current_action_index += 1
+            return self.get_decision(player_name, game_state)
+
+        # If the next logged action is for a different player,
+        # inject the implied action for THIS actor (do NOT consume the log).
         if act.actor_uid != player_name:
             if self._can_inject_check(player_name, game_state):
                 return ActionType.CHECK, None
@@ -1341,53 +1370,80 @@ class HandModelDecisionEngineAdapter:
                 return ActionType.FOLD, None
             return None
 
-        # From here, the log IS for this player → consume it
+        # From here, the log line IS for this player — consume it.
         self.current_action_index += 1
 
-        # Current bet / stack for to-amount mapping
-        curr = float(getattr(game_state, "current_bet", 0.0) or 0.0)
-        bb = float(getattr(game_state, "big_blind", 10.0) or 10.0)  # heuristic default
-        p = next((pl for pl in game_state.players if pl.name == player_name), None)
-        stack_room = (p.stack + p.current_bet) if p else float("inf")
+        curr = self._to_float(getattr(game_state, "current_bet", 0.0))
+        bb   = self._to_float(getattr(game_state, "big_blind", 10.0))
+        p    = next((pl for pl in game_state.players if pl.name == player_name), None)
+        p_cb = self._to_float(getattr(p, "current_bet", 0.0)) if p else 0.0
+        p_st = self._to_float(getattr(p, "stack", 0.0)) if p else float("inf")
+        stack_room = p_cb + p_st
 
+        a = self._to_float(getattr(act, "amount", 0.0))
+
+        # Normalize HM → PPSM with "to-amount" semantics
         if act.action == HM.CHECK:
             return ActionType.CHECK, None
         if act.action == HM.FOLD:
             return ActionType.FOLD, None
+
         if act.action == HM.CALL:
-            return ActionType.CALL, None  # ignore amount; engine calculates pay-to
+            # Some logs encode CALL 0 when curr==0 → treat as CHECK
+            if curr == 0.0 and a == 0.0:
+                return ActionType.CHECK, None
+            return ActionType.CALL, None  # engine computes pay-to
+
         if act.action == HM.BET:
-            amt = float(act.amount or 0.0)
+            if a <= 1e-9 and curr == 0.0:
+                return ActionType.CHECK, None  # "BET 0" → CHECK
             if curr == 0.0:
-                return ActionType.BET, amt  # first wager of the street
-            # Logged as BET but actually a RAISE: convert to to-amount
-            to_total = max(amt, curr + amt)  # accept either total or delta
+                return ActionType.BET, a
+            # Mislabelled raise: accept either delta or total
+            to_total = max(a, curr + a)
             if to_total > curr and to_total <= stack_room:
                 return ActionType.RAISE, to_total
-            return None  # let validator surface this clearly
+            return None  # let the validator print a snapshot
 
         if act.action == HM.RAISE:
-            r = float(act.amount or 0.0)
             candidates = []
-            # Interpret as delta:
-            total1 = curr + r
-            if total1 > curr and total1 <= stack_room:
-                candidates.append(total1)
-            # Interpret as total:
-            total2 = r
-            if total2 > curr and total2 <= stack_room:
-                candidates.append(total2)
-            # Prefer a "full-ish" raise (>= bb over current), else the largest valid
+            t1 = curr + a   # as delta
+            t2 = a          # as total
+            if t1 > curr and t1 <= stack_room:
+                candidates.append(('delta', t1))
+            if t2 > curr and t2 <= stack_room:
+                candidates.append(('total', t2))
+            
+            # Prefer 'total' interpretation over 'delta' when both are valid
+            # This handles most hand-log formats better
             chosen = None
-            for t in candidates:
-                if (t - curr) + 1e-9 >= bb:
-                    chosen = t
-                    break
+            for interpretation, t in candidates:
+                if (t - curr) + 1e-9 >= bb:  # meets minimum raise
+                    if interpretation == 'total':  # prefer total over delta
+                        chosen = t
+                        break
+                    elif chosen is None:  # accept delta only if no total found
+                        chosen = t
+            
             if chosen is None and candidates:
-                chosen = max(candidates)
+                # Fallback: prefer total, then largest
+                for interpretation, t in candidates:
+                    if interpretation == 'total':
+                        chosen = t
+                        break
+                if chosen is None:
+                    chosen = max(candidates, key=lambda x: x[1])[1]
+            
             return (ActionType.RAISE, chosen) if chosen else None
 
-        # Unknown or unsupported action type
+        # Optional explicit ALL_IN in some logs
+        if getattr(HM, "ALL_IN", None) and act.action == HM.ALL_IN:
+            to_allin = stack_room  # current_bet + stack
+            if curr == 0.0:
+                return ActionType.BET, to_allin
+            return ActionType.RAISE, to_allin
+
+        # Unknown action — return None and let the engine move on
         return None
     
 
@@ -1404,9 +1460,14 @@ def create_hand_replay_engine(hand_model):
     return HandModelDecisionEngineAdapter(hand_model)
 
 def create_gto_decision_engine(config):
-    """Create a GTO decision engine (placeholder for future implementation)."""
-    # TODO: Implement GTO decision engine
-    raise NotImplementedError("GTO decision engine not yet implemented")
+    """Create a GTO decision engine using the new adapter."""
+    try:
+        from .gto_decision_engine_adapter import create_gto_decision_engine as create_gto_adapter
+        num_players = getattr(config, 'num_players', 6)
+        return create_gto_adapter(num_players)
+    except ImportError as e:
+        print(f"⚠️ GTO decision engine not available: {e}")
+        raise NotImplementedError("GTO decision engine not yet implemented")
 
 def create_custom_decision_engine(strategy_function):
     """Create a custom decision engine from a strategy function (placeholder)."""

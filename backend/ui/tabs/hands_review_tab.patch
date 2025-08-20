@@ -1,0 +1,81 @@
+--- ui/tabs/hands_review_tab.py+++ ui/tabs/hands_review_tab_PATCHED.py@@ -1575,40 +1575,39 @@             btn.refresh_theme()
+ 
+ 
++    
+     def _handle_effect_animate(self, payload):
+-        """Minimal animation handler: flash pot badge or perform simple pulses."""
++        """Handle animation requests from EffectBus using ChipAnimations where possible."""
+         try:
+             name = (payload or {}).get("name")
+-            ms = int((payload or {}).get("ms", 250))
+-            # Attempt to flash the pot badge by pulsing its outline width a few times
+-            pot_comp = None
+-            try:
+-                from ..tableview.components.pot_display import PotDisplay
+-                for comp in getattr(self, "table_components", []):
+-                    if isinstance(comp, PotDisplay):
+-                        pot_comp = comp
+-                        break
+-            except Exception:
+-                pot_comp = None
+-
+-            if pot_comp and hasattr(pot_comp, "_pot_bg_id") and self.canvas_manager and hasattr(self.canvas_manager, "canvas"):
+-                c = self.canvas_manager.canvas
+-                pid = pot_comp._pot_bg_id
+-                if pid:
+-                    def pulse_once(w=1):
+-                        try:
+-                            c.itemconfig(pid, width=w)
+-                        except Exception:
+-                            pass
+-                    # 3 pulses over the duration
+-                    step = max(1, ms // 3)
+-                    for i, w in enumerate([1, 3, 1]):
+-                        if hasattr(self, "game_director"):
+-                            self.game_director.schedule(step * i, {"type":"ANIM_STEP","name":name}, callback=lambda w=w: pulse_once(w))
+-                        else:
+-                            self.after(step * i, lambda w=w: pulse_once(w))
++            ms = int((payload or {}).get("ms", 300))
++            if not getattr(self, "canvas_manager", None):
++                return
++            c = self.canvas_manager.canvas
++            from ..tableview.components.chip_animations import ChipAnimations
++            anim = ChipAnimations(self.theme_manager)
++            pot_center = getattr(self, "pot_center", (self.width//2, self.height//2)) if hasattr(self, "width") else (200, 100)
++            # Try to locate a hero seat for source position
++            seats = self.display_state.get("seats", [])
++            if seats:
++                src_seat = seats[0]
++                sx, sy = src_seat.get("x", 80), src_seat.get("y", 160)
++            else:
++                sx, sy = 80, 160
++
++            if name == "chips_to_pot":
++                anim.fly_chips_to_pot(c, sx, sy, pot_center[0], pot_center[1], amount=200, callback=None)
++            elif name == "pot_to_winner":
++                # Pick the winner seat roughly
++                winner = None
++                for seat in seats:
++                    if not seat.get("folded"):
++                        winner = seat; break
++                wx, wy = (winner.get("x", 320), winner.get("y", 160)) if winner else (320, 160)
++                anim.fly_pot_to_winner(c, pot_center[0], pot_center[1], wx, wy, callback=None)
+         except Exception as e:
+             print(f"⚠️ Animation handler error: {e}")
++
+ 
+     def _style_theme_radio_buttons(self):
+         """Apply theme-specific styling to radio buttons to eliminate default green highlights."""
+@@ -2085,6 +2084,13 @@                     player_name = seat.get('name', actor_uid)
+                     break
+             
++
++            # Update acting highlight: set only the actor as acting
++            try:
++                for seat in self.display_state.get('seats', []):
++                    seat['acting'] = (seat.get('player_uid') == actor_uid)
++            except Exception:
++                pass
+             if action_type == "DEAL_HOLE":
+                 # Hole cards are already loaded in initial state
+                 print(f"🃏 Enhanced RPGW: Hole cards dealt")

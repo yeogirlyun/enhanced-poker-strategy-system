@@ -79,15 +79,17 @@ class GTODecisionEngine(DecisionEngine):
     
     def __init__(self, num_players: int = 6):
         """Initialize the GTO decision engine."""
-        from .improved_gto_strategy import ImprovedGTOStrategy
+        # Temporarily disabled due to syntax errors in improved_gto_strategy
+        # from .improved_gto_strategy import ImprovedGTOStrategy
         
         self.num_players = num_players
         self.gto_strategies = {}
         self.decision_count = 0
         
         # Initialize GTO strategies for each player position
-        for i in range(num_players):
-            self.gto_strategies[i] = ImprovedGTOStrategy(num_players)
+        # Temporarily disabled due to syntax errors
+        # for i in range(num_players):
+        #     self.ppsm = ImprovedGTOStrategy(num_players)
     
     def get_decision(self, player_index: int, game_state: Dict[str, Any]) -> Dict[str, Any]:
         """Get GTO-optimal decision for the given player and game state."""

@@ -2,7 +2,7 @@
   "total_hands": 20,
   "successful_hands": 0,
   "failed_hands": 20,
-  "total_actions": 19,
+  "total_actions": 4000,
   "successful_actions": 0,
   "hands": [
     {
@@ -12,15 +12,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -30,15 +30,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -48,15 +48,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -66,15 +66,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -84,15 +84,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -102,15 +102,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -120,15 +120,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -138,15 +138,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -156,15 +156,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -174,15 +174,15 @@
       "final_pot": 15.0,
       "expected_pot": 2000.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 40.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 30.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -192,15 +192,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -210,15 +210,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -228,15 +228,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -246,15 +246,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -264,15 +264,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -282,15 +282,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -300,15 +300,15 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -318,30 +318,33 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
       "hand_id": "hand_18",
       "hand_index": 19,
       "success": false,
-      "exception": "[Errno 32] Broken pipe",
-      "final_pot": 0,
+      "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 0,
+      "total_actions": 200,
       "successful_actions": 0,
-      "failed_actions": 0,
+      "failed_actions": 200,
       "errors": [
-        "[Errno 32] Broken pipe"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     },
     {
@@ -351,20 +354,20 @@
       "final_pot": 15.0,
       "expected_pot": 520.0,
       "pot_match": false,
-      "total_actions": 1,
+      "total_actions": 200,
       "successful_actions": 0,
       "failed_actions": 200,
       "errors": [
-        "Invalid action: RAISE 35.0",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'",
-        "Exception getting decision: unsupported operand type(s) for -: 'NoneType' and 'int'"
+        "Invalid action: RAISE 25.0",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None",
+        "Invalid action: FOLD None"
       ]
     }
   ],
-  "duration": 0.014490127563476562,
-  "hands_per_sec": 1380.2500987231801,
+  "duration": 0.01662588119506836,
+  "hands_per_sec": 1202.9437577078613,
   "success_rate": 0.0,
   "action_success_rate": 0.0,
   "verdict": "NOT_READY",

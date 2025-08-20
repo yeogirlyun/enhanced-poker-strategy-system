@@ -96,7 +96,7 @@ class GTOToHandConverter:
         return Hand(
             metadata=metadata,
             seats=seats,
-            hero_player_id=seats[0].player_id if seats else None,  # First player as hero
+            hero_player_uid=seats[0].player_uid if seats else None,  # Fixed: use hero_player_uid
             streets=streets,
             pots=pots,
             showdown=showdown,
@@ -157,7 +157,7 @@ class GTOToHandConverter:
             )
             seat = Seat(
                 seat_no=i + 1,
-                player_id=player_id,
+                player_uid=player_id,  # Fixed: use player_uid instead of player_id
                 display_name=player_data.get('name', f'Player {i+1}'),  # Display can have spaces
                 starting_stack=int(player_data.get('stack', 1000)),
                 is_button=(i == 0)  # First player as button for simplicity
@@ -248,7 +248,7 @@ class GTOToHandConverter:
                 return_action = Action(
                     order=next_order,
                     street=last_street,
-                    actor_id=last_aggressor,
+                    actor_uid=last_aggressor,  # Fixed: use actor_uid instead of actor_id
                     action=ActionType.RETURN_UNCALLED,
                     amount=last_aggressor_amount,
                     note=f"Uncalled bet of ${last_aggressor_amount} returned"
@@ -279,7 +279,7 @@ class GTOToHandConverter:
                     preflop_street.actions.append(Action(
                         order=order,
                         street=Street.PREFLOP,
-                        actor_id=player_id,
+                        actor_uid=player_id,  # Fixed: use actor_uid instead of actor_id
                         action=ActionType.POST_BLIND,
                         amount=sb_amount,
                         to_amount=sb_amount,
@@ -295,7 +295,7 @@ class GTOToHandConverter:
                     preflop_street.actions.append(Action(
                         order=order,
                         street=Street.PREFLOP,
-                        actor_id=player_id,
+                        actor_uid=player_id,  # Fixed: use actor_uid instead of actor_id
                         action=ActionType.POST_BLIND,
                         amount=bb_amount,
                         to_amount=bb_amount,
@@ -345,7 +345,7 @@ class GTOToHandConverter:
             return Action(
                 order=order,
                 street=street,
-                actor_id=player_id,
+                actor_uid=player_id,  # Fixed: use actor_uid instead of actor_id
                 action=action_type,
                 amount=int(amount),
                 to_amount=to_amount,
@@ -366,11 +366,11 @@ class GTOToHandConverter:
         
         # For GTO sessions, create a single main pot
         # All players are eligible (we don't track side pots in current format)
-        eligible_players = [seat.player_id for seat in seats]
+        eligible_players = [seat.player_uid for seat in seats]
         
         pot = Pot(
             amount=int(final_pot),
-            eligible_player_ids=eligible_players,
+            eligible_player_uids=eligible_players,  # Fixed: use eligible_player_uids
             shares=[]  # Will be filled by showdown analysis
         )
         
@@ -394,7 +394,7 @@ class GTOToHandConverter:
             
             for i, winner in enumerate(winners):
                 pot.shares.append(PotShare(
-                    player_id=winner,
+                    player_uid=winner,  # Fixed: use player_uid instead of player_id
                     amount=share_amount + (1 if i < remainder else 0)
                 ))
         
@@ -421,8 +421,8 @@ class GTOToHandConverter:
         
         # Ensure all seats have entries
         for seat in seats:
-            if seat.player_id not in final_stacks:
-                final_stacks[seat.player_id] = seat.starting_stack
+            if seat.player_uid not in final_stacks:
+                final_stacks[seat.player_uid] = seat.starting_stack
         
         return final_stacks
 

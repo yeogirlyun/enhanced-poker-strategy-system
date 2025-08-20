@@ -43,7 +43,7 @@ class CardWidget(tk.Canvas):
     def __init__(self, parent, width=50, height=70):
         # Get theme-aware colors for card widget
         try:
-            from backend.ui.services.theme_manager import ThemeManager
+            from ui.services.theme_manager import ThemeManager
             theme_manager = ThemeManager()
             theme_colors = theme_manager.get()
             card_bg = theme_colors.get("card.bg", "#FFFFFF")
@@ -82,7 +82,7 @@ class CardWidget(tk.Canvas):
         else:
             # Valid card - show the actual card with theme-aware background
             try:
-                from backend.ui.services.theme_manager import ThemeManager
+                from ui.services.theme_manager import ThemeManager
                 theme_manager = ThemeManager()
                 theme_colors = theme_manager.get()
                 card_bg = theme_colors.get("card.bg", "#FFFFFF")

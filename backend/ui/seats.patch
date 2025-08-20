@@ -1,0 +1,20 @@
+--- ui/tableview/components/seats.py+++ ui/tableview/components/seats_PATCHED.py@@ -1,7 +1,19 @@ import math
+ from ...services.theme_manager import ThemeManager
+ from .card_utils import format_card_display
+-from .premium_chips import draw_chip_stack
++
++try:
++    from .premium_chips import draw_chip_stack
++except Exception:
++    def draw_chip_stack(canvas, x, y, denom_key="chip.gold", text="", r=14, tags=None):
++        fill = "#D97706"  # gold-ish
++        try:
++            canvas.create_oval(x-r, y-r, x+r, y+r, fill=fill, outline="black", width=1, tags=tags or ())
++            if text:
++                canvas.create_text(x, y, text=str(text), fill="white", font=("Arial", 9, "bold"), tags=tags or ())
++        except Exception:
++            pass
++
+ 
+ 
+ def _lighten_color(color_hex: str, factor: float) -> str:

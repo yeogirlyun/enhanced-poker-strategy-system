@@ -21,11 +21,14 @@ class TableFelt:
         else:
             THEME = {"table.felt": "#2B2F36", "table_rail": None}
         c = canvas_manager.canvas
+        if c is None:
+            return
         w, h = canvas_manager.size()
         
-        # Use fallback size if canvas not ready
-        if w <= 1 or h <= 1:
-            w, h = 800, 600
+        # Validate dimensions; skip if not ready to avoid small remnants
+        if w <= 100 or h <= 100:
+            print(f"⚠️ TableFelt: Skipping render - invalid size {w}x{h}")
+            return
             
         felt_color = THEME.get("table.felt", THEME.get("table_felt", "#1B4D3A"))
         rail_color = THEME.get("table.rail", THEME.get("table_rail", "#2E4F76"))

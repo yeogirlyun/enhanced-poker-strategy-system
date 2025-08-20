@@ -1,0 +1,72 @@
+[
+  {
+    "hand_id": "mock_gto_6056",
+    "player_count": 2,
+    "final_pot": 233,
+    "board": [
+      "As",
+      "Kd",
+      "7h",
+      "2c",
+      "9s"
+    ],
+    "actions_count": 10,
+    "status": "completed"
+  },
+  {
+    "hand_id": "mock_gto_8020",
+    "player_count": 2,
+    "final_pot": 103,
+    "board": [
+      "As",
+      "Kd",
+      "7h",
+      "2c",
+      "9s"
+    ],
+    "actions_count": 15,
+    "status": "completed"
+  },
+  {
+    "hand_id": "mock_gto_4111",
+    "player_count": 2,
+    "final_pot": 214,
+    "board": [
+      "As",
+      "Kd",
+      "7h",
+      "2c",
+      "9s"
+    ],
+    "actions_count": 24,
+    "status": "completed"
+  },
+  {
+    "hand_id": "mock_gto_2253",
+    "player_count": 2,
+    "final_pot": 201,
+    "board": [
+      "As",
+      "Kd",
+      "7h",
+      "2c",
+      "9s"
+    ],
+    "actions_count": 22,
+    "status": "completed"
+  },
+  {
+    "hand_id": "mock_gto_2929",
+    "player_count": 2,
+    "final_pot": 222,
+    "board": [
+      "As",
+      "Kd",
+      "7h",
+      "2c",
+      "9s"
+    ],
+    "actions_count": 20,
+    "status": "completed"
+  }
+]

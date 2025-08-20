@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "total_duplicates": 1,
+    "scanned_directory": ".",
+    "ignore_patterns": [
+      "*/__pycache__/*",
+      "*/logs/*"
+    ],
+    "timestamp": "2025-08-19T23:00:04.611927"
+  },
+  "duplicates": [
+    {
+      "type": "duplicate_method_same_class",
+      "class": "GameState",
+      "name": "round_state",
+      "file": "./core/poker_types.py",
+      "line": 95,
+      "severity": "high",
+      "description": "Method 'round_state' defined multiple times in class 'GameState'"
+    }
+  ]
+}
