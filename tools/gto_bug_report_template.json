@@ -1,0 +1,61 @@
+{
+  "templates": {
+    "gto_integration_bug": {
+      "title": "🚨 **GTO INTEGRATION BUG REPORT - INTERFACE MISMATCH**",
+      "description": "Critical bug analysis for GTODecisionEngineAdapter interface mismatch with PPSM legal actions method.",
+      "output_dir": "bug_report",
+      "filename": "GTO_INTEGRATION_BUG_REPORT_FOCUSED.md",
+      "categories": [
+        {
+          "name": "INITIAL BUG ANALYSIS",
+          "files": [
+            "GTO_INTEGRATION_BUG_REPORT.md"
+          ]
+        },
+        {
+          "name": "FAILING GTO ADAPTER CODE",
+          "files": [
+            "backend/gto/gto_decision_engine_adapter.py",
+            "backend/gto/industry_gto_engine.py",
+            "backend/gto/unified_types.py"
+          ]
+        },
+        {
+          "name": "PPSM INTERFACE DEFINITIONS",
+          "files": [
+            "backend/core/pure_poker_state_machine.py",
+            "backend/core/poker_types.py"
+          ]
+        },
+        {
+          "name": "GTO HAND GENERATION",
+          "files": [
+            "backend/gto/gto_hands_generator.py",
+            "backend/gto/round_trip_integrity_tester.py"
+          ]
+        },
+        {
+          "name": "INTEGRATION TEST RESULTS",
+          "files": [
+            "backend/test_gto_integration_complete.py",
+            "backend/gto/test_gto_integration.py"
+          ]
+        },
+        {
+          "name": "HAND MODEL SYSTEM",
+          "files": [
+            "backend/core/hand_model.py",
+            "backend/core/hand_model_decision_engine.py"
+          ]
+        },
+        {
+          "name": "EXISTING ERROR LOGS",
+          "files": [
+            "**/gto_*.json",
+            "**/test_*.py|gto"
+          ]
+        }
+      ]
+    }
+  }
+}
